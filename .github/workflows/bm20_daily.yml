@@ -2,12 +2,19 @@ name: BM20 Daily
 
 on:
   schedule:
-    - cron: "0 23 * * *"   # 매일 08:00 KST (UTC+9) → 전날 23:00 UTC
+    - cron: "0 23 * * *"  # 매일 08:00 KST (UTC+9) → 전날 23:00 UTC
   workflow_dispatch: {}
 
 jobs:
   run:
     runs-on: ubuntu-latest
+
+    env:
+      OUT_DIR: out
+      # (선택) 스크립트 내부의 자동 업로드 옵션을 쓴다면 여기도 둘 수 있어요
+      # GDRIVE_DEST: "BM20/daily"
+      # AUTO_UPLOAD_TO_DRIVE: "1"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -16,15 +23,16 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: "pip"
 
-      - name: Install deps + rclone
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
+          # requirements.txt에 반드시 포함:
+          # reportlab, jinja2, matplotlib, pandas, requests
           pip install -r requirements.txt
-          sudo apt-get update
-          sudo apt-get install -y rclone
 
-      # ✅ 추가: 한글 폰트 설치 (차트/레이블용)
+      # ✅ 한글 폰트 설치 (ReportLab/Matplotlib에서 한글 안 깨지게)
       - name: Install Korean fonts (Nanum + Noto CJK)
         run: |
           sudo apt-get update
@@ -32,11 +40,10 @@ jobs:
           sudo fc-cache -f -v
 
       - name: Run BM20 generator (KST today)
-        env:
-          OUT_DIR: out
         run: |
           python bm20_daily.py
 
+      # ✅ rclone 설정 복원 (Google Drive 업로드용)
       - name: Restore rclone config from secret
         env:
           RCLONE_CONF_B64: ${{ secrets.RCLONE_CONF_B64 }}
@@ -45,15 +52,18 @@ jobs:
           echo "$RCLONE_CONF_B64" | base64 -d > ~/.config/rclone/rclone.conf
           rclone version
 
+      # ✅ Google Drive 업로드 (원하는 경로로 변경 가능)
       - name: Copy to Google Drive
         env:
-          GDRIVE_DEST: "BM20/daily"   # 원하는 경로로 변경 가능
+          GDRIVE_DEST: "BM20/daily"
         run: |
           rclone copy out gd:"$GDRIVE_DEST" --create-empty-src-dirs --progress --transfers=4 --checkers=8
 
-      - name: Upload artifact (fallback 확인용)
+      # 실행 결과를 GitHub Artifacts로도 보관(백업/확인용)
+      - name: Upload artifact (fallback)
         uses: actions/upload-artifact@v4
         with:
           name: bm20_${{ github.run_id }}
           path: out/**
           if-no-files-found: error
+
