@@ -1,6 +1,8 @@
+# ===================== BM20 Daily — Final (KST, date-folder, robust KP) =====================
 import os, time, json, random
 from datetime import datetime, timedelta, timezone
-import requests, pandas as pd
+import requests
+import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -8,24 +10,29 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import cm
 
-# ===== 공통 =====
+# ===== 날짜/폴더 설정 (맨 위에서 정의) =====
 OUT_DIR = os.getenv("OUT_DIR", "out")
 os.makedirs(OUT_DIR, exist_ok=True)
 
-# KST(UTC+9) 기준 오늘 날짜 고정
-KST = timezone(timedelta(hours=9))
-YMD = datetime.now(KST).strftime("%Y-%m-%d")
+KST = timezone(timedelta(hours=9))                 # 한국 시간
+YMD = datetime.now(KST).strftime("%Y-%m-%d")       # 오늘 날짜(YYYY-MM-DD)
 
+OUT_DIR_DATE = os.path.join(OUT_DIR, YMD)          # 날짜별 하위 폴더
+os.makedirs(OUT_DIR_DATE, exist_ok=True)
+
+# ===== 상수 =====
 CG = "https://api.coingecko.com/api/v3"
 BTC_CAP, OTH_CAP = 0.30, 0.15
 TOP_UP, TOP_DOWN = 6, 4
 
+# BM20 = 기존 20 + DOGE 후보 → 시총 Top20 유지
 BM20_IDS = [
-  "bitcoin","ethereum","solana","ripple","binancecoin","toncoin","avalanche-2",
-  "chainlink","cardano","polygon","near","polkadot","cosmos","litecoin",
-  "arbitrum","optimism","internet-computer","aptos","filecoin","sui","dogecoin"
+    "bitcoin","ethereum","solana","ripple","binancecoin","toncoin","avalanche-2",
+    "chainlink","cardano","polygon","near","polkadot","cosmos","litecoin",
+    "arbitrum","optimism","internet-computer","aptos","filecoin","sui","dogecoin"
 ]
 
+# ===== 유틸 =====
 def cg_get(path, params=None, retry=3, timeout=15):
     last=None
     for i in range(retry):
@@ -42,7 +49,7 @@ def safe_float(x, d=0.0):
     try: return float(x)
     except: return d
 
-# 1) 시세/시총
+# ===== 1) 실시간 시세/시총 =====
 mkts = cg_get("/coins/markets", {
   "vs_currency":"usd","ids":",".join(BM20_IDS),
   "order":"market_cap_desc","per_page":len(BM20_IDS),"page":1,
@@ -55,15 +62,16 @@ df = pd.DataFrame([{
   "chg24":safe_float(m.get("price_change_percentage_24h"),0.0),
 } for m in mkts]).sort_values("market_cap", ascending=False).reset_index(drop=True)
 
-# 21 후보 → 시총 상위 20개 유지
+# 21 후보 → 상위 20개만 유지
 df = df.head(20).reset_index(drop=True)
 
-# 2) 전일 종가 근사 (KST 기준 전날)
+# ===== 2) 전일 종가 (KST 기준 전날) 근사 =====
 def get_yday_close(cid):
     data = cg_get(f"/coins/{cid}/market_chart", {"vs_currency":"usd","days":2})
     prices = data.get("prices", [])
     if not prices: return None
     yday = (datetime.now(KST) - timedelta(days=1)).date()
+    # CG 타임스탬프는 UNIX ms (UTC). KST로 변환해 같은 날짜의 마지막 값 선택
     series = [(datetime.fromtimestamp(p[0]/1000, timezone.utc), p[1]) for p in prices]
     yvals = [p for (t,p) in series if t.astimezone(KST).date()==yday]
     if yvals: return float(yvals[-1])
@@ -71,19 +79,26 @@ def get_yday_close(cid):
 
 prevs=[]
 for cid in df["id"]:
-    try: prevs.append(get_yday_close(cid))
-    except Exception: prevs.append(None); time.sleep(0.25)
+    try:
+        prevs.append(get_yday_close(cid))
+    except Exception:
+        prevs.append(None)
+    time.sleep(0.25)
+# 보정: 누락 시 24h 변동률로 역산
 for i,r in df.iterrows():
     if prevs[i] in (None,0):
         prevs[i] = r["current_price"]/(1+(r["chg24"] or 0)/100.0)
 df["previous_price"]=prevs
 
-# 3) 가중치(상한→정규화)
+# ===== 3) 가중치 (상한→정규화) =====
 df["weight_raw"]=df["market_cap"]/max(df["market_cap"].sum(),1.0)
-df["weight_ratio"]=df.apply(lambda r: min(r["weight_raw"], BTC_CAP if r["name"]=="BTC" else OTH_CAP), axis=1)
+df["weight_ratio"]=df.apply(
+    lambda r: min(r["weight_raw"], BTC_CAP if r["name"]=="BTC" else OTH_CAP),
+    axis=1
+)
 df["weight_ratio"]=df["weight_ratio"]/df["weight_ratio"].sum()
 
-# 4) 김치 프리미엄 (df 재활용 + 우회)
+# ===== 4) 김치 프리미엄 (안정화·우회 포함) =====
 def get_kp(df):
     def _req(url, params=None, retry=3, timeout=12):
         last=None
@@ -95,7 +110,7 @@ def get_kp(df):
             except Exception as e:
                 last=e; time.sleep(0.6*(i+1))
         raise last
-    # KRW
+    # KRW (Upbit → CG KRW → 실패 시 None)
     try:
         u=_req("https://api.upbit.com/v1/ticker", {"markets":"KRW-BTC"})
         btc_krw=float(u[0]["trade_price"]); dom="upbit"
@@ -106,7 +121,7 @@ def get_kp(df):
         except Exception:
             return None, {"dom":"fallback0","glb":"df","fx":"fixed1350",
                           "btc_krw":None,"btc_usd":None,"usdkrw":1350.0}
-    # USD
+    # USD (df 가격 재활용 → 필요 시 거래소 우회 → 최후 CG USD)
     try:
         btc_usd=float(df.loc[df["name"]=="BTC","current_price"].iloc[0]); glb="df"
     except Exception:
@@ -124,7 +139,8 @@ def get_kp(df):
                 if isinstance(j,dict) and "price" in j: btc_usd=float(j["price"]); glb=url; break
                 if "data" in j and isinstance(j["data"],list): btc_usd=float(j["data"][0]["last"]); glb=url; break
                 if "result" in j and "XXBTZUSD" in j["result"]: btc_usd=float(j["result"]["XXBTZUSD"]["c"][0]); glb=url; break
-            except Exception: continue
+            except Exception:
+                continue
         if btc_usd is None:
             try:
                 cg=_req(f"{CG}/simple/price", {"ids":"bitcoin","vs_currencies":"usd"})
@@ -132,7 +148,7 @@ def get_kp(df):
             except Exception:
                 return None, {"dom":dom,"glb":"fallback0","fx":"fixed1350",
                               "btc_krw":round(btc_krw,2),"btc_usd":None,"usdkrw":1350.0}
-    # FX
+    # FX (USDT→KRW, 비정상시 1350 고정)
     try:
         t=_req(f"{CG}/simple/price", {"ids":"tether","vs_currencies":"krw"})
         usdkrw=float(t["tether"]["krw"]); fx="cg_tether"
@@ -143,9 +159,9 @@ def get_kp(df):
     return kp, {"dom":dom,"glb":glb,"fx":fx,
                 "btc_krw":round(btc_krw,2),"btc_usd":round(btc_usd,2),"usdkrw":round(usdkrw,2)}
 
-kimchi_pct, kp_meta = get_kp(df)
+kimchi_pct, kp_meta = get_kp(df)  # kimchi_pct: float 또는 None
 
-# 5) BM20 계산
+# ===== 5) BM20 계산 =====
 df["price_change_pct"]=(df["current_price"]/df["previous_price"]-1)*100
 df["contribution"]=(df["current_price"]-df["previous_price"])*df["weight_ratio"]
 bm20_prev=float((df["previous_price"]*df["weight_ratio"]).sum())
@@ -156,7 +172,7 @@ num_up=int((df["price_change_pct"]>0).sum()); num_down=int((df["price_change_pct
 top3=df.sort_values("contribution", ascending=False).head(3).reset_index(drop=True)
 bot2=df.sort_values("contribution", ascending=True).head(2).reset_index(drop=True)
 
-# 6) 뉴스 (요청 톤)
+# ===== 6) 뉴스(해석형 톤) =====
 btc_row=df.loc[df["name"]=="BTC"].iloc[0]; btc_pct=btc_row["price_change_pct"]
 lead2,lead3=top3.iloc[1], top3.iloc[2]; lag1,lag2=bot2.iloc[0], bot2.iloc[1]
 trend_word="상승" if bm20_chg>=0 else "하락"
@@ -166,23 +182,27 @@ dominance="상승이 압도적으로 많았다." if num_up>(num_down+2) else ("�
 kp_text = f"{kimchi_pct:.2f}%" if kimchi_pct is not None else "집계 지연"
 
 news_lines=[
- f"비트코인과 이더리움을 포함한 대형코인 위주의 BM20 지수는 전일대비 {bm20_chg:+.2f}% {trend_word}한 {bm20_now:,.0f}pt를 기록했다.",
- f"이 가운데 비트코인(BTC)이 {btc_pct:+.2f}% {verb_btc} 지수 {('상승' if bm20_chg>=0 else '하락')}을 견인했고, "
- f"{lead2['name']}({lead2['price_change_pct']:+.2f}%), {lead3['name']}({lead3['price_change_pct']:+.2f}%)도 긍정적으로 기여했다.",
- f"반면, {lag1['name']}({lag1['price_change_pct']:+.2f}%), {lag2['name']}({lag2['price_change_pct']:+.2f}%)는 하락, {limit_phrase}",
- f"이날 대형 코인 20개 중 상승한 자산은 {num_up}개였고, 하락한 코인은 {num_down}개로 {dominance}",
- f"한편, 업비트와 빗썸 등 한국 주요 거래소와 바이낸스 등 해외거래소와의 비트코인 가격 차이를 나타내는 k-bm 프리미엄(김치프리미엄)은 {kp_text}로 집계됐다."
+  f"비트코인과 이더리움을 포함한 대형코인 위주의 BM20 지수는 전일대비 {bm20_chg:+.2f}% {trend_word}한 {bm20_now:,.0f}pt를 기록했다.",
+  f"이 가운데 비트코인(BTC)이 {btc_pct:+.2f}% {verb_btc} 지수 {('상승' if bm20_chg>=0 else '하락')}을 견인했고, "
+  f"{lead2['name']}({lead2['price_change_pct']:+.2f}%), {lead3['name']}({lead3['price_change_pct']:+.2f}%)도 긍정적으로 기여했다.",
+  f"반면, {lag1['name']}({lag1['price_change_pct']:+.2f}%), {lag2['name']}({lag2['price_change_pct']:+.2f}%)는 하락, {limit_phrase}",
+  f"이날 대형 코인 20개 중 상승한 자산은 {num_up}개였고, 하락한 코인은 {num_down}개로 {dominance}",
+  f"한편, 업비트와 빗썸 등 한국 주요 거래소와 바이낸스 등 해외거래소와의 비트코인 가격 차이를 나타내는 k-bm 프리미엄(김치프리미엄)은 {kp_text}로 집계됐다."
 ]
 news=" ".join(news_lines)
 
-# 7) 저장
+# ===== 7) 저장 경로 =====
 txt_path = os.path.join(OUT_DIR_DATE, f"bm20_news_{YMD}.txt")
 csv_path = os.path.join(OUT_DIR_DATE, f"bm20_daily_data_{YMD}.csv")
 png_path = os.path.join(OUT_DIR_DATE, f"bm20_chart_{YMD}.png")
 pdf_path = os.path.join(OUT_DIR_DATE, f"bm20_daily_{YMD}.pdf")
 kp_path  = os.path.join(OUT_DIR_DATE, f"kimchi_{YMD}.json")
 
-# 8) 차트
+# ===== 8) 저장 (TXT/CSV) =====
+with open(txt_path,"w",encoding="utf-8") as f: f.write(news)
+df[["name","current_price","previous_price","weight_ratio"]].to_csv(csv_path, index=False, encoding="utf-8")
+
+# ===== 9) 차트 (상승=초록/하락=빨강) =====
 winners=df.sort_values("price_change_pct", ascending=False).head(TOP_UP)
 losers=df.sort_values("price_change_pct", ascending=True).head(TOP_DOWN)
 bar=pd.concat([winners[["name","price_change_pct"]], losers[["name","price_change_pct"]]])
@@ -193,11 +213,9 @@ plt.axvline(0, linewidth=1, color="steelblue")
 plt.title(f"BM20 Daily Performance  ({YMD})")
 plt.xlabel("Daily Change (%)")
 plt.tight_layout()
-png_path=os.path.join(OUT_DIR, f"bm20_chart_{YMD}.png")
 plt.savefig(png_path, dpi=180); plt.close()
 
-# 9) 1페이지 PDF
-pdf_path=os.path.join(OUT_DIR, f"bm20_daily_{YMD}.pdf")
+# ===== 10) PDF(1페이지) =====
 c=canvas.Canvas(pdf_path, pagesize=A4)
 w, h = A4; margin = 1.5*cm; y = h - margin
 c.setFont("Helvetica-Bold", 14); c.drawString(margin, y, f"BM20 데일리 리포트  {YMD}")
@@ -211,22 +229,9 @@ if os.path.exists(png_path):
     c.drawImage(png_path, margin, margin, width=img_w, height=img_h, preserveAspectRatio=True, anchor='sw')
 c.showPage(); c.save()
 
-# 10) 김프 메타 로그
-kp_path=os.path.join(OUT_DIR, f"kimchi_{YMD}.json")
+# ===== 11) 김프 메타 로그 =====
 with open(kp_path, "w", encoding="utf-8") as f:
-    json.dump({"date":YMD, **(kp_meta or {}), "kimchi_pct": (None if kimchi_pct is None else round(float(kimchi_pct),4))}, f, ensure_ascii=False)
+    json.dump({"date":YMD, **(kp_meta or {}), "kimchi_pct": (None if kimchi_pct is None else round(float(kimchi_pct),4))},
+              f, ensure_ascii=False)
 
 print("Saved:", txt_path, csv_path, png_path, pdf_path, kp_path)
-
-# ===== 공통 =====
-OUT_DIR = os.getenv("OUT_DIR", "out")
-os.makedirs(OUT_DIR, exist_ok=True)
-
-# KST(UTC+9) 기준 오늘 날짜
-KST = timezone(timedelta(hours=9))
-YMD = datetime.now(KST).strftime("%Y-%m-%d")
-
-# ★ 추가: 날짜 하위 폴더 생성
-OUT_DIR_DATE = os.path.join(OUT_DIR, YMD)
-os.makedirs(OUT_DIR_DATE, exist_ok=True)
-
