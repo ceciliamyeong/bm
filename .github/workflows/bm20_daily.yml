@@ -2,7 +2,7 @@ name: BM20 Daily
 
 on:
   schedule:
-    - cron: "0 23 * * *"  # 매일 08:00 KST (UTC+9) → 전날 23:00 UTC
+    - cron: "0 23 * * *"  # 매일 08:00 KST
   workflow_dispatch: {}
 
 jobs:
@@ -11,9 +11,8 @@ jobs:
 
     env:
       OUT_DIR: out
-      # (선택) 스크립트 내부의 자동 업로드 옵션을 쓴다면 여기도 둘 수 있어요
-      # GDRIVE_DEST: "BM20/daily"
-      # AUTO_UPLOAD_TO_DRIVE: "1"
+      GDRIVE_DEST: "BM20/daily"          # 드라이브 업로드 경로
+      AUTO_UPLOAD_TO_DRIVE: "0"          # bm20_daily.py 내부 자동업로드는 끔(여기 rclone 스텝으로 처리)
 
     steps:
       - name: Checkout
@@ -28,22 +27,23 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          # requirements.txt에 반드시 포함:
-          # reportlab, jinja2, matplotlib, pandas, requests
+          # requirements.txt에 reportlab jinja2 matplotlib pandas requests 포함
           pip install -r requirements.txt
 
-      # ✅ 한글 폰트 설치 (ReportLab/Matplotlib에서 한글 안 깨지게)
+      # ✅ 한글 폰트(ReportLab/Matplotlib) 설치
       - name: Install Korean fonts (Nanum + Noto CJK)
         run: |
           sudo apt-get update
           sudo apt-get install -y fonts-nanum fonts-noto-cjk fontconfig
           sudo fc-cache -f -v
 
-      - name: Run BM20 generator (KST today)
-        run: |
-          python bm20_daily.py
+      # ✅ rclone 설치 (공식 액션 사용)
+      - name: Setup rclone
+        uses: rclone/setup-rclone@v1
+        with:
+          rclone_version: 'latest'
 
-      # ✅ rclone 설정 복원 (Google Drive 업로드용)
+      # ✅ rclone 설정 복원 (레포 시크릿에 RCLONE_CONF_B64 필요)
       - name: Restore rclone config from secret
         env:
           RCLONE_CONF_B64: ${{ secrets.RCLONE_CONF_B64 }}
@@ -52,18 +52,25 @@ jobs:
           echo "$RCLONE_CONF_B64" | base64 -d > ~/.config/rclone/rclone.conf
           rclone version
 
-      # ✅ Google Drive 업로드 (원하는 경로로 변경 가능)
-      - name: Copy to Google Drive
-        env:
-          GDRIVE_DEST: "BM20/daily"
+      # 리포트 생성
+      - name: Run BM20 generator (KST today)
         run: |
-          rclone copy out gd:"$GDRIVE_DEST" --create-empty-src-dirs --progress --transfers=4 --checkers=8
+          python bm20_daily.py
 
-      # 실행 결과를 GitHub Artifacts로도 보관(백업/확인용)
+      # ✅ Google Drive 업로드
+      - name: Copy to Google Drive
+        run: |
+          rclone copy out gd:"$GDRIVE_DEST" \
+            --create-empty-src-dirs --progress --transfers=4 --checkers=8
+
+      # 결과물 아티팩트 업로드(백업/확인용)
       - name: Upload artifact (fallback)
         uses: actions/upload-artifact@v4
         with:
           name: bm20_${{ github.run_id }}
+          path: out/**
+          if-no-files-found: error
+
           path: out/**
           if-no-files-found: error
 
