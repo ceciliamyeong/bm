@@ -24,6 +24,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y rclone
 
+      # ✅ 추가: 한글 폰트 설치 (차트/레이블용)
+      - name: Install Korean fonts (Nanum + Noto CJK)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-nanum fonts-noto-cjk fontconfig
+          sudo fc-cache -f -v
+
       - name: Run BM20 generator (KST today)
         env:
           OUT_DIR: out
