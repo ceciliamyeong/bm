@@ -11,8 +11,8 @@ jobs:
 
     env:
       OUT_DIR: out
-      GDRIVE_DEST: "BM20/daily"          # 드라이브 업로드 경로
-      AUTO_UPLOAD_TO_DRIVE: "0"          # bm20_daily.py 내부 자동업로드는 끔(여기 rclone 스텝으로 처리)
+      GDRIVE_DEST: "BM20/daily"
+      AUTO_UPLOAD_TO_DRIVE: "0"
 
     steps:
       - name: Checkout
@@ -27,23 +27,30 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          # requirements.txt에 reportlab jinja2 matplotlib pandas requests 포함
           pip install -r requirements.txt
 
-      # ✅ 한글 폰트(ReportLab/Matplotlib) 설치
+      # 한글 폰트 설치
       - name: Install Korean fonts (Nanum + Noto CJK)
         run: |
           sudo apt-get update
           sudo apt-get install -y fonts-nanum fonts-noto-cjk fontconfig
           sudo fc-cache -f -v
 
-      # ✅ rclone 설치 (공식 액션 사용)
-      - name: Setup rclone
-        uses: rclone/setup-rclone@v1
-        with:
-          rclone_version: 'latest'
+      # 🔧 rclone 설치 (액션 대신 apt/curl 사용)
+      # 방법 A: apt
+      - name: Install rclone
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rclone
+          rclone version
 
-      # ✅ rclone 설정 복원 (레포 시크릿에 RCLONE_CONF_B64 필요)
+      # (만약 apt가 실패하면 위 스텝 대신 아래 curl 스텝을 쓰세요)
+      # - name: Install rclone (curl script)
+      #   run: |
+      #     curl -fsSL https://rclone.org/install.sh | sudo bash
+      #     rclone version
+
+      # rclone 설정 복원
       - name: Restore rclone config from secret
         env:
           RCLONE_CONF_B64: ${{ secrets.RCLONE_CONF_B64 }}
@@ -57,13 +64,13 @@ jobs:
         run: |
           python bm20_daily.py
 
-      # ✅ Google Drive 업로드
+      # Google Drive 업로드
       - name: Copy to Google Drive
         run: |
           rclone copy out gd:"$GDRIVE_DEST" \
             --create-empty-src-dirs --progress --transfers=4 --checkers=8
 
-      # 결과물 아티팩트 업로드(백업/확인용)
+      # 아티팩트 업로드
       - name: Upload artifact (fallback)
         uses: actions/upload-artifact@v4
         with:
