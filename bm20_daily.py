@@ -1,7 +1,5 @@
-# ===================== BM20 Daily — 2-Column PDF + HTML + Gmail =====================
-import os, time, json, random, smtplib, ssl
-from email.message import EmailMessage
-from email.utils import formataddr
+# ===================== BM20 Daily — 2-Column PDF + HTML + Slack =====================
+import os, time, json, random
 from datetime import datetime, timedelta, timezone
 import requests
 import pandas as pd
@@ -240,7 +238,6 @@ def get_pct_series(coin_id, days=8):
     return [ (v/base-1)*100 for v in s ]
 
 btc7=get_pct_series("bitcoin", 8); eth7=get_pct_series("ethereum", 8)
-x=range(max(len(btc7), len(eth7)))
 plt.figure()
 plt.plot(range(len(btc7)), btc7, label="BTC 7D")
 plt.plot(range(len(eth7)), eth7, label="ETH 7D")
@@ -304,7 +301,7 @@ tbl.setStyle(TableStyle([
 story_left += [tbl]
 
 if os.path.exists(bar_png):
-    story_right += [Image(bar_png, width=col_w, height=col_w*0.55), Spacer(1,0.3*cm)]
+    story_right += [Image(bar_png, width=col_w, height=col_w*0.55), Spacer(1, 0.3*cm)]
 if os.path.exists(trend_png):
     story_right += [Image(trend_png, width=col_w, height=col_w*0.60)]
 
@@ -365,58 +362,64 @@ html = html_tpl.render(
 )
 with open(html_path, "w", encoding="utf-8") as f: f.write(html)
 
-# ================== Gmail Send ==================
-def send_email_gmail(subject: str, html_body: str, attachments: list):
-    user = os.getenv("GMAIL_USER")
-    app_pw = os.getenv("GMAIL_APP_PASS")
-    to_raw = os.getenv("MAIL_TO", "")
-    from_name = os.getenv("MAIL_FROM_NAME", "BM20 Bot")
-    if not user or not app_pw or not to_raw:
-        print("[mail] GMAIL_USER/GMAIL_APP_PASS/MAIL_TO not set → skip"); return
-    to_list = [t.strip() for t in to_raw.split(",") if t.strip()]
-    msg = EmailMessage()
-    msg["Subject"] = subject
-    msg["From"] = formataddr((from_name, user))
-    msg["To"] = ", ".join(to_list)
-    plain = f"""[BM20 데일리] {YMD}
-BM20 지수: {bm20_now:,.0f}pt
-일간 변동: {bm20_chg:+.2f}%
+# ================== Slack Webhook 알림 ==================
+def send_slack_message_via_webhook(text: str, blocks: list | None = None):
+    url = os.getenv("SLACK_WEBHOOK_URL")
+    if not url:
+        print("[slack] SLACK_WEBHOOK_URL 미설정 → 발송 생략")
+        return
+    payload = {"text": text}
+    if blocks:
+        payload["blocks"] = blocks
+    res = requests.post(url, json=payload, timeout=20)
+    if res.status_code == 200:
+        print("[slack] 메시지 전송 완료")
+    else:
+        print(f"[slack] 전송 실패: {res.status_code}, {res.text}")
+
+_gdrive_hint = "Google Drive 업로드 경로에서 파일 확인"  # rclone이 드라이브에 올림 (워크플로우 yml 참고)
+files_list = [
+    os.path.basename(pdf_path),
+    os.path.basename(html_path),
+    os.path.basename(bar_png),
+    os.path.basename(trend_png),
+    os.path.basename(csv_path),
+    os.path.basename(txt_path),
+]
+
+slack_title = f"BM20 데일리 리포트 {YMD}"
+slack_text_fallback = f"""*{slack_title}*
+지수: {bm20_now:,.0f} pt ({bm20_chg:+.2f}%)
 상승/하락: {num_up}/{num_down}
-김치 프리미엄: {kp_text}
+김치프리미엄: {kp_text}
 
-요약: {news}
-"""
-    msg.set_content(plain)
-    msg.add_alternative(html_body, subtype="html")
-    for path in attachments:
-        if not path or not os.path.exists(path): continue
-        with open(path, "rb") as f: data=f.read()
-        fname=os.path.basename(path); lower=fname.lower()
-        if   lower.endswith(".pdf"):  mt,st="application","pdf"
-        elif lower.endswith(".png"):  mt,st="image","png"
-        elif lower.endswith(".csv"):  mt,st="text","csv"
-        elif lower.endswith(".txt"):  mt,st="text","plain"
-        elif lower.endswith(".html"): mt,st="text","html"
-        else:                         mt,st="application","octet-stream"
-        msg.add_attachment(data, maintype=mt, subtype=st, filename=fname)
-    with smtplib.SMTP("smtp.gmail.com", 587, timeout=60) as smtp:
-        smtp.ehlo(); smtp.starttls(context=ssl.create_default_context())
-        smtp.login(user, app_pw); smtp.send_message(msg)
-    print(f"[mail] sent to: {msg['To']}")
+주요 뉴스:
+{news}
 
-mail_subject = f"[BM20 Daily] {YMD}  BM20 {bm20_chg:+.2f}% ({bm20_now:,.0f}pt)"
-mail_html = f"""
-<h2>BM20 데일리 리포트 <span style='color:#666'>{YMD}</span></h2>
-<ul>
-  <li><b>BM20 지수</b>: {bm20_now:,.0f} pt</li>
-  <li><b>일간 변동</b>: {bm20_chg:+.2f}%</li>
-  <li><b>상승/하락</b>: {num_up}/{num_down}</li>
-  <li><b>김치 프리미엄</b>: {kp_text}</li>
-</ul>
-<p style="line-height:1.6">{news}</p>
-<p>첨부: PDF 리포트, 차트 PNG, CSV/TXT</p>
-"""
-send_email_gmail(mail_subject, mail_html, [pdf_path, bar_png, trend_png, csv_path, txt_path, html_path])
+📂 {_gdrive_hint}
+• """ + "\n• ".join(files_list)
+
+blocks = [
+    {"type": "header", "text": {"type": "plain_text", "text": slack_title}},
+    {
+        "type": "section",
+        "fields": [
+            {"type": "mrkdwn", "text": f"*BM20 지수*\n{bm20_now:,.0f} pt"},
+            {"type": "mrkdwn", "text": f"*일간 변동*\n{bm20_chg:+.2f}%"},
+            {"type": "mrkdwn", "text": f"*상승/하락*\n{num_up}/{num_down}"},
+            {"type": "mrkdwn", "text": f"*김치 프리미엄*\n{kp_text}"},
+        ],
+    },
+    {"type": "divider"},
+    {"type": "section", "text": {"type": "mrkdwn", "text": f"*요약*\n{news}"}},
+    {"type": "divider"},
+    {
+        "type": "section",
+        "text": {"type": "mrkdwn", "text": "📂 *첨부 파일 (드라이브 업로드됨)*\n" + "\n".join([f"• `{n}`" for n in files_list])},
+    },
+]
+
+send_slack_message_via_webhook(text=slack_text_fallback, blocks=blocks)
 
 # ================== Kimchi meta log ==================
 with open(kp_path, "w", encoding="utf-8") as f:
@@ -424,4 +427,5 @@ with open(kp_path, "w", encoding="utf-8") as f:
               f, ensure_ascii=False)
 
 print("Saved:", txt_path, csv_path, bar_png, trend_png, pdf_path, html_path, kp_path)
+
 
