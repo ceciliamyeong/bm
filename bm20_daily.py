@@ -10,6 +10,14 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import cm
 
+# ▼▼▼ 추가: ReportLab 한글 폰트 등록 ▼▼▼
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+
+KOREAN_FONT = "HYSMyeongJo-Medium"   # ReportLab 내장 CJK 폰트
+pdfmetrics.registerFont(UnicodeCIDFont(KOREAN_FONT))
+# ▲▲▲ 여기까지 추가
+
 # ===== 날짜/폴더 설정 (맨 위에서 정의) =====
 OUT_DIR = os.getenv("OUT_DIR", "out")
 os.makedirs(OUT_DIR, exist_ok=True)
@@ -218,7 +226,7 @@ plt.savefig(png_path, dpi=180); plt.close()
 # ===== 10) PDF(1페이지) =====
 c=canvas.Canvas(pdf_path, pagesize=A4)
 w, h = A4; margin = 1.5*cm; y = h - margin
-c.setFont("Helvetica-Bold", 14); c.drawString(margin, y, f"BM20 데일리 리포트  {YMD}")
+c.setFont(KOREAN_FONT, 14); c.drawString(margin, y, f"BM20 데일리 리포트  {YMD}")
 y -= 0.8*cm; c.setFont("Helvetica", 10)
 for line in news_lines:
     for seg in [line[i:i+68] for i in range(0, len(line), 68)]:
