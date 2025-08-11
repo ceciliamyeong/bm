@@ -1,81 +1,96 @@
-# ===================== BM20 Daily — Final (KST, date-folder, robust KP) =====================
+# ===================== BM20 Daily — 2-Column PDF + HTML Newsletter =====================
 import os, time, json, random
 from datetime import datetime, timedelta, timezone
 import requests
 import pandas as pd
+
+# ---- Matplotlib (차트) ----
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
-from reportlab.lib.units import cm
+import matplotlib.font_manager as fm
 
-# ▼▼▼ ReportLab 한글 폰트 등록 (CID 폰트) ▼▼▼
+# ---- ReportLab (PDF) ----
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import cm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
-KOREAN_FONT = "HYSMyeongJo-Medium"   # ReportLab 내장 CJK 폰트
-pdfmetrics.registerFont(UnicodeCIDFont(KOREAN_FONT))
-# ▲▲▲
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.platypus import (
+    BaseDocTemplate, Frame, PageTemplate, Paragraph, Spacer, Table, TableStyle, Image
+)
 
-# ▼▼▼ Matplotlib 한글 폰트 시도(차트에 한글이 있을 때 대비) ▼▼▼
-import matplotlib.font_manager as fm
+# ---- HTML (Newsletter) ----
+from jinja2 import Template
+
+# ================== 공통 설정 ==================
+# 폴더/날짜
+OUT_DIR = os.getenv("OUT_DIR", "out")
+os.makedirs(OUT_DIR, exist_ok=True)
+KST = timezone(timedelta(hours=9))
+YMD = datetime.now(KST).strftime("%Y-%m-%d")
+OUT_DIR_DATE = os.path.join(OUT_DIR, YMD)
+os.makedirs(OUT_DIR_DATE, exist_ok=True)
+
+# 경로
+txt_path = os.path.join(OUT_DIR_DATE, f"bm20_news_{YMD}.txt")
+csv_path = os.path.join(OUT_DIR_DATE, f"bm20_daily_data_{YMD}.csv")
+bar_png = os.path.join(OUT_DIR_DATE, f"bm20_bar_{YMD}.png")
+trend_png = os.path.join(OUT_DIR_DATE, f"bm20_trend_{YMD}.png")
+pdf_path = os.path.join(OUT_DIR_DATE, f"bm20_daily_{YMD}.pdf")
+html_path = os.path.join(OUT_DIR_DATE, f"bm20_daily_{YMD}.html")
+kp_path  = os.path.join(OUT_DIR_DATE, f"kimchi_{YMD}.json")
+
+# ================== 폰트 설정 ==================
+# ReportLab: CJK 폰트 (내장 CID)
+KOREAN_FONT = "HYSMyeongJo-Medium"
+pdfmetrics.registerFont(UnicodeCIDFont(KOREAN_FONT))
+
+# Matplotlib: 한글 폰트(있으면 적용)
 try:
-    # GitHub Actions(우분투)에 흔한 경로. 있으면 사용, 없으면 그냥 넘어감
-    CANDIDATES = [
+    CANDS = [
         "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",
         "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
         "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
     ]
-    for p in CANDIDATES:
+    for p in CANDS:
         if os.path.exists(p):
             fm.fontManager.addfont(p)
-            plt.rcParams["font.family"] = os.path.splitext(os.path.basename(p))[0].replace(".ttf","")
+            plt.rcParams["font.family"] = os.path.splitext(os.path.basename(p))[0].replace(".ttf", "")
             break
     plt.rcParams["axes.unicode_minus"] = False
 except Exception:
     plt.rcParams["axes.unicode_minus"] = False
-# ▲▲▲
 
-# ===== 날짜/폴더 설정 (맨 위에서 정의) =====
-OUT_DIR = os.getenv("OUT_DIR", "out")
-os.makedirs(OUT_DIR, exist_ok=True)
-
-KST = timezone(timedelta(hours=9))                 # 한국 시간
-YMD = datetime.now(KST).strftime("%Y-%m-%d")       # 오늘 날짜(YYYY-MM-DD)
-
-OUT_DIR_DATE = os.path.join(OUT_DIR, YMD)          # 날짜별 하위 폴더
-os.makedirs(OUT_DIR_DATE, exist_ok=True)
-
-# ===== 상수 =====
+# ================== 데이터 수집/가공 ==================
 CG = "https://api.coingecko.com/api/v3"
 BTC_CAP, OTH_CAP = 0.30, 0.15
 TOP_UP, TOP_DOWN = 6, 4
 
-# BM20 = 기존 20 + DOGE 후보 → 시총 Top20 유지
 BM20_IDS = [
     "bitcoin","ethereum","solana","ripple","binancecoin","toncoin","avalanche-2",
     "chainlink","cardano","polygon","near","polkadot","cosmos","litecoin",
     "arbitrum","optimism","internet-computer","aptos","filecoin","sui","dogecoin"
 ]
 
-# ===== 유틸 =====
+def safe_float(x, d=0.0):
+    try: return float(x)
+    except: return d
+
 def cg_get(path, params=None, retry=3, timeout=15):
     last=None
     for i in range(retry):
         try:
             r=requests.get(f"{CG}{path}", params=params, timeout=timeout,
                            headers={"User-Agent":"Mozilla/5.0"})
-            r.raise_for_status()
-            return r.json()
+            r.raise_for_status(); return r.json()
         except Exception as e:
             last=e; time.sleep(0.6+0.4*random.random())
     raise last
 
-def safe_float(x, d=0.0):
-    try: return float(x)
-    except: return d
-
-# ===== 1) 실시간 시세/시총 =====
+# 1) 현재 시세/시총
 mkts = cg_get("/coins/markets", {
   "vs_currency":"usd","ids":",".join(BM20_IDS),
   "order":"market_cap_desc","per_page":len(BM20_IDS),"page":1,
@@ -87,17 +102,14 @@ df = pd.DataFrame([{
   "market_cap":safe_float(m["market_cap"]),
   "chg24":safe_float(m.get("price_change_percentage_24h"),0.0),
 } for m in mkts]).sort_values("market_cap", ascending=False).reset_index(drop=True)
-
-# 21 후보 → 상위 20개만 유지
 df = df.head(20).reset_index(drop=True)
 
-# ===== 2) 전일 종가 (KST 기준 전날) 근사 =====
+# 2) 전일 종가 근사(KST 전날 종가)
 def get_yday_close(cid):
     data = cg_get(f"/coins/{cid}/market_chart", {"vs_currency":"usd","days":2})
     prices = data.get("prices", [])
     if not prices: return None
     yday = (datetime.now(KST) - timedelta(days=1)).date()
-    # CG 타임스탬프는 UNIX ms (UTC). KST로 변환해 같은 날짜의 마지막 값 선택
     series = [(datetime.fromtimestamp(p[0]/1000, timezone.utc), p[1]) for p in prices]
     yvals = [p for (t,p) in series if t.astimezone(KST).date()==yday]
     if yvals: return float(yvals[-1])
@@ -105,18 +117,15 @@ def get_yday_close(cid):
 
 prevs=[]
 for cid in df["id"]:
-    try:
-        prevs.append(get_yday_close(cid))
-    except Exception:
-        prevs.append(None)
-    time.sleep(0.25)
-# 보정: 누락 시 24h 변동률로 역산
+    try: prevs.append(get_yday_close(cid))
+    except Exception: prevs.append(None)
+    time.sleep(0.2)
 for i,r in df.iterrows():
     if prevs[i] in (None,0):
         prevs[i] = r["current_price"]/(1+(r["chg24"] or 0)/100.0)
 df["previous_price"]=prevs
 
-# ===== 3) 가중치 (상한→정규화) =====
+# 3) 가중치 제한 후 정규화
 df["weight_raw"]=df["market_cap"]/max(df["market_cap"].sum(),1.0)
 df["weight_ratio"]=df.apply(
     lambda r: min(r["weight_raw"], BTC_CAP if r["name"]=="BTC" else OTH_CAP),
@@ -124,7 +133,7 @@ df["weight_ratio"]=df.apply(
 )
 df["weight_ratio"]=df["weight_ratio"]/df["weight_ratio"].sum()
 
-# ===== 4) 김치 프리미엄 (안정화·우회 포함) =====
+# 4) 김치 프리미엄
 def get_kp(df):
     def _req(url, params=None, retry=3, timeout=12):
         last=None
@@ -136,7 +145,7 @@ def get_kp(df):
             except Exception as e:
                 last=e; time.sleep(0.6*(i+1))
         raise last
-    # KRW (Upbit → CG KRW → 실패 시 None)
+    # KRW
     try:
         u=_req("https://api.upbit.com/v1/ticker", {"markets":"KRW-BTC"})
         btc_krw=float(u[0]["trade_price"]); dom="upbit"
@@ -147,7 +156,7 @@ def get_kp(df):
         except Exception:
             return None, {"dom":"fallback0","glb":"df","fx":"fixed1350",
                           "btc_krw":None,"btc_usd":None,"usdkrw":1350.0}
-    # USD (df 가격 재활용 → 필요 시 거래소 우회 → 최후 CG USD)
+    # USD
     try:
         btc_usd=float(df.loc[df["name"]=="BTC","current_price"].iloc[0]); glb="df"
     except Exception:
@@ -156,15 +165,9 @@ def get_kp(df):
         for url,pr in [
           ("https://api.binance.com/api/v3/ticker/price", {"symbol":"BTCUSDT"}),
           ("https://api1.binance.com/api/v3/ticker/price", {"symbol":"BTCUSDT"}),
-          ("https://api.exchange.coinbase.com/products/BTC-USD/ticker", None),
-          ("https://www.okx.com/api/v5/market/ticker", {"instId":"BTC-USDT"}),
-          ("https://api.kraken.com/0/public/Ticker", {"pair":"XBTUSD"}),
         ]:
             try:
-                j=_req(url, pr)
-                if isinstance(j,dict) and "price" in j: btc_usd=float(j["price"]); glb=url; break
-                if "data" in j and isinstance(j["data"],list): btc_usd=float(j["data"][0]["last"]); glb=url; break
-                if "result" in j and "XXBTZUSD" in j["result"]: btc_usd=float(j["result"]["XXBTZUSD"]["c"][0]); glb=url; break
+                j=_req(url, pr); btc_usd=float(j["price"]); glb=url; break
             except Exception:
                 continue
         if btc_usd is None:
@@ -174,7 +177,7 @@ def get_kp(df):
             except Exception:
                 return None, {"dom":dom,"glb":"fallback0","fx":"fixed1350",
                               "btc_krw":round(btc_krw,2),"btc_usd":None,"usdkrw":1350.0}
-    # FX (USDT→KRW, 비정상시 1350 고정)
+    # FX
     try:
         t=_req(f"{CG}/simple/price", {"ids":"tether","vs_currencies":"krw"})
         usdkrw=float(t["tether"]["krw"]); fx="cg_tether"
@@ -185,9 +188,9 @@ def get_kp(df):
     return kp, {"dom":dom,"glb":glb,"fx":fx,
                 "btc_krw":round(btc_krw,2),"btc_usd":round(btc_usd,2),"usdkrw":round(usdkrw,2)}
 
-kimchi_pct, kp_meta = get_kp(df)  # kimchi_pct: float 또는 None
+kimchi_pct, kp_meta = get_kp(df)
 
-# ===== 5) BM20 계산 =====
+# 5) 인덱스/통계
 df["price_change_pct"]=(df["current_price"]/df["previous_price"]-1)*100
 df["contribution"]=(df["current_price"]-df["previous_price"])*df["weight_ratio"]
 bm20_prev=float((df["previous_price"]*df["weight_ratio"]).sum())
@@ -198,7 +201,6 @@ num_up=int((df["price_change_pct"]>0).sum()); num_down=int((df["price_change_pct
 top3=df.sort_values("contribution", ascending=False).head(3).reset_index(drop=True)
 bot2=df.sort_values("contribution", ascending=True).head(2).reset_index(drop=True)
 
-# ===== 6) 뉴스(해석형 톤) =====
 btc_row=df.loc[df["name"]=="BTC"].iloc[0]; btc_pct=btc_row["price_change_pct"]
 lead2,lead3=top3.iloc[1], top3.iloc[2]; lag1,lag2=bot2.iloc[0], bot2.iloc[1]
 trend_word="상승" if bm20_chg>=0 else "하락"
@@ -217,57 +219,205 @@ news_lines=[
 ]
 news=" ".join(news_lines)
 
-# ===== 7) 저장 경로 =====
-txt_path = os.path.join(OUT_DIR_DATE, f"bm20_news_{YMD}.txt")
-csv_path = os.path.join(OUT_DIR_DATE, f"bm20_daily_data_{YMD}.csv")
-png_path = os.path.join(OUT_DIR_DATE, f"bm20_chart_{YMD}.png")
-pdf_path = os.path.join(OUT_DIR_DATE, f"bm20_daily_{YMD}.pdf")
-kp_path  = os.path.join(OUT_DIR_DATE, f"kimchi_{YMD}.json")
-
-# ===== 8) 저장 (TXT/CSV) =====
+# 텍스트/CSV 저장
 with open(txt_path,"w",encoding="utf-8") as f: f.write(news)
-df[["name","current_price","previous_price","weight_ratio"]].to_csv(csv_path, index=False, encoding="utf-8")
+df[["name","current_price","previous_price","weight_ratio","price_change_pct"]].to_csv(csv_path, index=False, encoding="utf-8")
 
-# ===== 9) 차트 (상승=초록/하락=빨강) =====
+# ================== 차트 생성 ==================
+# A) Top/Bottom 바차트
 winners=df.sort_values("price_change_pct", ascending=False).head(TOP_UP)
 losers=df.sort_values("price_change_pct", ascending=True).head(TOP_DOWN)
 bar=pd.concat([winners[["name","price_change_pct"]], losers[["name","price_change_pct"]]])
-colors=["tab:green" if v>=0 else "tab:red" for v in bar["price_change_pct"]]
+
 plt.figure()
-plt.barh(bar["name"], bar["price_change_pct"], color=colors)
-plt.axvline(0, linewidth=1, color="steelblue")
+colors_bar=["tab:green" if v>=0 else "tab:red" for v in bar["price_change_pct"]]
+plt.barh(bar["name"], bar["price_change_pct"], color=colors_bar)
+plt.axvline(0, linewidth=1)
 plt.title(f"BM20 Daily Performance  ({YMD})")
 plt.xlabel("Daily Change (%)")
 plt.tight_layout()
-plt.savefig(png_path, dpi=180); plt.close()
+plt.savefig(bar_png, dpi=180); plt.close()
 
-# ===== 10) PDF(1페이지) =====
-c=canvas.Canvas(pdf_path, pagesize=A4)
-w, h = A4; margin = 1.5*cm; y = h - margin
+# B) BTC·ETH 7일 추세 (정규화 0% 시작)
+def get_pct_series(coin_id, days=8):
+    data=cg_get(f"/coins/{coin_id}/market_chart", {"vs_currency":"usd","days":days})
+    prices=data.get("prices",[])
+    if not prices: return []
+    s=[p[1] for p in prices]
+    base=s[0]
+    return [ (v/base-1)*100 for v in s ]
 
-# 제목
-c.setFont(KOREAN_FONT, 14)
-c.drawString(margin, y, f"BM20 데일리 리포트  {YMD}")
+btc7=get_pct_series("bitcoin", 8)
+eth7=get_pct_series("ethereum", 8)
+x=range(len(btc7))
+plt.figure()
+plt.plot(x, btc7, label="BTC 7D")
+plt.plot(x, eth7, label="ETH 7D")
+plt.legend()
+plt.title(f"BTC/ETH 7D Trend ({YMD})")
+plt.ylabel("% Change from Start")
+plt.tight_layout()
+plt.savefig(trend_png, dpi=180); plt.close()
 
-# 본문
-y -= 0.8*cm
-c.setFont(KOREAN_FONT, 10)  # ★ Helvetica → KOREAN_FONT 로 통일
-for line in news_lines:
-    # 너무 길면 자동 줄바꿈(간단 래핑)
-    for seg in [line[i:i+68] for i in range(0, len(line), 68)]:
-        c.drawString(margin, y, seg); y -= 0.5*cm
+# ================== PDF: 2단 레이아웃 ==================
+# 스타일
+styles=getSampleStyleSheet()
+styles.add(ParagraphStyle(name="K-Title", fontName=KOREAN_FONT, fontSize=20, leading=24))
+styles.add(ParagraphStyle(name="K-Sub", fontName=KOREAN_FONT, fontSize=12, leading=16))
+styles.add(ParagraphStyle(name="K-Body", fontName=KOREAN_FONT, fontSize=10.5, leading=15))
+styles.add(ParagraphStyle(name="K-Strong", fontName=KOREAN_FONT, fontSize=12, leading=16, textColor=colors.HexColor("#1A237E")))
 
-# 차트 이미지
-y -= 0.3*cm
-if os.path.exists(png_path):
-    img_w = w - 2*margin; img_h = img_w * 0.5
-    c.drawImage(png_path, margin, margin, width=img_w, height=img_h, preserveAspectRatio=True, anchor='sw')
+doc = BaseDocTemplate(pdf_path, pagesize=A4,
+                      leftMargin=1.4*cm, rightMargin=1.4*cm,
+                      topMargin=1.3*cm, bottomMargin=1.3*cm)
 
-c.showPage(); c.save()
+frame_w = (A4[0] - doc.leftMargin - doc.rightMargin)
+col_gap = 0.8*cm
+col_w = (frame_w - col_gap)/2.0
+col_h = A4[1] - doc.topMargin - doc.bottomMargin
 
-# ===== 11) 김프 메타 로그 =====
+left = Frame(doc.leftMargin, doc.bottomMargin, col_w, col_h, id='left')
+right= Frame(doc.leftMargin + col_w + col_gap, doc.bottomMargin, col_w, col_h, id='right')
+doc.addPageTemplates([PageTemplate(id='TwoCol', frames=[left, right])])
+
+story_left = []
+story_right = []
+
+# 헤더(전체 폭이 아니라 왼쪽 첫 요소를 제목으로)
+title = Paragraph(f"BM20 데일리 리포트  {YMD}", styles["K-Title"])
+story_left += [title, Spacer(1, 0.25*cm)]
+
+# 요약 박스
+summary_tbl = Table([
+    ["BM20 지수", f"{bm20_now:,.0f} pt"],
+    ["일간 변동", f"{bm20_chg:+.2f}%"],
+    ["상승/하락", f"{num_up} / {num_down}"],
+    ["김치 프리미엄", f"{kp_text}"],
+], colWidths=[3.2*cm, col_w-3.2*cm-0.2*cm])
+summary_tbl.setStyle(TableStyle([
+    ("FONTNAME",(0,0),(-1,-1), KOREAN_FONT),
+    ("FONTSIZE",(0,0),(-1,-1),10.5),
+    ("BACKGROUND",(0,0),(-1,0), colors.HexColor("#ECEFF1")),
+    ("TEXTCOLOR",(0,0),(0,-1), colors.HexColor("#1A237E")),
+    ("BOX",(0,0),(-1,-1),0.5,colors.HexColor("#B0BEC5")),
+    ("INNERGRID",(0,0),(-1,-1),0.25,colors.HexColor("#CFD8DC")),
+    ("ALIGN",(1,0),(1,-1),"RIGHT"),
+    ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
+]))
+story_left += [summary_tbl, Spacer(1, 0.35*cm)]
+
+# 뉴스 문장
+for ln in news_lines:
+    story_left += [Paragraph(ln, styles["K-Body"]), Spacer(1, 0.12*cm)]
+
+story_left += [Spacer(1, 0.3*cm), Paragraph("Top 상승/하락", styles["K-Strong"]), Spacer(1, 0.2*cm)]
+
+# Top/Bottom 표
+tbl_data = [["종목","일간 등락(%)"]]
+for _,r in winners.iterrows(): tbl_data.append([r["name"], f"{r['price_change_pct']:+.2f}"])
+for _,r in losers.iterrows():  tbl_data.append([r["name"], f"{r['price_change_pct']:+.2f}"])
+tbl = Table(tbl_data, colWidths=[col_w*0.45, col_w*0.45])
+tbl.setStyle(TableStyle([
+    ("FONTNAME",(0,0),(-1,-1), KOREAN_FONT),
+    ("FONTSIZE",(0,0),(-1,-1),10),
+    ("BACKGROUND",(0,0),(-1,0), colors.HexColor("#E3F2FD")),
+    ("BOX",(0,0),(-1,-1),0.5,colors.HexColor("#90CAF9")),
+    ("INNERGRID",(0,0),(-1,-1),0.25,colors.HexColor("#BBDEFB")),
+    ("ALIGN",(1,1),(1,-1),"RIGHT"),
+]))
+story_left += [tbl]
+
+# 오른쪽 컬럼: 차트 2개
+if os.path.exists(bar_png):
+    story_right += [Image(bar_png, width=col_w, height=col_w*0.55), Spacer(1,0.3*cm)]
+if os.path.exists(trend_png):
+    story_right += [Image(trend_png, width=col_w, height=col_w*0.60)]
+
+# 빌드
+doc.build(story_left + story_right)
+
+# ================== HTML 뉴스레터 생성 ==================
+html_tpl = Template(r"""
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BM20 데일리 {{ ymd }}</title>
+<style>
+  body {font-family: -apple-system, BlinkMacSystemFont, "NanumGothic","Noto Sans CJK","Malgun Gothic", Arial, sans-serif; margin:0; padding:0; background:#fafbfc; color:#111;}
+  .wrap {max-width: 720px; margin: 0 auto; padding: 20px;}
+  .card {background:#fff; border:1px solid #e5e9f0; border-radius:12px; padding:20px; margin-bottom:16px;}
+  h1 {font-size:24px; margin:0 0 10px 0;}
+  h2 {font-size:16px; margin:18px 0 8px 0; color:#1A237E;}
+  .muted {color:#555;}
+  table {width:100%; border-collapse: collapse; font-size:14px;}
+  th, td {border:1px solid #e5e9f0; padding:8px; text-align:left;}
+  th {background:#eef4ff;}
+  .metric {display:flex; flex-wrap:wrap; gap:10px;}
+  .metric div {flex:1 1 45%; background:#f7f9fc; border:1px solid #e1e6ef; border-radius:10px; padding:10px;}
+  .right {text-align:right;}
+  img {max-width:100%; height:auto; border-radius:10px; border:1px solid #e5e9f0;}
+  .footer {font-size:12px; color:#666; text-align:center; margin-top:16px;}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>BM20 데일리 리포트 <span class="muted">{{ ymd }}</span></h1>
+      <div class="metric">
+        <div><b>BM20 지수</b><br>{{ bm20_now }} pt</div>
+        <div><b>일간 변동</b><br>{{ bm20_chg }}</div>
+        <div><b>상승/하락</b><br>{{ num_up }}/{{ num_down }}</div>
+        <div><b>김치 프리미엄</b><br>{{ kp_text }}</div>
+      </div>
+      <h2>요약</h2>
+      <p>{{ news }}</p>
+    </div>
+
+    <div class="card">
+      <h2>Top 상승/하락</h2>
+      <table>
+        <tr><th>종목</th><th class="right">일간 등락(%)</th></tr>
+        {% for row in table_rows %}
+          <tr><td>{{ row.name }}</td><td class="right">{{ row.chg }}</td></tr>
+        {% endfor %}
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>차트</h2>
+      {% if bar_png %}<p><img src="{{ bar_png }}" alt="BM20 Top/Bottom"></p>{% endif %}
+      {% if trend_png %}<p><img src="{{ trend_png }}" alt="BTC/ETH 7D Trend"></p>{% endif %}
+    </div>
+
+    <div class="footer">Data: CoinGecko, Upbit · © Blockmedia BM20</div>
+  </div>
+</body>
+</html>
+""")
+
+table_rows = []
+for _,r in winners.iterrows(): table_rows.append({"name": r["name"], "chg": f"{r['price_change_pct']:+.2f}%"})
+for _,r in losers.iterrows():  table_rows.append({"name": r["name"], "chg": f"{r['price_change_pct']:+.2f}%"})
+
+html = html_tpl.render(
+    ymd=YMD,
+    bm20_now=f"{bm20_now:,.0f}",
+    bm20_chg=f"{bm20_chg:+.2f}%",
+    num_up=num_up, num_down=num_down,
+    kp_text=kp_text,
+    news=news,
+    table_rows=table_rows,
+    bar_png=os.path.basename(bar_png),
+    trend_png=os.path.basename(trend_png)
+)
+with open(html_path, "w", encoding="utf-8") as f:
+    f.write(html)
+
+# ================== 김프 메타 로그 ==================
 with open(kp_path, "w", encoding="utf-8") as f:
     json.dump({"date":YMD, **(kp_meta or {}), "kimchi_pct": (None if kimchi_pct is None else round(float(kimchi_pct),4))},
               f, ensure_ascii=False)
 
-print("Saved:", txt_path, csv_path, png_path, pdf_path, kp_path)
+print("Saved:", txt_path, csv_path, bar_png, trend_png, pdf_path, html_path, kp_path)
