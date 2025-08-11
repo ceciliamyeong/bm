@@ -421,3 +421,90 @@ with open(kp_path, "w", encoding="utf-8") as f:
               f, ensure_ascii=False)
 
 print("Saved:", txt_path, csv_path, bar_png, trend_png, pdf_path, html_path, kp_path)
+
+# ====== Gmail 메일 발송용 import ======
+import smtplib, ssl
+from email.message import EmailMessage
+from email.utils import formataddr
+
+# ====== Gmail 메일 발송 함수 ======
+def send_email_gmail(
+    subject: str,
+    html_body: str,
+    attachments: list
+):
+    user = os.getenv("GMAIL_USER")
+    app_pw = os.getenv("GMAIL_APP_PASS")  # 앱 비밀번호(2단계 인증)
+    to_raw = os.getenv("MAIL_TO", "")     # 콤마로 여러 명 가능
+    from_name = os.getenv("MAIL_FROM_NAME", "BM20 Bot")
+
+    if not user or not app_pw or not to_raw:
+        print("[mail] 환경변수(GMAIL_USER/GMAIL_APP_PASS/MAIL_TO) 미설정 → 발송 생략")
+        return
+
+    to_list = [t.strip() for t in to_raw.split(",") if t.strip()]
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = formataddr((from_name, user))
+    msg["To"] = ", ".join(to_list)
+
+    # 텍스트 + HTML 본문
+    plain = f"""[BM20 데일리] {YMD}
+BM20 지수: {bm20_now:,.0f}pt
+일간 변동: {bm20_chg:+.2f}%
+상승/하락: {num_up}/{num_down}
+김치 프리미엄: {kp_text}
+
+요약: {news}
+"""
+    msg.set_content(plain)
+    msg.add_alternative(html_body, subtype="html")
+
+    # 첨부파일들
+    for path in attachments:
+        if not path or not os.path.exists(path):
+            continue
+        with open(path, "rb") as f:
+            data = f.read()
+        fname = os.path.basename(path)
+        if fname.lower().endswith(".pdf"):
+            maintype, subtype = "application", "pdf"
+        elif fname.lower().endswith(".png"):
+            maintype, subtype = "image", "png"
+        elif fname.lower().endswith(".csv"):
+            maintype, subtype = "text", "csv"
+        elif fname.lower().endswith(".txt"):
+            maintype, subtype = "text", "plain"
+        elif fname.lower().endswith(".html"):
+            maintype, subtype = "text", "html"
+        else:
+            maintype, subtype = "application", "octet-stream"
+        msg.add_attachment(data, maintype=maintype, subtype=subtype, filename=fname)
+
+    # SMTP 전송
+    with smtplib.SMTP("smtp.gmail.com", 587, timeout=60) as smtp:
+        smtp.ehlo()
+        smtp.starttls(context=ssl.create_default_context())
+        smtp.login(user, app_pw)
+        smtp.send_message(msg)
+    print(f"[mail] sent to: {msg['To']}")
+
+# ====== 메일 본문 구성 & 발송 호출 ======
+mail_subject = f"[BM20 Daily] {YMD}  BM20 {bm20_chg:+.2f}% ({bm20_now:,.0f}pt)"
+mail_html = f"""
+<h2>BM20 데일리 리포트 <span style='color:#666'>{YMD}</span></h2>
+<ul>
+  <li><b>BM20 지수</b>: {bm20_now:,.0f} pt</li>
+  <li><b>일간 변동</b>: {bm20_chg:+.2f}%</li>
+  <li><b>상승/하락</b>: {num_up}/{num_down}</li>
+  <li><b>김치 프리미엄</b>: {kp_text}</li>
+</ul>
+<p style="line-height:1.6">{news}</p>
+<p>첨부: PDF 리포트, 차트 PNG, CSV/TXT</p>
+"""
+
+send_email_gmail(
+    subject=mail_subject,
+    html_body=mail_html,
+    attachments=[pdf_path, bar_png, trend_png, csv_path, txt_path, html_path]
+)
