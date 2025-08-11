@@ -10,13 +10,31 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import cm
 
-# ▼▼▼ 추가: ReportLab 한글 폰트 등록 ▼▼▼
+# ▼▼▼ ReportLab 한글 폰트 등록 (CID 폰트) ▼▼▼
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
-
 KOREAN_FONT = "HYSMyeongJo-Medium"   # ReportLab 내장 CJK 폰트
 pdfmetrics.registerFont(UnicodeCIDFont(KOREAN_FONT))
-# ▲▲▲ 여기까지 추가
+# ▲▲▲
+
+# ▼▼▼ Matplotlib 한글 폰트 시도(차트에 한글이 있을 때 대비) ▼▼▼
+import matplotlib.font_manager as fm
+try:
+    # GitHub Actions(우분투)에 흔한 경로. 있으면 사용, 없으면 그냥 넘어감
+    CANDIDATES = [
+        "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",
+        "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+        "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+    ]
+    for p in CANDIDATES:
+        if os.path.exists(p):
+            fm.fontManager.addfont(p)
+            plt.rcParams["font.family"] = os.path.splitext(os.path.basename(p))[0].replace(".ttf","")
+            break
+    plt.rcParams["axes.unicode_minus"] = False
+except Exception:
+    plt.rcParams["axes.unicode_minus"] = False
+# ▲▲▲
 
 # ===== 날짜/폴더 설정 (맨 위에서 정의) =====
 OUT_DIR = os.getenv("OUT_DIR", "out")
@@ -226,15 +244,25 @@ plt.savefig(png_path, dpi=180); plt.close()
 # ===== 10) PDF(1페이지) =====
 c=canvas.Canvas(pdf_path, pagesize=A4)
 w, h = A4; margin = 1.5*cm; y = h - margin
-c.setFont(KOREAN_FONT, 14); c.drawString(margin, y, f"BM20 데일리 리포트  {YMD}")
-y -= 0.8*cm; c.setFont("Helvetica", 10)
+
+# 제목
+c.setFont(KOREAN_FONT, 14)
+c.drawString(margin, y, f"BM20 데일리 리포트  {YMD}")
+
+# 본문
+y -= 0.8*cm
+c.setFont(KOREAN_FONT, 10)  # ★ Helvetica → KOREAN_FONT 로 통일
 for line in news_lines:
+    # 너무 길면 자동 줄바꿈(간단 래핑)
     for seg in [line[i:i+68] for i in range(0, len(line), 68)]:
         c.drawString(margin, y, seg); y -= 0.5*cm
+
+# 차트 이미지
 y -= 0.3*cm
 if os.path.exists(png_path):
     img_w = w - 2*margin; img_h = img_w * 0.5
     c.drawImage(png_path, margin, margin, width=img_w, height=img_h, preserveAspectRatio=True, anchor='sw')
+
 c.showPage(); c.save()
 
 # ===== 11) 김프 메타 로그 =====
