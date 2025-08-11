@@ -1,7 +1,8 @@
-# ===================== BM20 Daily — Centered Header & Left-Aligned Body (Funding + VolSpike + 7D Trend) =====================
-# 기능: 데이터 수집 → 중앙 헤더(지수/상하락/김프/펀딩비) → 코인별 퍼포먼스(세로/큰 라벨) → 상승/하락 TOP3 → 거래량 증가율 TOP3
-#     → BTC/ETH 7일 추세 → 김프/펀딩비 표 → 해석형 뉴스 → PDF/HTML → (옵션) GDrive 업로드
-# 안정화: CoinGecko 429 백오프, per-coin market_chart 대량 호출 회피(거래량 증감은 상위 소수 코인만 조회, 실패 시 안전 폴백)
+# ===================== BM20 Daily — Clean Card PDF + Stable Funding =====================
+# 기능: 데이터 수집 → 중앙 타이틀 + 카드형 요약/섹션 → 코인별 퍼포먼스(큰 라벨) → Top/Bottom → 거래량 증가율 TOP3
+#     → BTC/ETH 7일 추세 → 김프/펀딩비 표 → 해석형 뉴스 → PDF/HTML → (옵션) rclone 업로드
+# 안정화: CoinGecko 429 백오프, per-coin market_chart 대량 호출 회피(전일가 역산),
+#        Funding: Binance /premiumIndex:lastFundingRate, Bybit v5 tickers
 
 import os, time, json, random, subprocess
 from datetime import datetime, timedelta, timezone
@@ -24,7 +25,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
 
-# ---- HTML (optional preview) ----
+# ---- HTML (optional) ----
 from jinja2 import Template
 
 # ================== 공통 설정 ==================
@@ -77,20 +78,20 @@ def fmt_pct(v, digits=1):
     except Exception:
         return "-"
 
+def safe_float(x, d=0.0):
+    try: return float(x)
+    except: return d
+
 # ================== Data Layer ==================
 CG = "https://api.coingecko.com/api/v3"
 BTC_CAP, OTH_CAP = 0.30, 0.15
-TOP_UP, TOP_DOWN = 3, 3  # 표는 Top3만 표기
+TOP_UP, TOP_DOWN = 3, 3
 
 BM20_IDS = [
     "bitcoin","ethereum","solana","ripple","binancecoin","toncoin","avalanche-2",
     "chainlink","cardano","polygon","near","polkadot","cosmos","litecoin",
     "arbitrum","optimism","internet-computer","aptos","filecoin","sui","dogecoin"
 ]
-
-def safe_float(x, d=0.0):
-    try: return float(x)
-    except: return d
 
 # ---- CoinGecko with backoff ----
 def cg_get(path, params=None, retry=8, timeout=20):
@@ -125,7 +126,7 @@ df = pd.DataFrame([{
   "chg24":safe_float(m.get("price_change_percentage_24h"),0.0),
 } for m in mkts]).sort_values("market_cap", ascending=False).head(20).reset_index(drop=True)
 
-# 2) 전일 종가: 24h 변동률로 역산 (대량 호출 제거)
+# 2) 전일 종가: 24h 변동률로 역산
 df["previous_price"] = df.apply(
     lambda r: (r["current_price"] / (1 + (r["chg24"] or 0) / 100.0)) if r["current_price"] else None,
     axis=1
@@ -183,38 +184,56 @@ def get_kp(df):
 
 kimchi_pct, kp_meta = get_kp(df)
 
-# 5) 펀딩비 (Binance + Bybit 시도 → 개별/평균 모두 표기 가능)
-def get_binance_funding(symbol="BTCUSDT", retry=4):
-    url = "https://fapi.binance.com/fapi/v1/fundingRate"; last=None
+# 5) 펀딩비 — 안정 엔드포인트(다중 폴백)
+def get_binance_funding(symbol="BTCUSDT", retry=5):
+    urls = [
+        "https://fapi.binance.com/fapi/v1/premiumIndex",
+        "https://fapi1.binance.com/fapi/v1/premiumIndex",
+        "https://fapi2.binance.com/fapi/v1/premiumIndex",
+    ]
+    last = None
     for i in range(retry):
-        try:
-            r=requests.get(url, params={"symbol":symbol, "limit":1}, timeout=12, headers={"User-Agent":"BM20/1.0"})
-            if r.status_code==429: time.sleep(1.0*(i+1)); continue
-            r.raise_for_status(); data=r.json()
-            return float(data[0]["fundingRate"])*100.0
-        except Exception as e:
-            last=e; time.sleep(0.6*(i+1))
+        for u in urls:
+            try:
+                r = requests.get(u, params={"symbol": symbol}, timeout=12,
+                                 headers={"User-Agent":"BM20/1.0","Accept":"application/json"})
+                if r.status_code == 429:
+                    time.sleep(1.0*(i+1)); continue
+                r.raise_for_status()
+                j = r.json()
+                if isinstance(j, dict) and "lastFundingRate" in j:
+                    return float(j["lastFundingRate"]) * 100.0
+                if isinstance(j, list) and j and "lastFundingRate" in j[0]:
+                    return float(j[0]["lastFundingRate"]) * 100.0
+            except Exception as e:
+                last = e
+        time.sleep(0.6*(i+1))
     return None
 
-def get_bybit_funding(symbol="BTCUSDT", retry=4):
-    # v5 funding history (최신 1건). 실패 시 None
-    url = "https://api.bybit.com/v5/market/funding/history"; last=None
+def get_bybit_funding(symbol="BTCUSDT", retry=5):
+    url = "https://api.bybit.com/v5/market/tickers"
+    last = None
     for i in range(retry):
         try:
-            r=requests.get(url, params={"category":"linear","symbol":symbol,"limit":1}, timeout=12, headers={"User-Agent":"BM20/1.0"})
-            if r.status_code==429: time.sleep(1.0*(i+1)); continue
-            r.raise_for_status(); j=r.json()
-            lst=j.get("result",{}).get("list",[])
+            r = requests.get(url, params={"category":"linear","symbol":symbol}, timeout=12,
+                             headers={"User-Agent":"BM20/1.0","Accept":"application/json"})
+            if r.status_code == 429:
+                time.sleep(1.0*(i+1)); continue
+            r.raise_for_status()
+            j = r.json()
+            lst = j.get("result",{}).get("list",[])
             if lst:
-                return float(lst[0].get("fundingRate"))*100.0
+                fr = lst[0].get("fundingRate")
+                if fr is not None:
+                    return float(fr) * 100.0
             return None
         except Exception as e:
-            last=e; time.sleep(0.6*(i+1))
+            last = e; time.sleep(0.6*(i+1))
     return None
 
-btc_f_bin = get_binance_funding("BTCUSDT"); time.sleep(0.3)
-eth_f_bin = get_binance_funding("ETHUSDT"); time.sleep(0.3)
-btc_f_byb = get_bybit_funding("BTCUSDT");   time.sleep(0.3)
+btc_f_bin = get_binance_funding("BTCUSDT"); time.sleep(0.25)
+eth_f_bin = get_binance_funding("ETHUSDT"); time.sleep(0.25)
+btc_f_byb = get_bybit_funding("BTCUSDT");   time.sleep(0.25)
 eth_f_byb = get_bybit_funding("ETHUSDT")
 
 # 6) 인덱스/통계
@@ -225,25 +244,20 @@ bm20_now=float((df["current_price"]*df["weight_ratio"]).sum())
 bm20_chg=(bm20_now/bm20_prev-1)*100 if bm20_prev else 0.0
 num_up=int((df["price_change_pct"]>0).sum()); num_down=int((df["price_change_pct"]<0).sum())
 
-# Top/Bottom (등락률 기준)
 top_up = df.sort_values("price_change_pct", ascending=False).head(TOP_UP).reset_index(drop=True)
 top_dn = df.sort_values("price_change_pct", ascending=True).head(TOP_DOWN).reset_index(drop=True)
 
-# 거래량 증가율 TOP (상위 소수 코인만 조회해 안전화)
+# 거래량 증가율 TOP3 (상위 소수만 조회, 근사)
 def get_prev_volume_coin(cid, days=2):
-    # CoinGecko market_chart: total_volumes 시계열에서 24h 전 값 근사
     data = cg_get(f"/coins/{cid}/market_chart", {"vs_currency":"usd","days":days})
     vols = data.get("total_volumes", [])
     if not vols: return None
-    # 마지막 값(now)과 약 24h 이전 값(리스트에서 중간쯤)을 비교
     now_v = float(vols[-1][1])
-    # 24h 이전 근사: 배열 길이가 48~50개라 가정, 중앙 값 사용(없으면 첫 값)
     past_v = float(vols[len(vols)//2][1]) if len(vols) >= 2 else float(vols[0][1])
-    # 일부 거래소는 스냅샷 성격 → 비율 비교로 근사 사용
     if past_v == 0: return None
     return now_v, past_v
 
-vol_df = df.sort_values("total_volume", ascending=False).head(8).copy()  # 상위 8개만 조회
+vol_df = df.sort_values("total_volume", ascending=False).head(8).copy()
 vol_incr_rows = []
 for _, r in vol_df.iterrows():
     try:
@@ -261,7 +275,7 @@ if not vol_incr.empty:
 else:
     vol_top3 = pd.DataFrame([{"symbol":"-", "incr_pct": None} for _ in range(3)])
 
-# 7) 뉴스 텍스트 (요청하신 해석 톤)
+# 7) 뉴스 텍스트 (해석 톤)
 def s(v): return f"{v:+.2f}%"
 news_lines = [
     f"비트코인과 이더리움을 포함한 대형주 위주의 코인 BM20지수는 {YMD} 전일대비 {s(bm20_chg)} 상승한 {bm20_now:,.0f} 포인트를 기록했다.",
@@ -271,14 +285,15 @@ news_lines = [
     f"시총 상위 종목 20개 가운데 상승 {num_up}개, 하락 {num_down}개로 {'상승이 우세했다' if num_up>num_down else ('하락이 우세했다' if num_down>num_up else '보합이었다')}."
 ]
 kp_text = fmt_pct(kimchi_pct, 2) if kimchi_pct is not None else "집계 지연"
-# 펀딩 텍스트 (바이낸스/바이빗 동시 표기 가능)
-def f4(x): return fmt_pct(x, 4)
-funding_sentence = f"바이낸스 기준 펀딩비는 BTC {f4(btc_f_bin)}, ETH {f4(eth_f_bin)}"
-if btc_f_byb is not None or eth_f_byb is not None:
-    funding_sentence += f"; 바이빗 기준은 BTC {f4(btc_f_byb)}, ETH {f4(eth_f_byb)}"
-news_lines.append(f"한편, 국내 거래소와 해외 거래소 간 비트코인 가격 차이를 의미하는 K-BM 프리미엄은 {kp_text}로, "
-                  f"{'한국이 낮은 수준' if (kimchi_pct is not None and kimchi_pct<0) else '한국이 높은 수준'}에서 거래되고 있다. "
-                  f"{funding_sentence}로 집계됐다.")
+def fp(v): return "-" if (v is None) else f"{float(v):.4f}%"
+funding_sentence = f"바이낸스 기준 펀딩비는 BTC {fp(btc_f_bin)}, ETH {fp(eth_f_bin)}"
+if (btc_f_byb is not None) or (eth_f_byb is not None):
+    funding_sentence += f"; 바이빗 기준은 BTC {fp(btc_f_byb)}, ETH {fp(eth_f_byb)}"
+news_lines.append(
+    f"한편, 국내 거래소와 해외 거래소 간 비트코인 가격 차이를 의미하는 K-BM 프리미엄은 {kp_text}로, "
+    f"{'한국이 낮은 수준' if (kimchi_pct is not None and kimchi_pct<0) else '한국이 높은 수준'}에서 거래되고 있다. "
+    f"{funding_sentence}로 집계됐다."
+)
 news = " ".join(news_lines)
 
 # 8) 저장 (TXT/CSV/JSON)
@@ -321,125 +336,118 @@ plt.plot(range(len(eth7)), eth7, label="ETH")
 plt.legend(loc="upper left"); plt.title("BTC & ETH 7일 가격 추세", fontsize=13, loc="left", pad=8)
 plt.ylabel("% (from start)"); plt.tight_layout(); plt.savefig(trend_png, dpi=180); plt.close()
 
-# ================== PDF (Header Centered, Body Left) ==================
-styles=getSampleStyleSheet()
-title_style    = ParagraphStyle("Title",    fontName=KOREAN_FONT, fontSize=18, alignment=1, spaceAfter=8)
-subtitle_style = ParagraphStyle("Subtitle", fontName=KOREAN_FONT, fontSize=12.5, alignment=1, textColor=colors.HexColor("#546E7A"), spaceAfter=12)
+# ================== PDF (Clean Card Layout: Centered title, left body) ==================
+styles = getSampleStyleSheet()
+title_style    = ParagraphStyle("Title",    fontName=KOREAN_FONT, fontSize=18, alignment=1, spaceAfter=6)
+subtitle_style = ParagraphStyle("Subtitle", fontName=KOREAN_FONT, fontSize=12.5, alignment=1,
+                                textColor=colors.HexColor("#546E7A"), spaceAfter=12)
+section_h      = ParagraphStyle("SectionH", fontName=KOREAN_FONT, fontSize=13,  alignment=0,
+                                textColor=colors.HexColor("#1A237E"), spaceBefore=4, spaceAfter=8)
+body_style     = ParagraphStyle("Body",     fontName=KOREAN_FONT, fontSize=11,  alignment=0, leading=16)
 
-section_h_style= ParagraphStyle("SectionH", fontName=KOREAN_FONT, fontSize=12.5, alignment=0, textColor=colors.HexColor("#1A237E"), spaceBefore=10, spaceAfter=6)
-body_style     = ParagraphStyle("Body",     fontName=KOREAN_FONT, fontSize=11, alignment=0, leading=16)
-table_head_sz  = 10.5; table_body_sz = 10.5
+def card(flowables, pad=10, bg="#FFFFFF", border="#E5E9F0"):
+    tbl = Table([[flowables]], colWidths=[16.4*cm])
+    tbl.setStyle(TableStyle([
+        ("FONTNAME", (0,0), (-1,-1), KOREAN_FONT),
+        ("LEFTPADDING",(0,0),(-1,-1), pad), ("RIGHTPADDING",(0,0),(-1,-1), pad),
+        ("TOPPADDING",(0,0),(-1,-1), pad),  ("BOTTOMPADDING",(0,0),(-1,-1), pad),
+        ("BACKGROUND",(0,0),(-1,-1), colors.HexColor(bg)),
+        ("BOX",(0,0),(-1,-1),0.75, colors.HexColor(border)),
+        ("VALIGN",(0,0),(-1,-1),"TOP"),
+    ]))
+    return tbl
+
+def style_table_basic(t, header_bg="#EEF4FF", box="#CFD8DC", grid="#E5E9F0", fs=10.5):
+    t.setStyle(TableStyle([
+        ("FONTNAME",(0,0),(-1,-1), KOREAN_FONT),
+        ("FONTSIZE",(0,0),(-1,-1), fs),
+        ("BACKGROUND",(0,0),(-1,0), colors.HexColor(header_bg)),
+        ("BOX",(0,0),(-1,-1),0.5, colors.HexColor(box)),
+        ("INNERGRID",(0,0),(-1,-1),0.25, colors.HexColor(grid)),
+        ("ALIGN",(0,0),(-1,-1),"LEFT"),
+        ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
+    ]))
 
 doc = SimpleDocTemplate(pdf_path, pagesize=A4,
                         leftMargin=1.8*cm, rightMargin=1.8*cm,
                         topMargin=1.6*cm, bottomMargin=1.6*cm)
 
 story = []
-# 상단 중앙 헤더
-story += [
-    Paragraph("BM20 데일리 리포트", title_style),
-    Paragraph(f"{YMD}", subtitle_style),
-]
+story += [Paragraph("BM20 데일리 리포트", title_style),
+          Paragraph(f"{YMD}", subtitle_style)]
 
-# 지수/상하락/김프/펀딩비는 '메트릭 표'(좌정렬)로 보여주기
+# 메트릭 표 (좌정렬)
 metrics = [
-    ["지수", f"{bm20_now:,.0f} pt"],
-    ["일간 변동", f"{bm20_chg:+.2f}%"],
-    ["상승/하락", f"{num_up} / {num_down}"],
+    ["지수",        f"{bm20_now:,.0f} pt"],
+    ["일간 변동",   f"{bm20_chg:+.2f}%"],
+    ["상승/하락",   f"{num_up} / {num_down}"],
     ["김치 프리미엄", kp_text],
 ]
-# 펀딩비 표기(바이낸스/바이빗)
-fund_rows=[]
-def fp(v): return fmt_pct(v,4)
-fund_rows.append(["펀딩비(Binance)", f"BTC {fp(btc_f_bin)} / ETH {fp(eth_f_bin)}"])
+metrics += [
+    ["펀딩비(Binance)", f"BTC {fp(btc_f_bin)} / ETH {fp(eth_f_bin)}"],
+]
 if (btc_f_byb is not None) or (eth_f_byb is not None):
-    fund_rows.append(["펀딩비(Bybit)",   f"BTC {fp(btc_f_byb)} / ETH {fp(eth_f_byb)}"])
-metrics += fund_rows
+    metrics += [["펀딩비(Bybit)", f"BTC {fp(btc_f_byb)} / ETH {fp(eth_f_byb)}"]]
 
-mt = Table(metrics, colWidths=[3.5*cm, 11.7*cm])
-mt.setStyle(TableStyle([
-    ("FONTNAME",(0,0),(-1,-1), KOREAN_FONT),
-    ("FONTSIZE",(0,0),(-1,-1),10.8),
-    ("BACKGROUND",(0,0),(0,-1), colors.HexColor("#ECEFF1")),
-    ("TEXTCOLOR",(0,0),(0,-1), colors.HexColor("#1A237E")),
-    ("ALIGN",(0,0),(-1,-1),"LEFT"),
-    ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
-    ("BOX",(0,0),(-1,-1),0.5,colors.HexColor("#CFD8DC")),
-    ("INNERGRID",(0,0),(-1,-1),0.25,colors.HexColor("#CFD8DC")),
-]))
-story += [mt, Spacer(1,0.45*cm)]
+mt = Table(metrics, colWidths=[3.8*cm, 12.2*cm])
+style_table_basic(mt)
+story += [card([mt]), Spacer(1, 0.45*cm)]
 
 # 코인별 퍼포먼스
-story += [Paragraph("코인별 퍼포먼스", section_h_style)]
+perf_block = [Paragraph("코인별 퍼포먼스 (1D, USD)", section_h)]
 if os.path.exists(bar_png):
-    story += [Image(bar_png, width=16.0*cm, height=6.6*cm), Spacer(1, 0.4*cm)]
+    perf_block += [Image(bar_png, width=16.0*cm, height=6.6*cm)]
+story += [card(perf_block), Spacer(1, 0.45*cm)]
 
-# 상승/하락 TOP3 표
+# 상승/하락 TOP3
 tbl_up = [["상승 TOP3","등락률"], *[[r["symbol"], f"{r['price_change_pct']:+.2f}%"] for _,r in top_up.iterrows()]]
 tbl_dn = [["하락 TOP3","등락률"], *[[r["symbol"], f"{r['price_change_pct']:+.2f}%"] for _,r in top_dn.iterrows()]]
-def style_tbl(t):
-    t.setStyle(TableStyle([
-        ("FONTNAME",(0,0),(-1,-1), KOREAN_FONT),
-        ("FONTSIZE",(0,0),(-1,-1),table_body_sz),
-        ("BACKGROUND",(0,0),(-1,0), colors.HexColor("#E3F2FD")),
-        ("BOX",(0,0),(-1,-1),0.5,colors.HexColor("#90CAF9")),
-        ("INNERGRID",(0,0),(-1,-1),0.25,colors.HexColor("#BBDEFB")),
-        ("ALIGN",(1,1),(1,-1),"RIGHT"),
-    ]))
-t_up = Table(tbl_up, colWidths=[8.0*cm, 3.5*cm]); style_tbl(t_up)
-t_dn = Table(tbl_dn, colWidths=[8.0*cm, 3.5*cm]); style_tbl(t_dn)
-story += [t_up, Spacer(1,0.2*cm), t_dn, Spacer(1,0.35*cm)]
+t_up = Table(tbl_up, colWidths=[8.0*cm, 3.5*cm])
+t_dn = Table(tbl_dn, colWidths=[8.0*cm, 3.5*cm])
+style_table_basic(t_up); style_table_basic(t_dn)
+story += [card([Paragraph("상승/하락 TOP3", section_h), Spacer(1,4), t_up, Spacer(1,6), t_dn]),
+          Spacer(1, 0.45*cm)]
 
-# 거래량 증가율 TOP3
-story += [Paragraph("거래량 증가율 TOP3 (근사)", section_h_style)]
-vol_tbl = [["종목","증가율"], *[[r["symbol"], f"{r['incr_pct']:+.2f}%"] for _,r in vol_top3.iterrows()]]
+# 거래량 증가율 TOP3 (근사)
+vol_tbl = [["종목","증가율"], *[[r["symbol"], "-" if r["incr_pct"] is None else f"{r['incr_pct']:+.2f}%"] for _,r in vol_top3.iterrows()]]
 t_vol = Table(vol_tbl, colWidths=[8.0*cm, 3.5*cm])
 t_vol.setStyle(TableStyle([
     ("FONTNAME",(0,0),(-1,-1), KOREAN_FONT),
-    ("FONTSIZE",(0,0),(-1,-1),table_body_sz),
+    ("FONTSIZE",(0,0),(-1,-1),10.5),
     ("BACKGROUND",(0,0),(-1,0), colors.HexColor("#FFF3E0")),
-    ("BOX",(0,0),(-1,-1),0.5,colors.HexColor("#FFCC80")),
-    ("INNERGRID",(0,0),(-1,-1),0.25,colors.HexColor("#FFE0B2")),
-    ("ALIGN",(1,1),(1,-1),"RIGHT"),
+    ("BOX",(0,0),(-1,-1),0.5, colors.HexColor("#FFCC80")),
+    ("INNERGRID",(0,0),(-1,-1),0.25, colors.HexColor("#FFE0B2")),
+    ("ALIGN",(0,0),(-1,-1),"LEFT"),
+    ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
 ]))
-story += [t_vol, Spacer(1,0.35*cm)]
+story += [card([Paragraph("거래량 증가율 TOP3 (근사)", section_h), Spacer(1,4), t_vol]),
+          Spacer(1, 0.45*cm)]
 
 # BTC/ETH 7일 추세
-story += [Paragraph("BTC & ETH 7일 가격 추세", section_h_style)]
+trend_block = [Paragraph("BTC & ETH 7일 가격 추세", section_h)]
 if os.path.exists(trend_png):
-    story += [Image(trend_png, width=16.0*cm, height=5.2*cm), Spacer(1,0.35*cm)]
+    trend_block += [Image(trend_png, width=16.0*cm, height=5.2*cm)]
+story += [card(trend_block), Spacer(1, 0.45*cm)]
 
-# 김프/펀딩비 표 (요약표와 별개로 다시 한 번 표 형태)
-story += [Paragraph("김치 프리미엄 & 펀딩비", section_h_style)]
-kpf_rows = [
-    ["김치 프리미엄", kp_text],
-    ["펀딩비(Binance)", f"BTC {fp(btc_f_bin)} / ETH {fp(eth_f_bin)}"]
-]
+# 김프/펀딩비 표 (요약과 별개)
+kpf_rows = [["김치 프리미엄", kp_text],
+            ["펀딩비(Binance)", f"BTC {fp(btc_f_bin)} / ETH {fp(eth_f_bin)}"]]
 if (btc_f_byb is not None) or (eth_f_byb is not None):
-    kpf_rows.append(["펀딩비(Bybit)",   f"BTC {fp(btc_f_byb)} / ETH {fp(eth_f_byb)}"])
-t_kpf = Table(kpf_rows, colWidths=[3.5*cm, 11.7*cm])
-t_kpf.setStyle(TableStyle([
-    ("FONTNAME",(0,0),(-1,-1), KOREAN_FONT),
-    ("FONTSIZE",(0,0),(-1,-1),10.8),
-    ("BACKGROUND",(0,0),(0,-1), colors.HexColor("#ECEFF1")),
-    ("TEXTCOLOR",(0,0),(0,-1), colors.HexColor("#1A237E")),
-    ("BOX",(0,0),(-1,-1),0.5,colors.HexColor("#CFD8DC")),
-    ("INNERGRID",(0,0),(-1,-1),0.25,colors.HexColor("#CFD8DC")),
-    ("ALIGN",(0,0),(-1,-1),"LEFT"),
-]))
-story += [t_kpf, Spacer(1,0.4*cm)]
+    kpf_rows.append(["펀딩비(Bybit)", f"BTC {fp(btc_f_byb)} / ETH {fp(eth_f_byb)}"])
+t_kpf = Table(kpf_rows, colWidths=[3.8*cm, 12.2*cm])
+style_table_basic(t_kpf)
+story += [card([Paragraph("김치 프리미엄 & 펀딩비", section_h), Spacer(1,4), t_kpf]),
+          Spacer(1, 0.45*cm)]
 
 # BM20 데일리 뉴스 (해석 톤)
-story += [Paragraph("BM20 데일리 뉴스", section_h_style),
-          Paragraph(news, body_style)]
+story += [card([Paragraph("BM20 데일리 뉴스", section_h), Spacer(1,2), Paragraph(news, body_style)]),
+          Spacer(1, 0.45*cm)]
 
 # 푸터
-story += [Spacer(1,0.5*cm),
-          Paragraph("© Blockmedia · Data: CoinGecko, Upbit · Funding: Binance & Bybit", ParagraphStyle("Footer", fontName=KOREAN_FONT, fontSize=9, alignment=1, textColor=colors.HexColor("#78909C")))]
-
-doc = SimpleDocTemplate(pdf_path, pagesize=A4,
-                        leftMargin=1.8*cm, rightMargin=1.8*cm,
-                        topMargin=1.6*cm, bottomMargin=1.6*cm)
+footer = Paragraph("© Blockmedia · Data: CoinGecko, Upbit · Funding: Binance & Bybit",
+                   ParagraphStyle("Footer", fontName=KOREAN_FONT, fontSize=9, alignment=1,
+                                  textColor=colors.HexColor("#78909C")))
+story += [footer]
 doc.build(story)
 
 # ================== HTML (옵션 미리보기) ==================
