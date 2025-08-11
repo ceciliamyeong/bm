@@ -1,10 +1,12 @@
-# ===================== BM20 Daily — 2-Column PDF + HTML Newsletter =====================
-import os, time, json, random
+# ===================== BM20 Daily — 2-Column PDF + HTML + Gmail =====================
+import os, time, json, random, smtplib, ssl
+from email.message import EmailMessage
+from email.utils import formataddr
 from datetime import datetime, timedelta, timezone
 import requests
 import pandas as pd
 
-# ---- Matplotlib (차트) ----
+# ---- Matplotlib (charts) ----
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -16,7 +18,6 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
-from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.platypus import (
     BaseDocTemplate, Frame, PageTemplate, Paragraph, Spacer, Table, TableStyle, Image
@@ -26,29 +27,24 @@ from reportlab.platypus import (
 from jinja2 import Template
 
 # ================== 공통 설정 ==================
-# 폴더/날짜
-OUT_DIR = os.getenv("OUT_DIR", "out")
-os.makedirs(OUT_DIR, exist_ok=True)
+OUT_DIR = os.getenv("OUT_DIR", "out"); os.makedirs(OUT_DIR, exist_ok=True)
 KST = timezone(timedelta(hours=9))
 YMD = datetime.now(KST).strftime("%Y-%m-%d")
-OUT_DIR_DATE = os.path.join(OUT_DIR, YMD)
-os.makedirs(OUT_DIR_DATE, exist_ok=True)
+OUT_DIR_DATE = os.path.join(OUT_DIR, YMD); os.makedirs(OUT_DIR_DATE, exist_ok=True)
 
-# 경로
-txt_path = os.path.join(OUT_DIR_DATE, f"bm20_news_{YMD}.txt")
-csv_path = os.path.join(OUT_DIR_DATE, f"bm20_daily_data_{YMD}.csv")
-bar_png = os.path.join(OUT_DIR_DATE, f"bm20_bar_{YMD}.png")
+# Paths
+txt_path  = os.path.join(OUT_DIR_DATE, f"bm20_news_{YMD}.txt")
+csv_path  = os.path.join(OUT_DIR_DATE, f"bm20_daily_data_{YMD}.csv")
+bar_png   = os.path.join(OUT_DIR_DATE, f"bm20_bar_{YMD}.png")
 trend_png = os.path.join(OUT_DIR_DATE, f"bm20_trend_{YMD}.png")
-pdf_path = os.path.join(OUT_DIR_DATE, f"bm20_daily_{YMD}.pdf")
+pdf_path  = os.path.join(OUT_DIR_DATE, f"bm20_daily_{YMD}.pdf")
 html_path = os.path.join(OUT_DIR_DATE, f"bm20_daily_{YMD}.html")
-kp_path  = os.path.join(OUT_DIR_DATE, f"kimchi_{YMD}.json")
+kp_path   = os.path.join(OUT_DIR_DATE, f"kimchi_{YMD}.json")
 
-# ================== 폰트 설정 ==================
-# ReportLab: CJK 폰트 (내장 CID)
-KOREAN_FONT = "HYSMyeongJo-Medium"
+# ================== Fonts ==================
+KOREAN_FONT = "HYSMyeongJo-Medium"   # ReportLab 내장 CJK
 pdfmetrics.registerFont(UnicodeCIDFont(KOREAN_FONT))
 
-# Matplotlib: 한글 폰트(있으면 적용)
 try:
     CANDS = [
         "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",
@@ -58,13 +54,13 @@ try:
     for p in CANDS:
         if os.path.exists(p):
             fm.fontManager.addfont(p)
-            plt.rcParams["font.family"] = os.path.splitext(os.path.basename(p))[0].replace(".ttf", "")
+            plt.rcParams["font.family"] = os.path.splitext(os.path.basename(p))[0].replace(".ttf","")
             break
     plt.rcParams["axes.unicode_minus"] = False
 except Exception:
     plt.rcParams["axes.unicode_minus"] = False
 
-# ================== 데이터 수집/가공 ==================
+# ================== Data ==================
 CG = "https://api.coingecko.com/api/v3"
 BTC_CAP, OTH_CAP = 0.30, 0.15
 TOP_UP, TOP_DOWN = 6, 4
@@ -81,7 +77,7 @@ def safe_float(x, d=0.0):
 
 def cg_get(path, params=None, retry=3, timeout=15):
     last=None
-    for i in range(retry):
+    for _ in range(retry):
         try:
             r=requests.get(f"{CG}{path}", params=params, timeout=timeout,
                            headers={"User-Agent":"Mozilla/5.0"})
@@ -90,7 +86,7 @@ def cg_get(path, params=None, retry=3, timeout=15):
             last=e; time.sleep(0.6+0.4*random.random())
     raise last
 
-# 1) 현재 시세/시총
+# 1) markets
 mkts = cg_get("/coins/markets", {
   "vs_currency":"usd","ids":",".join(BM20_IDS),
   "order":"market_cap_desc","per_page":len(BM20_IDS),"page":1,
@@ -104,7 +100,7 @@ df = pd.DataFrame([{
 } for m in mkts]).sort_values("market_cap", ascending=False).reset_index(drop=True)
 df = df.head(20).reset_index(drop=True)
 
-# 2) 전일 종가 근사(KST 전날 종가)
+# 2) yday close (KST)
 def get_yday_close(cid):
     data = cg_get(f"/coins/{cid}/market_chart", {"vs_currency":"usd","days":2})
     prices = data.get("prices", [])
@@ -125,7 +121,7 @@ for i,r in df.iterrows():
         prevs[i] = r["current_price"]/(1+(r["chg24"] or 0)/100.0)
 df["previous_price"]=prevs
 
-# 3) 가중치 제한 후 정규화
+# 3) weights
 df["weight_raw"]=df["market_cap"]/max(df["market_cap"].sum(),1.0)
 df["weight_ratio"]=df.apply(
     lambda r: min(r["weight_raw"], BTC_CAP if r["name"]=="BTC" else OTH_CAP),
@@ -133,7 +129,7 @@ df["weight_ratio"]=df.apply(
 )
 df["weight_ratio"]=df["weight_ratio"]/df["weight_ratio"].sum()
 
-# 4) 김치 프리미엄
+# 4) Kimchi premium
 def get_kp(df):
     def _req(url, params=None, retry=3, timeout=12):
         last=None
@@ -190,7 +186,7 @@ def get_kp(df):
 
 kimchi_pct, kp_meta = get_kp(df)
 
-# 5) 인덱스/통계
+# 5) index stats
 df["price_change_pct"]=(df["current_price"]/df["previous_price"]-1)*100
 df["contribution"]=(df["current_price"]-df["previous_price"])*df["weight_ratio"]
 bm20_prev=float((df["previous_price"]*df["weight_ratio"]).sum())
@@ -219,75 +215,58 @@ news_lines=[
 ]
 news=" ".join(news_lines)
 
-# 텍스트/CSV 저장
+# Save text/csv
 with open(txt_path,"w",encoding="utf-8") as f: f.write(news)
 df[["name","current_price","previous_price","weight_ratio","price_change_pct"]].to_csv(csv_path, index=False, encoding="utf-8")
 
-# ================== 차트 생성 ==================
-# A) Top/Bottom 바차트
+# ================== Charts ==================
+# A) top/bottom bar
 winners=df.sort_values("price_change_pct", ascending=False).head(TOP_UP)
 losers=df.sort_values("price_change_pct", ascending=True).head(TOP_DOWN)
 bar=pd.concat([winners[["name","price_change_pct"]], losers[["name","price_change_pct"]]])
-
 plt.figure()
 colors_bar=["tab:green" if v>=0 else "tab:red" for v in bar["price_change_pct"]]
 plt.barh(bar["name"], bar["price_change_pct"], color=colors_bar)
 plt.axvline(0, linewidth=1)
-plt.title(f"BM20 Daily Performance  ({YMD})")
-plt.xlabel("Daily Change (%)")
-plt.tight_layout()
-plt.savefig(bar_png, dpi=180); plt.close()
+plt.title(f"BM20 Daily Performance  ({YMD})"); plt.xlabel("Daily Change (%)")
+plt.tight_layout(); plt.savefig(bar_png, dpi=180); plt.close()
 
-# B) BTC·ETH 7일 추세 (정규화 0% 시작)
+# B) BTC/ETH 7D trend (pct from start)
 def get_pct_series(coin_id, days=8):
     data=cg_get(f"/coins/{coin_id}/market_chart", {"vs_currency":"usd","days":days})
     prices=data.get("prices",[])
     if not prices: return []
-    s=[p[1] for p in prices]
-    base=s[0]
+    s=[p[1] for p in prices]; base=s[0]
     return [ (v/base-1)*100 for v in s ]
 
-btc7=get_pct_series("bitcoin", 8)
-eth7=get_pct_series("ethereum", 8)
-x=range(len(btc7))
+btc7=get_pct_series("bitcoin", 8); eth7=get_pct_series("ethereum", 8)
+x=range(max(len(btc7), len(eth7)))
 plt.figure()
-plt.plot(x, btc7, label="BTC 7D")
-plt.plot(x, eth7, label="ETH 7D")
-plt.legend()
-plt.title(f"BTC/ETH 7D Trend ({YMD})")
-plt.ylabel("% Change from Start")
-plt.tight_layout()
-plt.savefig(trend_png, dpi=180); plt.close()
+plt.plot(range(len(btc7)), btc7, label="BTC 7D")
+plt.plot(range(len(eth7)), eth7, label="ETH 7D")
+plt.legend(); plt.title(f"BTC/ETH 7D Trend ({YMD})"); plt.ylabel("% Change from Start")
+plt.tight_layout(); plt.savefig(trend_png, dpi=180); plt.close()
 
-# ================== PDF: 2단 레이아웃 ==================
-# 스타일
+# ================== PDF (Two-column) ==================
 styles=getSampleStyleSheet()
-styles.add(ParagraphStyle(name="K-Title", fontName=KOREAN_FONT, fontSize=20, leading=24))
-styles.add(ParagraphStyle(name="K-Sub", fontName=KOREAN_FONT, fontSize=12, leading=16))
-styles.add(ParagraphStyle(name="K-Body", fontName=KOREAN_FONT, fontSize=10.5, leading=15))
+styles.add(ParagraphStyle(name="K-Title",  fontName=KOREAN_FONT, fontSize=20, leading=24))
 styles.add(ParagraphStyle(name="K-Strong", fontName=KOREAN_FONT, fontSize=12, leading=16, textColor=colors.HexColor("#1A237E")))
+styles.add(ParagraphStyle(name="K-Body",   fontName=KOREAN_FONT, fontSize=10.5, leading=15))
 
 doc = BaseDocTemplate(pdf_path, pagesize=A4,
                       leftMargin=1.4*cm, rightMargin=1.4*cm,
                       topMargin=1.3*cm, bottomMargin=1.3*cm)
-
 frame_w = (A4[0] - doc.leftMargin - doc.rightMargin)
 col_gap = 0.8*cm
 col_w = (frame_w - col_gap)/2.0
 col_h = A4[1] - doc.topMargin - doc.bottomMargin
-
 left = Frame(doc.leftMargin, doc.bottomMargin, col_w, col_h, id='left')
 right= Frame(doc.leftMargin + col_w + col_gap, doc.bottomMargin, col_w, col_h, id='right')
 doc.addPageTemplates([PageTemplate(id='TwoCol', frames=[left, right])])
 
-story_left = []
-story_right = []
+story_left, story_right = [], []
+story_left += [Paragraph(f"BM20 데일리 리포트  {YMD}", styles["K-Title"]), Spacer(1,0.25*cm)]
 
-# 헤더(전체 폭이 아니라 왼쪽 첫 요소를 제목으로)
-title = Paragraph(f"BM20 데일리 리포트  {YMD}", styles["K-Title"])
-story_left += [title, Spacer(1, 0.25*cm)]
-
-# 요약 박스
 summary_tbl = Table([
     ["BM20 지수", f"{bm20_now:,.0f} pt"],
     ["일간 변동", f"{bm20_chg:+.2f}%"],
@@ -306,13 +285,10 @@ summary_tbl.setStyle(TableStyle([
 ]))
 story_left += [summary_tbl, Spacer(1, 0.35*cm)]
 
-# 뉴스 문장
 for ln in news_lines:
     story_left += [Paragraph(ln, styles["K-Body"]), Spacer(1, 0.12*cm)]
-
 story_left += [Spacer(1, 0.3*cm), Paragraph("Top 상승/하락", styles["K-Strong"]), Spacer(1, 0.2*cm)]
 
-# Top/Bottom 표
 tbl_data = [["종목","일간 등락(%)"]]
 for _,r in winners.iterrows(): tbl_data.append([r["name"], f"{r['price_change_pct']:+.2f}"])
 for _,r in losers.iterrows():  tbl_data.append([r["name"], f"{r['price_change_pct']:+.2f}"])
@@ -327,128 +303,81 @@ tbl.setStyle(TableStyle([
 ]))
 story_left += [tbl]
 
-# 오른쪽 컬럼: 차트 2개
 if os.path.exists(bar_png):
     story_right += [Image(bar_png, width=col_w, height=col_w*0.55), Spacer(1,0.3*cm)]
 if os.path.exists(trend_png):
     story_right += [Image(trend_png, width=col_w, height=col_w*0.60)]
 
-# 빌드
 doc.build(story_left + story_right)
 
-# ================== HTML 뉴스레터 생성 ==================
+# ================== HTML Newsletter ==================
 html_tpl = Template(r"""
-<!doctype html>
-<html lang="ko">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>BM20 데일리 {{ ymd }}</title>
 <style>
-  body {font-family: -apple-system, BlinkMacSystemFont, "NanumGothic","Noto Sans CJK","Malgun Gothic", Arial, sans-serif; margin:0; padding:0; background:#fafbfc; color:#111;}
-  .wrap {max-width: 720px; margin: 0 auto; padding: 20px;}
-  .card {background:#fff; border:1px solid #e5e9f0; border-radius:12px; padding:20px; margin-bottom:16px;}
-  h1 {font-size:24px; margin:0 0 10px 0;}
-  h2 {font-size:16px; margin:18px 0 8px 0; color:#1A237E;}
-  .muted {color:#555;}
-  table {width:100%; border-collapse: collapse; font-size:14px;}
-  th, td {border:1px solid #e5e9f0; padding:8px; text-align:left;}
-  th {background:#eef4ff;}
-  .metric {display:flex; flex-wrap:wrap; gap:10px;}
-  .metric div {flex:1 1 45%; background:#f7f9fc; border:1px solid #e1e6ef; border-radius:10px; padding:10px;}
-  .right {text-align:right;}
-  img {max-width:100%; height:auto; border-radius:10px; border:1px solid #e5e9f0;}
-  .footer {font-size:12px; color:#666; text-align:center; margin-top:16px;}
-</style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="card">
-      <h1>BM20 데일리 리포트 <span class="muted">{{ ymd }}</span></h1>
-      <div class="metric">
-        <div><b>BM20 지수</b><br>{{ bm20_now }} pt</div>
-        <div><b>일간 변동</b><br>{{ bm20_chg }}</div>
-        <div><b>상승/하락</b><br>{{ num_up }}/{{ num_down }}</div>
-        <div><b>김치 프리미엄</b><br>{{ kp_text }}</div>
-      </div>
-      <h2>요약</h2>
-      <p>{{ news }}</p>
+body{font-family:-apple-system,BlinkMacSystemFont,"NanumGothic","Noto Sans CJK","Malgun Gothic",Arial,sans-serif;background:#fafbfc;color:#111;margin:0}
+.wrap{max-width:720px;margin:0 auto;padding:20px}
+.card{background:#fff;border:1px solid #e5e9f0;border-radius:12px;padding:20px;margin-bottom:16px}
+h1{font-size:24px;margin:0 0 10px 0} h2{font-size:16px;margin:18px 0 8px 0;color:#1A237E}
+.muted{color:#555} table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border:1px solid #e5e9f0;padding:8px;text-align:left} th{background:#eef4ff}
+.metric{display:flex;flex-wrap:wrap;gap:10px}
+.metric div{flex:1 1 45%;background:#f7f9fc;border:1px solid #e1e6ef;border-radius:10px;padding:10px}
+.right{text-align:right} img{max-width:100%;height:auto;border-radius:10px;border:1px solid #e5e9f0}
+.footer{font-size:12px;color:#666;text-align:center;margin-top:16px}
+</style></head><body>
+<div class="wrap">
+  <div class="card">
+    <h1>BM20 데일리 리포트 <span class="muted">{{ ymd }}</span></h1>
+    <div class="metric">
+      <div><b>BM20 지수</b><br>{{ bm20_now }} pt</div>
+      <div><b>일간 변동</b><br>{{ bm20_chg }}</div>
+      <div><b>상승/하락</b><br>{{ num_up }}/{{ num_down }}</div>
+      <div><b>김치 프리미엄</b><br>{{ kp_text }}</div>
     </div>
-
-    <div class="card">
-      <h2>Top 상승/하락</h2>
-      <table>
-        <tr><th>종목</th><th class="right">일간 등락(%)</th></tr>
-        {% for row in table_rows %}
-          <tr><td>{{ row.name }}</td><td class="right">{{ row.chg }}</td></tr>
-        {% endfor %}
-      </table>
-    </div>
-
-    <div class="card">
-      <h2>차트</h2>
-      {% if bar_png %}<p><img src="{{ bar_png }}" alt="BM20 Top/Bottom"></p>{% endif %}
-      {% if trend_png %}<p><img src="{{ trend_png }}" alt="BTC/ETH 7D Trend"></p>{% endif %}
-    </div>
-
-    <div class="footer">Data: CoinGecko, Upbit · © Blockmedia BM20</div>
+    <h2>요약</h2>
+    <p>{{ news }}</p>
   </div>
-</body>
-</html>
+  <div class="card">
+    <h2>Top 상승/하락</h2>
+    <table><tr><th>종목</th><th class="right">일간 등락(%)</th></tr>
+      {% for row in table_rows %}<tr><td>{{ row.name }}</td><td class="right">{{ row.chg }}</td></tr>{% endfor %}
+    </table>
+  </div>
+  <div class="card">
+    <h2>차트</h2>
+    {% if bar_png %}<p><img src="{{ bar_png }}" alt="BM20 Top/Bottom"></p>{% endif %}
+    {% if trend_png %}<p><img src="{{ trend_png }}" alt="BTC/ETH 7D Trend"></p>{% endif %}
+  </div>
+  <div class="footer">Data: CoinGecko, Upbit · © Blockmedia BM20</div>
+</div></body></html>
 """)
 
-table_rows = []
+table_rows=[]
 for _,r in winners.iterrows(): table_rows.append({"name": r["name"], "chg": f"{r['price_change_pct']:+.2f}%"})
 for _,r in losers.iterrows():  table_rows.append({"name": r["name"], "chg": f"{r['price_change_pct']:+.2f}%"})
 
 html = html_tpl.render(
-    ymd=YMD,
-    bm20_now=f"{bm20_now:,.0f}",
-    bm20_chg=f"{bm20_chg:+.2f}%",
-    num_up=num_up, num_down=num_down,
-    kp_text=kp_text,
-    news=news,
-    table_rows=table_rows,
-    bar_png=os.path.basename(bar_png),
-    trend_png=os.path.basename(trend_png)
+    ymd=YMD, bm20_now=f"{bm20_now:,.0f}", bm20_chg=f"{bm20_chg:+.2f}%",
+    num_up=num_up, num_down=num_down, kp_text=kp_text, news=news,
+    table_rows=table_rows, bar_png=os.path.basename(bar_png), trend_png=os.path.basename(trend_png)
 )
-with open(html_path, "w", encoding="utf-8") as f:
-    f.write(html)
+with open(html_path, "w", encoding="utf-8") as f: f.write(html)
 
-# ================== 김프 메타 로그 ==================
-with open(kp_path, "w", encoding="utf-8") as f:
-    json.dump({"date":YMD, **(kp_meta or {}), "kimchi_pct": (None if kimchi_pct is None else round(float(kimchi_pct),4))},
-              f, ensure_ascii=False)
-
-print("Saved:", txt_path, csv_path, bar_png, trend_png, pdf_path, html_path, kp_path)
-
-# ====== Gmail 메일 발송용 import ======
-import smtplib, ssl
-from email.message import EmailMessage
-from email.utils import formataddr
-
-# ====== Gmail 메일 발송 함수 ======
-def send_email_gmail(
-    subject: str,
-    html_body: str,
-    attachments: list
-):
+# ================== Gmail Send ==================
+def send_email_gmail(subject: str, html_body: str, attachments: list):
     user = os.getenv("GMAIL_USER")
-    app_pw = os.getenv("GMAIL_APP_PASS")  # 앱 비밀번호(2단계 인증)
-    to_raw = os.getenv("MAIL_TO", "")     # 콤마로 여러 명 가능
+    app_pw = os.getenv("GMAIL_APP_PASS")
+    to_raw = os.getenv("MAIL_TO", "")
     from_name = os.getenv("MAIL_FROM_NAME", "BM20 Bot")
-
     if not user or not app_pw or not to_raw:
-        print("[mail] 환경변수(GMAIL_USER/GMAIL_APP_PASS/MAIL_TO) 미설정 → 발송 생략")
-        return
-
+        print("[mail] GMAIL_USER/GMAIL_APP_PASS/MAIL_TO not set → skip"); return
     to_list = [t.strip() for t in to_raw.split(",") if t.strip()]
     msg = EmailMessage()
     msg["Subject"] = subject
     msg["From"] = formataddr((from_name, user))
     msg["To"] = ", ".join(to_list)
-
-    # 텍스트 + HTML 본문
     plain = f"""[BM20 데일리] {YMD}
 BM20 지수: {bm20_now:,.0f}pt
 일간 변동: {bm20_chg:+.2f}%
@@ -459,37 +388,22 @@ BM20 지수: {bm20_now:,.0f}pt
 """
     msg.set_content(plain)
     msg.add_alternative(html_body, subtype="html")
-
-    # 첨부파일들
     for path in attachments:
-        if not path or not os.path.exists(path):
-            continue
-        with open(path, "rb") as f:
-            data = f.read()
-        fname = os.path.basename(path)
-        if fname.lower().endswith(".pdf"):
-            maintype, subtype = "application", "pdf"
-        elif fname.lower().endswith(".png"):
-            maintype, subtype = "image", "png"
-        elif fname.lower().endswith(".csv"):
-            maintype, subtype = "text", "csv"
-        elif fname.lower().endswith(".txt"):
-            maintype, subtype = "text", "plain"
-        elif fname.lower().endswith(".html"):
-            maintype, subtype = "text", "html"
-        else:
-            maintype, subtype = "application", "octet-stream"
-        msg.add_attachment(data, maintype=maintype, subtype=subtype, filename=fname)
-
-    # SMTP 전송
+        if not path or not os.path.exists(path): continue
+        with open(path, "rb") as f: data=f.read()
+        fname=os.path.basename(path); lower=fname.lower()
+        if   lower.endswith(".pdf"):  mt,st="application","pdf"
+        elif lower.endswith(".png"):  mt,st="image","png"
+        elif lower.endswith(".csv"):  mt,st="text","csv"
+        elif lower.endswith(".txt"):  mt,st="text","plain"
+        elif lower.endswith(".html"): mt,st="text","html"
+        else:                         mt,st="application","octet-stream"
+        msg.add_attachment(data, maintype=mt, subtype=st, filename=fname)
     with smtplib.SMTP("smtp.gmail.com", 587, timeout=60) as smtp:
-        smtp.ehlo()
-        smtp.starttls(context=ssl.create_default_context())
-        smtp.login(user, app_pw)
-        smtp.send_message(msg)
+        smtp.ehlo(); smtp.starttls(context=ssl.create_default_context())
+        smtp.login(user, app_pw); smtp.send_message(msg)
     print(f"[mail] sent to: {msg['To']}")
 
-# ====== 메일 본문 구성 & 발송 호출 ======
 mail_subject = f"[BM20 Daily] {YMD}  BM20 {bm20_chg:+.2f}% ({bm20_now:,.0f}pt)"
 mail_html = f"""
 <h2>BM20 데일리 리포트 <span style='color:#666'>{YMD}</span></h2>
@@ -502,9 +416,12 @@ mail_html = f"""
 <p style="line-height:1.6">{news}</p>
 <p>첨부: PDF 리포트, 차트 PNG, CSV/TXT</p>
 """
+send_email_gmail(mail_subject, mail_html, [pdf_path, bar_png, trend_png, csv_path, txt_path, html_path])
 
-send_email_gmail(
-    subject=mail_subject,
-    html_body=mail_html,
-    attachments=[pdf_path, bar_png, trend_png, csv_path, txt_path, html_path]
-)
+# ================== Kimchi meta log ==================
+with open(kp_path, "w", encoding="utf-8") as f:
+    json.dump({"date":YMD, **(kp_meta or {}), "kimchi_pct": (None if kimchi_pct is None else round(float(kimchi_pct),4))},
+              f, ensure_ascii=False)
+
+print("Saved:", txt_path, csv_path, bar_png, trend_png, pdf_path, html_path, kp_path)
+
