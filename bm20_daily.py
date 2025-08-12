@@ -1,8 +1,6 @@
-# ===================== BM20 Daily — Clean Card PDF + Stable Funding =====================
-# 기능: 데이터 수집 → 중앙 타이틀 + 카드형 요약/섹션 → 코인별 퍼포먼스(큰 라벨) → Top/Bottom → 거래량 증가율 TOP3
-#     → BTC/ETH 7일 추세 → 김프/펀딩비 표 → 해석형 뉴스 → PDF/HTML → (옵션) rclone 업로드
-# 안정화: CoinGecko 429 백오프, per-coin market_chart 대량 호출 회피(전일가 역산),
-#        Funding: Binance /premiumIndex:lastFundingRate, Bybit v5 tickers
+# ===================== BM20 Daily — Stable Funding + Natural News =====================
+# 기능: 데이터 수집 → 카드형 PDF/HTML → 코인별 퍼포먼스 → Top/Bottom → 거래량 증가율 TOP3
+#     → BTC/ETH 7일 추세 → 김프/펀딩비 표 → 자연어 뉴스 → (옵션) rclone 업로드
 
 import os, time, json, random, subprocess
 from datetime import datetime, timedelta, timezone
@@ -82,6 +80,10 @@ def safe_float(x, d=0.0):
     try: return float(x)
     except: return d
 
+def clamp_list_str(items, n=3):
+    items = [str(x) for x in items if str(x)]
+    return items[:n]
+
 # ================== Data Layer ==================
 CG = "https://api.coingecko.com/api/v3"
 BTC_CAP, OTH_CAP = 0.30, 0.15
@@ -98,8 +100,7 @@ def cg_get(path, params=None, retry=8, timeout=20):
     last = None
     api_key = os.getenv("COINGECKO_API_KEY")
     headers = {"User-Agent": "BM20/1.0"}
-    if api_key:
-        headers["x-cg-pro-api-key"] = api_key
+    if api_key: headers["x-cg-pro-api-key"] = api_key
     for i in range(retry):
         try:
             r = requests.get(f"{CG}{path}", params=params, timeout=timeout, headers=headers)
@@ -113,7 +114,7 @@ def cg_get(path, params=None, retry=8, timeout=20):
             last = e; time.sleep(0.8 * (i + 1) + random.random())
     raise last
 
-# 1) markets (시세/시총/거래량)
+# 1) markets
 mkts = cg_get("/coins/markets", {
   "vs_currency":"usd","ids":",".join(BM20_IDS),
   "order":"market_cap_desc","per_page":len(BM20_IDS),"page":1,
@@ -183,58 +184,64 @@ def get_kp(df):
     return kp, {"dom":dom,"glb":glb,"fx":fx,"btc_krw":round(btc_krw,2),"btc_usd":round(btc_usd,2),"usdkrw":round(usdkrw,2)}
 
 kimchi_pct, kp_meta = get_kp(df)
+kp_text = fmt_pct(kimchi_pct, 2) if kimchi_pct is not None else "집계 지연"
 
-# 5) 펀딩비 — 안정 엔드포인트(다중 폴백)
+# 5) 펀딩비 — 안정 엔드포인트 + 다중 폴백
 def get_binance_funding(symbol="BTCUSDT", retry=5):
     urls = [
         "https://fapi.binance.com/fapi/v1/premiumIndex",
         "https://fapi1.binance.com/fapi/v1/premiumIndex",
         "https://fapi2.binance.com/fapi/v1/premiumIndex",
     ]
-    last = None
     for i in range(retry):
         for u in urls:
             try:
                 r = requests.get(u, params={"symbol": symbol}, timeout=12,
                                  headers={"User-Agent":"BM20/1.0","Accept":"application/json"})
-                if r.status_code == 429:
-                    time.sleep(1.0*(i+1)); continue
+                if r.status_code == 429: time.sleep(1.0*(i+1)); continue
                 r.raise_for_status()
                 j = r.json()
                 if isinstance(j, dict) and "lastFundingRate" in j:
                     return float(j["lastFundingRate"]) * 100.0
                 if isinstance(j, list) and j and "lastFundingRate" in j[0]:
                     return float(j[0]["lastFundingRate"]) * 100.0
-            except Exception as e:
-                last = e
+            except Exception:
+                pass
         time.sleep(0.6*(i+1))
+    # 마지막 폴백(히스토리 최신 1개)
+    try:
+        r = requests.get("https://fapi.binance.com/fapi/v1/fundingRate",
+                         params={"symbol":symbol,"limit":1}, timeout=12)
+        r.raise_for_status(); d=r.json()
+        if d: return float(d[0]["fundingRate"]) * 100.0
+    except Exception:
+        return None
     return None
 
 def get_bybit_funding(symbol="BTCUSDT", retry=5):
     url = "https://api.bybit.com/v5/market/tickers"
-    last = None
     for i in range(retry):
         try:
             r = requests.get(url, params={"category":"linear","symbol":symbol}, timeout=12,
                              headers={"User-Agent":"BM20/1.0","Accept":"application/json"})
-            if r.status_code == 429:
-                time.sleep(1.0*(i+1)); continue
+            if r.status_code == 429: time.sleep(1.0*(i+1)); continue
             r.raise_for_status()
             j = r.json()
             lst = j.get("result",{}).get("list",[])
             if lst:
                 fr = lst[0].get("fundingRate")
-                if fr is not None:
-                    return float(fr) * 100.0
+                if fr is not None: return float(fr) * 100.0
             return None
-        except Exception as e:
-            last = e; time.sleep(0.6*(i+1))
+        except Exception:
+            time.sleep(0.6*(i+1))
     return None
 
-btc_f_bin = get_binance_funding("BTCUSDT"); time.sleep(0.25)
-eth_f_bin = get_binance_funding("ETHUSDT"); time.sleep(0.25)
-btc_f_byb = get_bybit_funding("BTCUSDT");   time.sleep(0.25)
+btc_f_bin = get_binance_funding("BTCUSDT"); time.sleep(0.2)
+eth_f_bin = get_binance_funding("ETHUSDT"); time.sleep(0.2)
+btc_f_byb = get_bybit_funding("BTCUSDT");   time.sleep(0.2)
 eth_f_byb = get_bybit_funding("ETHUSDT")
+
+def fp(v): return "-" if (v is None) else f"{float(v):.4f}%"
 
 # 6) 인덱스/통계
 df["price_change_pct"]=(df["current_price"]/df["previous_price"]-1)*100
@@ -262,7 +269,7 @@ vol_incr_rows = []
 for _, r in vol_df.iterrows():
     try:
         pair = get_prev_volume_coin(r["id"], days=2)
-        time.sleep(0.25)
+        time.sleep(0.2)
         if pair:
             now_v, past_v = pair
             incr = (now_v/past_v - 1.0) * 100.0
@@ -275,26 +282,40 @@ if not vol_incr.empty:
 else:
     vol_top3 = pd.DataFrame([{"symbol":"-", "incr_pct": None} for _ in range(3)])
 
-# 7) 뉴스 텍스트 (해석 톤)
-def s(v): return f"{v:+.2f}%"
-news_lines = [
-    f"비트코인과 이더리움을 포함한 대형주 위주의 코인 BM20지수는 {YMD} 전일대비 {s(bm20_chg)} 상승한 {bm20_now:,.0f} 포인트를 기록했다.",
-    f"시총 1위인 비트코인은 {s(float(df.loc[df['symbol']=='BTC','price_change_pct'].iloc[0]))} 오르며 시장을 이끌었고, "
-    f"{top_up.loc[0,'symbol']}({s(top_up.loc[0,'price_change_pct'])}), {top_up.loc[1,'symbol']}({s(top_up.loc[1,'price_change_pct'])}), {top_up.loc[2,'symbol']}({s(top_up.loc[2,'price_change_pct'])})가 각각 상승하며 시장을 견인했다.",
-    f"반면, {top_dn.loc[0,'symbol']}({s(top_dn.loc[0,'price_change_pct'])}), {top_dn.loc[1,'symbol']}({s(top_dn.loc[1,'price_change_pct'])}), {top_dn.loc[2,'symbol']}({s(top_dn.loc[2,'price_change_pct'])})는 하락해 지수 상승을 제한했다.",
-    f"시총 상위 종목 20개 가운데 상승 {num_up}개, 하락 {num_down}개로 {'상승이 우세했다' if num_up>num_down else ('하락이 우세했다' if num_down>num_up else '보합이었다')}."
-]
-kp_text = fmt_pct(kimchi_pct, 2) if kimchi_pct is not None else "집계 지연"
-def fp(v): return "-" if (v is None) else f"{float(v):.4f}%"
-funding_sentence = f"바이낸스 기준 펀딩비는 BTC {fp(btc_f_bin)}, ETH {fp(eth_f_bin)}"
-if (btc_f_byb is not None) or (eth_f_byb is not None):
-    funding_sentence += f"; 바이빗 기준은 BTC {fp(btc_f_byb)}, ETH {fp(eth_f_byb)}"
-news_lines.append(
-    f"한편, 국내 거래소와 해외 거래소 간 비트코인 가격 차이를 의미하는 K-BM 프리미엄은 {kp_text}로, "
-    f"{'한국이 낮은 수준' if (kimchi_pct is not None and kimchi_pct<0) else '한국이 높은 수준'}에서 거래되고 있다. "
-    f"{funding_sentence}로 집계됐다."
-)
-news = " ".join(news_lines)
+# 7) 뉴스 — 자연어 분기 강화
+def build_news():
+    def s(v): return f"{float(v):+,.2f}%"
+    trend = "상승" if bm20_chg > 0 else ("하락" if bm20_chg < 0 else "보합")
+    lead_verb = "오르며" if df.loc[df["symbol"]=="BTC","price_change_pct"].iloc[0] >= 0 else "내리며"
+
+    up_syms  = clamp_list_str(top_up["symbol"].tolist(), 3)
+    up_pcts  = [s(p) for p in top_up["price_change_pct"].tolist()[:len(up_syms)]]
+    dn_syms  = clamp_list_str(top_dn["symbol"].tolist(), 3)
+    dn_pcts  = [s(p) for p in top_dn["price_change_pct"].tolist()[:len(dn_syms)]]
+
+    parts = []
+    parts.append(f"비트코인과 이더리움을 포함한 대형주 위주의 BM20 지수는 {YMD} 전일대비 {s(bm20_chg)} {trend}한 {bm20_now:,.0f}포인트를 기록했다.")
+    btc_pct = df.loc[df["symbol"]=="BTC","price_change_pct"].iloc[0]
+    parts.append(f"시총 1위 비트코인은 {s(btc_pct)} {lead_verb} 시장 방향에 영향을 줬다.")
+
+    if up_syms:
+        parts.append(f"상승 종목 가운데 {', '.join(up_syms)}가 각각 {', '.join(up_pcts)} 기록하며 상대적으로 견조했다.")
+    if dn_syms:
+        parts.append(f"반면 {', '.join(dn_syms)}는 {', '.join(dn_pcts)} 하락해 지수 흐름을 제약했다.")
+
+    balance = ("상승이 우세했다" if num_up>num_down else
+               ("하락이 우세했다" if num_down>num_up else "상승·하락이 비슷했다"))
+    parts.append(f"시총 상위 20종목 중 상승 {num_up}개, 하락 {num_down}개로 {balance}.")
+
+    kp_side = "한국이 낮은 수준" if (kimchi_pct is not None and kimchi_pct < 0) else "한국이 높은 수준"
+    fund_sentence = f"바이낸스 펀딩비는 BTC {fp(btc_f_bin)}, ETH {fp(eth_f_bin)}"
+    if (btc_f_byb is not None) or (eth_f_byb is not None):
+        fund_sentence += f"; 바이빗은 BTC {fp(btc_f_byb)}, ETH {fp(eth_f_byb)}"
+    parts.append(f"국내외 가격 차이를 나타내는 K-BM 프리미엄은 {kp_text}로, {kp_side}에서 거래됐다. "
+                 f"{fund_sentence}가 집계됐다.")
+    return " ".join(parts)
+
+news = build_news()
 
 # 8) 저장 (TXT/CSV/JSON)
 with open(txt_path,"w",encoding="utf-8") as f: f.write(news)
@@ -305,7 +326,7 @@ with open(kp_path, "w", encoding="utf-8") as f:
               f, ensure_ascii=False)
 
 # ================== Charts ==================
-# A) 코인별 퍼포먼스 (세로 막대, 라벨 폰트 크게)
+# A) 코인별 퍼포먼스
 perf = df.sort_values("price_change_pct", ascending=False)[["symbol","price_change_pct"]].reset_index(drop=True)
 plt.figure(figsize=(10.6, 4.6))
 x = range(len(perf)); y = perf["price_change_pct"].values
@@ -328,7 +349,7 @@ def get_pct_series(coin_id, days=8):
     if not prices: return []
     s=[p[1] for p in prices]; base=s[0]
     return [ (v/base-1)*100 for v in s ]
-btc7=get_pct_series("bitcoin", 8); time.sleep(0.6)
+btc7=get_pct_series("bitcoin", 8); time.sleep(0.5)
 eth7=get_pct_series("ethereum", 8)
 plt.figure(figsize=(10.6, 3.8))
 plt.plot(range(len(btc7)), btc7, label="BTC")
@@ -336,7 +357,7 @@ plt.plot(range(len(eth7)), eth7, label="ETH")
 plt.legend(loc="upper left"); plt.title("BTC & ETH 7일 가격 추세", fontsize=13, loc="left", pad=8)
 plt.ylabel("% (from start)"); plt.tight_layout(); plt.savefig(trend_png, dpi=180); plt.close()
 
-# ================== PDF (Clean Card Layout: Centered title, left body) ==================
+# ================== PDF (Clean Card Layout) ==================
 styles = getSampleStyleSheet()
 title_style    = ParagraphStyle("Title",    fontName=KOREAN_FONT, fontSize=18, alignment=1, spaceAfter=6)
 subtitle_style = ParagraphStyle("Subtitle", fontName=KOREAN_FONT, fontSize=12.5, alignment=1,
@@ -376,34 +397,28 @@ story = []
 story += [Paragraph("BM20 데일리 리포트", title_style),
           Paragraph(f"{YMD}", subtitle_style)]
 
-# 메트릭 표 (좌정렬)
+# 메트릭 표
 metrics = [
     ["지수",        f"{bm20_now:,.0f} pt"],
     ["일간 변동",   f"{bm20_chg:+.2f}%"],
     ["상승/하락",   f"{num_up} / {num_down}"],
     ["김치 프리미엄", kp_text],
-]
-metrics += [
     ["펀딩비(Binance)", f"BTC {fp(btc_f_bin)} / ETH {fp(eth_f_bin)}"],
 ]
 if (btc_f_byb is not None) or (eth_f_byb is not None):
-    metrics += [["펀딩비(Bybit)", f"BTC {fp(btc_f_byb)} / ETH {fp(eth_f_byb)}"]]
-
-mt = Table(metrics, colWidths=[3.8*cm, 12.2*cm])
-style_table_basic(mt)
+    metrics.append(["펀딩비(Bybit)", f"BTC {fp(btc_f_byb)} / ETH {fp(eth_f_byb)}"])
+mt = Table(metrics, colWidths=[3.8*cm, 12.2*cm]); style_table_basic(mt)
 story += [card([mt]), Spacer(1, 0.45*cm)]
 
 # 코인별 퍼포먼스
 perf_block = [Paragraph("코인별 퍼포먼스 (1D, USD)", section_h)]
-if os.path.exists(bar_png):
-    perf_block += [Image(bar_png, width=16.0*cm, height=6.6*cm)]
+if os.path.exists(bar_png): perf_block += [Image(bar_png, width=16.0*cm, height=6.6*cm)]
 story += [card(perf_block), Spacer(1, 0.45*cm)]
 
 # 상승/하락 TOP3
 tbl_up = [["상승 TOP3","등락률"], *[[r["symbol"], f"{r['price_change_pct']:+.2f}%"] for _,r in top_up.iterrows()]]
 tbl_dn = [["하락 TOP3","등락률"], *[[r["symbol"], f"{r['price_change_pct']:+.2f}%"] for _,r in top_dn.iterrows()]]
-t_up = Table(tbl_up, colWidths=[8.0*cm, 3.5*cm])
-t_dn = Table(tbl_dn, colWidths=[8.0*cm, 3.5*cm])
+t_up = Table(tbl_up, colWidths=[8.0*cm, 3.5*cm]); t_dn = Table(tbl_dn, colWidths=[8.0*cm, 3.5*cm])
 style_table_basic(t_up); style_table_basic(t_dn)
 story += [card([Paragraph("상승/하락 TOP3", section_h), Spacer(1,4), t_up, Spacer(1,6), t_dn]),
           Spacer(1, 0.45*cm)]
@@ -425,21 +440,10 @@ story += [card([Paragraph("거래량 증가율 TOP3 (근사)", section_h), Space
 
 # BTC/ETH 7일 추세
 trend_block = [Paragraph("BTC & ETH 7일 가격 추세", section_h)]
-if os.path.exists(trend_png):
-    trend_block += [Image(trend_png, width=16.0*cm, height=5.2*cm)]
+if os.path.exists(trend_png): trend_block += [Image(trend_png, width=16.0*cm, height=5.2*cm)]
 story += [card(trend_block), Spacer(1, 0.45*cm)]
 
-# 김프/펀딩비 표 (요약과 별개)
-kpf_rows = [["김치 프리미엄", kp_text],
-            ["펀딩비(Binance)", f"BTC {fp(btc_f_bin)} / ETH {fp(eth_f_bin)}"]]
-if (btc_f_byb is not None) or (eth_f_byb is not None):
-    kpf_rows.append(["펀딩비(Bybit)", f"BTC {fp(btc_f_byb)} / ETH {fp(eth_f_byb)}"])
-t_kpf = Table(kpf_rows, colWidths=[3.8*cm, 12.2*cm])
-style_table_basic(t_kpf)
-story += [card([Paragraph("김치 프리미엄 & 펀딩비", section_h), Spacer(1,4), t_kpf]),
-          Spacer(1, 0.45*cm)]
-
-# BM20 데일리 뉴스 (해석 톤)
+# BM20 데일리 뉴스
 story += [card([Paragraph("BM20 데일리 뉴스", section_h), Spacer(1,2), Paragraph(news, body_style)]),
           Spacer(1, 0.45*cm)]
 
@@ -450,7 +454,7 @@ footer = Paragraph("© Blockmedia · Data: CoinGecko, Upbit · Funding: Binance 
 story += [footer]
 doc.build(story)
 
-# ================== HTML (옵션 미리보기) ==================
+# ================== HTML (옵션) ==================
 html_tpl = Template(r"""
 <!doctype html><html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -517,9 +521,9 @@ with open(html_path, "w", encoding="utf-8") as f: f.write(html)
 
 print("Saved:", txt_path, csv_path, bar_png, trend_png, pdf_path, html_path, kp_path)
 
-# ================== (옵션) Google Drive 업로드 (rclone) ==================
-GDRIVE_DEST = os.getenv("GDRIVE_DEST")  # 예: "BM20/daily"
-AUTO_UPLOAD = os.getenv("AUTO_UPLOAD_TO_DRIVE", "0")  # "1"이면 업로드 시도
+# ================== (옵션) Google Drive 업로드 ==================
+GDRIVE_DEST = os.getenv("GDRIVE_DEST")
+AUTO_UPLOAD = os.getenv("AUTO_UPLOAD_TO_DRIVE", "0")
 
 def run(cmd):
     print("[cmd]", " ".join(cmd))
@@ -532,3 +536,4 @@ if AUTO_UPLOAD == "1" and GDRIVE_DEST:
     run(["rclone", "copy", OUT_DIR, f"gd:{GDRIVE_DEST}", "--create-empty-src-dirs", "--transfers=4", "--checkers=8"])
 else:
     print("[rclone] skipped (set AUTO_UPLOAD_TO_DRIVE=1 and GDRIVE_DEST to enable)")
+
