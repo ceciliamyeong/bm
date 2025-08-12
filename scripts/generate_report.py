@@ -1,33 +1,77 @@
-import requests, datetime, base64, io, os, time
+# scripts/generate_report.py
+# BM20 데일리 자동 생성 (최신본 index.html + 아카이브 /archive/날짜.html)
+# - CoinGecko 공개 API 사용
+# - 429(Too Many Requests) 대비: 재시도/백오프/슬립
+# - 국내상장 가중치: 정적 심볼 리스트로 우선 판정(빠름) + 필요 시 API 확인(안정)
+# - 이미지 Base64 포함 단일 HTML 출력
+
+import requests, datetime, base64, io, os, time, random, sys
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# ===== 공통 설정 =====
+# ===== 기본 설정 =====
 KST = datetime.timezone(datetime.timedelta(hours=9))
 TODAY = datetime.datetime.now(KST).strftime("%Y-%m-%d")
 ARCHIVE_DIR = "archive"
 os.makedirs(ARCHIVE_DIR, exist_ok=True)
 
-STABLE_TICKERS = {"USDT","USDC","FDUSD","BUSD","TUSD","DAI","USDP","UST","EURS","PYUSD"}
-KOREAN_EXCHANGES = {"Upbit","Bithumb","Coinone"}  # CoinGecko ticker의 market.name 기준
+# ===== Rate Limit 대응 =====
+RATE_SLEEP = float(os.getenv("BM20_RATE_SLEEP", "1.2"))  # 호출 간 대기(초)
+MAX_RETRY  = int(os.getenv("BM20_MAX_RETRY", "5"))
+CG_API_KEY = os.getenv("CG_API_KEY")  # 있으면 레이트리밋 완화(Pro)
+DEFAULT_HEADERS = {"User-Agent": "bm20-bot/1.0"}
+if CG_API_KEY:
+    DEFAULT_HEADERS["x-cg-pro-api-key"] = CG_API_KEY
 
 def cg(path, **params):
-    """CoinGecko GET with 간단 재시도"""
+    """CoinGecko 호출 (재시도/백오프)"""
     url = f"https://api.coingecko.com/api/v3/{path}"
-    for i in range(3):
-        r = requests.get(url, params=params, timeout=30)
+    for i in range(MAX_RETRY):
+        r = requests.get(url, params=params, timeout=30, headers=DEFAULT_HEADERS)
         if r.status_code == 200:
+            time.sleep(RATE_SLEEP)
             return r.json()
-        time.sleep(1 + i)
+        if r.status_code == 429:
+            wait = RATE_SLEEP * (2 ** i) + random.uniform(0, 0.6)
+            time.sleep(wait)
+            continue
+        # 기타 오류도 한 번씩 쉰 뒤 재시도
+        time.sleep(RATE_SLEEP)
+    # 마지막 실패
     r.raise_for_status()
 
-# ===== 1) 후보군: 시총 상위에서 스테이블 제외 =====
+# ===== BM20 구성 규칙 =====
+STABLE_TICKERS = {"USDT","USDC","FDUSD","BUSD","TUSD","DAI","USDP","UST","EURS","PYUSD"}
+KOREAN_EXCHANGES = ["Upbit","Bithumb","Coinone"]
+
+# 국내 3대 거래소 상장 여부: 우선 정적 심볼로 빠르게 True 판단
+KR_LISTED_SYMBOLS = {
+    "BTC","ETH","XRP","ADA","SOL","DOGE","TRX","DOT","LINK","MATIC",
+    "LTC","ATOM","BCH","APT","ARB","AVAX","SUI","NEAR","ICP","FIL",
+    "OP","PEPE","ETC","HBAR","STX","ALGO","IMX","INJ","TIA","RNDR"
+}
+
+def listed_on_korea(coin_id, symbol):
+    if symbol.upper() in KR_LISTED_SYMBOLS:
+        return True
+    # 필요할 때만 API 확인 (429 방지)
+    try:
+        j = cg(f"coins/{coin_id}/tickers", include_exchange_logo=False)
+        for t in j.get("tickers", []):
+            market = (t.get("market") or {}).get("name","")
+            if any(ex in market for ex in KOREAN_EXCHANGES):
+                return True
+    except Exception:
+        return False
+    return False
+
+# ===== 상위 코인 가져오기 (스테이블 제외) =====
 markets = cg("coins/markets",
              vs_currency="usd",
              order="market_cap_desc",
              per_page=40, page=1,
              price_change_percentage="24h")
-# DataFrame으로 정리
+
 m = pd.DataFrame([{
     "id": c["id"],
     "symbol": c["symbol"].upper(),
@@ -36,36 +80,26 @@ m = pd.DataFrame([{
     "pct24h": c["price_change_percentage_24h"] or 0.0
 } for c in markets])
 
-# 스테이블 제외
 m = m[~m["symbol"].isin(STABLE_TICKERS)].reset_index(drop=True)
 
-# ===== 2) 국내 3대 거래소 상장 여부 확인 → 1.3x 보너스 =====
-def listed_on_korea(coin_id):
-    # tickers 호출(상위20개만 훑어도 충분)
-    j = cg(f"coins/{coin_id}/tickers", include_exchange_logo=False)
-    for t in j.get("tickers", []):
-        market = (t.get("market") or {}).get("name","")
-        if any(ex in market for ex in KOREAN_EXCHANGES):
-            return True
-    return False
+# 후보 20개만 사용(호출 최소화)
+cands = m.head(20).copy()
+cands["kr_listed"] = [listed_on_korea(cid, sym) for cid, sym in zip(cands["id"], cands["symbol"])]
 
-top_candidates = m.head(25).copy()
-top_candidates["kr_listed"] = [listed_on_korea(cid) for cid in top_candidates["id"]]
-top_candidates["weight_base"] = top_candidates["mcap"] * top_candidates["kr_listed"].apply(lambda x: 1.3 if x else 1.0)
+# 국내상장 가중치 1.3x
+cands["weight_base"] = cands["mcap"] * cands["kr_listed"].apply(lambda x: 1.3 if x else 1.0)
+total = cands["weight_base"].sum()
+cands["weight"] = cands["weight_base"] / total
 
-# 최종 BM20 구성(시총 기준, 보너스 반영 후 정규화)
-bm20 = top_candidates.sort_values("mcap", ascending=False).head(20).copy()
-total = bm20["weight_base"].sum()
-bm20["weight"] = bm20["weight_base"] / total
+bm20 = cands.copy()
 
-# ===== 3) BM20 데일리 수익률 계산 (가중합) =====
-# CoinGecko pct24h는 %단위. 가중합을 위해 소수화
+# BM20 일간 수익률(가중합)
 bm20["ret"] = bm20["pct24h"] / 100.0
-bm20_return = (bm20["weight"] * bm20["ret"]).sum()   # 지수 일간 수익률
-bm20_change_pct = bm20_return * 100.0                # %로 표시
-bm20_index = 100.0 * (1.0 + bm20_return)             # 임시 지수 레벨(=전일 100 기준)
+bm20_return = (bm20["weight"] * bm20["ret"]).sum()
+bm20_change_pct = bm20_return * 100.0
+bm20_index = 100.0 * (1.0 + bm20_return)  # 전일=100 가정 지수 레벨
 
-# ===== 4) BTC/ETH 7일 추세 그래프 =====
+# ===== 차트용 데이터 =====
 def hist7d_ret(coin_id):
     j = cg(f"coins/{coin_id}/market_chart", vs_currency="usd", days=7)
     p = pd.DataFrame(j["prices"], columns=["ts","price"])
@@ -83,14 +117,14 @@ def fig_to_png_base64(fig):
     plt.close(fig)
     return base64.b64encode(buf.getvalue()).decode()
 
-# 차트 1: 7일 추세
+# 차트 1: BTC/ETH 7일 추세
 fig1 = plt.figure(figsize=(10,3))
 plt.plot(btc_ret, label="BTC")
 plt.plot(eth_ret, label="ETH")
 plt.legend(); plt.title("BTC & ETH 7일 가격 추세"); plt.ylabel("% (from start)")
 img_trend = fig_to_png_base64(fig1)
 
-# 차트 2: BM20 구성 코인 일간 퍼포먼스
+# 차트 2: BM20 구성 코인 1D 퍼포먼스
 disp = bm20.sort_values("pct24h", ascending=False)
 fig2 = plt.figure(figsize=(10,3))
 plt.bar(disp["symbol"], disp["pct24h"])
@@ -100,18 +134,18 @@ for x, y in enumerate(disp["pct24h"]):
              va="bottom" if y>=0 else "top", fontsize=8)
 img_bar = fig_to_png_base64(fig2)
 
-# ===== 5) HTML 생성(이미지 Base64 포함 단일 파일) =====
-def html_escape(s): return str(s).replace("&","&amp;").replace("<","&lt;").replace(">","&gt;")
+# ===== HTML 생성 =====
+def esc(s): return str(s).replace("&","&amp;").replace("<","&lt;").replace(">","&gt;")
 
 rows = "\n".join(
-    f"<tr><td>{html_escape(r.symbol)}</td>"
+    f"<tr><td>{esc(r.symbol)}</td>"
     f"<td style='text-align:right'>{'예' if r.kr_listed else '아니오'}</td>"
     f"<td style='text-align:right'>{r.weight*100:,.2f}%</td>"
     f"<td style='text-align:right'>{r.pct24h:+.2f}%</td></tr>"
     for r in bm20.itertuples()
 )
 
-HEADLINE = f"BM20 {TODAY} — 지수 {bm20_index:,.2f} (일간 {bm20_change_pct:+.2f}%) · 국내상장 가중치 1.3× 적용"
+HEADLINE = f"BM20 {TODAY} — 지수 {bm20_index:,.2f} (일간 {bm20_change_pct:+.2f}%) · 국내상장 1.3× 가중치"
 
 HTML = f"""<!doctype html><html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -158,7 +192,7 @@ table{{width:100%;border-collapse:collapse;font-size:14px}} th,td{{border:1px so
 
 <div class="card">
   <h2>데일리 뉴스</h2>
-  <p>{HEADLINE}</p>
+  <p>{esc(HEADLINE)}</p>
   <p class="center"><a href="archive/">아카이브 보기</a></p>
 </div>
 
@@ -166,7 +200,7 @@ table{{width:100%;border-collapse:collapse;font-size:14px}} th,td{{border:1px so
 </div></body></html>
 """
 
-# 저장: 날짜본 + 최신본 + 아카이브 인덱스
+# ===== 저장 (아카이브 + 최신본 + 아카이브 인덱스) =====
 arc_path = f"{ARCHIVE_DIR}/bm20_daily_{TODAY}.html"
 with open(arc_path, "w", encoding="utf-8") as f: f.write(HTML)
 with open("index.html", "w", encoding="utf-8") as f: f.write(HTML)
