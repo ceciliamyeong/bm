@@ -43,7 +43,16 @@ jobs:
           TZ: Asia/Seoul
         run: |
           python bm20_daily.py
-
+ 
+      - name: Debug — show out tree
+        run: |
+          echo "PWD=$(pwd)"
+          ls -la
+          echo "---- out ----"
+          ls -la out || true
+          echo "---- out recursive ----"
+          find out -maxdepth 2 -type d -print || true
+ 
       # ✅ 2) 최신 폴더 자동 감지 → archive로 복사 → index.html 갱신
       - name: Generate site (latest + archive)
         env:
