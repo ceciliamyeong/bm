@@ -68,6 +68,27 @@ jobs:
           # Jekyll 무시 파일(캐싱/빌드 이슈 방지)
           echo "" > .nojekyll
 
+          # ✅ 2.5) latest.html + 최신 이미지 고정 이름으로 생성
+      - name: Publish latest (fixed assets)
+        run: |
+          set -euo pipefail
+          DATE=$(TZ=Asia/Seoul date +%F)
+          SRC="bm20/archive/$DATE"
+
+          # 안전장치: 오늘자 산출물 확인
+          test -f "$SRC/bm20_daily_${DATE}.html"
+          test -f "$SRC/bm20_bar_${DATE}.png"
+          test -f "$SRC/bm20_trend_${DATE}.png"
+
+          # latest.html 생성 (이미지 경로를 고정 이름으로 치환)
+          sed "s/bm20_bar_${DATE}\.png/bm20_bar_latest.png/g; s/bm20_trend_${DATE}\.png/bm20_trend_latest.png/g" \
+            "$SRC/bm20_daily_${DATE}.html" > bm20/latest.html
+
+          # 최신 이미지 고정 파일명으로 복사
+          cp "$SRC/bm20_bar_${DATE}.png"   bm20/bm20_bar_latest.png
+          cp "$SRC/bm20_trend_${DATE}.png" bm20/bm20_trend_latest.png
+
+
       # ✅ 3) 변경사항 커밋 & 푸시 (rebase로 충돌 방지)
       - name: Commit & Push (with pull --rebase)
         env:
