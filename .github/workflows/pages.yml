@@ -46,6 +46,26 @@ jobs:
           # 캐싱·Jekyll 이슈 방지
           echo "" > .nojekyll
 
+      - name: Publish latest (fixed assets)
+        run: |
+          set -euo pipefail
+          DATE=$(TZ=Asia/Seoul date +%F)
+          SRC="bm20/archive/$DATE"
+
+          # 오늘자 산출물 확인
+          test -f "$SRC/bm20_daily_${DATE}.html"
+          test -f "$SRC/bm20_bar_${DATE}.png"
+          test -f "$SRC/bm20_trend_${DATE}.png"
+
+          # latest.html 생성 (이미지 경로를 고정 이름으로 치환)
+          sed "s/bm20_bar_${DATE}\.png/bm20_bar_latest.png/g; s/bm20_trend_${DATE}\.png/bm20_trend_latest.png/g" \
+            "$SRC/bm20_daily_${DATE}.html" > bm20/latest.html
+
+          # 최신 이미지 고정 파일명으로 복사
+          cp "$SRC/bm20_bar_${DATE}.png"   bm20/bm20_bar_latest.png
+          cp "$SRC/bm20_trend_${DATE}.png" bm20/bm20_trend_latest.png
+
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
