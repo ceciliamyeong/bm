@@ -2,10 +2,9 @@ name: BM20 Daily
 
 on:
   schedule:
-    - cron: "10 23 * * *"   # 매일 08:10 KST (정산/429 타이밍 회피)
+    - cron: "10 23 * * *"   # 매일 08:10 KST
   workflow_dispatch: {}
 
-# 동시 실행 충돌 방지
 concurrency:
   group: bm20-daily-${{ github.ref }}
   cancel-in-progress: false
@@ -14,7 +13,7 @@ jobs:
   run:
     runs-on: ubuntu-latest
 
-    # index.html/archive 갱신을 main에 커밋할 수 있도록
+    # index.html / archive / latest.html 을 main에 커밋
     permissions:
       contents: write
 
@@ -41,7 +40,7 @@ jobs:
           sudo apt-get install -y fonts-nanum fonts-noto-cjk fontconfig
           sudo fc-cache -f -v
 
-      # ✅ 1) 리포트 생성 (반드시 먼저 실행)
+      # ✅ 1) 리포트 생성 (out/YYYY-MM-DD 아래로 산출물 생성)
       - name: Run BM20 generator
         env:
           OUT_DIR: out
@@ -59,7 +58,7 @@ jobs:
           echo "---- out recursive ----"
           find out -maxdepth 2 -type d -print || true
 
-      # ✅ 2) 최신 폴더 자동 감지 → archive로 복사 → index.html 갱신
+      # ✅ 2) out → archive 복사 + index.html 최신 블록 갱신 + latest.html 생성
       - name: Generate site (latest + archive)
         env:
           TZ: Asia/Seoul
@@ -68,28 +67,30 @@ jobs:
           # Jekyll 무시 파일(캐싱/빌드 이슈 방지)
           echo "" > .nojekyll
 
-          # ✅ 2.5) latest.html + 최신 이미지 고정 이름으로 생성
+      # ✅ 2.5) latest.html + 최신 이미지(고정 파일명) 보장
+      # (generate_report.py가 이미 만들지만, 워크플로 단에서도 한 번 더 보강)
       - name: Publish latest (fixed assets)
         run: |
           set -euo pipefail
           DATE=$(TZ=Asia/Seoul date +%F)
           SRC="archive/$DATE"
 
-        # 오늘자 산출물 확인 (루트 기준)
+          echo "[DEBUG] Checking files in $SRC"
+          ls -la "$SRC" || true
+
           test -f "$SRC/bm20_daily_${DATE}.html"
           test -f "$SRC/bm20_bar_${DATE}.png"
           test -f "$SRC/bm20_trend_${DATE}.png"
 
-        # latest.html 생성 (이미지 경로를 고정 이름으로 치환)
+          # latest.html (이미지 경로를 고정 이름으로 치환)
           sed "s/bm20_bar_${DATE}\.png/bm20_bar_latest.png/g; s/bm20_trend_${DATE}\.png/bm20_trend_latest.png/g" \
-          "$SRC/bm20_daily_${DATE}.html" > latest.html
+            "$SRC/bm20_daily_${DATE}.html" > latest.html
 
-    # 최신 이미지 고정 파일명으로 복사 (루트에 둠)
-    cp "$SRC/bm20_bar_${DATE}.png"   bm20_bar_latest.png
-    cp "$SRC/bm20_trend_${DATE}.png" bm20_trend_latest.png
+          # 최신 이미지 고정 파일명으로 복사 (루트에 유지)
+          cp "$SRC/bm20_bar_${DATE}.png"   bm20_bar_latest.png
+          cp "$SRC/bm20_trend_${DATE}.png" bm20_trend_latest.png
 
-
-      # ✅ 3) 변경사항 커밋 & 푸시 (rebase로 충돌 방지)
+      # ✅ 3) 변경사항 커밋 & 푸시 (rebase로 충돌 최소화)
       - name: Commit & Push (with pull --rebase)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -101,5 +102,5 @@ jobs:
           git fetch origin ${BRANCH}
           git pull --rebase origin ${BRANCH} || true
           git add -A
-          git commit -m "chore: auto daily report for $(date -u +'%Y-%m-%d')" || echo "nothing to commit"
+          git commit -m "[skip ci] chore: auto daily report for $(date -u +'%Y-%m-%d')" || echo "nothing to commit"
           git push origin HEAD:${BRANCH}
