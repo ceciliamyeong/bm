@@ -283,43 +283,68 @@ else:
     vol_top3 = pd.DataFrame([{"symbol":"-", "incr_pct": None} for _ in range(3)])
 
 # 7) 뉴스 — 자연어 분기 강화
-def build_news():
-    def s(v): return f"{float(v):+,.2f}%"
+# 7) 뉴스 — 요청 톤(제목+본문)으로 교체
+def build_news_v2():
+    # 포맷 유틸
+    def pct(v):
+        try: return f"{float(v):+,.2f}%"
+        except:  return "-"
+    def pct_abs(v):  # +기호 제거 버전 (제목에 사용)
+        try: return f"{abs(float(v)):.2f}%"
+        except:  return "-"
+    def num(v):
+        try:
+            s = f"{float(v):,.2f}"
+            return s.rstrip("0").rstrip(".")
+        except:  return "-"
+
+    # 지수/시장 폭
     trend = "상승" if bm20_chg > 0 else ("하락" if bm20_chg < 0 else "보합")
-    lead_verb = "오르며" if df.loc[df["symbol"]=="BTC","price_change_pct"].iloc[0] >= 0 else "내리며"
+    breadth_word = "강세 우위" if num_up>num_down else ("약세 우위" if num_down>num_up else "중립")
+    breadth = f"상승 {num_up}·하락 {num_down}"
 
-    up_syms  = clamp_list_str(top_up["symbol"].tolist(), 3)
-    up_pcts  = [s(p) for p in top_up["price_change_pct"].tolist()[:len(up_syms)]]
-    dn_syms  = clamp_list_str(top_dn["symbol"].tolist(), 3)
-    dn_pcts  = [s(p) for p in top_dn["price_change_pct"].tolist()[:len(dn_syms)]]
+    # Top/Bottom
+    ups = [f"{r['symbol']}({pct(r['price_change_pct'])})" for _, r in top_up.iterrows()]
+    dns = [f"{r['symbol']}({pct(r['price_change_pct'])})" for _, r in top_dn.iterrows()]
 
-    parts = []
-    parts.append(f"비트코인과 이더리움을 포함한 대형주 위주의 BM20 지수는 {YMD} 전일대비 {s(bm20_chg)} {trend}한 {bm20_now:,.0f}포인트를 기록했다.")
-    btc_pct = df.loc[df["symbol"]=="BTC","price_change_pct"].iloc[0]
-    parts.append(f"시총 1위 비트코인은 {s(btc_pct)} {lead_verb} 시장 방향에 영향을 줬다.")
+    # BTC/ETH 현재가 및 등락
+    btc = df.loc[df["symbol"]=="BTC"].iloc[0]
+    eth = df.loc[df["symbol"]=="ETH"].iloc[0]
+    btc_line = f"비트코인(BTC)은 {pct(btc['price_change_pct'])} "
+    btc_line += ("하락" if btc["price_change_pct"]<0 else ("상승" if btc["price_change_pct"]>0 else "보합"))
+    btc_line += f"한 {num(btc['current_price'])}달러에 거래됐다."
+    eth_line = f"이더리움(ETH)은 {pct(eth['price_change_pct'])} "
+    eth_line += ("하락" if eth["price_change_pct"]<0 else ("상승" if eth["price_change_pct"]>0 else "보합"))
+    eth_line += f"한 {num(eth['current_price'])}달러선."
 
-    if up_syms:
-        parts.append(f"상승 종목 가운데 {', '.join(up_syms)}가 각각 {', '.join(up_pcts)} 기록하며 상대적으로 견조했다.")
-    if dn_syms:
-        parts.append(f"반면 {', '.join(dn_syms)}는 {', '.join(dn_pcts)} 하락해 지수 흐름을 제약했다.")
+    # 김치 프리미엄 & 펀딩비 문구
+    kp_side = "국내 거래소가 해외 대비 소폭 할인되어" if (kimchi_pct is not None and kimchi_pct < 0) else "국내 거래소가 소폭 할증되어"
+    kp_line = f"국내외 가격 차이를 나타내는 김치 프리미엄은 {fmt_pct(kimchi_pct,2)}로, {kp_side} 거래됐다."
 
-    balance = ("상승이 우세했다" if num_up>num_down else
-               ("하락이 우세했다" if num_down>num_up else "상승·하락이 비슷했다"))
-    parts.append(f"시총 상위 20종목 중 상승 {num_up}개, 하락 {num_down}개로 {balance}.")
+    # 펀딩 텍스트(있으면 BIN_TEXT/ BYB_TEXT 사용)
+    FUND_BIN = BIN_TEXT if 'BIN_TEXT' in locals() else f"BTC {fp(btc_f_bin)} / ETH {fp(eth_f_bin)}"
+    FUND_BYB = BYB_TEXT if 'BYB_TEXT' in locals() else (None if (btc_f_byb is None and eth_f_byb is None) else f"BTC {fp(btc_f_byb)} / ETH {fp(eth_f_byb)}")
+    fund_line = f"바이낸스 기준 펀딩비는 {FUND_BIN}" + ("" if FUND_BYB is None else f", 바이빗은 {FUND_BYB}") + "로 집계됐다."
 
-    kp_side = "한국이 낮은 수준" if (kimchi_pct is not None and kimchi_pct < 0) else "한국이 높은 수준"
-    fund_sentence = f"바이낸스 펀딩비는 BTC {fp(btc_f_bin)}, ETH {fp(eth_f_bin)}"
-    if (btc_f_byb is not None) or (eth_f_byb is not None):
-        fund_sentence += f"; 바이빗은 BTC {fp(btc_f_byb)}, ETH {fp(eth_f_byb)}"
-    parts.append(f"국내외 가격 차이를 나타내는 K-BM 프리미엄은 {kp_text}로, {kp_side}에서 거래됐다. "
-                 f"{fund_sentence}가 집계됐다.")
-    return " ".join(parts)
+    # 제목 + 본문
+    title = f"BM20 {pct_abs(bm20_chg)} {'상승' if bm20_chg>0 else ('하락' if bm20_chg<0 else '보합')}…지수 {num(bm20_now)}pt, 김치프리미엄 {fmt_pct(kimchi_pct,2)}"
+    body = " ".join([
+        f"BM20 지수가 {YMD} 전일 대비 {pct(bm20_chg)} {trend}해 {num(bm20_now)}포인트를 기록했다.",
+        f"시장 폭은 {breadth}로 {breadth_word}다.",
+        (f"개별 종목으로는 {'·'.join(dns)} 하락 폭이 컸다." if num_down>=num_up else f"개별 종목으로는 {'·'.join(ups)} 강세를 보였다."),
+        (f"반면 {'·'.join(ups)} 강세를 보였다." if num_down>=num_up else f"반면 {'·'.join(dns)} 하락 폭이 컸다."),
+        btc_line, eth_line,
+        kp_line, fund_line
+    ])
+    return title, body
 
-news = build_news()
+news_title, news_body = build_news_v2()
+news = f"{news_title}\n{news_body}"
 
 # 8) 저장 (TXT/CSV/JSON)
-with open(txt_path,"w",encoding="utf-8") as f: f.write(news)
-df_out=df[["symbol","name","current_price","previous_price","price_change_pct","market_cap","total_volume","weight_ratio","contribution"]]
+with open(txt_path,"w",encoding="utf-8") as f:
+    f.write(news)
+df_out = df[["symbol","name","current_price","previous_price","price_change_pct","market_cap","total_volume","weight_ratio","contribution"]]
 df_out.to_csv(csv_path, index=False, encoding="utf-8")
 with open(kp_path, "w", encoding="utf-8") as f:
     json.dump({"date":YMD, **(kp_meta or {}), "kimchi_pct": (None if kimchi_pct is None else round(float(kimchi_pct),4))},
