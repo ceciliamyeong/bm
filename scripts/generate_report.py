@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # Find latest out/YYYY-MM-DD, copy to archive/YYYY-MM-DD, and update index.html
+# + Publish latest: creates bm20/latest.html and bm20_bar_latest.png / bm20_trend_latest.png
 # - Injects news preview (reads bm20_news_YYYY-MM-DD.txt)
 # - Creates .nojekyll to avoid Jekyll processing
 # - Robust when out/ has no dated folder (falls back to root files)
@@ -73,6 +74,7 @@ def read_news_preview(latest_dir: Path, max_chars: int = 380) -> str | None:
     return html.escape(para)
 
 def update_index(latest_dir: Path):
+    """index.html의 <!--LATEST_START--> ... <!--LATEST_END--> 블록을 오늘자 프리뷰로 교체"""
     if not INDEX.exists():
         print("[warn] index.html not found; skip update")
         return
@@ -96,7 +98,6 @@ def update_index(latest_dir: Path):
     news_html = ""
     preview = read_news_preview(latest_dir)
     if preview:
-        # index.html 안에서 스타일에 종속되지 않도록 가볍게만 지정
         news_html = (
             f'<div style="margin-top:10px;padding:10px;border:1px dashed #e0e0e0;'
             f'background:#fafafa;border-radius:8px">'
@@ -121,10 +122,46 @@ def update_index(latest_dir: Path):
     INDEX.write_text(new_html, encoding="utf-8")
     print("[update] index.html latest block (with news) updated")
 
+# --- add: publish latest (fixed assets) -------------------------------
+def publish_latest(latest_dir: Path):
+    """
+    Create /bm20/latest.html (if bm20/ exists; otherwise /latest.html) and
+    copy latest images with fixed names: bm20_bar_latest.png, bm20_trend_latest.png
+    """
+    ymd = latest_dir.name
+    html_src = latest_dir / f"bm20_daily_{ymd}.html"
+    bar_src  = latest_dir / f"bm20_bar_{ymd}.png"
+    trd_src  = latest_dir / f"bm20_trend_{ymd}.png"
+
+    if not html_src.exists():
+        print("[publish_latest] skip: html not found", html_src)
+        return
+    if not bar_src.exists() or not trd_src.exists():
+        print("[publish_latest] skip: image(s) not found", bar_src, trd_src)
+        return
+
+    # 배포 타겟 디렉토리: bm20/ 폴더가 있으면 거기에, 없으면 루트
+    target_root = ROOT / "bm20" if (ROOT / "bm20").exists() else ROOT
+    target_root.mkdir(parents=True, exist_ok=True)
+
+    # latest.html: 이미지 경로를 고정 파일명으로 치환
+    html_txt = html_src.read_text(encoding="utf-8")
+    html_txt = html_txt.replace(f"bm20_bar_{ymd}.png",   "bm20_bar_latest.png")
+    html_txt = html_txt.replace(f"bm20_trend_{ymd}.png", "bm20_trend_latest.png")
+    (target_root / "latest.html").write_text(html_txt, encoding="utf-8")
+
+    # 최신 이미지 고정 파일명으로 복사
+    shutil.copyfile(bar_src, target_root / "bm20_bar_latest.png")
+    shutil.copyfile(trd_src, target_root / "bm20_trend_latest.png")
+
+    print(f"[publish_latest] wrote {(target_root / 'latest.html').as_posix()}")
+# ---------------------------------------------------------------------
+
 def main():
     latest = ensure_latest_dir()
     dst = copy_dir(latest)
     update_index(dst)
+    publish_latest(dst)  # ★ 최신 고정 링크/이미지 생성
     (ROOT / ".nojekyll").write_text("", encoding="utf-8")
     print("[done] site updated")
 
