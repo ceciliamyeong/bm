@@ -50,7 +50,11 @@ jobs:
         run: |
           set -euo pipefail
           DATE=$(TZ=Asia/Seoul date +%F)
-          SRC="bm20/archive/$DATE"
+          SRC="archive/$DATE"
+
+          # 디버그: 오늘자 산출물 목록 확인
+          echo "[DEBUG] Checking files in $SRC"
+          ls -la "$SRC" || true
 
           # 오늘자 산출물 확인
           test -f "$SRC/bm20_daily_${DATE}.html"
@@ -59,12 +63,11 @@ jobs:
 
           # latest.html 생성 (이미지 경로를 고정 이름으로 치환)
           sed "s/bm20_bar_${DATE}\.png/bm20_bar_latest.png/g; s/bm20_trend_${DATE}\.png/bm20_trend_latest.png/g" \
-            "$SRC/bm20_daily_${DATE}.html" > bm20/latest.html
+            "$SRC/bm20_daily_${DATE}.html" > latest.html
 
           # 최신 이미지 고정 파일명으로 복사
-          cp "$SRC/bm20_bar_${DATE}.png"   bm20/bm20_bar_latest.png
-          cp "$SRC/bm20_trend_${DATE}.png" bm20/bm20_trend_latest.png
-
+          cp "$SRC/bm20_bar_${DATE}.png"   bm20_bar_latest.png
+          cp "$SRC/bm20_trend_${DATE}.png" bm20_trend_latest.png
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
