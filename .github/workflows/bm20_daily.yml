@@ -5,6 +5,11 @@ on:
     - cron: "10 23 * * *"   # 매일 08:10 KST (정산/429 타이밍 회피)
   workflow_dispatch: {}
 
+# 동시 실행 충돌 방지
+concurrency:
+  group: bm20-daily-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   run:
     runs-on: ubuntu-latest
@@ -43,7 +48,8 @@ jobs:
           TZ: Asia/Seoul
         run: |
           python bm20_daily.py
- 
+
+      # 🔎 디버그: out/ 트리 확인
       - name: Debug — show out tree
         run: |
           echo "PWD=$(pwd)"
@@ -52,7 +58,7 @@ jobs:
           ls -la out || true
           echo "---- out recursive ----"
           find out -maxdepth 2 -type d -print || true
- 
+
       # ✅ 2) 최신 폴더 자동 감지 → archive로 복사 → index.html 갱신
       - name: Generate site (latest + archive)
         env:
@@ -62,11 +68,17 @@ jobs:
           # Jekyll 무시 파일(캐싱/빌드 이슈 방지)
           echo "" > .nojekyll
 
-      # ✅ 3) 변경사항 커밋 & 푸시 (GitHub Pages는 main 브랜치를 바로 서빙)
-      - name: Commit & Push
+      # ✅ 3) 변경사항 커밋 & 푸시 (rebase로 충돌 방지)
+      - name: Commit & Push (with pull --rebase)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -e
+          BRANCH="${GITHUB_REF#refs/heads/}"
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin ${BRANCH}
+          git pull --rebase origin ${BRANCH} || true
           git add -A
           git commit -m "chore: auto daily report for $(date -u +'%Y-%m-%d')" || echo "nothing to commit"
-          git push
+          git push origin HEAD:${BRANCH}
