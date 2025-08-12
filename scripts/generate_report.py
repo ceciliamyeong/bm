@@ -1,10 +1,11 @@
 # scripts/generate_report.py
 # BM20 데일리 HTML 자동 생성 (index 최신 + /archive/날짜.html)
 # - 조선비즈 톤 뉴스(제목+본문) 자동 생성
-# - 헤더 메트릭(지수/일간/상승·하락/김프/펀딩비)
-# - 1D 바차트 / 상승·하락 TOP3 / 거래량 증가율 TOP3
-# - BTC·ETH 7일 추세 / 구성&가중치 표
-# - 이미지 Base64 포함, UTF-8 저장, CoinGecko 429 백오프
+# - PDF처럼: 헤더 메트릭 / 1D 바차트 / 상승·하락 TOP3 / 거래량 증가율 TOP3
+#            / BTC·ETH 7일 추세 / 구성&가중치 표 / (옵션) 외부 뉴스 본문
+# - 이미지 Base64 포함, UTF-8 저장
+# - CoinGecko 429 백오프, Binance funding 사용
+# - (선택) news/today.md 있으면 본문 추가
 
 import requests, datetime, base64, io, os, time, random
 import pandas as pd
@@ -43,13 +44,13 @@ markets = cg("coins/markets", vs_currency="usd", order="market_cap_desc",
              per_page=40, page=1, price_change_percentage="24h")
 
 df = pd.DataFrame([{
-    "id": c["id"],
+    "id":     c["id"],
     "symbol": c["symbol"].upper(),
-    "name": c["name"],
-    "mcap": c["market_cap"] or 0,
-    "pct":  (c["price_change_percentage_24h"] or 0.0),
-    "vol":  c["total_volume"] or 0.0,
-    "price":c["current_price"] or 0.0,
+    "name":   c["name"],
+    "mcap":   c["market_cap"] or 0,
+    "pct":    (c["price_change_percentage_24h"] or 0.0),
+    "vol":    c["total_volume"] or 0.0,
+    "price":  c["current_price"] or 0.0,
 } for c in markets])
 df = df[~df["symbol"].isin(STABLES)].reset_index(drop=True)
 
@@ -74,9 +75,9 @@ def volume_spike_top3():
         try:
             j = cg(f"coins/{cid}/market_chart", vs_currency="usd", days=7)
             vol = pd.DataFrame(j["total_volumes"], columns=["ts","v"])
-            median7   = vol["v"].median()
-            today_last= float(vol["v"].iloc[-1])
-            ratio = (today_last/median7) if median7 else 0.0
+            median7    = vol["v"].median()
+            latest_vol = float(vol["v"].iloc[-1])
+            ratio = (latest_vol/median7) if median7 else 0.0
             out.append((sym, ratio))
         except Exception:
             out.append((sym, 0.0))
@@ -108,7 +109,7 @@ def funding_rate(symbol="BTCUSDT"):
         pass
     return None
 
-k_prem  = None  # 김프는 공용 API 한계로 표시만 비워둠(원하면 소스 연결해 줄 수 있음)
+k_prem  = None  # 김프는 공용 API 한계로 빈칸(나중에 별도 소스 연결 가능)
 fund_btc = funding_rate("BTCUSDT")
 fund_eth = funding_rate("ETHUSDT")
 
@@ -143,15 +144,15 @@ top3_dn = disp.tail(3)[["symbol","pct"]]
 # ===== 조선비즈 톤 뉴스(제목+본문) =====
 YMD = TODAY
 
-def pct(v):      # +기호 포함
+def pct(v):
     try: return f"{float(v):+,.2f}%"
     except: return "-"
 
-def pct_abs(v):  # 절대값(%)
+def pct_abs(v):
     try: return f"{abs(float(v)):.2f}%"
     except: return "-"
 
-def num(v):      # 1,234.56 포맷
+def num(v):
     try:
         s = f"{float(v):,.2f}"
         return s.rstrip("0").rstrip(".")
@@ -170,11 +171,9 @@ def fp(v):
 bm20_chg = bm20_change_pct; bm20_now = bm20_index
 num_up = up_count; num_down = down_count
 kimchi_pct = k_prem
-btc_f_bin, eth_f_bin = fund_btc, fund_eth
 btc_row = df.loc[df["symbol"]=="BTC"].head(1)
 eth_row = df.loc[df["symbol"]=="ETH"].head(1)
 
-# 뉴스 빌더
 def build_news_v2():
     trend = "상승" if bm20_chg>0 else ("하락" if bm20_chg<0 else "보합")
     breadth_word = "강세 우위" if num_up>num_down else ("약세 우위" if num_down>num_up else "중립")
@@ -190,7 +189,6 @@ def build_news_v2():
         btc_line = f"비트코인(BTC)은 {pct(br['pct'])} "
         btc_line += ("하락" if br["pct"]<0 else ("상승" if br["pct"]>0 else "보합"))
         btc_line += f"해 {num(br['price'])}달러선."
-
     eth_line = ""
     if len(eth_row):
         er = eth_row.iloc[0]
@@ -204,13 +202,12 @@ def build_news_v2():
     else:
         kp_side = "할인" if kimchi_pct<0 else "할증"
         kp_line = f"김치 프리미엄 {fmt_pct(kimchi_pct,2)}({kp_side})."
-    fund_line = f"바이낸스 펀딩비는 BTC {fp(btc_f_bin)}, ETH {fp(eth_f_bin)}."
+    fund_line = f"바이낸스 펀딩비는 BTC {fp(fund_btc)}, ETH {fp(fund_eth)}."
 
     # 제목(간결·사실), 본문(숏문장 위주)
     title = f"BM20 {pct_abs(bm20_chg)} {'상승' if bm20_chg>0 else ('하락' if bm20_chg<0 else '보합')}… 지수 {num(bm20_now)}pt"
     if kimchi_pct is not None:
         title += f", 김프 {fmt_pct(kimchi_pct,2)}"
-
     body = " ".join([
         f"{YMD} BM20 지수 {pct(bm20_chg)} {trend}.",
         f"시장 폭은 {breadth}({breadth_word}).",
@@ -335,6 +332,10 @@ h3{{font-size:18px;margin:6px 0}}
 arc_path = f"{ARCHIVE_DIR}/bm20_daily_{TODAY}.html"
 with open(arc_path, "w", encoding="utf-8") as f: f.write(HTML)
 with open("index.html", "w", encoding="utf-8") as f: f.write(HTML)
+
+# Jekyll 처리/캐시 이슈 방지(페이지 배포용)
+with open(".nojekyll", "w", encoding="utf-8") as f:
+    f.write("")
 
 items = sorted([p for p in os.listdir(ARCHIVE_DIR) if p.startswith("bm20_daily_") and p.endswith(".html")])
 links = "\n".join([f'<li><a href="{p}">{p.replace("bm20_daily_","").replace(".html","")}</a></li>' for p in items])
