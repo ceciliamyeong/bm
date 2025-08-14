@@ -122,11 +122,13 @@ def update_index(latest_dir: Path):
     INDEX.write_text(new_html, encoding="utf-8")
     print("[update] index.html latest block (with news) updated")
 
-# --- add: publish latest (fixed assets) -------------------------------
+# --- publish latest (fixed assets) -----------------------------------
 def publish_latest(latest_dir: Path):
     """
-    Create /bm20/latest.html (if bm20/ exists; otherwise /latest.html) and
-    copy latest images with fixed names: bm20_bar_latest.png, bm20_trend_latest.png
+    Always create under bm20/:
+      - bm20/latest.html
+      - bm20/bm20_bar_latest.png
+      - bm20/bm20_trend_latest.png
     """
     ymd = latest_dir.name
     html_src = latest_dir / f"bm20_daily_{ymd}.html"
@@ -140,8 +142,8 @@ def publish_latest(latest_dir: Path):
         print("[publish_latest] skip: image(s) not found", bar_src, trd_src)
         return
 
-    # 배포 타겟 디렉토리: bm20/ 폴더가 있으면 거기에, 없으면 루트
-    target_root = ROOT / "bm20" if (ROOT / "bm20").exists() else ROOT
+    # 항상 bm20/ 아래로 배포
+    target_root = ROOT / "bm20"
     target_root.mkdir(parents=True, exist_ok=True)
 
     # latest.html: 이미지 경로를 고정 파일명으로 치환
