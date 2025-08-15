@@ -8,14 +8,15 @@
   <style>
     :root { --card-w: 1040px; }
     * { box-sizing: border-box; }
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 24px; background: #fafafa; }
-    .card { max-width: var(--card-w); margin: 0 auto; padding: 16px 18px; border-radius: 16px; background: #fff; box-shadow: 0 8px 28px rgba(0,0,0,.08); }
-    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
-    .muted { color: #666; font-size: 12px; }
-    .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-    select, button { border: 1px solid #ddd; background: #fff; padding: 6px 10px; border-radius: 8px; font-size: 13px; }
-    button.active { border-color: #000; }
-    .err { color: #b00020; font-size: 13px; margin-top: 6px; }
+    body { font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; margin:24px; background:#fafafa; }
+    .card { max-width:var(--card-w); margin:0 auto; padding:16px 18px; border-radius:16px; background:#fff; box-shadow:0 8px 28px rgba(0,0,0,.08); }
+    .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; }
+    .muted { color:#666; font-size:12px; }
+    .controls { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+    select, button { border:1px solid #ddd; background:#fff; padding:6px 10px; border-radius:8px; font-size:13px; }
+    button.active { border-color:#000; }
+    .err { color:#b00020; font-size:13px; margin-top:6px; }
+    .warn { color:#8a5a00; font-size:12px; margin-top:6px; }
   </style>
 </head>
 <body>
@@ -36,23 +37,29 @@
           <option value="first">표시 구간 첫날 = 100</option>
           <option value="2018">2018-01-01 = 100</option>
         </select>
+        <button id="download">CSV 다운로드</button>
       </div>
     </div>
 
     <canvas id="chart" height="360"></canvas>
     <div id="meta" class="muted" style="margin-top:8px"></div>
+    <div id="warn" class="warn"></div>
     <div id="error" class="err"></div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-  // BM 지수 CSV (output=csv)
+  // ────────────────────── 설정 ──────────────────────
+  // output=csv 로 끝나는 네 BM CSV 링크로 바꿔도 됨
   const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTCY4gVE1R52KBlm7rC8RmI2odz8DtCiIQUo9HbACLT_kM_Sr8KM4-KjwlgI6cerR1Z4BkNZAo2bjm7/pub?gid=0&single=true&output=csv";
+  const HARD_BASE = "2018-01-01"; // 고정 기준일 옵션 값
+  const AUTO_REFRESH_MS = 10 * 60 * 1000; // 10분마다 자동 새로고침
+  // ────────────────────────────────────────────────
 
-  // 간단 CSV 파서(따옴표 처리 포함)
+  // 따옴표 처리까지 되는 CSV 파서
   function parseCSV(text) {
     const rows = [];
-    let i = 0, cur = [], field = "", inQ = false;
+    let i=0, cur=[], field="", inQ=false;
     while (i < text.length) {
       const ch = text[i++];
       if (inQ) {
@@ -60,8 +67,8 @@
         else field += ch;
       } else {
         if (ch === '"') inQ = true;
-        else if (ch === ',') { cur.push(field); field = ""; }
-        else if (ch === '\n') { cur.push(field); rows.push(cur); cur = []; field = ""; }
+        else if (ch === ',') { cur.push(field); field=""; }
+        else if (ch === '\n') { cur.push(field); rows.push(cur); cur=[]; field=""; }
         else if (ch !== '\r') field += ch;
       }
     }
@@ -72,7 +79,7 @@
   async function fetchCSV(url) {
     const res = await fetch(url + "&v=" + Date.now(), { cache: "no-store" });
     if (!res.ok) throw new Error("fetch 실패: " + res.status);
-    return await res.text();
+    return res.text();
   }
 
   function buildSeries(text) {
@@ -84,7 +91,7 @@
     return rows.slice(1).map(r => ({
       date: r[di],
       index: Number(r[ii]),
-      flag: ((r[fi] || "backtest") + "").toLowerCase()
+      flag: ((r[fi] || "backtest")+"").toLowerCase()
     })).filter(d => d.date && Number.isFinite(d.index));
   }
 
@@ -101,51 +108,83 @@
     if (!series.length) return series;
     let baseVal = series[0].index;
     if (mode === "2018") {
-      const base = series.find(d => d.date === "2018-01-01");
+      const base = series.find(d => d.date === HARD_BASE);
       baseVal = base ? base.index : series[0].index;
     }
     return series.map(d => ({ ...d, index: (d.index / baseVal) * 100 }));
   }
 
+  // 핵심 렌더러
   let chart;
   function render(series, range="ALL", rebaseMode="first") {
+    const warnEl = document.getElementById("warn");
+    warnEl.textContent = "";
+
     const sliced = sliceRange(series, range);
-    const data = rebase(sliced, rebaseMode==="2018" ? "2018" : "first");
+    const data   = rebase(sliced, rebaseMode==="2018" ? "2018" : "first");
+
+    // 경고: 데이터가 너무 짧으면(예: 40일 미만) 백필 미완성 안내
+    if (series.length < 40) {
+      warnEl.textContent = "⚠️ 데이터가 짧습니다. (백필 미완성 가능) — constituents를 더 채워 전 구간 산출하세요.";
+    }
+
     const labels = data.map(d => d.date);
     const values = data.map(d => d.index);
 
+    // 메타 (누적·전일대비)
     const meta = document.getElementById("meta");
     if (!data.length) {
       meta.textContent = "데이터 없음";
     } else {
       const first = data[0], last = data[data.length-1];
-      const perf = (((last.index/first.index)-1)*100).toFixed(2);
-      meta.textContent = `표시 구간: ${first.date} → ${last.date} · 누적: ${perf}%`;
+      const prev  = data[data.length-2] || last;
+      const total = (((last.index/first.index)-1)*100).toFixed(2);
+      const dayChg = ((last.index/prev.index-1)*100);
+      const sign = dayChg >= 0 ? "+" : "";
+      meta.textContent = `표시 구간: ${first.date} → ${last.date} · 누적: ${total}% · 오늘: ${sign}${dayChg.toFixed(2)}%`;
     }
+
+    // live 포인트(있으면)
+    const lastLive = [...sliced].reverse().find(d => d.flag === "live");
+    const livePoint = lastLive ? [{x:lastLive.date, y: (rebaseMode==="2018"
+                        ? (lastLive.index / (series.find(d=>d.date===HARD_BASE)?.index || series[0].index) * 100)
+                        : (lastLive.index / series[0].index * 100))}] : [];
 
     if (chart) chart.destroy();
     chart = new Chart(document.getElementById("chart"), {
       type: "line",
-      data: { labels, datasets: [{ label: "BM", data: values, tension: 0.25, pointRadius: 0, borderWidth: 2 }] },
+      data: {
+        labels,
+        datasets: [
+          { label:"BM", data: values, tension:.25, pointRadius:0, borderWidth:2 },
+          { label:"live", data: livePoint, type:"scatter", pointRadius:4, showLine:false }
+        ]
+      },
       options: {
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `Index: ${Number(ctx.parsed.y).toFixed(2)}` } } },
-        scales: { x: { display: false }, y: { beginAtZero: false } }
+        plugins: {
+          legend:{ display:false },
+          tooltip:{ callbacks:{ label:(ctx)=>`Index: ${Number(ctx.parsed.y).toFixed(2)}` } }
+        },
+        scales:{ x:{ display:false }, y:{ beginAtZero:false } }
       }
     });
   }
 
+  // 부팅
   (async () => {
-    const errEl = document.getElementById("error");
+    const errEl  = document.getElementById("error");
+    const rangeBtns = Array.from(document.querySelectorAll("button[data-range]"));
+    const rebaseSel = document.getElementById("rebase");
+    const dlBtn = document.getElementById("download");
+
     try {
       const text = await fetchCSV(CSV_URL);
-      const series = buildSeries(text);
+      let series = buildSeries(text);
 
       // 초기 렌더
       render(series, "ALL", "first");
 
-      // 컨트롤 핸들러
-      const rangeBtns = Array.from(document.querySelectorAll("button[data-range]"));
-      const rebaseSel = document.getElementById("rebase");
+      // 컨트롤
       rangeBtns.forEach(b => b.addEventListener("click", () => {
         rangeBtns.forEach(x => x.classList.toggle("active", x===b));
         render(series, b.dataset.range, rebaseSel.value);
@@ -154,6 +193,18 @@
         const active = document.querySelector("button[data-range].active")?.dataset.range || "ALL";
         render(series, active, rebaseSel.value);
       });
+      dlBtn.addEventListener("click", () => { location.href = CSV_URL; });
+
+      // 자동 새로고침
+      setInterval(async () => {
+        try {
+          const refreshed = await fetchCSV(CSV_URL);
+          series = buildSeries(refreshed);
+          const active = document.querySelector("button[data-range].active")?.dataset.range || "ALL";
+          render(series, active, rebaseSel.value);
+        } catch(_) {}
+      }, AUTO_REFRESH_MS);
+
     } catch (e) {
       errEl.textContent = e.message || String(e);
     }
