@@ -1,48 +1,138 @@
 <!doctype html>
 <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>BM20 Index</title>
 <style>
-  body { font-family: system-ui, sans-serif; margin: 24px; }
-  .card { max-width: 900px; margin: 0 auto; padding: 16px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,.08); }
-  .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  :root { --card-w: 1000px; }
+  body { font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; margin: 24px; background: #fafafa; }
+  .card { max-width: var(--card-w); margin: 0 auto; padding: 16px 18px; border-radius: 16px; background: #fff;
+          box-shadow: 0 8px 28px rgba(0,0,0,.08); }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
   .muted { color: #666; font-size: 12px; }
+  .controls { display: flex; gap: 8px; align-items: center; }
+  select, button { border: 1px solid #ddd; background: #fff; padding: 6px 10px; border-radius: 8px; font-size: 13px; }
+  button.active { border-color: #000; }
 </style>
+
 <div class="card">
-  <div class="row">
-    <h2>BM20 Index</h2>
-    <small class="muted">source: Google Sheets CSV</small>
+  <div class="row" style="margin-bottom:8px">
+    <div>
+      <h2 style="margin:0">BM20 Index</h2>
+      <div class="muted">source: Google Sheets (CSV)</div>
+    </div>
+    <div class="controls">
+      <span class="muted">Range</span>
+      <button data-range="ALL" class="active">ALL</button>
+      <button data-range="YTD">YTD</button>
+      <button data-range="1Y">1Y</button>
+      <button data-range="3Y">3Y</button>
+      <span class="muted" style="margin-left:8px">Rebase</span>
+      <select id="rebase">
+        <option value="first">First visible = 100</option>
+        <option value="2018">2018-01-01 = 100</option>
+      </select>
+    </div>
   </div>
-  <canvas id="chart" height="320"></canvas>
+
+  <canvas id="chart" height="360"></canvas>
   <div id="meta" class="muted" style="margin-top:8px"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-const CSV_URL = "여기에_너의_CSV_링크"; // output=csv 붙은 링크
+const CSV_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTCY4gVE1R52KBlm7rC8RmI2odz8DtCiIQUo9HbACLT_kM_Sr8KM4-KjwlgI6cerR1Z4BkNZAo2bjm7/pub?gid=0&single=true&output=csv";
 
-async function loadCSV(url){
+let RAW = []; // {date:'YYYY-MM-DD', index:number, flag:'backtest'|'live'}
+
+async function loadCsv(url){
   const res = await fetch(url + "&v=" + Date.now(), { cache: "no-store" });
   const text = await res.text();
   const rows = text.trim().split(/\r?\n/).map(r => r.split(","));
   const [header, ...data] = rows;
-  const H = header.map(s => s.toLowerCase());
-  const di = H.indexOf("date"), ii = H.indexOf("index");
-  return data.map(r => ({ date: r[di], index: Number(r[ii]) }))
-             .filter(d => Number.isFinite(d.index));
+  const H = header.map(s => s.trim().toLowerCase());
+  const di = H.indexOf("date"), ii = H.indexOf("index"), fi = H.indexOf("flag");
+  return data.map(r => ({
+      date: r[di],
+      index: Number(r[ii]),
+      flag: ((r[fi]||"backtest")+"").toLowerCase()
+    }))
+    .filter(d => Number.isFinite(d.index) && d.date);
+}
+
+function sliceRange(src, range){
+  if (range === "ALL") return src;
+  const to = new Date(); let from = new Date(0);
+  if (range === "YTD"){ from = new Date(new Date().getFullYear(), 0, 1); }
+  else if (range === "1Y"){ from = new Date(to); from.setFullYear(to.getFullYear()-1); }
+  else if (range === "3Y"){ from = new Date(to); from.setFullYear(to.getFullYear()-3); }
+  return src.filter(d => new Date(d.date) >= from);
+}
+
+function rebase(series, mode){
+  if (!series.length) return series;
+  let baseVal = series[0].index;
+  if (mode === "2018"){
+    const base = series.find(d => d.date === "2018-01-01");
+    baseVal = base ? base.index : series[0].index;
+  }
+  return series.map(d => ({ ...d, index: (d.index / baseVal) * 100 }));
+}
+
+function buildLivePoint(series){
+  const live = [...series].reverse().find(d => d.flag === "live");
+  return live ? [{ x: live.date, y: live.index }] : [];
+}
+
+let chart;
+function render(range="ALL", rebaseMode="first"){
+  const sliced = sliceRange(RAW, range);
+  const data = rebase(sliced, rebaseMode==="2018" ? "2018" : "first");
+  const labels = data.map(d => d.date);
+  const values = data.map(d => d.index);
+  const livePoint = buildLivePoint(data);
+
+  const first = data[0], last = data[data.length-1];
+  const perf = first && last ? (((last.index/first.index)-1)*100).toFixed(2) : "0.00";
+  document.getElementById("meta").textContent =
+    data.length ? `기간: ${first.date} → ${last.date} · 누적: ${perf}%` : "데이터 없음";
+
+  if (chart) chart.destroy();
+  const ctx = document.getElementById("chart");
+  chart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        { label: "BM20", data: values, tension: 0.25, pointRadius: 0, borderWidth: 2 },
+        { label: "live", data: livePoint, type: "scatter", pointRadius: 4, showLine: false }
+      ]
+    },
+    options: {
+      plugins: { legend: { display: false }, tooltip: { callbacks: {
+        label: (ctx) => `Index: ${Number(ctx.parsed.y).toFixed(2)}`
+      }}},
+      scales: { x: { display: false }, y: { beginAtZero: false } }
+    }
+  });
+
+  // 버튼 상태 갱신
+  document.querySelectorAll("button[data-range]").forEach(b=>{
+    b.classList.toggle("active", b.dataset.range === range);
+  });
 }
 
 (async () => {
-  const series = await loadCSV(CSV_URL);
-  const ctx = document.getElementById("chart");
-  const labels = series.map(d => d.date);
-  const values = series.map(d => d.index);
-  new Chart(ctx, {
-    type: "line",
-    data: { labels, datasets: [{ label: "BM20", data: values, tension: 0.2, pointRadius: 0 }] },
-    options: { plugins: { legend: { display: false } }, scales: { x: { display: false } } }
+  RAW = await loadCsv(CSV_URL);
+  render("ALL","first");
+
+  // 컨트롤 핸들러
+  document.querySelectorAll("button[data-range]").forEach(b=>{
+    b.addEventListener("click", () => render(b.dataset.range, document.getElementById("rebase").value));
   });
-  const first = series[0], last = series[series.length-1];
-  const perf = ((last.index / first.index - 1) * 100).toFixed(2);
-  document.getElementById("meta").textContent = `기간: ${first.date} → ${last.date} · 누적: ${perf}%`;
+  document.getElementById("rebase").addEventListener("change", (e)=>{
+    const active = document.querySelector("button[data-range].active")?.dataset.range || "ALL";
+    render(active, e.target.value);
+  });
 })();
 </script>
