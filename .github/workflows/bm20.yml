@@ -25,6 +25,6 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install deps
-        run: pip install gspread google-auth google-auth-oauthlib google-auth-httplib2
+        run: pip install pandas numpy yfinance gspread google-auth google-auth-oauthlib google-auth-httplib2
       - name: Append today's index (live)
         run: python scripts/run_daily.py
