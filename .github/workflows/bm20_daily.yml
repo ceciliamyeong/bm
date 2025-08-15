@@ -12,13 +12,12 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-latest
-    env:
-      COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
 
     permissions:
       contents: write  # index.html / archive / latest.html 커밋용
 
     env:
+      COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
       TZ: Asia/Seoul
 
     steps:
