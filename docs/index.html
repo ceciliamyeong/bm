@@ -116,59 +116,49 @@
 
   // 핵심 렌더러
   let chart;
-  function render(series, range="ALL", rebaseMode="first") {
-    const warnEl = document.getElementById("warn");
-    warnEl.textContent = "";
+function render(series, range="ALL", rebaseMode="first") {
+  const sliced = sliceRange(series, range);
+  const data   = rebase(sliced, rebaseMode==="2018" ? "2018" : "first");
 
-    const sliced = sliceRange(series, range);
-    const data   = rebase(sliced, rebaseMode==="2018" ? "2018" : "first");
+  const labels = data.map(d => d.date);
+  const values = data.map(d => d.index);
 
-    // 경고: 데이터가 너무 짧으면(예: 40일 미만) 백필 미완성 안내
-    if (series.length < 40) {
-      warnEl.textContent = "⚠️ 데이터가 짧습니다. (백필 미완성 가능) — constituents를 더 채워 전 구간 산출하세요.";
-    }
-
-    const labels = data.map(d => d.date);
-    const values = data.map(d => d.index);
-
-    // 메타 (누적·전일대비)
-    const meta = document.getElementById("meta");
-    if (!data.length) {
-      meta.textContent = "데이터 없음";
-    } else {
-      const first = data[0], last = data[data.length-1];
-      const prev  = data[data.length-2] || last;
-      const total = (((last.index/first.index)-1)*100).toFixed(2);
-      const dayChg = ((last.index/prev.index-1)*100);
-      const sign = dayChg >= 0 ? "+" : "";
-      meta.textContent = `표시 구간: ${first.date} → ${last.date} · 누적: ${total}% · 오늘: ${sign}${dayChg.toFixed(2)}%`;
-    }
-
-    // live 포인트(있으면)
-    const lastLive = [...sliced].reverse().find(d => d.flag === "live");
-    const livePoint = lastLive ? [{x:lastLive.date, y: (rebaseMode==="2018"
-                        ? (lastLive.index / (series.find(d=>d.date===HARD_BASE)?.index || series[0].index) * 100)
-                        : (lastLive.index / series[0].index * 100))}] : [];
-
-    if (chart) chart.destroy();
-    chart = new Chart(document.getElementById("chart"), {
-      type: "line",
-      data: {
-        labels,
-        datasets: [
-          { label:"BM", data: values, tension:.25, pointRadius:0, borderWidth:2 },
-          { label:"live", data: livePoint, type:"scatter", pointRadius:4, showLine:false }
-        ]
-      },
-      options: {
-        plugins: {
-          legend:{ display:false },
-          tooltip:{ callbacks:{ label:(ctx)=>`Index: ${Number(ctx.parsed.y).toFixed(2)}` } }
-        },
-        scales:{ x:{ display:false }, y:{ beginAtZero:false } }
-      }
-    });
+  // 마지막 값/전일 대비
+  const meta = document.getElementById("meta");
+  if (!data.length) {
+    meta.textContent = "데이터 없음";
+  } else {
+    const last = data[data.length-1];
+    const prev = data[data.length-2] || last;
+    const perf = (((last.index/data[0].index)-1)*100).toFixed(2);
+    const dchg = ((last.index/prev.index-1)*100);
+    const sign = dchg >= 0 ? "+" : "";
+    meta.textContent = `표시 구간: ${data[0].date} → ${last.date} · 누적: ${perf}% · 오늘: ${sign}${dchg.toFixed(2)}%`;
   }
+
+  // live 포인트(있으면)
+  const live = [...sliced].reverse().find(d => d.flag === "live");
+  const livePoint = live ? [{x: live.date, y: (rebaseMode==="2018"
+                        ? (live.index / (data.find(d=>d.date==="2018-01-01")?.index || data[0].index) * 100)
+                        : (live.index / data[0].index * 100))}] : [];
+
+  if (chart) chart.destroy();
+  chart = new Chart(document.getElementById("chart"), {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        { label: "BM", data: values, tension: 0.25, pointRadius: 0, borderWidth: 2 },
+        { label: "live", data: livePoint, type: "scatter", pointRadius: 4, showLine: false }
+      ]
+    },
+    options: {
+      plugins: { legend: { display: false },
+        tooltip: { callbacks: { label: (ctx) => `Index: ${Number(ctx.parsed.y).toFixed(2)}` } } },
+      scales: { x: { display: false }, y: { beginAtZero: false } }
+    }
+  });
+}
 
   // 부팅
   (async () => {
