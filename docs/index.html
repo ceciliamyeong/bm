@@ -1,0 +1,48 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>BM20 Index</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 24px; }
+  .card { max-width: 900px; margin: 0 auto; padding: 16px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+  .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .muted { color: #666; font-size: 12px; }
+</style>
+<div class="card">
+  <div class="row">
+    <h2>BM20 Index</h2>
+    <small class="muted">source: Google Sheets CSV</small>
+  </div>
+  <canvas id="chart" height="320"></canvas>
+  <div id="meta" class="muted" style="margin-top:8px"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const CSV_URL = "여기에_너의_CSV_링크"; // output=csv 붙은 링크
+
+async function loadCSV(url){
+  const res = await fetch(url + "&v=" + Date.now(), { cache: "no-store" });
+  const text = await res.text();
+  const rows = text.trim().split(/\r?\n/).map(r => r.split(","));
+  const [header, ...data] = rows;
+  const H = header.map(s => s.toLowerCase());
+  const di = H.indexOf("date"), ii = H.indexOf("index");
+  return data.map(r => ({ date: r[di], index: Number(r[ii]) }))
+             .filter(d => Number.isFinite(d.index));
+}
+
+(async () => {
+  const series = await loadCSV(CSV_URL);
+  const ctx = document.getElementById("chart");
+  const labels = series.map(d => d.date);
+  const values = series.map(d => d.index);
+  new Chart(ctx, {
+    type: "line",
+    data: { labels, datasets: [{ label: "BM20", data: values, tension: 0.2, pointRadius: 0 }] },
+    options: { plugins: { legend: { display: false } }, scales: { x: { display: false } } }
+  });
+  const first = series[0], last = series[series.length-1];
+  const perf = ((last.index / first.index - 1) * 100).toFixed(2);
+  document.getElementById("meta").textContent = `기간: ${first.date} → ${last.date} · 누적: ${perf}%`;
+})();
+</script>
