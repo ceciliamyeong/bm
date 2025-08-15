@@ -5,26 +5,41 @@ import pandas as pd
 import gspread, yfinance as yf
 from google.oauth2.service_account import Credentials
 
-# ===== 설정 =====
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 TZ = "Asia/Seoul"
 BASE_VALUE = 100.0
 
-# coin_id -> Yahoo Finance 티커 (필요시 계속 추가)
+# ---- 20종 YF_MAP ----
 YF_MAP = {
-    "bitcoin":  "BTC-USD",
-    "ethereum": "ETH-USD",
-    "ripple":   "XRP-USD",
-    # "binancecoin":"BNB-USD", "solana":"SOL-USD", ...
+    "bitcoin":             "BTC-USD",
+    "ethereum":            "ETH-USD",
+    "ripple":              "XRP-USD",
+    "binancecoin":         "BNB-USD",
+    "solana":              "SOL-USD",
+    "cardano":             "ADA-USD",
+    "dogecoin":            "DOGE-USD",
+    "tron":                "TRX-USD",
+    "avalanche-2":         "AVAX-USD",
+    "polkadot":            "DOT-USD",
+    "chainlink":           "LINK-USD",
+    "bitcoin-cash":        "BCH-USD",
+    "litecoin":            "LTC-USD",
+    "stellar":             "XLM-USD",
+    "internet-computer":   "ICP-USD",
+    "near":                "NEAR-USD",
+    "aptos":               "APT-USD",
+    "cosmos":              "ATOM-USD",
+    "uniswap":             "UNI-USD",
+    "ethereum-classic":    "ETC-USD",
 }
 
-# ===== 공용 함수 =====
 def kst_today():
     return pd.Timestamp.now(tz=TZ).date()
 
 def authorize():
     creds = Credentials.from_service_account_info(
-        json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"]), scopes=SCOPES
+        json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"]),
+        scopes=SCOPES
     )
     gc = gspread.authorize(creds)
     sh = gc.open_by_key(os.environ["SHEET_ID"])
@@ -43,18 +58,16 @@ def load_constituents(ws_cons):
     if len(vals) < 2:
         raise RuntimeError("bm20_constituents 비어 있음")
     df = pd.DataFrame(vals[1:], columns=[c.strip() for c in vals[0]])
-
     need = ["month","coin_id","symbol","weight"]
     for c in need:
         if c not in df.columns: raise RuntimeError(f"컬럼 '{c}' 없음")
-
     df["month"]  = pd.to_datetime(df["month"], errors="coerce").dt.to_period("M")
     df["weight"] = pd.to_numeric(df["weight"], errors="coerce").fillna(0.0)
     if "kr_bonus_applied" not in df.columns: df["kr_bonus_applied"] = False
-    df["kr_bonus_applied"] = df["kr_bonus_applied"].astype(str).str.lower().isin(["1","true","y","yes"])
+    df["kr_bonus_applied"] = df["kr_bonus_applied"].astype(str)\
+                              .str.lower().isin(["1","true","y","yes"])
     df = df.dropna(subset=["month","coin_id"])
-
-    # KR 보너스(1.3x) 적용 후 월내 정규화 (Deprecation 경고 없는 버전)
+    # KR 1.3x 보너스 후 월내 정규화(Deprecation 없는 버전)
     df["w_eff"] = df["weight"] * df["kr_bonus_applied"].map({True:1.3, False:1.0})
     sum_by_m = df.groupby("month")["w_eff"].transform(lambda s: s.sum() if s.sum() > 0 else len(s))
     df["norm_weight"] = df["w_eff"] / sum_by_m
@@ -63,8 +76,7 @@ def load_constituents(ws_cons):
 
 def latest_sheet_snapshot(ws_index):
     vals = ws_index.get_all_values()
-    if len(vals) < 2:
-        return None, None
+    if len(vals) < 2: return None, None
     df = pd.DataFrame(vals[1:], columns=[c.strip().lower() for c in vals[0]])
     df["date"] = pd.to_datetime(df["date"], errors="coerce").dt.date
     df["index"] = pd.to_numeric(df["index"], errors="coerce")
@@ -85,22 +97,17 @@ def expand_carry_forward(cons_df, start_date, end_date):
 def fetch_close(tickers, start, end):
     raw = yf.download(tickers=tickers, start=str(start), end=str(end + dt.timedelta(days=1)),
                       interval="1d", auto_adjust=True, progress=False, group_by="ticker")
+    close = None
     if isinstance(raw, pd.DataFrame) and not raw.empty:
         if isinstance(raw.columns, pd.MultiIndex):
             lvl1 = set(raw.columns.get_level_values(1))
             use  = "Close" if "Close" in lvl1 else ("Adj Close" if "Adj Close" in lvl1 else None)
             if use:
                 close = raw.xs(use, axis=1, level=1)
-            else:
-                close = None
         else:
             if   "Close" in raw.columns: close = raw[["Close"]]
             elif "Adj Close" in raw.columns: close = raw[["Adj Close"]]
-            else: close = None
             if close is not None: close.columns = tickers
-    else:
-        close = None
-
     # per-ticker 폴백
     if close is None or close.shape[1] == 0:
         cols = {}
@@ -112,63 +119,51 @@ def fetch_close(tickers, start, end):
                 elif "Adj Close" in h.columns: cols[t] = h["Adj Close"]
         if cols:
             close = pd.DataFrame(cols)
-
     if close is not None:
         close = close.dropna(how="all", axis=1)
     return close
 
-# ===== 메인 =====
 def main():
     sh = authorize()
     ws_cons  = ensure_ws(sh, "bm20_constituents", ["month","coin_id","symbol","weight","kr_bonus_applied","listed_in_kr3","is_stable","notes"])
     ws_index = ensure_ws(sh, "bm20_index",       ["date","index","flag","updated_at"])
 
     cons_df = load_constituents(ws_cons)
-
-    # 시트의 최신 날짜/지수
     last_date, last_index = latest_sheet_snapshot(ws_index)
+
     if last_date is None:
-        # 첫 실행: 2018-01-01부터 시작
         firstM = cons_df["month"].min()
         start_date = pd.to_datetime(f"{firstM.year}-{firstM.month:02d}-01").date()
         start_index = BASE_VALUE
     else:
-        # 그 다음 날부터 다시 계산
         start_date  = last_date + dt.timedelta(days=1)
         start_index = last_index
 
-    # 오늘(KST) 기준 마지막 계산 목표일
     today = kst_today()
     if start_date > today:
         print(f"[INFO] Already up-to-date (last={last_date}).")
         return
 
-    # 필요한 기간만 constituents carry-forward
     cons_exp = expand_carry_forward(cons_df, start_date, today)
 
-    # 필요한 코인만 매핑
     coins   = sorted(cons_exp["coin_id"].unique())
     mapped  = [c for c in coins if c in YF_MAP]
     if not mapped:
         raise RuntimeError("YF_MAP 매핑된 코인이 없습니다. (YF_MAP 업데이트 필요)")
     tickers = [YF_MAP[c] for c in mapped]
 
-    # 가격 받기(스타트 이전 하루까지 포함해서 전일 대비 수익 계산)
     price_start = start_date - dt.timedelta(days=1)
     close = fetch_close(tickers, price_start, today)
     if close is None or close.shape[1] == 0:
         raise RuntimeError("가격 데이터가 비었습니다. (레이트리밋/티커 확인)")
 
-    # 티커 -> coin_id
     rev = {YF_MAP[c]: c for c in mapped}
     close = close.rename(columns=rev).loc[:, [c for c in mapped if c in close.columns]].astype(float).sort_index()
 
-    # 일자 정렬/보간 + 수익률
     di = pd.date_range(close.index.min(), close.index.max(), freq="D")
     close = close.reindex(di).ffill()
     rets  = close.pct_change().fillna(0.0)
 
-    # 월중 고정 가중치 부여
     weights = pd.DataFrame(0.0, index=rets.index, columns=rets.columns)
     months_idx = weights.index.to_period("M")
     for m, g in cons_exp.groupby("month"):
@@ -176,29 +171,19 @@ def main():
         mask = (months_idx == m)
         if mask.any(): weights.loc[mask, :] = w
 
-    # 혹시 합이 1이 아니면 재정규화
     rs = weights.sum(axis=1)
     bad = rs != 0
     weights.loc[bad] = weights.loc[bad].div(rs[bad], axis=0)
 
-    # 우리가 실제로 추가해야 하는 기간만 선택
     calc_idx = pd.date_range(start_date, today, freq="D")
     port_ret = (rets.loc[calc_idx] * weights.loc[calc_idx]).sum(axis=1)
-
-    # 전일 지수에서 이어붙이기
     index_series = (1.0 + port_ret).cumprod() * start_index
 
     now_iso = pd.Timestamp.now(tz=TZ).isoformat()
-    rows = []
-    for d, v in index_series.items():
-        rows.append([d.strftime("%Y-%m-%d"), float(v), "live", now_iso])
-
+    rows = [[d.strftime("%Y-%m-%d"), float(v), "live", now_iso] for d, v in index_series.items()]
     if not rows:
-        print("[INFO] No new rows to append.")
-        return
+        print("[INFO] No new rows to append."); return
 
-    # 중복 방지: 시트에 같은 날짜가 있으면 지우고 추가
-    # (gspread는 범위 삭제가 느려서, 간단히 끝에 append만 하고 프론트에서 마지막만 쓰는 것도 가능)
     ws_index.append_rows(rows, value_input_option="USER_ENTERED")
     print(f"[OK] Appended {len(rows)} rows: {rows[0][0]} → {rows[-1][0]}")
 
