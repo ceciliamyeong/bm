@@ -1,184 +1,206 @@
 #!/usr/bin/env python3
-"""
-scripts/run_daily.py
-
-- Google Sheets의 `bm20_index` 탭에 오늘자 라이브 값 한 줄을 추가합니다.
-- 계산 로직:
-    1) `bm20_constituents`에서 '현재 월' 구성/가중치 로드
-    2) KR 1.3배 보정 → 월내 정규화(norm_weight)
-    3) yfinance 일별 종가로 어제→오늘 수익률 산출
-    4) 전일 지수 × (1 + 가중 평균 수익률) = 오늘 지수
-- 전제 환경변수(레포 Secrets로 등록):
-    * SHEET_ID
-    * GOOGLE_SERVICE_ACCOUNT_JSON  (서비스계정 JSON 전문)
-- 의존성: pandas numpy yfinance gspread google-auth google-auth-oauthlib google-auth-httplib2
-"""
-import os, json, math, datetime as dt, time
-import pandas as pd, numpy as np
-import yfinance as yf
-import gspread
+import os, json, datetime as dt
+import numpy as np
+import pandas as pd
+import gspread, yfinance as yf
 from google.oauth2.service_account import Credentials
 
+# ===== 설정 =====
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-HEADER = ["date", "index", "flag", "updated_at"]
+TZ = "Asia/Seoul"
+BASE_VALUE = 100.0
 
-# CoinGecko coin_id -> Yahoo Finance ticker 매핑 (필요시 추가)
+# coin_id -> Yahoo Finance 티커 (필요시 계속 추가)
 YF_MAP = {
-    "bitcoin": "BTC-USD",
+    "bitcoin":  "BTC-USD",
     "ethereum": "ETH-USD",
-    "ripple": "XRP-USD",
-    "litecoin": "LTC-USD",
-    "bitcoin-cash": "BCH-USD",
-    "binancecoin": "BNB-USD",
-    "cardano": "ADA-USD",
-    "solana": "SOL-USD",
-    "polkadot": "DOT-USD",
-    "chainlink": "LINK-USD",
-    "stellar": "XLM-USD",
-    "tron": "TRX-USD",
-    "dogecoin": "DOGE-USD",
+    "ripple":   "XRP-USD",
+    # "binancecoin":"BNB-USD", "solana":"SOL-USD", ...
 }
 
-def kst_now():
-    return dt.datetime.now(dt.timezone(dt.timedelta(hours=9)))
-
-def kst_today_date():
-    return kst_now().date()
+# ===== 공용 함수 =====
+def kst_today():
+    return pd.Timestamp.now(tz=TZ).date()
 
 def authorize():
-    sheet_id = os.environ["SHEET_ID"]
-    sa_json = os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"]
-    creds = Credentials.from_service_account_info(json.loads(sa_json), scopes=SCOPES)
+    creds = Credentials.from_service_account_info(
+        json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"]), scopes=SCOPES
+    )
     gc = gspread.authorize(creds)
-    sh = gc.open_by_key(sheet_id)
+    sh = gc.open_by_key(os.environ["SHEET_ID"])
     return sh
 
-def ensure_ws(sh):
+def ensure_ws(sh, title, header):
     try:
-        ws = sh.worksheet("bm20_index")
+        ws = sh.worksheet(title)
     except gspread.exceptions.WorksheetNotFound:
-        ws = sh.add_worksheet(title="bm20_index", rows=2000, cols=len(HEADER))
-        ws.append_row(HEADER, value_input_option="USER_ENTERED")
+        ws = sh.add_worksheet(title=title, rows=5000, cols=len(header))
+        ws.append_row(header, value_input_option="USER_ENTERED")
     return ws
 
-def get_last_row(ws):
-    vals = ws.get_all_values()
-    return vals[-1] if len(vals) >= 2 else None
-
-def get_last_index_value(ws) -> float | None:
-    vals = ws.get_values("B:B")
-    try:
-        return float(vals[-1][0]) if vals and vals[-1] and vals[-1][0] else None
-    except Exception:
-        return None
-
-def read_constituents(sh) -> pd.DataFrame | None:
-    try:
-        ws = sh.worksheet("bm20_constituents")
-    except gspread.exceptions.WorksheetNotFound:
-        return None
-    vals = ws.get_all_values()
+def load_constituents(ws_cons):
+    vals = ws_cons.get_all_values()
     if len(vals) < 2:
-        return None
-    df = pd.DataFrame(vals[1:], columns=vals[0])
-    df["month"] = pd.to_datetime(df["month"], format="%Y-%m", errors="coerce").dt.to_period("M")
+        raise RuntimeError("bm20_constituents 비어 있음")
+    df = pd.DataFrame(vals[1:], columns=[c.strip() for c in vals[0]])
+
+    need = ["month","coin_id","symbol","weight"]
+    for c in need:
+        if c not in df.columns: raise RuntimeError(f"컬럼 '{c}' 없음")
+
+    df["month"]  = pd.to_datetime(df["month"], errors="coerce").dt.to_period("M")
     df["weight"] = pd.to_numeric(df["weight"], errors="coerce").fillna(0.0)
-    if "kr_bonus_applied" in df.columns:
-        df["kr_bonus_applied"] = df["kr_bonus_applied"].astype(str).str.lower().isin(["1","true","y","yes"])
+    if "kr_bonus_applied" not in df.columns: df["kr_bonus_applied"] = False
+    df["kr_bonus_applied"] = df["kr_bonus_applied"].astype(str).str.lower().isin(["1","true","y","yes"])
+    df = df.dropna(subset=["month","coin_id"])
+
+    # KR 보너스(1.3x) 적용 후 월내 정규화 (Deprecation 경고 없는 버전)
+    df["w_eff"] = df["weight"] * df["kr_bonus_applied"].map({True:1.3, False:1.0})
+    sum_by_m = df.groupby("month")["w_eff"].transform(lambda s: s.sum() if s.sum() > 0 else len(s))
+    df["norm_weight"] = df["w_eff"] / sum_by_m
+    df = df.drop(columns=["w_eff"])
+    return df
+
+def latest_sheet_snapshot(ws_index):
+    vals = ws_index.get_all_values()
+    if len(vals) < 2:
+        return None, None
+    df = pd.DataFrame(vals[1:], columns=[c.strip().lower() for c in vals[0]])
+    df["date"] = pd.to_datetime(df["date"], errors="coerce").dt.date
+    df["index"] = pd.to_numeric(df["index"], errors="coerce")
+    df = df.dropna(subset=["date","index"]).sort_values("date")
+    if df.empty: return None, None
+    return df["date"].iloc[-1], float(df["index"].iloc[-1])
+
+def expand_carry_forward(cons_df, start_date, end_date):
+    months = pd.period_range(pd.Period(start_date, "M"), pd.Period(end_date, "M"))
+    out, last = [], None
+    for m in months:
+        g = cons_df[cons_df["month"] == m]
+        if not g.empty: last = g.copy()
+        if last is None: continue
+        t = last.copy(); t.loc[:, "month"] = m; out.append(t)
+    return pd.concat(out, ignore_index=True)
+
+def fetch_close(tickers, start, end):
+    raw = yf.download(tickers=tickers, start=str(start), end=str(end + dt.timedelta(days=1)),
+                      interval="1d", auto_adjust=True, progress=False, group_by="ticker")
+    if isinstance(raw, pd.DataFrame) and not raw.empty:
+        if isinstance(raw.columns, pd.MultiIndex):
+            lvl1 = set(raw.columns.get_level_values(1))
+            use  = "Close" if "Close" in lvl1 else ("Adj Close" if "Adj Close" in lvl1 else None)
+            if use:
+                close = raw.xs(use, axis=1, level=1)
+            else:
+                close = None
+        else:
+            if   "Close" in raw.columns: close = raw[["Close"]]
+            elif "Adj Close" in raw.columns: close = raw[["Adj Close"]]
+            else: close = None
+            if close is not None: close.columns = tickers
     else:
-        df["kr_bonus_applied"] = False
+        close = None
 
-    def norm_group(g: pd.DataFrame):
-        bonus = np.where(g["kr_bonus_applied"].values, 1.3, 1.0)
-        w = g["weight"].values * bonus
-        s = w.sum()
-        if not math.isfinite(s) or s <= 0:
-            n = len(g)
-            w = np.array([1.0/n]*n, dtype=float)
-            s = w.sum()
-        return g.assign(norm_weight=(w / s))
+    # per-ticker 폴백
+    if close is None or close.shape[1] == 0:
+        cols = {}
+        for t in tickers:
+            h = yf.download(tickers=t, start=str(start), end=str(end + dt.timedelta(days=1)),
+                            interval="1d", auto_adjust=True, progress=False)
+            if not h.empty:
+                if "Close" in h.columns: cols[t] = h["Close"]
+                elif "Adj Close" in h.columns: cols[t] = h["Adj Close"]
+        if cols:
+            close = pd.DataFrame(cols)
 
-    return df.groupby("month", group_keys=False).apply(norm_group)
+    if close is not None:
+        close = close.dropna(how="all", axis=1)
+    return close
 
-def fetch_daily_return_yf(ticker: str) -> float | None:
-    try:
-        dfp = yf.download(ticker, period="5d", interval="1d", auto_adjust=True, progress=False)
-        if dfp is None or dfp.empty or "Close" not in dfp.columns or len(dfp) < 2:
-            return None
-        close = dfp["Close"]
-        r = float(close.iloc[-1] / close.iloc[-2] - 1.0)
-        return r if math.isfinite(r) else None
-    except Exception:
-        return None
-
-def calc_today_index_value(sh, ws_index) -> float | None:
-    prev_idx = get_last_index_value(ws_index)
-    if prev_idx is None:
-        return None
-
-    cons = read_constituents(sh)
-    if cons is None or cons.empty:
-        return None
-
-    cur_month = pd.Period(kst_today_date(), freq="M")
-    g = cons[cons["month"] == cur_month]
-    if g.empty:
-        return None
-
-    coins = g["coin_id"].tolist()
-    w = g.set_index("coin_id")["norm_weight"]
-
-    contribs = []
-    for cid in coins:
-        tkr = YF_MAP.get(cid)
-        if not tkr:
-            print(f"[WARN] YF_MAP missing for coin_id='{cid}' → contribution=0")
-            continue
-        r = fetch_daily_return_yf(tkr)
-        if r is None:
-            print(f"[WARN] could not get daily return for {tkr} → contribution=0")
-            continue
-        wi = float(w.get(cid, 0.0) or 0.0)
-        contribs.append(wi * r)
-        time.sleep(0.15)  # rate-limit 배려
-
-    if not contribs:
-        return None
-
-    daily_ret = float(np.sum(contribs))
-    if not math.isfinite(daily_ret):
-        return None
-
-    return float(prev_idx * (1.0 + daily_ret))
-
-def append_today(ws_index, value: float):
-    today = kst_today_date().isoformat()
-    updated_at = kst_now().isoformat()
-    ws_index.append_row([today, float(value), "live", updated_at], value_input_option="USER_ENTERED")
-    print(f"[OK] Appended live row: {today} -> {value}")
-
+# ===== 메인 =====
 def main():
     sh = authorize()
-    ws_index = ensure_ws(sh)
+    ws_cons  = ensure_ws(sh, "bm20_constituents", ["month","coin_id","symbol","weight","kr_bonus_applied","listed_in_kr3","is_stable","notes"])
+    ws_index = ensure_ws(sh, "bm20_index",       ["date","index","flag","updated_at"])
 
-    today = kst_today_date().isoformat()
-    last = get_last_row(ws_index)
-    if last and last[0] == today:
-        print(f"[INFO] Already updated for {today}. Skipping.")
+    cons_df = load_constituents(ws_cons)
+
+    # 시트의 최신 날짜/지수
+    last_date, last_index = latest_sheet_snapshot(ws_index)
+    if last_date is None:
+        # 첫 실행: 2018-01-01부터 시작
+        firstM = cons_df["month"].min()
+        start_date = pd.to_datetime(f"{firstM.year}-{firstM.month:02d}-01").date()
+        start_index = BASE_VALUE
+    else:
+        # 그 다음 날부터 다시 계산
+        start_date  = last_date + dt.timedelta(days=1)
+        start_index = last_index
+
+    # 오늘(KST) 기준 마지막 계산 목표일
+    today = kst_today()
+    if start_date > today:
+        print(f"[INFO] Already up-to-date (last={last_date}).")
         return
 
-    val = calc_today_index_value(sh, ws_index)
-    if val is None or not math.isfinite(val):
-        prev = get_last_index_value(ws_index)
-        if prev is None:
-            raise RuntimeError("No previous index value and daily calc unavailable.")
-        print("[WARN] Daily calc unavailable; carrying forward previous value.")
-        val = prev
+    # 필요한 기간만 constituents carry-forward
+    cons_exp = expand_carry_forward(cons_df, start_date, today)
 
-    append_today(ws_index, val)
+    # 필요한 코인만 매핑
+    coins   = sorted(cons_exp["coin_id"].unique())
+    mapped  = [c for c in coins if c in YF_MAP]
+    if not mapped:
+        raise RuntimeError("YF_MAP 매핑된 코인이 없습니다. (YF_MAP 업데이트 필요)")
+    tickers = [YF_MAP[c] for c in mapped]
+
+    # 가격 받기(스타트 이전 하루까지 포함해서 전일 대비 수익 계산)
+    price_start = start_date - dt.timedelta(days=1)
+    close = fetch_close(tickers, price_start, today)
+    if close is None or close.shape[1] == 0:
+        raise RuntimeError("가격 데이터가 비었습니다. (레이트리밋/티커 확인)")
+
+    # 티커 -> coin_id
+    rev = {YF_MAP[c]: c for c in mapped}
+    close = close.rename(columns=rev).loc[:, [c for c in mapped if c in close.columns]].astype(float).sort_index()
+
+    # 일자 정렬/보간 + 수익률
+    di = pd.date_range(close.index.min(), close.index.max(), freq="D")
+    close = close.reindex(di).ffill()
+    rets  = close.pct_change().fillna(0.0)
+
+    # 월중 고정 가중치 부여
+    weights = pd.DataFrame(0.0, index=rets.index, columns=rets.columns)
+    months_idx = weights.index.to_period("M")
+    for m, g in cons_exp.groupby("month"):
+        w = g.set_index("coin_id")["norm_weight"].reindex(weights.columns).fillna(0.0).values
+        mask = (months_idx == m)
+        if mask.any(): weights.loc[mask, :] = w
+
+    # 혹시 합이 1이 아니면 재정규화
+    rs = weights.sum(axis=1)
+    bad = rs != 0
+    weights.loc[bad] = weights.loc[bad].div(rs[bad], axis=0)
+
+    # 우리가 실제로 추가해야 하는 기간만 선택
+    calc_idx = pd.date_range(start_date, today, freq="D")
+    port_ret = (rets.loc[calc_idx] * weights.loc[calc_idx]).sum(axis=1)
+
+    # 전일 지수에서 이어붙이기
+    index_series = (1.0 + port_ret).cumprod() * start_index
+
+    now_iso = pd.Timestamp.now(tz=TZ).isoformat()
+    rows = []
+    for d, v in index_series.items():
+        rows.append([d.strftime("%Y-%m-%d"), float(v), "live", now_iso])
+
+    if not rows:
+        print("[INFO] No new rows to append.")
+        return
+
+    # 중복 방지: 시트에 같은 날짜가 있으면 지우고 추가
+    # (gspread는 범위 삭제가 느려서, 간단히 끝에 append만 하고 프론트에서 마지막만 쓰는 것도 가능)
+    ws_index.append_rows(rows, value_input_option="USER_ENTERED")
+    print(f"[OK] Appended {len(rows)} rows: {rows[0][0]} → {rows[-1][0]}")
 
 if __name__ == "__main__":
-    for k in ("SHEET_ID", "GOOGLE_SERVICE_ACCOUNT_JSON"):
-        if not os.environ.get(k):
-            raise SystemExit(f"Missing required environment variable: {k}")
     main()
