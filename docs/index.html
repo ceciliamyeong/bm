@@ -46,159 +46,110 @@
     <div id="warn" class="warn"></div>
     <div id="error" class="err"></div>
   </div>
+<!-- ECharts CDN -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-  // ────────────────────── 설정 ──────────────────────
-  // output=csv 로 끝나는 네 BM CSV 링크로 바꿔도 됨
-  const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTCY4gVE1R52KBlm7rC8RmI2odz8DtCiIQUo9HbACLT_kM_Sr8KM4-KjwlgI6cerR1Z4BkNZAo2bjm7/pub?gid=0&single=true&output=csv";
-  const HARD_BASE = "2018-01-01"; // 고정 기준일 옵션 값
-  const AUTO_REFRESH_MS = 10 * 60 * 1000; // 10분마다 자동 새로고침
-  // ────────────────────────────────────────────────
+<!-- 차트 영역 + 메타 -->
+<div id="bm20" style="height:380px; max-width: 1000px; margin: 24px auto;"></div>
+<div id="bm20-meta" style="max-width:1000px;margin:6px auto 20px;font:12px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#666;"></div>
 
-  // 따옴표 처리까지 되는 CSV 파서
-  function parseCSV(text) {
-    const rows = [];
-    let i=0, cur=[], field="", inQ=false;
-    while (i < text.length) {
-      const ch = text[i++];
-      if (inQ) {
-        if (ch === '"') { if (text[i] === '"') { field += '"'; i++; } else inQ = false; }
-        else field += ch;
-      } else {
-        if (ch === '"') inQ = true;
-        else if (ch === ',') { cur.push(field); field=""; }
-        else if (ch === '\n') { cur.push(field); rows.push(cur); cur=[]; field=""; }
-        else if (ch !== '\r') field += ch;
-      }
-    }
-    if (field.length || cur.length) { cur.push(field); rows.push(cur); }
-    return rows;
-  }
+<script>
+// ① CSV 엔드포인트 (네가 준 링크)
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTndyrPd3WWwFtfzv2CZxJeDcH-l8ibQIdO5ouYS4HsaGpbeXQQbs6WEr9qPqqZbRoT6cObdFxJpief/pub?gid=720141148&single=true&output=csv";
 
-  async function fetchCSV(url) {
-    const res = await fetch(url + "&v=" + Date.now(), { cache: "no-store" });
-    if (!res.ok) throw new Error("fetch 실패: " + res.status);
-    return res.text();
-  }
-
-  function buildSeries(text) {
-    const rows = parseCSV(text);
-    if (!rows.length) return [];
-    const H = rows[0].map(s => s.trim().toLowerCase());
-    const di = H.indexOf("date"), ii = H.indexOf("index"), fi = H.indexOf("flag");
-    if (di < 0 || ii < 0) throw new Error("CSV에 date/index 컬럼이 없습니다.");
-    return rows.slice(1).map(r => ({
-      date: r[di],
-      index: Number(r[ii]),
-      flag: ((r[fi] || "backtest")+"").toLowerCase()
-    })).filter(d => d.date && Number.isFinite(d.index));
-  }
-
-  function sliceRange(src, range) {
-    if (range === "ALL") return src;
-    const to = new Date(); let from = new Date(0);
-    if (range === "YTD") from = new Date(new Date().getFullYear(), 0, 1);
-    else if (range === "1Y") { from = new Date(to); from.setFullYear(to.getFullYear()-1); }
-    else if (range === "3Y") { from = new Date(to); from.setFullYear(to.getFullYear()-3); }
-    return src.filter(d => new Date(d.date) >= from);
-  }
-
-  function rebase(series, mode) {
-    if (!series.length) return series;
-    let baseVal = series[0].index;
-    if (mode === "2018") {
-      const base = series.find(d => d.date === HARD_BASE);
-      baseVal = base ? base.index : series[0].index;
-    }
-    return series.map(d => ({ ...d, index: (d.index / baseVal) * 100 }));
-  }
-
-  // 핵심 렌더러
-  let chart;
-function render(series, range="ALL", rebaseMode="first") {
-  const sliced = sliceRange(series, range);
-  const data   = rebase(sliced, rebaseMode==="2018" ? "2018" : "first");
-
-  const labels = data.map(d => d.date);
-  const values = data.map(d => d.index);
-
-  // 마지막 값/전일 대비
-  const meta = document.getElementById("meta");
-  if (!data.length) {
-    meta.textContent = "데이터 없음";
-  } else {
-    const last = data[data.length-1];
-    const prev = data[data.length-2] || last;
-    const perf = (((last.index/data[0].index)-1)*100).toFixed(2);
-    const dchg = ((last.index/prev.index-1)*100);
-    const sign = dchg >= 0 ? "+" : "";
-    meta.textContent = `표시 구간: ${data[0].date} → ${last.date} · 누적: ${perf}% · 오늘: ${sign}${dchg.toFixed(2)}%`;
-  }
-
-  // live 포인트(있으면)
-  const live = [...sliced].reverse().find(d => d.flag === "live");
-  const livePoint = live ? [{x: live.date, y: (rebaseMode==="2018"
-                        ? (live.index / (data.find(d=>d.date==="2018-01-01")?.index || data[0].index) * 100)
-                        : (live.index / data[0].index * 100))}] : [];
-
-  if (chart) chart.destroy();
-  chart = new Chart(document.getElementById("chart"), {
-    type: "line",
-    data: {
-      labels,
-      datasets: [
-        { label: "BM", data: values, tension: 0.25, pointRadius: 0, borderWidth: 2 },
-        { label: "live", data: livePoint, type: "scatter", pointRadius: 4, showLine: false }
-      ]
-    },
-    options: {
-      plugins: { legend: { display: false },
-        tooltip: { callbacks: { label: (ctx) => `Index: ${Number(ctx.parsed.y).toFixed(2)}` } } },
-      scales: { x: { display: false }, y: { beginAtZero: false } }
-    }
-  });
+// ② CSV 가져오기 (캐시 무효화용 v 파라미터 추가)
+async function fetchCsv() {
+  const url = CSV_URL + (CSV_URL.includes("?") ? "&" : "?") + "v=" + Date.now();
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error("CSV fetch failed: " + res.status);
+  return res.text();
 }
 
-  // 부팅
-  (async () => {
-    const errEl  = document.getElementById("error");
-    const rangeBtns = Array.from(document.querySelectorAll("button[data-range]"));
-    const rebaseSel = document.getElementById("rebase");
-    const dlBtn = document.getElementById("download");
+// ③ 아주 심플한 CSV 파서 (열: date,index,flag,updated_at 가정)
+function parseCsv(text) {
+  const lines = text.trim().split(/\r?\n/);
+  const header = lines.shift().split(",");
+  const idxDate = header.indexOf("date");
+  const idxIndex = header.indexOf("index");
+  const idxUpdated = header.indexOf("updated_at");
 
-    try {
-      const text = await fetchCSV(CSV_URL);
-      let series = buildSeries(text);
+  const rows = lines.map(line => {
+    // 값에 콤마가 들어갈 일이 거의 없으니 단순 split 사용 (필요시 Papaparse로 교체 가능)
+    const cells = line.split(",");
+    const vRaw = cells[idxIndex]?.trim().replace(/"/g, "");
+    const v = parseFloat(vRaw);
+    return {
+      date: cells[idxDate],
+      value: Number.isFinite(v) ? v : null,
+      updated: idxUpdated >= 0 ? cells[idxUpdated] : null
+    };
+  }).filter(r => r.value !== null);
 
-      // 초기 렌더
-      render(series, "ALL", "first");
+  return rows;
+}
 
-      // 컨트롤
-      rangeBtns.forEach(b => b.addEventListener("click", () => {
-        rangeBtns.forEach(x => x.classList.toggle("active", x===b));
-        render(series, b.dataset.range, rebaseSel.value);
-      }));
-      rebaseSel.addEventListener("change", () => {
-        const active = document.querySelector("button[data-range].active")?.dataset.range || "ALL";
-        render(series, active, rebaseSel.value);
-      });
-      dlBtn.addEventListener("click", () => { location.href = CSV_URL; });
+// ④ 차트 렌더
+function renderChart(rows) {
+  const el = document.getElementById("bm20");
+  const chart = echarts.init(el, null, { renderer: "canvas" });
 
-      // 자동 새로고침
-      setInterval(async () => {
-        try {
-          const refreshed = await fetchCSV(CSV_URL);
-          series = buildSeries(refreshed);
-          const active = document.querySelector("button[data-range].active")?.dataset.range || "ALL";
-          render(series, active, rebaseSel.value);
-        } catch(_) {}
-      }, AUTO_REFRESH_MS);
+  const data = rows.map(r => [r.date, r.value]);
 
-    } catch (e) {
-      errEl.textContent = e.message || String(e);
-    }
-  })();
-  </script>
+  chart.setOption({
+    title: { text: "BM20 Index", left: "center", top: 0 },
+    tooltip: {
+      trigger: "axis",
+      valueFormatter: v => (typeof v === "number" ? v.toFixed(2) : v)
+    },
+    grid: { left: 48, right: 24, top: 48, bottom: 56 },
+    xAxis: { type: "time" },
+    yAxis: { type: "value", scale: true, name: "Index" },
+    dataZoom: [
+      { type: "inside" },
+      { type: "slider", bottom: 18 }
+    ],
+    series: [{
+      name: "BM20",
+      type: "line",
+      showSymbol: false,
+      smooth: true,
+      data
+    }]
+  });
+
+  // 메타 정보: 최신값/업데이트 시각/간단 수익률
+  const last = rows[rows.length - 1];
+  const metaEl = document.getElementById("bm20-meta");
+
+  // 간단 수익률 계산 (1M/3M/1Y) — 데이터가 충분할 때만
+  function periodReturn(days) {
+    if (rows.length <= days) return null;
+    const prev = rows[rows.length - 1 - days].value;
+    return prev ? (last.value / prev - 1) : null;
+  }
+  const ret1m = periodReturn(21);
+  const ret3m = periodReturn(63);
+  const ret1y = periodReturn(252);
+
+  metaEl.innerHTML = `
+    <b>Last</b>: ${last?.date ?? "-"} &nbsp; | &nbsp;
+    <b>Index</b>: ${last?.value?.toFixed(2) ?? "-"} &nbsp; | &nbsp;
+    <b>Updated</b>: ${last?.updated ?? "-"}
+    ${ret1m!==null ? ` &nbsp; | &nbsp; <b>1M</b>: ${(ret1m*100).toFixed(2)}%` : ""}
+    ${ret3m!==null ? ` &nbsp; | &nbsp; <b>3M</b>: ${(ret3m*100).toFixed(2)}%` : ""}
+    ${ret1y!==null ? ` &nbsp; | &nbsp; <b>1Y</b>: ${(ret1y*100).toFixed(2)}%` : ""}
+  `;
+
+  // 반응형
+  window.addEventListener("resize", () => chart.resize());
+}
+
+// ⑤ 실행
+fetchCsv().then(parseCsv).then(renderChart).catch(err => {
+  console.error(err);
+  document.getElementById("bm20-meta").textContent = "데이터 로드 실패: " + err.message;
+});
+</script>
+
 </body>
 </html>
