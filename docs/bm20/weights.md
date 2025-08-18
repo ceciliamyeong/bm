@@ -6,7 +6,7 @@ layout: default
 
 # 분기별 구성·가중치
 
-<p>아래 표는 분기별 확정 가중치와 사용된 소스(시총/달러거래대금/스냅샷), KR 보너스/상한 적용 여부를 보여줍니다.</p>
+<p>분기별 확정 가중치와 사용된 소스(시총/달러거래대금/스냅샷), KR 보너스/상한 적용 여부를 보여줍니다.</p>
 
 <table id="wq" style="width:100%;border-collapse:collapse">
   <thead>
@@ -23,7 +23,7 @@ layout: default
 </table>
 
 <script>
-const WQ_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTndyrPd3WWwFtfzv2CZxJeDcH-l8ibQIdO5ouYS4HsaGpbeXQQbs6WEr9qPqqZbRoT6cObdFxJpief/pub?gid=1645238012&single=true&output=csv"; // ← 시트 CSV 링크
+const WQ_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTndyrPd3WWwFtfzv2CZxJeDcH-l8ibQIdO5ouYS4HsaGpbeXQQbs6WEr9qPqqZbRoT6cObdFxJpief/pub?gid=1645238012&single=true&output=csv";
 
 async function getCsv(u){const r=await fetch(u+(u.includes('?')?'&':'?')+'v='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error(r.status);return r.text();}
 function parseCsv(t){
@@ -42,6 +42,8 @@ function parseCsv(t){
   }).filter(r=>Number.isFinite(r.w));
 }
 function renderRows(rows){
+  // 분기+코인 정렬
+  rows.sort((a,b)=>a.q.localeCompare(b.q)||a.coin.localeCompare(b.coin));
   const tb=document.querySelector("#wq tbody");
   tb.innerHTML = rows.map(r=>`
     <tr>
@@ -53,7 +55,6 @@ function renderRows(rows){
       <td style="text-align:center">${r.cap?"적용":"-"}</td>
     </tr>`).join("");
 }
-if(WQ_CSV.startsWith("http")) getCsv(WQ_CSV).then(parseCsv).then(renderRows)
+getCsv(WQ_CSV).then(parseCsv).then(renderRows)
   .catch(e=>document.querySelector("#wq tbody").innerHTML=`<tr><td colspan="6">로드 실패: ${e.message}</td></tr>`);
-else document.querySelector("#wq tbody").innerHTML=`<tr><td colspan="6">CSV URL 설정 필요</td></tr>`;
 </script>
