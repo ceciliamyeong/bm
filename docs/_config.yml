@@ -1,8 +1,10 @@
-title: "BM Indices"
-baseurl: "/bm"   # ← 리포 이름이 bm 이면 반드시 /bm
+title: BM Indices
+theme: minima
 
-nav:
-  - text: "BM20 개요"
-    url: "/bm20/"               # 개요(차트) 페이지
-  - text: "BM20 구성"
-    url: "/bm20/weights/"       # 또는 "/bm20/portfolio-2025q3/" 로 연결해도 됩니다
+url: https://ceciliamyeong.github.io
+baseurl: /bm          # ← 꼭!
+
+header_pages:         # 헤더 메뉴에 올릴 문서 경로(사이트 루트 기준)
+  - bm20/overview.md
+  - bm20/components.md
+  - bm20/daily-template.md
