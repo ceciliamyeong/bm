@@ -5,11 +5,6 @@ permalink: /bm20/
 {% include bm_index_nav.html active="home" %}
 
 # BM20
-- 👉 **개요:** [/bm20/overview/](/bm20/overview/)
-- 👉 **지수 산정:** [/bm20/methodology/](/bm20/methodology/)
-- 👉 **지수 성과:** [/bm20/performance/](/bm20/performance/)
-- 👉 **데이터:** [/bm20/data/](/bm20/data/)
-- 👉 **FAQ:** [/bm20/faq/](/bm20/faq/)
 
 <div id="bm20" style="height:380px; max-width:1000px; margin:24px 0;"></div>
 <div id="bm20-meta" style="font:12px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#666;"></div>
