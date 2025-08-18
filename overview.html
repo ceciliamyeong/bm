@@ -1,0 +1,48 @@
+<!doctype html><html lang="ko"><meta charset="utf-8">
+<title>BM20 개요</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<body style="font:14px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:1000px;margin:24px auto;padding:0 12px">
+<h1>BM20 개요</h1>
+
+<div id="bm-nav"></div>
+<script src="/bm20/nav.js"></script>
+<script>loadBmNav('overview');</script>
+
+<div id="bm20" style="height:380px;margin:24px 0;"></div>
+<div id="bm20-meta" style="color:#666;margin-bottom:16px"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
+<script>
+// CSV 엔드포인트 (네 시트 링크)
+const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vTndyrPd3WWwFtfzv2CZxJeDcH-l8ibQIdO5ouYS4HsaGpbeXQQbs6WEr9qPqqZbRoT6cObdFxJpief/pub?gid=720141148&single=true&output=csv";
+
+async function fetchCsv(){
+  const url=CSV_URL+(CSV_URL.includes('?')?'&':'?')+'v='+Date.now();
+  const r=await fetch(url,{cache:'no-store'}); if(!r.ok) throw new Error(r.status); return r.text();
+}
+function parseCsv(text){
+  const lines=text.trim().split(/\r?\n/); const header=lines.shift().split(",");
+  const iD=header.indexOf("date"), iV=header.indexOf("index"), iU=header.indexOf("updated_at");
+  return lines.map(l=>{const c=l.split(","); const v=parseFloat((c[iV]||"").replace(/"/g,""));
+    return {date:c[iD], value:Number.isFinite(v)?v:null, updated:iU>=0?c[iU]:null};})
+    .filter(r=>r.value!==null);
+}
+function render(rows){
+  const chart=echarts.init(document.getElementById('bm20'));
+  chart.setOption({
+    tooltip:{trigger:'axis',valueFormatter:v=>typeof v==='number'?v.toFixed(2):v},
+    grid:{left:48,right:24,top:24,bottom:56},
+    xAxis:{type:'time'}, yAxis:{type:'value',scale:true, name:'Index'},
+    dataZoom:[{type:'inside'},{type:'slider',bottom:18}],
+    series:[{type:'line',showSymbol:false,smooth:true,data:rows.map(r=>[r.date,r.value])}]
+  });
+  const last=rows.at(-1);
+  document.getElementById('bm20-meta').textContent =
+    `Last: ${last?.date} | Index: ${last?.value?.toFixed(2)} | Updated: ${last?.updated ?? '-'}`;
+  addEventListener('resize',()=>chart.resize());
+}
+fetchCsv().then(parseCsv).then(render).catch(e=>{
+  document.getElementById('bm20-meta').textContent='데이터 로드 실패: '+e.message;
+});
+</script>
+</body></html>
