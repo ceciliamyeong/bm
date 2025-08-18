@@ -23,7 +23,7 @@ layout: default
 </table>
 
 <script>
-const WQ_CSV = "PASTE_YOUR_bm20_weights_q_CSV_URL"; // ← 시트 CSV 링크
+const WQ_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTndyrPd3WWwFtfzv2CZxJeDcH-l8ibQIdO5ouYS4HsaGpbeXQQbs6WEr9qPqqZbRoT6cObdFxJpief/pub?gid=1645238012&single=true&output=csv"; // ← 시트 CSV 링크
 
 async function getCsv(u){const r=await fetch(u+(u.includes('?')?'&':'?')+'v='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error(r.status);return r.text();}
 function parseCsv(t){
