@@ -7,10 +7,12 @@ layout: default
 # 데이터 다운로드
 
 - **Index (일별)**  
-  <a target="_blank" href="https://docs.google.com/spreadsheets/d/e/2PACX-1vTndyrPd3WWwFtfzv2CZxJeDcH-l8ibQIdO5ouYS4HsaGpbeXQQbs6WEr9qPqqZbRoT6cObdFxJpief/pub?gid=720141148&single=true&output=csv">bm20_index.csv</a>
+  <a href="PASTE_YOUR_bm20_index_CSV_URL" target="_blank" rel="noopener">bm20_index.csv</a>
 
-- **Weights (분기, 최종가중치)** — (CSV URL로 교체)  
-  <code>REPLACE_WITH_bm20_weights_q_CSV_URL</code>
+- **Weights (분기)**  
+  <a href="PASTE_YOUR_bm20_weights_q_CSV_URL" target="_blank" rel="noopener">bm20_weights_q.csv</a>
 
-- **Summary (성과 요약)** — (CSV URL로 교체)  
-  <code>REPLACE_WITH_bm20_summary_CSV_URL</code>
+- **Summary (성과)**  
+  <a href="PASTE_YOUR_bm20_summary_CSV_URL" target="_blank" rel="noopener">bm20_summary.csv</a>
+
+> 모든 링크는 구글 스프레드시트 **웹에 게시 → CSV** URL입니다.
