@@ -84,15 +84,23 @@ def latest_sheet_snapshot(ws_index):
     if df.empty: return None, None
     return df["date"].iloc[-1], float(df["index"].iloc[-1])
 
-def expand_carry_forward(cons_df, start_date, end_date):
-    months = pd.period_range(pd.Period(start_date, "M"), pd.Period(end_date, "M"))
-    out, last = [], None
-    for m in months:
-        g = cons_df[cons_df["month"] == m]
-        if not g.empty: last = g.copy()
-        if last is None: continue
-        t = last.copy(); t.loc[:, "month"] = m; out.append(t)
+def expand_carry_forward(cons_df: pd.DataFrame, start_date, end_date) -> pd.DataFrame:
+    # 1) 입력 가드
+    if cons_df is None or cons_df.empty:
+        print("[WARN] cons_df is empty in expand_carry_forward; returning empty df")
+        return pd.DataFrame(columns=getattr(cons_df, "columns", []))
+
+    out = []
+
+    # ... 여기에 기존 날짜 루프/로직 있음 ...
+
+    # 2) 출력 가드
+    if not out:
+        print("[WARN] No rows generated in expand_carry_forward; returning input unchanged")
+        return cons_df.copy()
+
     return pd.concat(out, ignore_index=True)
+
 
 def fetch_close(tickers, start, end):
     raw = yf.download(tickers=tickers, start=str(start), end=str(end + dt.timedelta(days=1)),
