@@ -1,10 +1,8 @@
-title: BM Indices
-description: 블록미디어 BM 인덱스 포털
-theme: minima
-minima:
-  skin: auto
-header_pages:
-  - index.md
-  - bm20/index.md
-markdown: kramdown
-permalink: pretty
+title: "BM Indices"
+baseurl: "/bm"   # ← 리포 이름이 bm 이면 반드시 /bm
+
+nav:
+  - text: "BM20 개요"
+    url: "/bm20/"               # 개요(차트) 페이지
+  - text: "BM20 구성"
+    url: "/bm20/weights/"       # 또는 "/bm20/portfolio-2025q3/" 로 연결해도 됩니다
