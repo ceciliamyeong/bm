@@ -65,6 +65,10 @@ jobs:
             cp out/bm20_index_from_csv.csv out/bm20_index_merged.csv
           fi
 
+      - name: Sanity (first≈100)
+        run: |
+          head -n 2 out/bm20_index_merged.csv | tail -n 1 | awk -F, '{print $2}' | awk '{if ($1<95 || $1>105){print "ERR:first not ~100:",$1; exit 1}else{print "OK:first≈100:",$1}}'
+
       - name: Export JSON for web
         run: |
           python export_json.py out/bm20_index_merged.csv site
