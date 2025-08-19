@@ -12,7 +12,7 @@ def to_bool(v):
     return s in ('1','true','y','yes')
 
 def main():
-    # 두 이름 모두 지원: 리포 시크릿 이름 어떤 걸 써도 됨
+    # 두 이름 모두 지원: 어느 시크릿을 써도 됨
     sa  = os.getenv('GSPREAD_SA_JSON') or os.getenv('GOOGLE_SERVICE_ACCOUNT_JSON')
     sid = os.getenv('BM20_SHEET_ID')   or os.getenv('SHEET_ID')
     if not sa or not sid:
@@ -48,7 +48,7 @@ def main():
 
     out = df[['symbol','yf_ticker','listed_kr_override','include','cap_override']].copy()
     out.to_csv('bm20_map_btc30.csv', index=False, encoding='utf-8')
-    print(f'[OK] wrote bm20_map_btc30.csv rows={len(out)}')
+    print(f'[OK] wrote bm20_map_btc30.csv rows={{len(out)}}')
 
 if __name__ == '__main__':
     main()
