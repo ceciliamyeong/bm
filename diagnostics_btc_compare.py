@@ -1,30 +1,61 @@
-# diagnostics_btc_compare.py
-# BM20(병합본)과 BTC-USD를 동일 시작=100으로 정규화, 상관/베타 산출, JSON으로 저장
-import json, argparse, pandas as pd, yfinance as yf
+# diagnostics_btc_compare.py  (교체본)
+# BM20(병합본) vs BTC-USD: 시작=100 정규화, 상관/베타 계산, 최근 180일 시리즈 JSON 출력
+import os, json, argparse
+import pandas as pd
+import yfinance as yf
+
 ap = argparse.ArgumentParser()
 ap.add_argument("--merged", default="out/bm20_index_merged.csv")
 ap.add_argument("--out-json", default="site/diag_btc.json")
 ap.add_argument("--start", default="2018-01-01")
+ap.add_argument("--tail-days", type=int, default=180)
 args = ap.parse_args()
+
+# 1) BM20 병합본 로드
 bm = pd.read_csv(args.merged, parse_dates=["date"]).set_index("date")["index"].sort_index()
 bm = bm[bm.index >= pd.to_datetime(args.start)]
-btc = yf.download("BTC-USD", start=bm.index.min().strftime("%Y-%m-%d"), progress=False)["Close"].dropna()
-bm_n = bm / bm.iloc[0] * 100.0
+if bm.empty:
+    raise SystemExit("empty bm20 series")
+
+# 2) BTC-USD 수집 (명시적으로 auto_adjust)
+btc = yf.download(
+    "BTC-USD",
+    start=bm.index.min().strftime("%Y-%m-%d"),
+    progress=False,
+    auto_adjust=True,
+)["Close"].dropna()
+
+# 3) 시작=100 정규화
+bm_n  = bm / bm.iloc[0] * 100.0
 btc_n = btc / btc.iloc[0] * 100.0
+
+# 4) 수익률 정렬·결합 → 상관/베타
 ret = pd.concat([bm_n.pct_change(), btc_n.pct_change()], axis=1, join="inner").dropna()
-ret.columns = ["bm","btc"]
-corr = float(ret.corr().loc("bm","btc")) if hasattr(ret.corr(),"loc") else float(ret.corr().loc["bm","btc"])
-beta = float(ret["bm"].cov(ret["btc"]) / ret["btc"].var())
+ret.columns = ["bm", "btc"]
+
+corr = float(ret["bm"].corr(ret["btc"])) if not ret.empty else float("nan")
+var_btc = float(ret["btc"].var()) if not ret.empty else 0.0
+beta = float(ret["bm"].cov(ret["btc"]) / var_btc) if var_btc > 0 else float("nan")
+
+# 5) 최근 tail-days만 시리즈로 저장
+def pack_series(s: pd.Series, tail: int):
+    s = s.iloc[-tail:]
+    return [[d.strftime("%Y-%m-%d"), float(v)] for d, v in s.items()]
+
 out = {
-  "corr": corr, "beta": beta,
-  "bm_start": str(bm_n.index[0].date()), "btc_start": str(btc_n.index[0].date()),
-  "last": str(bm_n.index[-1].date())
+    "corr": corr,
+    "beta": beta,
+    "bm_start": bm_n.index[0].strftime("%Y-%m-%d"),
+    "btc_start": btc_n.index[0].strftime("%Y-%m-%d"),
+    "last": bm_n.index[-1].strftime("%Y-%m-%d"),
+    "series": {
+        "bm": pack_series(bm_n, args.tail_days),
+        "btc": pack_series(btc_n, args.tail_days),
+    },
 }
-# 용량 줄이려고 최근 180일만 라인 시리즈 제공
-tail = 180
-out["series"] = {
-  "bm": [[d.strftime("%Y-%m-%d"), float(v)] for d,v in bm_n.iloc[-tail:].items()],
-  "btc": [[d.strftime("%Y-%m-%d"), float(v)] for d,v in btc_n.iloc[-tail:].items()]
-}
-with open(args.out_json, "w", encoding="utf-8") as f: json.dump(out, f, ensure_ascii=False)
+
+os.makedirs(os.path.dirname(args.out_json) or ".", exist_ok=True)
+with open(args.out_json, "w", encoding="utf-8") as f:
+    json.dump(out, f, ensure_ascii=False)
+
 print(f"[OK] diag → {args.out_json} corr={corr:.3f} beta={beta:.2f}")
