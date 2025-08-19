@@ -46,42 +46,62 @@ jobs:
         run: |
           mkdir -p out site
           python bm20_from_daily_csv.py --archive ./archive --out ./out \
-          --rebalance quarterly --weights-source rules \
-          --listed-bonus 1.3 --cap BTC:0.30 --cap ETH:0.20 \
-          --map bm20_map_btc30.csv
+            --rebalance quarterly --weights-source rules \
+            --listed-bonus 1.3 --cap BTC:0.30 --cap ETH:0.20 \
+            --map bm20_map_btc30.csv
 
-       # 3) 백필
+      # 3) 백필
       - name: Backfill long history (current basket)
         run: |
-           python backfill_current_basket.py --archive ./archive --map bm20_map_btc30.csv \
+          python backfill_current_basket.py --archive ./archive --map bm20_map_btc30.csv \
             --start 2018-01-01 --out out/backfill_current_basket.csv \
             --btc-cap 0.30 --eth-cap 0.20 --listed-bonus 1.3
-       
-        # 4) 병합(존재 확인 포함, 실패시 패스스루)
-      - name: Merge backfill with daily index
+
+      # 4) 병합(실패 시 데일리 지수로 폴백)
+      - name: Merge backfill with daily index (safe)
         run: |
-            test -f out/bm20_index_from_csv.csv
-            python merge_backfill.py out/backfill_current_basket.csv out/bm20_index_from_csv.csv \
-              --out out/bm20_index_merged.csv
-        
-        # 5) 웹으로 내보내기(병합본 사용)
-      - name: Export JSON for web
-        run: |
-         if python merge_backfill.py out/backfill_current_basket.csv out/bm20_index_from_csv.csv --out out/bm20_index_merged.csv; then
+          if python merge_backfill.py out/backfill_current_basket.csv out/bm20_index_from_csv.csv \
+            --out out/bm20_index_merged.csv; then
             echo "merge ok"
           else
-           echo "merge failed → fallback to daily index"
-           cp out/bm20_index_from_csv.csv out/bm20_index_merged.csv
-         fi
-         
-        # (디버그용, 선택)
-      - name: Show out files
-        run: ls -la out       
-          
+            echo "merge failed → fallback to daily index"
+            cp out/bm20_index_from_csv.csv out/bm20_index_merged.csv
+          fi
+
+      # 5) 웹 JSON 생성(여기가 핵심: export_json.py로 생성)
+      - name: Export JSON for web
+        run: |
+          python export_json.py out/bm20_index_merged.csv site
+          ls -la site
+
+      # 배포 전 필수 파일 검사
+      - name: Sanity check files
+        run: |
+          echo "---- site/ listing ----"
+          ls -la site
+          test -f site/index.html || echo "WARN: index.html missing (fallback will be created)"
+          test -f site/series.json || (echo "ERR: series.json missing"; exit 1)
+          test -f site/latest.json || (echo "ERR: latest.json missing"; exit 1)
+          test -f site/stats.json  || (echo "ERR: stats.json missing";  exit 1)
+
+      # 정적 페이지 복사 (안전 버전)
       - name: Copy static pages to site/
         run: |
-          cp -R "$SITE_SRC"/. site/
-          # ⚠️ site/ 루트에 index.html 반드시 존재해야 404가 안 납니다.
+          mkdir -p site
+          if [ -f "$SITE_SRC/index.html" ]; then
+            cp -R "$SITE_SRC"/. site/
+          else
+            echo "WARN: $SITE_SRC/index.html not found; writing fallback index"
+            cat > site/index.html <<'HTML'
+<!doctype html><meta charset="utf-8"><title>BM20 Index</title>
+<h1>BM20 Index</h1><p>Loading…</p>
+<script>
+Promise.all([fetch('./series.json').then(r=>r.json()), fetch('./latest.json').then(r=>r.json())])
+.then(([s,l])=>{document.body.innerHTML='<h1>BM20 Index</h1><pre>'+JSON.stringify({latest:l,len:s.length},null,2)+'</pre>';})
+.catch(e=>{document.body.innerHTML='<h1>BM20 Index</h1><p style="color:red">Failed to load JSON: '+e+'</p>';});
+</script>
+HTML
+          fi
 
       - uses: actions/upload-pages-artifact@v3
         with:
