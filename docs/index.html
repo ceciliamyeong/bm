@@ -1,8 +1,25 @@
----
-title: 홈
-layout: default
----
-
-# 블록미디어 BM Indices
-
-- [BM20 Index]({{ '/bm20/' | relative_url }}) — 개요(차트) · 산정기준 · 구성·가중치 · 성과 · 데이터
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BM20 Index</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>body{font-family:system-ui,-apple-system,'Noto Sans KR',sans-serif;margin:24px} .wrap{max-width:900px;margin:auto}</style>
+</head><body><div class="wrap">
+<h1>BM20 Index</h1><p id="headline">Loading...</p><canvas id="chart" height="120"></canvas>
+<p style="color:#666">데이터 출처: series.json / latest.json</p></div>
+<script>
+async function main(){
+  const [series, latest, stats] = await Promise.all([
+    fetch('series.json').then(r=>r.json()),
+    fetch('latest.json').then(r=>r.json()),
+    fetch('stats.json').then(r=>r.json()).catch(()=>({}))
+  ]);
+  document.getElementById('headline').textContent =
+    `기준일 ${latest.date} 지수 ${latest.index.toFixed(2)} (일간 ${(latest.ret*100).toFixed(2)}%, MTD ${(stats.mtd*100).toFixed(2)}%, YTD ${(stats.ytd*100).toFixed(2)}%)`;
+  const labels = series.map(d=>d.date);
+  const data   = series.map(d=>d.index);
+  new Chart(document.getElementById('chart'), {
+    type: 'line', data: { labels, datasets: [{ label:'BM20', data }]},
+    options: { responsive:true, scales:{ y:{ beginAtZero:false } } }
+  });
+}
+main();
+</script></body></html>
