@@ -12,9 +12,9 @@ def to_bool(v):
     return s in ('1','true','y','yes')
 
 def main():
-    # Accept either pair of env var names
-    sa = os.getenv('GSPREAD_SA_JSON') or os.getenv('GOOGLE_SERVICE_ACCOUNT_JSON')
-    sid = os.getenv('BM20_SHEET_ID') or os.getenv('SHEET_ID')
+    # 두 이름 모두 지원: 리포 시크릿 이름 어떤 걸 써도 됨
+    sa  = os.getenv('GSPREAD_SA_JSON') or os.getenv('GOOGLE_SERVICE_ACCOUNT_JSON')
+    sid = os.getenv('BM20_SHEET_ID')   or os.getenv('SHEET_ID')
     if not sa or not sid:
         print('[ERR] require env GSPREAD_SA_JSON/GOOGLE_SERVICE_ACCOUNT_JSON and BM20_SHEET_ID/SHEET_ID', file=sys.stderr)
         sys.exit(1)
@@ -22,8 +22,6 @@ def main():
     creds = Credentials.from_service_account_info(json.loads(sa), scopes=SCOPES)
     gc = gspread.authorize(creds)
     ss = gc.open_by_key(sid)
-
-    # worksheet name must be 'bm20_map'
     try:
         ws = ss.worksheet('bm20_map')
     except gspread.WorksheetNotFound:
@@ -38,21 +36,19 @@ def main():
     cols = [c.strip() for c in vals[0]]
     df = pd.DataFrame(vals[1:], columns=cols)
 
-    # ensure required columns
     for c in ['symbol','yf_ticker','listed_kr_override','include','cap_override']:
-        if c not in df.columns:
-            df[c] = np.nan
+        if c not in df.columns: df[c] = np.nan
 
     df['symbol'] = df['symbol'].astype(str).str.upper().str.strip()
     df['yf_ticker'] = df['yf_ticker'].astype(str).str.strip().replace({'': np.nan})
     df['listed_kr_override'] = df['listed_kr_override'].map(to_bool).fillna(False)
     df['include'] = df['include'].map(to_bool)
-    df.loc[df['include'].isna(), 'include'] = True  # default include True
+    df.loc[df['include'].isna(), 'include'] = True  # 기본값 True
     df['cap_override'] = pd.to_numeric(df['cap_override'], errors='coerce')
 
     out = df[['symbol','yf_ticker','listed_kr_override','include','cap_override']].copy()
     out.to_csv('bm20_map_btc30.csv', index=False, encoding='utf-8')
-    print(f"[OK] wrote bm20_map_btc30.csv rows={len(out)}")
+    print(f'[OK] wrote bm20_map_btc30.csv rows={len(out)}')
 
 if __name__ == '__main__':
     main()
