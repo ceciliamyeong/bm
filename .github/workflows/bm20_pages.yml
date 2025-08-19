@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  SITE_SRC: docs   # index.html 있는 폴더(예: docs, 또는 docs/bm 로 바꿔도 됨)
+  SITE_SRC: docs   # index.html 있는 폴더(예: docs, 또는 docs/bm)
 
 jobs:
   build:
@@ -41,7 +41,6 @@ jobs:
           python pull_sheet_map.py
           head -n 10 bm20_map_btc30.csv || true
 
-      # 2) 일별 CSV로 지수 생성
       - name: Build index from CSVs
         run: |
           mkdir -p out site
@@ -50,14 +49,12 @@ jobs:
             --listed-bonus 1.3 --cap BTC:0.30 --cap ETH:0.20 \
             --map bm20_map_btc30.csv
 
-      # 3) 백필
       - name: Backfill long history (current basket)
         run: |
           python backfill_current_basket.py --archive ./archive --map bm20_map_btc30.csv \
             --start 2018-01-01 --out out/backfill_current_basket.csv \
             --btc-cap 0.30 --eth-cap 0.20 --listed-bonus 1.3
 
-      # 4) 병합(실패 시 데일리 지수로 폴백)
       - name: Merge backfill with daily index (safe)
         run: |
           if python merge_backfill.py out/backfill_current_basket.csv out/bm20_index_from_csv.csv \
@@ -68,40 +65,23 @@ jobs:
             cp out/bm20_index_from_csv.csv out/bm20_index_merged.csv
           fi
 
-      # 5) 웹 JSON 생성(여기가 핵심: export_json.py로 생성)
       - name: Export JSON for web
         run: |
           python export_json.py out/bm20_index_merged.csv site
           ls -la site
 
-      # 배포 전 필수 파일 검사
+      - name: Copy static pages to site/
+        run: |
+          cp -R "$SITE_SRC"/. site/
+
       - name: Sanity check files
         run: |
           echo "---- site/ listing ----"
           ls -la site
-          test -f site/index.html || echo "WARN: index.html missing (fallback will be created)"
+          test -f site/index.html || (echo "ERR: index.html missing"; exit 1)
           test -f site/series.json || (echo "ERR: series.json missing"; exit 1)
           test -f site/latest.json || (echo "ERR: latest.json missing"; exit 1)
           test -f site/stats.json  || (echo "ERR: stats.json missing";  exit 1)
-
-      # 정적 페이지 복사 (안전 버전)
-      - name: Copy static pages to site/
-        run: |
-          mkdir -p site
-          if [ -f "$SITE_SRC/index.html" ]; then
-            cp -R "$SITE_SRC"/. site/
-          else
-            echo "WARN: $SITE_SRC/index.html not found; writing fallback index"
-            cat > site/index.html <<'HTML'
-<!doctype html><meta charset="utf-8"><title>BM20 Index</title>
-<h1>BM20 Index</h1><p>Loading…</p>
-<script>
-Promise.all([fetch('./series.json').then(r=>r.json()), fetch('./latest.json').then(r=>r.json())])
-.then(([s,l])=>{document.body.innerHTML='<h1>BM20 Index</h1><pre>'+JSON.stringify({latest:l,len:s.length},null,2)+'</pre>';})
-.catch(e=>{document.body.innerHTML='<h1>BM20 Index</h1><p style="color:red">Failed to load JSON: '+e+'</p>';});
-</script>
-HTML
-          fi
 
       - uses: actions/upload-pages-artifact@v3
         with:
