@@ -1,5 +1,4 @@
 # diagnostics_btc_compare.py
-# BM20 vs BTC-USD: 시작=100 정규화, 상관/베타 계산, 최근 180일 시리즈 JSON 출력 (robust)
 import os, json, argparse
 import pandas as pd
 import yfinance as yf
@@ -15,32 +14,25 @@ def pack_series(s: pd.Series, tail: int):
     s = s.iloc[-tail:]
     return [[d.strftime("%Y-%m-%d"), float(v)] for d, v in s.items()]
 
-# 1) BM20 병합본
 bm = pd.read_csv(args.merged, parse_dates=["date"]).set_index("date")["index"].sort_index()
 bm = bm[bm.index >= pd.to_datetime(args.start)]
 if bm.empty:
     raise SystemExit("empty bm20 series")
 
-# 2) BTC
-btc = yf.download(
-    "BTC-USD",
-    start=bm.index.min().strftime("%Y-%m-%d"),
-    progress=False,
-    auto_adjust=True,
-)["Close"].dropna()
+btc = yf.download("BTC-USD",
+                  start=bm.index.min().strftime("%Y-%m-%d"),
+                  progress=False, auto_adjust=True)["Close"].dropna()
 
-# 3) 시작=100 정규화
 bm_n  = bm  / bm.iloc[0] * 100.0
 btc_n = btc / btc.iloc[0] * 100.0
 
-# 4) 상관/베타
 ret = pd.concat([bm_n.pct_change(), btc_n.pct_change()], axis=1, join="inner").dropna()
 ret.columns = ["bm", "btc"]
-corr = float(ret["bm"].corr(ret["btc"])) if not ret.empty else float("nan")
-var_btc = float(ret["btc"].var())
-beta = float(ret["bm"].cov(ret["btc"]) / var_btc) if var_btc > 0 else float("nan")
 
-# 5) JSON 출력
+corr = float(ret["bm"].corr(ret["btc"])) if not ret.empty else float("nan")
+varb = float(ret["btc"].var())
+beta = float(ret["bm"].cov(ret["btc"]) / varb) if varb > 0 else float("nan")
+
 out = {
     "corr": corr, "beta": beta,
     "bm_start": bm_n.index[0].strftime("%Y-%m-%d"),
