@@ -1,25 +1,94 @@
 <!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BM20 Index</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>body{font-family:system-ui,-apple-system,'Noto Sans KR',sans-serif;margin:24px} .wrap{max-width:900px;margin:auto}</style>
-</head><body><div class="wrap">
-<h1>BM20 Index</h1><p id="headline">Loading...</p><canvas id="chart" height="120"></canvas>
-<p style="color:#666">데이터 출처: series.json / latest.json</p></div>
-<script>
-async function main(){
-  const [series, latest, stats] = await Promise.all([
-    fetch('series.json').then(r=>r.json()),
-    fetch('latest.json').then(r=>r.json()),
-    fetch('stats.json').then(r=>r.json()).catch(()=>({}))
-  ]);
-  document.getElementById('headline').textContent =
-    `기준일 ${latest.date} 지수 ${latest.index.toFixed(2)} (일간 ${(latest.ret*100).toFixed(2)}%, MTD ${(stats.mtd*100).toFixed(2)}%, YTD ${(stats.ytd*100).toFixed(2)}%)`;
-  const labels = series.map(d=>d.date);
-  const data   = series.map(d=>d.index);
-  new Chart(document.getElementById('chart'), {
-    type: 'line', data: { labels, datasets: [{ label:'BM20', data }]},
-    options: { responsive:true, scales:{ y:{ beginAtZero:false } } }
-  });
-}
-main();
-</script></body></html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BM20 Index</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+  <style>
+    :root { --fg:#111; --muted:#6b7280; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Noto Sans KR', sans-serif; color:var(--fg); margin:24px; }
+    .wrap { max-width:1100px; margin:0 auto; }
+    h1 { font-size: clamp(28px, 4vw, 42px); margin:0 0 8px; }
+    .meta { margin:6px 0 18px; color:var(--muted); font-size:15px; }
+    canvas { width:100% !important; height:420px !important; }
+    .src { color:var(--muted); margin-top:16px; font-size:14px; }
+    .err { color:#b91c1c; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>BM20 Index</h1>
+    <div id="headline" class="meta">Loading…</div>
+    <canvas id="chart"></canvas>
+    <div class="src">데이터 출처: <a href="./series.json">series.json</a> / <a href="./latest.json">latest.json</a></div>
+  </div>
+
+  <script>
+  // 유틸
+  const pct = (x) => (x>=0?'+':'') + (x*100).toFixed(2) + '%';
+  const parseD = (d) => new Date(d + 'T00:00:00');
+  const fmtD = (d) => d.toISOString().slice(0,10);
+
+  async function main(){
+    try {
+      // JSON 로드 (캐시 우회)
+      const [series, latest] = await Promise.all([
+        fetch('./series.json', {cache:'no-cache'}).then(r=>r.json()),
+        fetch('./latest.json', {cache:'no-cache'}).then(r=>r.json()),
+      ]);
+
+      // 시계열 가공
+      const arr = series.map(d => ({ t: parseD(d.date), v: +d.index })).sort((a,b)=>a.t-b.t);
+      const last = arr[arr.length-1];
+      const prev = arr[arr.length-2] || last;
+
+      // 기준일 계산
+      const today = parseD(latest.date || fmtD(last.t));
+      const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      const yearStart  = new Date(today.getFullYear(), 0, 1);
+
+      // 특정 날짜의 지수(없으면 직전일 값)
+      const valueAtOrBefore = (when) => {
+        for (let i = arr.length-1; i >= 0; i--) if (arr[i].t <= when) return arr[i].v;
+        return arr[0]?.v ?? 100;
+      };
+
+      const dayRet = latest.ret ?? (last.v/prev.v - 1);
+      const m0 = valueAtOrBefore(monthStart);
+      const y0 = valueAtOrBefore(yearStart);
+      const mtd = (last.v / m0 - 1);
+      const ytd = (last.v / y0 - 1);
+
+      // 헤드라인
+      document.getElementById('headline').textContent =
+        `기준일 ${fmtD(last.t)} 지수 ${last.v.toFixed(2)} (일간 ${pct(dayRet)}, MTD ${pct(mtd)}, YTD ${pct(ytd)})`;
+
+      // 차트
+      const labels = arr.map(d => fmtD(d.t));
+      const data   = arr.map(d => d.v);
+      new Chart(document.getElementById('chart'), {
+        type: 'line',
+        data: { labels, datasets: [{ label:'BM20', data, borderWidth:2, pointRadius:2, tension:0.15 }] },
+        options: {
+          responsive:true,
+          scales: { x:{ ticks:{ maxTicksLimit:8 } }, y:{ beginAtZero:false } },
+          plugins: { legend:{ display:true } }
+        }
+      });
+    } catch (e) {
+      console.error(e);
+      document.getElementById('headline').innerHTML =
+        `<span class="err">데이터 로딩 실패</span> — series.json / latest.json을 확인하세요.`;
+    }
+  }
+
+  // Chart.js 로드 후 실행
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    main();
+  } else {
+    window.addEventListener('DOMContentLoaded', main);
+  }
+  </script>
+</body>
+</html>
