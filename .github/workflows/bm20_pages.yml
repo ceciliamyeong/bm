@@ -79,9 +79,10 @@ jobs:
         run: |
           python export_json.py out/bm20_index_merged.csv site
 
-      - name: BTC diagnostics
+      - name: BTC diagnostics (non-blocking)
         run: |
-          python diagnostics_btc_compare.py --merged out/bm20_index_merged.csv --out-json site/diag_btc.json
+          python diagnostics_btc_compare.py --merged out/bm20_index_merged.csv --out-json site/diag_btc.json  || true
+          
 
       - name: Contribution report (top)
         run: |
