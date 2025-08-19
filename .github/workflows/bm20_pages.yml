@@ -78,7 +78,15 @@ jobs:
       - name: Export JSON for web
         run: |
           python export_json.py out/bm20_index_merged.csv site
-          ls -la site
+
+      - name: BTC diagnostics
+        run: |
+          python diagnostics_btc_compare.py --merged out/bm20_index_merged.csv --out-json site/diag_btc.json
+
+      - name: Contribution report (top)
+        run: |
+          python contrib_report.py --map bm20_map_btc30.csv --out-json site/contrib_top.json
+
 
       - name: Copy static pages to site/
         run: |
