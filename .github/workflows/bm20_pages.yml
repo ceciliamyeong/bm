@@ -79,10 +79,24 @@ jobs:
         run: |
           python export_json.py out/bm20_index_merged.csv site
 
+      - name: Debug:show diag script head
+        run: |
+         echo "=== diagnostics_btc_compare.py HEAD ==="
+         sed -n '1,60p' diagnostics_btc_compare.py
+         echo "=== grep bad loc signature ==="
+         grep -n 'loc("bm","btc")' diagnostics_btc_compare.py && echo "OLD FILE !!" || echo "OK new file"
+
       - name: BTC diagnostics (non-blocking)
         run: |
-          python diagnostics_btc_compare.py --merged out/bm20_index_merged.csv --out-json site/diag_btc.json  || true
-          
+          python diagnostics_btc_compare.py --merged out/bm20_index_merged.csv --out-json site/diag_btc.json || true
+          # 파일이 없다면 최소 placeholder라도 생성
+          test -f site/diag_btc.json || echo '{"status":"missing"}' > site/diag_btc.json
+
+      - name: List site (check outputs)
+        run: |
+          ls -la site | sed -n '1,200p'
+
+  
 
       - name: Contribution report (top)
         run: |
