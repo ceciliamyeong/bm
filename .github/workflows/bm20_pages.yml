@@ -41,27 +41,42 @@ jobs:
           python pull_sheet_map.py
           head -n 10 bm20_map_btc30.csv || true
 
-       # 1) 백필
-      - name: Backfill long history (current basket)
-        run: |
-          python backfill_current_basket.py --archive ./archive --map bm20_map_btc30.csv \
-          --start 2018-01-01 --out out/backfill_current_basket.csv \
-          --btc-cap 0.30 --eth-cap 0.20 --listed-bonus 1.3
-
-       # 2) 백필과 일별지수 병합
-      - name: Merge backfill with daily index
-        run: |
-         python merge_backfill.py out/backfill_current_basket.csv out/bm20_index_from_csv.csv \
-          --out out/bm20_index_merged.csv
-   
-      - name: Build index & JSON
+      # 2) 일별 CSV로 지수 생성
+      - name: Build index from CSVs
         run: |
           mkdir -p out site
           python bm20_from_daily_csv.py --archive ./archive --out ./out \
-            --rebalance quarterly --weights-source rules \
-            --listed-bonus 1.3 --cap BTC:0.30 --cap ETH:0.20 \
-            --map bm20_map_btc30.csv
-          python export_json.py out/bm20_index_merged.csv site
+          --rebalance quarterly --weights-source rules \
+          --listed-bonus 1.3 --cap BTC:0.30 --cap ETH:0.20 \
+          --map bm20_map_btc30.csv
+
+       # 3) 백필
+      - name: Backfill long history (current basket)
+        run: |
+           python backfill_current_basket.py --archive ./archive --map bm20_map_btc30.csv \
+            --start 2018-01-01 --out out/backfill_current_basket.csv \
+            --btc-cap 0.30 --eth-cap 0.20 --listed-bonus 1.3
+       
+        # 4) 병합(존재 확인 포함, 실패시 패스스루)
+      - name: Merge backfill with daily index
+        run: |
+            test -f out/bm20_index_from_csv.csv
+            python merge_backfill.py out/backfill_current_basket.csv out/bm20_index_from_csv.csv \
+              --out out/bm20_index_merged.csv
+        
+        # 5) 웹으로 내보내기(병합본 사용)
+      - name: Export JSON for web
+        run: |
+         if python merge_backfill.py out/backfill_current_basket.csv out/bm20_index_from_csv.csv --out out/bm20_index_merged.csv; then
+            echo "merge ok"
+          else
+           echo "merge failed → fallback to daily index"
+           cp out/bm20_index_from_csv.csv out/bm20_index_merged.csv
+         fi
+         
+        # (디버그용, 선택)
+      - name: Show out files
+        run: ls -la out       
           
       - name: Copy static pages to site/
         run: |
