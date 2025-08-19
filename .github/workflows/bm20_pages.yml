@@ -39,7 +39,6 @@ jobs:
           BM20_SHEET_ID:   ${{ secrets.SHEET_ID }}
         run: |
           python pull_sheet_map.py
-          echo "----- bm20_map_btc30.csv head -----"
           head -n 10 bm20_map_btc30.csv || true
           
       - name: Build index & JSON
