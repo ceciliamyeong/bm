@@ -65,9 +65,15 @@ jobs:
             cp out/bm20_index_from_csv.csv out/bm20_index_merged.csv
           fi
 
-      - name: Sanity (first≈100)
+      - name: Sanity (first must be ~100)
         run: |
-          head -n 2 out/bm20_index_merged.csv | tail -n 1 | awk -F, '{print $2}' | awk '{if ($1<95 || $1>105){print "ERR:first not ~100:",$1; exit 1}else{print "OK:first≈100:",$1}}'
+          python - <<'PY'
+          import pandas as pd, sys
+          df = pd.read_csv('out/bm20_index_merged.csv')
+          v = float(df['index'].iloc[0])
+          print(f"first={v}")
+          sys.exit(0 if 95 <= v <= 105 else 1)
+          PY
 
       - name: Export JSON for web
         run: |
