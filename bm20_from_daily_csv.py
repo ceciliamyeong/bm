@@ -3,7 +3,8 @@ import os, sys, glob, re, argparse
 import pandas as pd
 import numpy as np
 
-STABLE = {"USDT","USDC","DAI","FDUSD","TUSD","USDE","USDP","USDL","USDS"}
+# ✅ 스테이블 제외 목록 (USDT는 제외하지 않음, 강제 포함 대상)
+STABLE = {"USDC","DAI","FDUSD","TUSD","USDE","USDP","USDL","USDS"}
 EXCLUDE_DERIV = {"WBTC","WETH","WBETH","WEETH","STETH","WSTETH","RETH","CBETH","RENBTC","HBTC","TBTC"}
 
 def parse_args():
@@ -19,6 +20,9 @@ def parse_args():
     ap.add_argument("--map", dest="map_path", default=None)
     ap.add_argument("--no-upbit", action="store_true")
     ap.add_argument("--dump-constituents", type=int, default=1)
+    ap.add_argument("--plot", action="store_true")
+    ap.add_argument("--plot-log", action="store_true")
+    ap.add_argument("--ret-cap", type=float, default=None, help="winsorize daily returns at +/-RET_CAP (e.g., 0.35)")
     return ap.parse_args()
 
 def load_daily_csvs(archive_dir):
@@ -73,51 +77,38 @@ def fetch_upbit_symbols():
     except Exception:
         return set()
 
-def apply_caps(weights: pd.Series, caps: dict):
-    w = weights.copy()
-    w = w / w.sum() if w.sum()>0 else w
-    if not caps: return w
-    for _ in range(10):
-        over = {s: float(w.get(s,0) - c) for s,c in caps.items() if s in w.index and w[s] > c}
-        if not over: break
-        excess = sum(over.values())
-        for s in over: w[s] = caps[s]
-        others = [s for s in w.index if s not in caps or w[s] < caps.get(s,1.0)+1e-15]
-        pool = float(pd.Series(w.loc[others]).sum())
-        if pool <= 0: break
-        w.loc[others] = w.loc[others] + (w.loc[others] / pool) * excess
-    return w / w.sum() if w.sum()>0 else w
+# ✅ 상한 + 나머지 균등
+def apply_caps_equalize_rest(w: pd.Series, caps: dict) -> pd.Series:
+    if w.sum() <= 0 or not len(w): return w
+    w = (w / w.sum()).copy()
+    caps = {k.upper(): float(v) for k,v in (caps or {}).items()}
+    capped_idx = [s for s in w.index if s in caps]
+    uncapped_idx = [s for s in w.index if s not in caps]
+    for s in capped_idx:
+        w[s] = min(float(w.get(s,0.0)), caps[s])
+    remaining = 1.0 - float(w.loc[capped_idx].sum()) if capped_idx else 1.0
+    if remaining < 0: remaining = 0.0
+    if len(uncapped_idx) > 0:
+        equal = remaining / len(uncapped_idx)
+        w.loc[uncapped_idx] = equal
+    else:
+        w = w / w.sum() if w.sum() > 0 else w
+    return w / w.sum() if w.sum() > 0 else w
 
-def bm_weights_rules(day_df, listed_bonus=1.3, cap_map=None, mapping=None, use_upbit=True):
+# ✅ Top20 (+DOGE, USDT 포함) → 상한 적용
+def bm_weights_rules(day_df, listed_bonus=1.3, cap_map=None, mapping=None,
+                     use_upbit=True, top_n=20, force_include=("DOGE","USDT")):
     cap_map = cap_map or {}
     df = day_df.copy()
     df["symbol"] = df["symbol"].astype(str).str.upper()
-
-    # exclude stables + derivatives
     df = df[~df["symbol"].isin(STABLE)].copy()
     df = df[~df["symbol"].isin(EXCLUDE_DERIV)].copy()
     if mapping is not None and "include" in mapping.columns:
         inc = mapping.set_index("symbol")["include"]
         df = df[df["symbol"].map(inc).fillna(True)]
-
     mc = pd.to_numeric(df.get("market_cap", np.nan), errors="coerce").fillna(0.0)
-    if mc.sum() > 0:
-        df = df.loc[mc>0].copy()
-
-    if df.empty:
-        return pd.Series(dtype="float64")
-
-    # base weights: market cap preferred, fallback to weight_ratio if present
-    if "market_cap" in df.columns and df["market_cap"].notna().any():
-        base_w = pd.to_numeric(df["market_cap"], errors="coerce").fillna(0.0)
-        base_w = base_w / base_w.sum() if base_w.sum()>0 else base_w
-    elif "weight_ratio" in df.columns:
-        base_w = pd.to_numeric(df["weight_ratio"], errors="coerce").fillna(0.0)
-        base_w = base_w / base_w.sum() if base_w.sum()>0 else base_w
-    else:
-        base_w = pd.Series(1.0, index=df.index); base_w = base_w / base_w.sum()
-
-    # KR listed overrides + Upbit auto
+    df = df.loc[mc > 0].copy()
+    if df.empty: return pd.Series(dtype="float64")
     listed = pd.Series(False, index=df.index, dtype="bool")
     if mapping is not None and "listed_kr_override" in mapping.columns:
         listed = listed | df["symbol"].map(mapping.set_index("symbol")["listed_kr_override"]).fillna(False).astype(bool)
@@ -127,21 +118,28 @@ def bm_weights_rules(day_df, listed_bonus=1.3, cap_map=None, mapping=None, use_u
             listed = listed | df["symbol"].isin(upbit)
         except Exception:
             pass
-
-    w_eff = base_w * listed.map(lambda x: listed_bonus if x else 1.0)
-    w_eff = w_eff / w_eff.sum() if w_eff.sum()>0 else w_eff
-
-    # caps
+    bonus = listed.map(lambda x: listed_bonus if x else 1.0).astype(float).reindex(df.index).fillna(1.0)
+    df["effcap_raw"] = mc.values * bonus.values
+    df = df.sort_values("effcap_raw", ascending=False)
+    force_include = tuple(s.upper() for s in (force_include or ()))
+    top = df.head(top_n)
+    must = df[df["symbol"].isin(force_include)]
+    if len(must) > 0 and not all(must["symbol"].isin(top["symbol"])):
+        union = pd.concat([top, must]).drop_duplicates(subset=["symbol"])
+        union = union.sort_values("effcap_raw", ascending=False).head(top_n)
+        df = union
+    else:
+        df = top
+    w0 = df.set_index("symbol")["effcap_raw"]
+    w0 = w0 / w0.sum() if w0.sum() > 0 else w0
     caps = dict(cap_map or {})
     if mapping is not None and "cap_override" in mapping.columns:
         for sym, v in mapping[["symbol","cap_override"]].dropna().values:
             caps[str(sym).upper()] = float(v)
-
-    w = pd.Series(w_eff.values, index=df["symbol"])
-    w = apply_caps(w, caps)
+    w = apply_caps_equalize_rest(w0, caps)
     return w
 
-def compute_returns(day_df, date, mapping=None, use_yahoo=True):
+def compute_returns(day_df, date, mapping=None, use_yahoo=True, ret_cap=None):
     r = None
     if "current_price" in day_df.columns and "previous_price" in day_df.columns:
         cur = pd.to_numeric(day_df["current_price"], errors="coerce")
@@ -152,7 +150,6 @@ def compute_returns(day_df, date, mapping=None, use_yahoo=True):
     if r is None or r.isna().all():
         r = pd.to_numeric(day_df.get("price_change_pct", np.nan), errors="coerce")
         if r.abs().median(skipna=True) > 1.0: r = r/100.0
-
     if use_yahoo and r.isna().any():
         try:
             import yfinance as yf
@@ -172,11 +169,12 @@ def compute_returns(day_df, date, mapping=None, use_yahoo=True):
                         ser = data[tkr]["Close"].dropna().sort_index()
                         if len(ser) >= 2:
                             r.loc[day_df["symbol"].str.upper()==s] = float(ser.iloc[-1]/ser.iloc[-2] - 1.0)
-                    except Exception:
-                        continue
-        except Exception:
-            pass
-    return r.fillna(0.0)
+                    except Exception: continue
+        except Exception: pass
+    r = r.fillna(0.0)
+    if ret_cap is not None:
+        r = r.clip(lower=-abs(ret_cap), upper=abs(ret_cap))
+    return r
 
 def first_trading_day(dates, freq="QE-DEC"):
     s = pd.Series(pd.to_datetime(sorted(dates)))
@@ -188,77 +186,50 @@ def first_trading_day(dates, freq="QE-DEC"):
 
 def compute_index_series(all_df, base_date=None, base_value=100.0, rebalance="quarterly",
                          weights_source="rules", listed_bonus=1.3, cap_map=None, mapping=None,
-                         use_upbit=True, dump_const=True, out_dir="out"):
+                         use_upbit=True, dump_const=True, out_dir="out", ret_cap=None):
     import os
     os.makedirs(out_dir, exist_ok=True)
     all_df["_date"] = pd.to_datetime(all_df["_date"]).dt.date
     dates = sorted(all_df["_date"].unique())
     if not dates: raise RuntimeError("No daily CSVs found")
-
     base_date = dates[0] if base_date is None else pd.to_datetime(base_date).date()
-
     if rebalance == "quarterly":
         anchor = first_trading_day(dates, "QE-DEC")
     elif rebalance == "monthly":
         anchor = first_trading_day(dates, "M")
     else:
         anchor = {d:d for d in dates}
-
     index_level = base_value
-    rows = []
-    stored = set()
+    rows, stored = [], set()
     for d in dates:
         day_df = all_df[all_df["_date"] == d].copy()
         day_df["symbol"] = day_df["symbol"].astype(str).str.upper()
-
-        if weights_source == "csv" and "weight_ratio" in day_df.columns:
-            w = pd.to_numeric(day_df["weight_ratio"], errors="coerce").fillna(0.0)
-            w = w / w.sum() if w.sum()>0 else w
-            w = pd.Series(w.values, index=day_df["symbol"])
-            w.loc[w.index.isin(STABLE | EXCLUDE_DERIV)] = 0.0
-            if mapping is not None and "include" in mapping.columns:
-                inc = mapping.set_index("symbol")["include"]
-                mask = day_df["symbol"].map(inc).fillna(True).to_numpy()
-                w = pd.Series(np.where(mask, w, 0.0), index=w.index)
-            w = w / w.sum() if w.sum()>0 else w
-        else:
-            w = bm_weights_rules(day_df, listed_bonus=listed_bonus, cap_map=cap_map, mapping=mapping, use_upbit=use_upbit)
-
         a = anchor[d]
-        if d != a:
-            base_df = all_df[all_df["_date"] == a]
-            if weights_source == "csv" and "weight_ratio" in base_df.columns:
-                w = pd.to_numeric(base_df["weight_ratio"], errors="coerce").fillna(0.0)
-                w = w / w.sum() if w.sum()>0 else w
-                w = pd.Series(w.values, index=base_df["symbol"].astype(str).str.upper())
-                w.loc[w.index.isin(STABLE | EXCLUDE_DERIV)] = 0.0
-                if mapping is not None and "include" in mapping.columns:
-                    inc = mapping.set_index("symbol")["include"]
-                    mask = base_df["symbol"].map(inc).fillna(True).to_numpy()
-                    w = pd.Series(np.where(mask, w, 0.0), index=w.index)
-                w = w / w.sum() if w.sum()>0 else w
-            else:
-                w = bm_weights_rules(base_df, listed_bonus=listed_bonus, cap_map=cap_map, mapping=mapping, use_upbit=use_upbit)
-
-        r = compute_returns(day_df, d, mapping=mapping, use_yahoo=True)
+        base_df = all_df[all_df["_date"] == a]
+        if weights_source == "csv" and "weight_ratio" in base_df.columns:
+            w = pd.to_numeric(base_df["weight_ratio"], errors="coerce").fillna(0.0)
+            w = w / w.sum() if w.sum()>0 else w
+            w = pd.Series(w.values, index=base_df["symbol"].astype(str).str.upper())
+        else:
+            w = bm_weights_rules(base_df, listed_bonus=listed_bonus, cap_map=cap_map,
+                                 mapping=mapping, use_upbit=use_upbit)
+        r = compute_returns(day_df, d, mapping=mapping, use_yahoo=True, ret_cap=ret_cap)
         r.index = day_df["symbol"].astype(str).str.upper()
         r = r.reindex(w.index).fillna(0.0)
-
         daily_ret = float((w * r).sum())
         index_level = base_value if d == base_date else index_level * (1.0 + daily_ret)
-        rows.append({"date":str(d), "index":round(index_level,6), "ret":round(daily_ret,8), "n_constituents":int((w>0).sum())})
-
-        if dump_const:
-            key = a
-            if key not in stored:
-                snap = pd.DataFrame({"symbol": w.index, "weight_base": (w/w.sum()).round(12)})
-                ym = pd.to_datetime(a).to_period("Q-DEC").strftime("%YQ%q") if rebalance=="quarterly" else pd.to_datetime(a).to_period("M").strftime("%Y-%m")
-                snap_path = os.path.join(out_dir, f"bm20_constituents_{ym}.csv")
-                snap.to_csv(snap_path, index=False, encoding="utf-8")
-                stored.add(key)
-
+        rows.append({"date":str(d), "index":round(index_level,6), "ret":round(daily_ret,8),
+                     "n_constituents":int((w>0).sum())})
+        if dump_const and a not in stored:
+            snap = pd.DataFrame({"symbol": w.index, "weight_base": (w/w.sum()).round(12)})
+            ym = pd.to_datetime(a).to_period("Q-DEC").strftime("%YQ%q") if rebalance=="quarterly" else pd.to_datetime(a).to_period("M").strftime("%Y-%m")
+            snap.to_csv(os.path.join(out_dir, f"bm20_constituents_{ym}.csv"), index=False, encoding="utf-8")
+            stored.add(a)
+    df_out = pd.DataFrame(rows)
+    df_out["index_log"] = np.log(df_out["index"].clip(lower=1e-12))
+    df_out["index_log10"] = np.log10(df_out["index"].clip(lower=1e-12))
     out_csv = os.path.join(out_dir, "bm20_index_from_csv.csv")
-    pd.DataFrame(rows).to_csv(out_csv, index=False, encoding="utf-8")
+    df_out.to_csv(out_csv, index=False, encoding="utf-8")
     return out_csv, rows[0]["date"], rows[-1]["date"], len(rows)
 
 def main():
@@ -279,9 +250,22 @@ def main():
         mapping=mapping,
         use_upbit=not args.no_upbit,
         dump_const=bool(args.dump_constituents),
-        out_dir=args.out
+        out_dir=args.out,
+        ret_cap=args.ret_cap
     )
     print(f"[OK] Index series → {out_csv} ({d0} → {dN}, {n} days, rebalance={args.rebalance}, weights={args.weights_source})")
+    if args.plot:
+        import matplotlib.pyplot as plt
+        d = pd.read_csv(out_csv, parse_dates=["date"])
+        fig, ax = plt.subplots(figsize=(9,4))
+        ax.plot(d["date"], d["index"], lw=1.2)
+        if args.plot_log:
+            ax.set_yscale("log")
+        ax.set_title("BM20 Index" + (" (Log Scale)" if args.plot_log else ""))
+        ax.grid(True, which="both", alpha=0.3)
+        png_path = os.path.join(args.out, "bm20_index.png" if not args.plot_log else "bm20_index_log.png")
+        fig.tight_layout(); fig.savefig(png_path, dpi=150)
+        print(f"[OK] Chart saved -> {png_path}")
 
 if __name__ == "__main__":
     main()
