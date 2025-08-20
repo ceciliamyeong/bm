@@ -21,6 +21,16 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import requests
 import pandas as pd
+# 파일 상단 import 아래에 추가
+import sys
+try:
+    import gspread, yfinance as yf
+    from google.oauth2.service_account import Credentials
+except Exception:
+    gspread = None; yf = None; Credentials = None
+
+USE_YF_FALLBACK = os.getenv("BM20_FALLBACK", "0") in ("1","true","TRUE","yes","y")
+
 
 # ---- Matplotlib ----
 import matplotlib
