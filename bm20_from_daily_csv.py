@@ -267,5 +267,10 @@ def main():
         fig.tight_layout(); fig.savefig(png_path, dpi=150)
         print(f"[OK] Chart saved -> {png_path}")
 
+df_out.to_json(os.path.join(out_dir, "series.json"),
+               orient="records", date_format="iso", force_ascii=False)
+df_out.tail(1).to_json(os.path.join(out_dir, "latest.json"),
+                       orient="records", date_format="iso", force_ascii=False)
+
 if __name__ == "__main__":
     main()
