@@ -2,8 +2,8 @@ name: BM20 Daily
 
 on:
   schedule:
-    - cron: "10 23 * * *"   # 매일 08:10 KST
-  workflow_dispatch: {}
+    - cron: "10 23 * * *"   # 매일 08:10 KST (UTC 23:10)
+  workflow_dispatch:
 
 concurrency:
   group: bm20-daily-${{ github.ref }}
@@ -17,8 +17,8 @@ jobs:
       contents: write  # index.html / archive / latest.html 커밋용
 
     env:
-      COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
       TZ: Asia/Seoul
+      COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
 
     steps:
       - name: Checkout
@@ -28,6 +28,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: "pip"
 
       - name: Install dependencies
         run: |
@@ -45,8 +46,7 @@ jobs:
         env:
           OUT_DIR: out
           TZ: Asia/Seoul
-          BM20_KRW_BONUS: "1.0"
-          COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}   # ✅ 이 줄이 중요
+          BM20_KRW_BONUS: "1.0"     # 필요시 "1.3"
         run: |
           set -e
           n=0
@@ -56,8 +56,10 @@ jobs:
             echo "[WARN] bm20_daily.py failed (attempt $n). Sleep & retry..."
             sleep 70
           done
+
           if [ $n -ge 3 ]; then
-           echo "[ERROR] bm20_daily.py failed after retries"; exit 1
+            echo "[ERROR] bm20_daily.py failed after retries"
+            exit 1
           fi
 
       # 디버그용
@@ -70,10 +72,8 @@ jobs:
           echo "---- out recursive ----"
           find out -maxdepth 2 -type d -print || true
 
-      # 2) out → archive 복사 + index 최신 블록 + latest.html 생성(스크립트 내부에서 처리)
+      # 2) out → archive 복사 + latest.html 생성(스크립트 내부에서 처리)
       - name: Generate site (latest + archive)
-        env:
-          TZ: Asia/Seoul
         run: |
           python scripts/generate_report.py
           echo "" > .nojekyll
@@ -98,7 +98,10 @@ jobs:
             fi
           done
 
-          sed "s/bm20_bar_${DATE}\.png/bm20_bar_latest.png/g; s/bm20_trend_${DATE}\.png/bm20_trend_latest.png/g" \
+          # 캐시버스터 없어도 동작하도록 sed 교체
+          sed -E \
+            -e "s#bm20_bar_${DATE}\.png(\?v=[0-9]+)?#bm20_bar_latest.png#g" \
+            -e "s#bm20_trend_${DATE}\.png(\?v=[0-9]+)?#bm20_trend_latest.png#g" \
             "$SRC/bm20_daily_${DATE}.html" > latest.html
 
           cp "$SRC/bm20_bar_${DATE}.png"   bm20_bar_latest.png
