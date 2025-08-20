@@ -127,6 +127,41 @@ KRW_LISTED = set(BM20_IDS)  # 전부 상장 가정(필요시 조정)
 # 환경변수로 오버라이드 (예: BM20_KRW_BONUS=1.3)
 KRW_BONUS = float(os.getenv("BM20_KRW_BONUS", "1.0"))
 
+# --- CoinGecko 공통 설정 (API 키 우선 → 데모 → 퍼블릭) ---
+CG_API_KEY  = os.getenv("COINGECKO_API_KEY")          # 네가 넣은 API 키
+CG_DEMO_KEY = os.getenv("COINGECKO_DEMO_API_KEY")      # (없으면 비워둠)
+
+CG_BASE = "https://pro-api.coingecko.com/api/v3" if CG_API_KEY else "https://api.coingecko.com/api/v3"
+CG_HEADERS = {"User-Agent": "BM20/1.0"}
+if CG_API_KEY:
+    CG_HEADERS["x-cg-pro-api-key"] = CG_API_KEY  # Pro 키 헤더
+
+def cg_get(path, params=None, retry=8, timeout=20):
+    """
+    CoinGecko 호출: Pro(API 키) 우선, 아니면 퍼블릭(+데모키 있으면 쿼리 파라미터로 붙임)
+    """
+    last = None
+    for i in range(retry):
+        try:
+            p = dict(params or {})
+            if not CG_API_KEY and CG_DEMO_KEY:
+                p["x_cg_demo_api_key"] = CG_DEMO_KEY
+            r = requests.get(f"{CG_BASE}{path}", params=p, timeout=timeout, headers=CG_HEADERS)
+            # 인증 문제는 명확히 에러
+            if r.status_code in (401, 403):
+                raise RuntimeError(f"CoinGecko auth error ({r.status_code}). Check COINGECKO_API_KEY or COINGECKO_DEMO_API_KEY.")
+            if r.status_code == 429:
+                ra = float(r.headers.get("Retry-After", 0)) or (1.5 * (i + 1))
+                time.sleep(min(ra, 10) + random.random()); continue
+            if 500 <= r.status_code < 600:
+                time.sleep(1.2 * (i + 1) + random.random()); continue
+            r.raise_for_status()
+            return r.json()
+        except Exception as e:
+            last = e
+            time.sleep(0.8 * (i + 1) + random.random())
+    raise last
+
 # ---- CoinGecko with backoff (pro-api 자동 선택) ----
 def cg_get(path, params=None, retry=8, timeout=20):
     last = None
@@ -136,177 +171,7 @@ def cg_get(path, params=None, retry=8, timeout=20):
     if api_key: headers["x-cg-pro-api-key"] = api_key
     for i in range(retry):
         try:
-            r = requests.get(f"{base}{path}", params=params, timeout=timeout, headers=headers)
-            if r.status_code == 429:
-                ra = float(r.headers.get("Retry-After", 0)) or (1.5 * (i + 1))
-                time.sleep(min(ra, 10) + random.random()); continue
-            if 500 <= r.status_code < 600:
-                time.sleep(1.2 * (i + 1) + random.random()); continue
-            r.raise_for_status(); return r.json()
-        except Exception as e:
-            last = e; time.sleep(0.8 * (i + 1) + random.random())
-    raise last
-
-# === 안전한 시장데이터 수집 ===
-def fetch_markets_chunked(ids, vs="usd", chunk=8):
-    rows, bad_ids = [], []
-    for i in range(0, len(ids), chunk):
-        sub = ids[i:i+chunk]
-        try:
-            j = cg_get("/coins/markets", {
-                "vs_currency": vs, "ids": ",".join(sub),
-                "order": "market_cap_desc", "per_page": len(sub), "page": 1,
-                "price_change_percentage": "24h"
-            })
-            if isinstance(j, list): rows.extend(j)
-        except Exception:
-            # 청크 실패 → 개별 재시도
-            for cid in sub:
-                try:
-                    jj = cg_get("/coins/markets", {
-                        "vs_currency": vs, "ids": cid,
-                        "order": "market_cap_desc", "per_page": 1, "page": 1,
-                        "price_change_percentage": "24h"
-                    })
-                    if isinstance(jj, list) and jj:
-                        rows.append(jj[0])
-                except Exception:
-                    bad_ids.append(cid)
-    if bad_ids:
-        print(f"[WARN] skipped ids: {','.join(bad_ids)}")
-    if not rows:
-        raise RuntimeError("no market rows fetched")
-    return rows
-
-# 1) markets
-mkts = fetch_markets_chunked(BM20_IDS, vs="usd", chunk=8)
-df = pd.DataFrame([{
-  "id":m["id"], "symbol":m["symbol"].upper(), "name":m.get("name", m["symbol"].upper()),
-  "current_price":safe_float(m["current_price"]), "market_cap":safe_float(m["market_cap"]),
-  "total_volume":safe_float(m.get("total_volume")),
-  "chg24":safe_float(m.get("price_change_percentage_24h"),0.0),
-} for m in mkts]).sort_values("market_cap", ascending=False).head(20).reset_index(drop=True)
-
-# 2) 전일 종가: 24h 변동률로 역산
-df["previous_price"] = df.apply(
-    lambda r: (r["current_price"] / (1 + (r["chg24"] or 0) / 100.0)) if r["current_price"] else None,
-    axis=1
-)
-
-# 3) 가중치(국내상장 보정 ×1.3 옵션 → 상한 적용 → 정규화)
-df["weight_raw"] = df["market_cap"] / max(df["market_cap"].sum(), 1.0)
-df["weight_raw"] = df.apply(
-    lambda r: r["weight_raw"] * (KRW_BONUS if r["id"] in KRW_LISTED else 1.0),
-    axis=1
-)
-df["weight_ratio"]=df.apply(lambda r: min(r["weight_raw"], BTC_CAP if r["symbol"]=="BTC" else OTH_CAP), axis=1)
-df["weight_ratio"]=df["weight_ratio"]/df["weight_ratio"].sum()
-
-# 4) 김치 프리미엄(폴백 + 캐시)
-CACHE = OUT_DIR / "cache"; CACHE.mkdir(exist_ok=True)
-KP_CACHE = CACHE / "kimchi_last.json"
-FD_CACHE = CACHE / "funding_last.json"
-
-def get_kp(df):
-    def _req(url, params=None, retry=5, timeout=12):
-        last=None
-        for i in range(retry):
-            try:
-                r=requests.get(url, params=params, timeout=timeout, headers={"User-Agent":"BM20/1.0"})
-                if r.status_code==429: time.sleep(1.0*(i+1)); continue
-                r.raise_for_status(); return r.json()
-            except Exception as e:
-                last=e; time.sleep(0.6*(i+1))
-        raise last
-    try:
-        u=_req("https://api.upbit.com/v1/ticker", {"markets":"KRW-BTC"})
-        btc_krw=float(u[0]["trade_price"]); dom="upbit"
-    except Exception:
-        try:
-            base = "https://pro-api.coingecko.com/api/v3" if os.getenv("COINGECKO_API_KEY") else "https://api.coingecko.com/api/v3"
-            cg=_req(f"{base}/simple/price", {"ids":"bitcoin","vs_currencies":"krw"})
-            btc_krw=float(cg["bitcoin"]["krw"]); dom="cg_krw"
-        except Exception:
-            last = read_json(KP_CACHE)
-            if last: return last.get("kimchi_pct"), {**last, "is_cache": True}
-            return None, {"dom":"fallback0","glb":"df","fx":"fixed1350","btc_krw":None,"btc_usd":None,"usdkrw":1350.0, "is_cache": True}
-    try:
-        btc_usd=float(df.loc[df["symbol"]=="BTC","current_price"].iloc[0]); glb="df"
-    except Exception:
-        btc_usd=None; glb=None
-    if btc_usd is None:
-        try:
-            b=_req("https://api.binance.com/api/v3/ticker/price", {"symbol":"BTCUSDT"})
-            btc_usd=float(b["price"]); glb="binance"
-        except Exception:
-            try:
-                base = "https://pro-api.coingecko.com/api/v3" if os.getenv("COINGECKO_API_KEY") else "https://api.coingecko.com/api/v3"
-                cg=_req(f"{base}/simple/price", {"ids":"bitcoin","vs_currencies":"usd"})
-                btc_usd=float(cg["bitcoin"]["usd"]); glb="cg_usd"
-            except Exception:
-                last = read_json(KP_CACHE)
-                if last: return last.get("kimchi_pct"), {**last, "is_cache": True}
-                return None, {"dom":dom,"glb":"fallback0","fx":"fixed1350","btc_krw":round(btc_krw,2),"btc_usd":None,"usdkrw":1350.0, "is_cache": True}
-    try:
-        base = "https://pro-api.coingecko.com/api/v3" if os.getenv("COINGECKO_API_KEY") else "https://api.coingecko.com/api/v3"
-        t=_req(f"{base}/simple/price", {"ids":"tether","vs_currencies":"krw"})
-        usdkrw=float(t["tether"]["krw"]); fx="cg_tether"
-        if not (900<=usdkrw<=2000): raise ValueError
-    except Exception:
-        usdkrw=1350.0; fx="fixed1350"
-    kp=((btc_krw/usdkrw)-btc_usd)/btc_usd*100
-    meta={"dom":dom,"glb":glb,"fx":fx,"btc_krw":round(btc_krw,2),"btc_usd":round(btc_usd,2),"usdkrw":round(usdkrw,2),"kimchi_pct":round(kp,6), "is_cache": False}
-    write_json(KP_CACHE, meta)
-    return kp, meta
-
-kimchi_pct, kp_meta = get_kp(df)
-kp_is_cache = bool(kp_meta.get("is_cache")) if kp_meta else False
-kp_text_base = fmt_pct(kimchi_pct, 2) if kimchi_pct is not None else "잠정(전일)"
-kp_text = kp_text_base + (" (캐시)" if kp_is_cache else "")
-if kp_is_cache and cache_is_stale(KP_CACHE, max_hours=24):
-    kp_text += " [24h+]"
-# 5) 펀딩비 — 바이낸스/바이빗 폴백 + 캐시
-def _get(url, params=None, timeout=12, retry=5, headers=None):
-    if headers is None:
-        headers = {"User-Agent":"BM20/1.0","Accept":"application/json"}
-    for i in range(retry):
-        try:
-            r = requests.get(url, params=params, timeout=timeout, headers=headers)
-            if r.status_code == 429:
-                time.sleep(1.0*(i+1)); continue
-            r.raise_for_status()
-            return r.json()
-        except Exception:
-            time.sleep(0.5*(i+1))
-    return None
-
-def get_binance_funding(symbol="BTCUSDT"):
-    domains = ["https://fapi.binance.com", "https://fapi1.binance.com", "https://fapi2.binance.com"]
-    for d in domains:
-        j = _get(f"{d}/fapi/v1/premiumIndex", {"symbol":symbol})
-        if isinstance(j, dict) and j.get("lastFundingRate") is not None:
-            try: return float(j["lastFundingRate"])*100.0
-            except: pass
-        if isinstance(j, list) and j and j[0].get("lastFundingRate") is not None:
-            try: return float(j[0]["lastFundingRate"])*100.0
-            except: pass
-    for d in domains:
-        j = _get(f"{d}/fapi/v1/fundingRate", {"symbol":symbol, "limit":1})
-        if isinstance(j, list) and j:
-            try: return float(j[0]["fundingRate"])*100.0
-            except: pass
-    return None
-
-def get_bybit_funding(symbol="BTCUSDT"):
-    j = _get("https://api.bybit.com/v5/market/tickers", {"category":"linear","symbol":symbol})
-    try:
-        lst = j.get("result",{}).get("list",[])
-        if lst and lst[0].get("fundingRate") is not None:
-            return float(lst[0]["fundingRate"])*100.0
-    except: pass
-    return None
-
-def fp(v, dash_text="집계 공란"):
+            r = requests.get(f"{ba립"):
     return dash_text if (v is None) else f"{float(v):.4f}%"
 
 btc_f_bin_live = get_binance_funding("BTCUSDT"); time.sleep(0.2)
@@ -464,18 +329,22 @@ for i, v in enumerate(y):
 plt.title("코인별 퍼포먼스 (1D, USD)", fontsize=13, loc="left", pad=10)
 plt.ylabel("%"); plt.tight_layout(); plt.savefig(bar_png, dpi=180); plt.close()
 
-# B) BTC/ETH 7일 추세 (실패 안전)
+# market_chart (BTC/ETH 7일)
 def safe_get_pct_series(coin_id, days=8):
     try:
-        base = "https://pro-api.coingecko.com/api/v3" if os.getenv("COINGECKO_API_KEY") else "https://api.coingecko.com/api/v3"
-        data=requests.get(f"{base}/coins/{coin_id}/market_chart", params={"vs_currency":"usd","days":days}, timeout=20, headers={"User-Agent":"BM20/1.0", **({"x-cg-pro-api-key": os.getenv("COINGECKO_API_KEY")} if os.getenv("COINGECKO_API_KEY") else {})}).json()
-        prices=data.get("prices",[])
+        p = {"vs_currency":"usd","days":days}
+        if not CG_API_KEY and CG_DEMO_KEY:
+            p["x_cg_demo_api_key"] = CG_DEMO_KEY
+        data = requests.get(f"{CG_BASE}/coins/{coin_id}/market_chart",
+                            params=p, timeout=20, headers=CG_HEADERS).json()
+        prices = data.get("prices", [])
         if not prices: return []
-        s=[p[1] for p in prices]; basev=s[0]
-        return [ (v/basev-1)*100 for v in s ]
+        s=[v for _,v in prices]; basev = s[0]
+        return [(v/basev - 1)*100 for v in s]
     except Exception as e:
         print(f"[WARN] market_chart failed for {coin_id}: {e}")
         return []
+
 
 btc7=safe_get_pct_series("bitcoin", 8); time.sleep(0.5)
 eth7=safe_get_pct_series("ethereum", 8)
