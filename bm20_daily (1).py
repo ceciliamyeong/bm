@@ -1,1 +1,0 @@
-<FULL PATCHED bm20_daily.py CODE HERE>
