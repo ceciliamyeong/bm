@@ -66,15 +66,6 @@ jobs:
           echo "---- out recursive ----"
           find out -maxdepth 2 -type d -print || true
 
-            # 1.5) Google Sheets 업데이트
-      - name: Update BM20 index in Google Sheets
-        shell: bash
-        env:
-          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
-          SHEET_ID: ${{ secrets.SHEET_ID }}
-        run: |
-          python scripts/bm20_sheet_update.py   
-
       # 2) out → archive 복사 + latest.html 생성(스크립트 내부에서 처리)
       - name: Generate site (latest + archive)
         shell: bash
