@@ -45,7 +45,8 @@ jobs:
         env:
           OUT_DIR: out
           TZ: Asia/Seoul
-          BM20_KRW_BONUS: "1.0"   # 필요시 "1.3"
+          BM20_KRW_BONUS: "1.0"
+          COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}   # ✅ 이 줄이 중요
         run: |
           set -e
           n=0
@@ -56,7 +57,7 @@ jobs:
             sleep 70
           done
           if [ $n -ge 3 ]; then
-            echo "[ERROR] bm20_daily.py failed after retries"; exit 1
+           echo "[ERROR] bm20_daily.py failed after retries"; exit 1
           fi
 
       # 디버그용
