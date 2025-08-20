@@ -7,12 +7,16 @@
 # - 기간수익률(1D/7D/30D/MTD/YTD) 계산, 인덱스 히스토리 저장
 # - HTML + PDF 저장 (이미지 캐시버스터 적용)
 # 의존: pandas, requests, matplotlib, reportlab, jinja2
-# 변경점(2025-08-20):
+# 변경점(2025-08-20, patched):
+# - CoinGecko 400 대응: BM20_IDS에 cosmos→cosmos-hub로 교체
+# - /coins/markets 요청을 청크(기본 8개)로 분할 + 실패 시 개별 재시도 + 문제 id 스킵
+# - market_chart 실패 시 경고만 내고 빈 시리즈 처리
+# - Pro 키 있으면 pro-api.coingecko 사용
 # - KRW_BONUS를 환경변수 BM20_KRW_BONUS로 제어
 # - 김치/펀딩 캐시 사용 시 라벨에 (캐시) 표기, 24h+ 경고 옵션
 # - HTML 이미지에 캐시버스터 ?v=타임스탬프 추가
 
-import os, time, json, random, subprocess
+import os, time, json, random
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import requests
@@ -86,10 +90,6 @@ def safe_float(x, d=0.0):
     try: return float(x)
     except: return d
 
-def clamp_list_str(items, n=3):
-    items = [str(x) for x in items if str(x)]
-    return items[:n]
-
 def write_json(path: Path, obj: dict):
     try:
         with open(path, "w", encoding="utf-8") as f:
@@ -112,35 +112,31 @@ def cache_is_stale(ts_path: Path, max_hours=24):
         return True
 
 # ================== Data Layer ==================
-CG = "https://api.coingecko.com/api/v3"
 BTC_CAP, OTH_CAP = 0.30, 0.15
 TOP_UP, TOP_DOWN = 3, 3
 
 # DOGE 포함 (국내 대표성 예외) + 상시 20종 유지 정책 반영
 BM20_IDS = [
     "bitcoin","ethereum","solana","ripple","binancecoin","toncoin","avalanche-2",
-    "chainlink","cardano","polygon","near","polkadot","cosmos","litecoin",
-    "arbitrum","optimism","internet-computer","aptos","filecoin","sui","dogecoin"  # 21번째로 후보 포함 → 상위 20만 사용
+    "chainlink","cardano","polygon","near","polkadot","cosmos-hub","litecoin",
+    "arbitrum","optimism","internet-computer","aptos","filecoin","sui","dogecoin"  # 21번째 후보 포함 → 상위 20 사용
 ]
 
 # 국내 상장 보정(×1.3) — 필요 시 매핑
-KRW_LISTED = {
-    "bitcoin","ethereum","solana","ripple","binancecoin","toncoin","avalanche-2",
-    "chainlink","cardano","polygon","near","polkadot","cosmos","litecoin",
-    "arbitrum","optimism","internet-computer","aptos","filecoin","sui","dogecoin"
-}
+KRW_LISTED = set(BM20_IDS)  # 전부 상장 가정(필요시 조정)
 # 환경변수로 오버라이드 (예: BM20_KRW_BONUS=1.3)
 KRW_BONUS = float(os.getenv("BM20_KRW_BONUS", "1.0"))
 
-# ---- CoinGecko with backoff ----
+# ---- CoinGecko with backoff (pro-api 자동 선택) ----
 def cg_get(path, params=None, retry=8, timeout=20):
     last = None
     api_key = os.getenv("COINGECKO_API_KEY")
+    base = "https://pro-api.coingecko.com/api/v3" if api_key else "https://api.coingecko.com/api/v3"
     headers = {"User-Agent": "BM20/1.0"}
     if api_key: headers["x-cg-pro-api-key"] = api_key
     for i in range(retry):
         try:
-            r = requests.get(f"{CG}{path}", params=params, timeout=timeout, headers=headers)
+            r = requests.get(f"{base}{path}", params=params, timeout=timeout, headers=headers)
             if r.status_code == 429:
                 ra = float(r.headers.get("Retry-After", 0)) or (1.5 * (i + 1))
                 time.sleep(min(ra, 10) + random.random()); continue
@@ -151,12 +147,39 @@ def cg_get(path, params=None, retry=8, timeout=20):
             last = e; time.sleep(0.8 * (i + 1) + random.random())
     raise last
 
+# === 안전한 시장데이터 수집 ===
+def fetch_markets_chunked(ids, vs="usd", chunk=8):
+    rows, bad_ids = [], []
+    for i in range(0, len(ids), chunk):
+        sub = ids[i:i+chunk]
+        try:
+            j = cg_get("/coins/markets", {
+                "vs_currency": vs, "ids": ",".join(sub),
+                "order": "market_cap_desc", "per_page": len(sub), "page": 1,
+                "price_change_percentage": "24h"
+            })
+            if isinstance(j, list): rows.extend(j)
+        except Exception:
+            # 청크 실패 → 개별 재시도
+            for cid in sub:
+                try:
+                    jj = cg_get("/coins/markets", {
+                        "vs_currency": vs, "ids": cid,
+                        "order": "market_cap_desc", "per_page": 1, "page": 1,
+                        "price_change_percentage": "24h"
+                    })
+                    if isinstance(jj, list) and jj:
+                        rows.append(jj[0])
+                except Exception:
+                    bad_ids.append(cid)
+    if bad_ids:
+        print(f"[WARN] skipped ids: {','.join(bad_ids)}")
+    if not rows:
+        raise RuntimeError("no market rows fetched")
+    return rows
+
 # 1) markets
-mkts = cg_get("/coins/markets", {
-  "vs_currency":"usd","ids":",".join(BM20_IDS),
-  "order":"market_cap_desc","per_page":len(BM20_IDS),"page":1,
-  "price_change_percentage":"24h"
-})
+mkts = fetch_markets_chunked(BM20_IDS, vs="usd", chunk=8)
 df = pd.DataFrame([{
   "id":m["id"], "symbol":m["symbol"].upper(), "name":m.get("name", m["symbol"].upper()),
   "current_price":safe_float(m["current_price"]), "market_cap":safe_float(m["market_cap"]),
@@ -200,7 +223,8 @@ def get_kp(df):
         btc_krw=float(u[0]["trade_price"]); dom="upbit"
     except Exception:
         try:
-            cg=_req(f"{CG}/simple/price", {"ids":"bitcoin","vs_currencies":"krw"})
+            base = "https://pro-api.coingecko.com/api/v3" if os.getenv("COINGECKO_API_KEY") else "https://api.coingecko.com/api/v3"
+            cg=_req(f"{base}/simple/price", {"ids":"bitcoin","vs_currencies":"krw"})
             btc_krw=float(cg["bitcoin"]["krw"]); dom="cg_krw"
         except Exception:
             last = read_json(KP_CACHE)
@@ -216,14 +240,16 @@ def get_kp(df):
             btc_usd=float(b["price"]); glb="binance"
         except Exception:
             try:
-                cg=_req(f"{CG}/simple/price", {"ids":"bitcoin","vs_currencies":"usd"})
+                base = "https://pro-api.coingecko.com/api/v3" if os.getenv("COINGECKO_API_KEY") else "https://api.coingecko.com/api/v3"
+                cg=_req(f"{base}/simple/price", {"ids":"bitcoin","vs_currencies":"usd"})
                 btc_usd=float(cg["bitcoin"]["usd"]); glb="cg_usd"
             except Exception:
                 last = read_json(KP_CACHE)
                 if last: return last.get("kimchi_pct"), {**last, "is_cache": True}
                 return None, {"dom":dom,"glb":"fallback0","fx":"fixed1350","btc_krw":round(btc_krw,2),"btc_usd":None,"usdkrw":1350.0, "is_cache": True}
     try:
-        t=_req(f"{CG}/simple/price", {"ids":"tether","vs_currencies":"krw"})
+        base = "https://pro-api.coingecko.com/api/v3" if os.getenv("COINGECKO_API_KEY") else "https://api.coingecko.com/api/v3"
+        t=_req(f"{base}/simple/price", {"ids":"tether","vs_currencies":"krw"})
         usdkrw=float(t["tether"]["krw"]); fx="cg_tether"
         if not (900<=usdkrw<=2000): raise ValueError
     except Exception:
@@ -239,7 +265,6 @@ kp_text_base = fmt_pct(kimchi_pct, 2) if kimchi_pct is not None else "잠정(전
 kp_text = kp_text_base + (" (캐시)" if kp_is_cache else "")
 if kp_is_cache and cache_is_stale(KP_CACHE, max_hours=24):
     kp_text += " [24h+]"
-
 # 5) 펀딩비 — 바이낸스/바이빗 폴백 + 캐시
 def _get(url, params=None, timeout=12, retry=5, headers=None):
     if headers is None:
@@ -256,7 +281,6 @@ def _get(url, params=None, timeout=12, retry=5, headers=None):
     return None
 
 def get_binance_funding(symbol="BTCUSDT"):
-    # premiumIndex.lastFundingRate
     domains = ["https://fapi.binance.com", "https://fapi1.binance.com", "https://fapi2.binance.com"]
     for d in domains:
         j = _get(f"{d}/fapi/v1/premiumIndex", {"symbol":symbol})
@@ -266,7 +290,6 @@ def get_binance_funding(symbol="BTCUSDT"):
         if isinstance(j, list) and j and j[0].get("lastFundingRate") is not None:
             try: return float(j[0]["lastFundingRate"])*100.0
             except: pass
-    # history 최신 1개
     for d in domains:
         j = _get(f"{d}/fapi/v1/fundingRate", {"symbol":symbol, "limit":1})
         if isinstance(j, list) and j:
@@ -286,34 +309,18 @@ def get_bybit_funding(symbol="BTCUSDT"):
 def fp(v, dash_text="집계 공란"):
     return dash_text if (v is None) else f"{float(v):.4f}%"
 
-# API 시도
 btc_f_bin_live = get_binance_funding("BTCUSDT"); time.sleep(0.2)
 eth_f_bin_live = get_binance_funding("ETHUSDT"); time.sleep(0.2)
 btc_f_byb_live = get_bybit_funding("BTCUSDT");   time.sleep(0.2)
 eth_f_byb_live = get_bybit_funding("ETHUSDT")
 
-# 실패 시 전일 캐시 사용
 last_fd = read_json(FD_CACHE) or {}
-bin_cache_used = False
-byb_cache_used = False
+bin_cache_used = False; byb_cache_used = False
 
-btc_f_bin = btc_f_bin_live
-eth_f_bin = eth_f_bin_live
-btc_f_byb = btc_f_byb_live
-eth_f_byb = eth_f_byb_live
-
-if btc_f_bin is None:
-    btc_f_bin = last_fd.get("btc_f_bin"); 
-    if btc_f_bin is not None: bin_cache_used = True
-if eth_f_bin is None:
-    eth_f_bin = last_fd.get("eth_f_bin"); 
-    if eth_f_bin is not None: bin_cache_used = True
-if btc_f_byb is None:
-    btc_f_byb = last_fd.get("btc_f_byb"); 
-    if btc_f_byb is not None: byb_cache_used = True
-if eth_f_byb is None:
-    eth_f_byb = last_fd.get("eth_f_byb"); 
-    if eth_f_byb is not None: byb_cache_used = True
+btc_f_bin = btc_f_bin_live or last_fd.get("btc_f_bin"); bin_cache_used |= (btc_f_bin_live is None and btc_f_bin is not None)
+eth_f_bin = eth_f_bin_live or last_fd.get("eth_f_bin"); bin_cache_used |= (eth_f_bin_live is None and eth_f_bin is not None)
+btc_f_byb = btc_f_byb_live or last_fd.get("btc_f_byb"); byb_cache_used |= (btc_f_byb_live is None and btc_f_byb is not None)
+eth_f_byb = eth_f_byb_live or last_fd.get("eth_f_byb"); byb_cache_used |= (eth_f_byb_live is None and eth_f_byb is not None)
 
 write_json(FD_CACHE, {"btc_f_bin":btc_f_bin, "eth_f_bin":eth_f_bin, "btc_f_byb":btc_f_byb, "eth_f_byb":eth_f_byb})
 
@@ -446,10 +453,10 @@ write_json(kp_path, {"date":YMD, **(kp_meta or {}), "kimchi_pct": (None if kimch
 perf = df.sort_values("price_change_pct", ascending=False)[["symbol","price_change_pct"]].reset_index(drop=True)
 plt.figure(figsize=(10.6, 4.6))
 x = range(len(perf)); y = perf["price_change_pct"].values
-colors_v = ["#2E7D32" if v >= 0 else "#C62828" for v in y]  # 진초록/진빨강
+colors_v = ["#2E7D32" if v >= 0 else "#C62828" for v in y]
 plt.bar(x, y, color=colors_v, width=0.82, edgecolor="#263238", linewidth=0.2)
 plt.xticks(x, perf["symbol"], rotation=0, fontsize=10)
-plt.axhline(0, linewidth=1, color="#90A4AE")
+plt.axhline(0, linewidth=1)
 for i, v in enumerate(y):
     off = (max(y)*0.03 if v>=0 else -abs(min(y))*0.03) or (0.25 if v>=0 else -0.25)
     va  = "bottom" if v>=0 else "top"
@@ -457,19 +464,26 @@ for i, v in enumerate(y):
 plt.title("코인별 퍼포먼스 (1D, USD)", fontsize=13, loc="left", pad=10)
 plt.ylabel("%"); plt.tight_layout(); plt.savefig(bar_png, dpi=180); plt.close()
 
-# B) BTC/ETH 7일 추세
-def get_pct_series(coin_id, days=8):
-    data=cg_get(f"/coins/{coin_id}/market_chart", {"vs_currency":"usd","days":days})
-    prices=data.get("prices",[])
-    if not prices: return []
-    s=[p[1] for p in prices]; base=s[0]
-    return [ (v/base-1)*100 for v in s ]
-btc7=get_pct_series("bitcoin", 8); time.sleep(0.5)
-eth7=get_pct_series("ethereum", 8)
+# B) BTC/ETH 7일 추세 (실패 안전)
+def safe_get_pct_series(coin_id, days=8):
+    try:
+        base = "https://pro-api.coingecko.com/api/v3" if os.getenv("COINGECKO_API_KEY") else "https://api.coingecko.com/api/v3"
+        data=requests.get(f"{base}/coins/{coin_id}/market_chart", params={"vs_currency":"usd","days":days}, timeout=20, headers={"User-Agent":"BM20/1.0", **({"x-cg-pro-api-key": os.getenv("COINGECKO_API_KEY")} if os.getenv("COINGECKO_API_KEY") else {})}).json()
+        prices=data.get("prices",[])
+        if not prices: return []
+        s=[p[1] for p in prices]; basev=s[0]
+        return [ (v/basev-1)*100 for v in s ]
+    except Exception as e:
+        print(f"[WARN] market_chart failed for {coin_id}: {e}")
+        return []
+
+btc7=safe_get_pct_series("bitcoin", 8); time.sleep(0.5)
+eth7=safe_get_pct_series("ethereum", 8)
 plt.figure(figsize=(10.6, 3.8))
-plt.plot(range(len(btc7)), btc7, label="BTC")
-plt.plot(range(len(eth7)), eth7, label="ETH")
-plt.legend(loc="upper left"); plt.title("BTC & ETH 7일 가격 추세", fontsize=13, loc="left", pad=8)
+if btc7: plt.plot(range(len(btc7)), btc7, label="BTC")
+if eth7: plt.plot(range(len(eth7)), eth7, label="ETH")
+if btc7 or eth7: plt.legend(loc="upper left")
+plt.title("BTC & ETH 7일 가격 추세", fontsize=13, loc="left", pad=8)
 plt.ylabel("% (from start)"); plt.tight_layout(); plt.savefig(trend_png, dpi=180); plt.close()
 
 # ================== PDF (Clean Card Layout) ==================
@@ -608,5 +622,8 @@ html = html_tpl.render(
     ts=TS
 )
 with open(html_path, "w", encoding="utf-8") as f: f.write(html)
+
+print("Saved:", txt_path, csv_path, bar_png, trend_png, pdf_path, html_path, kp_path)
+
 
 print("Saved:", txt_path, csv_path, bar_png, trend_png, pdf_path, html_path, kp_path)
