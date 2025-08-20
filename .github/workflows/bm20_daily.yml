@@ -42,22 +42,22 @@ jobs:
 
       # 1) 리포트 생성 (out/YYYY-MM-DD)
       - name: Run BM20 generator (with retries)
-          env:
+        env:
             OUT_DIR: out
             TZ: Asia/Seoul
             BM20_KRW_BONUS: "1.0"  # 필요시 1.3
-          run: |
-           set -e
-           n=0
-           until [ $n -ge 3 ]; do
+            run: |
+             set -e
+             n=0
+             until [ $n -ge 3 ]; do
              python bm20_daily.py && break
              n=$((n+1))
              echo "[WARN] bm20_daily.py failed (attempt $n). Sleep & retry..."
              sleep 70
-           done
-           if [ $n -ge 3 ]; then
-              echo "[ERROR] bm20_daily.py failed after retries"; exit 1
-           fi
+             done
+             if [ $n -ge 3 ]; then
+             echo "[ERROR] bm20_daily.py failed after retries"; exit 1
+             fi
 
       # 디버그용
       - name: Debug — show out tree
