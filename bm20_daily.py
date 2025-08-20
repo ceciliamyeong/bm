@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-# ===================== BM20 Daily — Yahoo Finance (Equal-Weight) =====================
-# 목적: CoinGecko 없이도 리포트(out/YYYY-MM-DD) 생성이 되도록 간소화 버전
+# ===================== BM20 Daily — Yahoo Finance (Custom Weights) =====================
+# 목적: CoinGecko 없이도 리포트(out/YYYY-MM-DD) 생성. 가중치는
+#   BTC 30% / ETH 20% / SOL 5% / XRP 5% / BNB 5% / 나머지 15개 = 35% 균등
 # - 가격/등락률/7일 추세: yfinance
-# - 가중치: 균등가중(20종 → 각 5%)
 # - 김치 프리미엄: Upbit KRW-BTC vs (BTC-USD * USDKRW from exchangerate.host), 폴백 1350
 # - 펀딩비: Binance/Bybit (API 실패 시 전일 캐시)
 # - 산출물: TXT, CSV, PNGs(bar/trend), PDF, HTML
 # 의존: pandas, numpy, requests, matplotlib, reportlab, jinja2, yfinance
 # 환경: OUT_DIR(옵션), TZ=Asia/Seoul(권장)
 
-import os, json, time, sys
+import os, json, time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import requests
@@ -112,7 +112,6 @@ BM20_IDS = [
     "arbitrum","optimism","internet-computer","aptos","filecoin","sui","dogecoin"
 ]
 
-# Yahoo Finance ticker mapping (prices)
 YF_MAP = {
     "bitcoin":"BTC-USD","ethereum":"ETH-USD","solana":"SOL-USD","ripple":"XRP-USD",
     "binancecoin":"BNB-USD","toncoin":"TON11419-USD","avalanche-2":"AVAX-USD",
@@ -122,16 +121,15 @@ YF_MAP = {
     "sui":"SUI-USD","dogecoin":"DOGE-USD"
 }
 
-# ✅ 표기용 심볼(라벨) 매핑
+# ✅ 표기용 심볼 매핑
 SYMBOL_MAP = {
     "bitcoin":"BTC","ethereum":"ETH","solana":"SOL","ripple":"XRP",
     "binancecoin":"BNB","toncoin":"TON","avalanche-2":"AVAX",
-    "chainlink":"LINK","cardano":"ADA","polygon":"POL","near":"NEAR",
+    "chainlink":"LINK","cardano":"ADA","polygon":"MATIC","near":"NEAR",
     "polkadot":"DOT","cosmos-hub":"ATOM","litecoin":"LTC","arbitrum":"ARB",
     "optimism":"OP","internet-computer":"ICP","aptos":"APT","filecoin":"FIL",
     "sui":"SUI","dogecoin":"DOGE"
 }
-
 
 # ================== Prices: yfinance ==================
 def fetch_yf_prices(ids):
@@ -143,6 +141,7 @@ def fetch_yf_prices(ids):
     start = end - timedelta(days=4)
     raw = yf.download(tickers=tickers, start=str(start), end=str(end + timedelta(days=1)),
                       interval="1d", auto_adjust=True, progress=False, group_by="ticker")
+
     def pick_close(df):
         if isinstance(df.columns, pd.MultiIndex):
             lvl1 = set(df.columns.get_level_values(1))
@@ -152,6 +151,7 @@ def fetch_yf_prices(ids):
             if "Close" in df.columns: return df[["Close"]]
             if "Adj Close" in df.columns: return df[["Adj Close"]]
         return pd.DataFrame()
+
     close = pick_close(raw)
     if close is None or close.empty:
         # per-ticker fallback
@@ -166,10 +166,12 @@ def fetch_yf_prices(ids):
             close = pd.DataFrame(cols)
     if close is None or close.empty:
         raise RuntimeError("yfinance returned empty close prices.")
+
     close = close.ffill().dropna(how="all")
     last = close.iloc[-1]
     prev = close.iloc[-2] if close.shape[0] >= 2 else close.iloc[-1]
     rev = {v: k for k, v in pairs.items() if v in last.index}
+
     rows = []
     for tkr, cur in last.dropna().items():
         cid = rev.get(tkr)
@@ -177,15 +179,17 @@ def fetch_yf_prices(ids):
         pre = float(prev.get(tkr, cur))
         chg24 = (float(cur)/float(pre)-1.0)*100.0 if pre else 0.0
         rows.append({
-            "id": cid, "symbol": cid[:4].upper(), "name": cid,
+            "id": cid, "name": cid, "sym": SYMBOL_MAP.get(cid, cid.upper()),
             "current_price": float(cur), "previous_price": float(pre),
             "chg24": chg24
         })
-    # pad missing ids for completeness
-    missing = [cid for cid in ids if cid not in [r["id"] for r in rows]]
-    for m in missing:
+
+    # 누락 채우기
+    got = {r["id"] for r in rows}
+    for m in ids:
+        if m in got: continue
         rows.append({
-            "id": m, "symbol": m[:4].upper(), "name": m,
+            "id": m, "name": m, "sym": SYMBOL_MAP.get(m, m.upper()),
             "current_price": float("nan"), "previous_price": float("nan"), "chg24": float("nan")
         })
     return pd.DataFrame(rows)
@@ -284,11 +288,23 @@ def fp(v, dash_text="집계 공란"):
 # ================== Main Data Build ==================
 # 1) Prices
 df = fetch_yf_prices(BM20_IDS)
-df["sym"] = df["id"].map(SYMBOL_MAP).fillna(df["id"].str.upper())
 
-# 2) Equal weights
-n = max(len(df), 1)
-df["weight_ratio"] = 1.0 / n
+# 2) Custom weights
+CUSTOM_WEIGHTS = {
+    "bitcoin": 0.30,
+    "ethereum": 0.20,
+    "solana": 0.05,
+    "ripple": 0.05,
+    "binancecoin": 0.05,
+}
+fixed_sum = sum(CUSTOM_WEIGHTS.values())  # 0.65
+ids_remaining = [cid for cid in df["id"].tolist() if cid not in CUSTOM_WEIGHTS]
+remain_w = (1.0 - fixed_sum) / max(len(ids_remaining), 1)
+
+weights = {}
+for cid in df["id"]:
+    weights[cid] = CUSTOM_WEIGHTS.get(cid, remain_w)
+df["weight_ratio"] = df["id"].map(weights).astype(float)
 
 # 3) Return & contribution
 df["price_change_pct"] = (df["current_price"]/df["previous_price"] - 1.0) * 100.0
@@ -351,22 +367,22 @@ def build_news_editorial():
     trend_word = "상승" if bm20_chg>0 else ("하락" if bm20_chg<0 else "보합")
     title = f"BM20 {abs_pct(bm20_chg)} {trend_word}…지수 {num2(bm20_now)}pt, 김치프리미엄 {fmt_pct(kimchi_pct,2)}" + (" (캐시)" if kp_is_cache else "")
 
-    ups = [f"{r['id'][:4].upper()}({pct(r['price_change_pct'])})" for _,r in top_up.iterrows() if not np.isnan(r['price_change_pct'])]
-    dns = [f"{r['id'][:4].upper()}({pct(r['price_change_pct'])})" for _,r in top_dn.iterrows() if not np.isnan(r['price_change_pct'])]
+    ups = [f"{r['sym']}({pct(r['price_change_pct'])})" for _,r in top_up.iterrows() if not np.isnan(r['price_change_pct'])]
+    dns = [f"{r['sym']}({pct(r['price_change_pct'])})" for _,r in top_dn.iterrows() if not np.isnan(r['price_change_pct'])]
     up_line = f"개별 종목으로는 {'·'.join(ups)} 강세를 보였다." if ups else ""
     dn_line = f"{'반면 ' if up_line else ''}{'·'.join(dns)} 하락 폭이 컸다." if dns else ""
 
-    def line_for(sym):
-        row = df.loc[df["id"]==sym]
+    def line_for(coin_id, display=None):
+        row = df.loc[df["id"]==coin_id]
         if row.empty: return ""
         r = row.iloc[0]
-        chg = r["price_change_pct"]
-        price = r["current_price"]
+        chg = r["price_change_pct"]; price = r["current_price"]; sym = r["sym"]
         if np.isnan(chg) or np.isnan(price): return ""
-        return f"{sym.upper()}는 {pct(chg)} {'하락' if chg<0 else ('상승' if chg>0 else '보합')}한 {num2(price)}달러."
+        name = display or coin_id.upper()
+        return f"{name}({sym})는 {pct(chg)} {'하락' if chg<0 else ('상승' if chg>0 else '보합')}한 {num2(price)}달러."
 
-    btc_line = line_for("bitcoin")
-    eth_line = line_for("ethereum")
+    btc_line = line_for("bitcoin","비트코인")
+    eth_line = line_for("ethereum","이더리움")
 
     breadth_word = "강세 우위" if num_up>num_down else ("약세 우위" if num_down>num_up else "중립")
     breadth = f"시장 폭은 상승 {num_up}·하락 {num_down}로 {breadth_word}다."
@@ -389,7 +405,7 @@ news_title, news_body = build_news_editorial()
 news = f"{news_title}\n{news_body}"
 
 with open(txt_path,"w",encoding="utf-8") as f: f.write(news)
-df_out=df[["id","current_price","previous_price","price_change_pct","weight_ratio","contribution"]].rename(columns={"id":"symbol"})
+df_out = df[["sym","id","current_price","previous_price","price_change_pct","weight_ratio","contribution"]].rename(columns={"sym":"symbol"})
 df_out.to_csv(csv_path, index=False, encoding="utf-8")
 write_json(kp_path, {"date":YMD, **(kp_meta or {}), "kimchi_pct": (None if kimchi_pct is None else round(float(kimchi_pct),4))})
 
@@ -401,7 +417,7 @@ x = range(len(perf)); y = perf["price_change_pct"].values
 colors_v = ["#2E7D32" if (isinstance(v,(int,float)) and v >= 0) else "#C62828" for v in y]
 y_plot = [0.0 if (isinstance(v,float) and np.isnan(v)) else v for v in y]
 plt.bar(x, y_plot, color=colors_v, width=0.82, edgecolor="#263238", linewidth=0.2)
-plt.xticks(x, [s[:4].upper() for s in perf["id"]], rotation=0, fontsize=10)
+plt.xticks(x, perf["sym"], rotation=0, fontsize=10)
 plt.axhline(0, linewidth=1, color="#90A4AE")
 if len(y_plot)>0:
     y_max = max(y_plot); y_min = min(y_plot)
@@ -523,7 +539,7 @@ doc = SimpleDocTemplate(str(pdf_path), pagesize=A4,
                         topMargin=1.6*cm, bottomMargin=1.6*cm)
 
 story = []
-story += [Paragraph("BM20 데일리 리포트 (YF·Equal)", title_style),
+story += [Paragraph("BM20 데일리 리포트 (YF·Custom Weights)", title_style),
           Paragraph(f"{YMD}", subtitle_style)]
 
 metrics = [
@@ -543,8 +559,8 @@ perf_block = [Paragraph("코인별 퍼포먼스 (1D, USD)", section_h)]
 if bar_png.exists(): perf_block += [Image(str(bar_png), width=16.0*cm, height=6.6*cm)]
 story += [card(perf_block), Spacer(1, 0.45*cm)]
 
-tbl_up = [["상승 TOP3","등락률"], *[[r["id"][:4].upper(), f"{r['price_change_pct']:+.2f}%"] for _,r in top_up.iterrows() if not np.isnan(r["price_change_pct"])]]
-tbl_dn = [["하락 TOP3","등락률"], *[[r["id"][:4].upper(), f"{r['price_change_pct']:+.2f}%"] for _,r in top_dn.iterrows() if not np.isnan(r["price_change_pct"])]]
+tbl_up = [["상승 TOP3","등락률"], *[[r["sym"], f"{r['price_change_pct']:+.2f}%"] for _,r in top_up.iterrows() if not np.isnan(r["price_change_pct"])]]
+tbl_dn = [["하락 TOP3","등락률"], *[[r["sym"], f"{r['price_change_pct']:+.2f}%"] for _,r in top_dn.iterrows() if not np.isnan(r["price_change_pct"])]]
 t_up = Table(tbl_up, colWidths=[8.0*cm, 3.5*cm]); t_dn = Table(tbl_dn, colWidths=[8.0*cm, 3.5*cm])
 style_table_basic(t_up); style_table_basic(t_dn)
 story += [card([Paragraph("상승/하락 TOP3", section_h), Spacer(1,4), t_up, Spacer(1,6), t_dn]),
