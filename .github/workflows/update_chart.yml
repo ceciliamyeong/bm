@@ -1,0 +1,32 @@
+name: Update BM20 vs BTC Chart
+
+on:
+  schedule:
+    - cron: "0 3 * * *"  # 매일 오전 3시 UTC (한국시간 12시) 실행
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install pandas matplotlib yfinance
+
+      - name: Generate BM20 vs BTC chart
+        run: python bm20_vs_btc.py
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add bm20_vs_btc.png
+          git commit -m "Auto-update BM20 vs BTC chart" || echo "No changes"
+          git push
