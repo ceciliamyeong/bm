@@ -112,6 +112,7 @@ BM20_IDS = [
     "arbitrum","optimism","internet-computer","aptos","filecoin","sui","dogecoin"
 ]
 
+# Yahoo Finance ticker mapping (prices)
 YF_MAP = {
     "bitcoin":"BTC-USD","ethereum":"ETH-USD","solana":"SOL-USD","ripple":"XRP-USD",
     "binancecoin":"BNB-USD","toncoin":"TON11419-USD","avalanche-2":"AVAX-USD",
@@ -120,6 +121,17 @@ YF_MAP = {
     "optimism":"OP-USD","internet-computer":"ICP-USD","aptos":"APT-USD","filecoin":"FIL-USD",
     "sui":"SUI-USD","dogecoin":"DOGE-USD"
 }
+
+# ✅ 표기용 심볼(라벨) 매핑
+SYMBOL_MAP = {
+    "bitcoin":"BTC","ethereum":"ETH","solana":"SOL","ripple":"XRP",
+    "binancecoin":"BNB","toncoin":"TON","avalanche-2":"AVAX",
+    "chainlink":"LINK","cardano":"ADA","polygon":"POL","near":"NEAR",
+    "polkadot":"DOT","cosmos-hub":"ATOM","litecoin":"LTC","arbitrum":"ARB",
+    "optimism":"OP","internet-computer":"ICP","aptos":"APT","filecoin":"FIL",
+    "sui":"SUI","dogecoin":"DOGE"
+}
+
 
 # ================== Prices: yfinance ==================
 def fetch_yf_prices(ids):
@@ -272,6 +284,7 @@ def fp(v, dash_text="집계 공란"):
 # ================== Main Data Build ==================
 # 1) Prices
 df = fetch_yf_prices(BM20_IDS)
+df["sym"] = df["id"].map(SYMBOL_MAP).fillna(df["id"].str.upper())
 
 # 2) Equal weights
 n = max(len(df), 1)
@@ -382,7 +395,7 @@ write_json(kp_path, {"date":YMD, **(kp_meta or {}), "kimchi_pct": (None if kimch
 
 # ================== Charts ==================
 # A) 퍼포먼스 바
-perf = df.sort_values("price_change_pct", ascending=False)[["id","price_change_pct"]].reset_index(drop=True)
+perf = df.sort_values("price_change_pct", ascending=False)[["sym","price_change_pct"]].reset_index(drop=True)
 plt.figure(figsize=(10.6, 4.6))
 x = range(len(perf)); y = perf["price_change_pct"].values
 colors_v = ["#2E7D32" if (isinstance(v,(int,float)) and v >= 0) else "#C62828" for v in y]
