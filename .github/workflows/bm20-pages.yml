@@ -62,17 +62,39 @@ jobs:
             --cap BTC:0.30 --cap ETH:0.20 --cap XRP:0.05 --cap USDT:0.05
         continue-on-error: false
 
+      - name: Build series.json (temporary minimal)
+        run: |
+          set -eo pipefail
+          mkdir -p out
+          python -u scripts/build_series.py
+          echo "[debug] built files in ./out:" && ls -al out || true
+      
       - name: Ensure series.json exists
         run: |
-          test -f out/series.json || (echo "::error::out/series.json missing" && exit 1)
-
+          set -eo pipefail
+          test -s out/series.json || (echo "::error::out/series.json missing or empty" && exit 1)
+      
       - name: Build BTC normalized JSON (optional)
         run: |
-          python scripts/build_btc_json.py || true
-
+          set -eo pipefail
+          if ! python -u scripts/build_btc_json.py; then
+            echo "::warning::build_btc_json.py failed (optional)."
+          fi
+      
       - name: Stage site (hub + subpages + data)
         run: |
+          set -eo pipefail
           rm -rf _site && mkdir -p _site
+          cp viewer/index.html _site/index.html
+          cp viewer/bm20-dashboard-viewer.html _site/bm20-dashboard-viewer.html || true
+          cp viewer/bm20-vs-btc.html         _site/bm20-vs-btc.html || true
+          cp viewer/methodology.html         _site/methodology.html || true
+          cp out/series.json _site/
+          [ -f out/btc_series.json ] && cp out/btc_series.json _site/ || true
+          [ -f out/latest.json ]     && cp out/latest.json     _site/ || true
+          [ -f site/contrib_top.json ] && cp site/contrib_top.json _site/ || true
+          touch _site/.nojekyll
+          echo "=== _site tree ==="; ls -lah _site
 
           # Hub (메인)
           cp viewer/index.html _site/index.html
