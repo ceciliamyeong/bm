@@ -232,55 +232,38 @@ def compute_index_series(all_df, base_date=None, base_value=100.0, rebalance="qu
     df_out.to_csv(out_csv, index=False, encoding="utf-8")
     return out_csv, rows[0]["date"], rows[-1]["date"], len(rows)
 
+import os
+import pandas as pd
+import matplotlib.pyplot as plt
+
 def main():
-    args = parse_args()
-    all_df = load_daily_csvs(args.archive)
-    if all_df.empty:
-        print("[ERR] No CSV found in", args.archive); sys.exit(1)
+    # ... (앞부분 계산 및 CSV 저장 코드)
 
-    cap_map = parse_caps(args.cap)
-    mapping = read_map(args.map_path) if args.map_path else read_map(None)
+    print(f"[OK] Index series → {out_csv} ({d0} → {dN}, {n} days, "
+          f"rebalance={args.rebalance}, weights={args.weights_source})")
 
-    out_csv, d0, dN, n = compute_index_series(
-        all_df,
-        base_date=args.base_date,
-        base_value=args.base_value,
-        rebalance=args.rebalance,
-        weights_source=args.weights_source,
-        listed_bonus=args.listed_bonus,
-        cap_map=cap_map,
-        mapping=mapping,
-        use_upbit=not args.no_upbit,
-        dump_const=bool(args.dump_constituents),
-        out_dir=args.out,
-        ret_cap=args.ret_cap
-    )
-
-    print(f"[OK] Index series → {out_csv} ({d0} → {dN}, {n} days, rebalance={args.rebalance}, weights={args.weights_source})")
-   
-    df_out.to_json(os.path.join(out_dir, "series.json"),
-                orient="records", force_ascii=False, indent=2)
-  
-     import os, pandas as pd
-    
+    # --- CSV → JSON 변환 ---
     d = pd.read_csv(out_csv, dtype={"date": str})
+    series_json = os.path.join("site", "series.json")  # site 폴더에 저장
     os.makedirs("site", exist_ok=True)
-    d.to_json(os.path.join("site", "series.json"),
-              orient="records", force_ascii=False, indent=2)
-    print(f"[OK] JSON saved -> site/series.json")
-
+    d.to_json(series_json, orient="records", force_ascii=False, indent=2)
+    print(f"[OK] JSON saved -> {series_json}")
+    # ------------------------
 
     if args.plot:
-        import matplotlib.pyplot as plt
         d = pd.read_csv(out_csv, parse_dates=["date"])
-        fig, ax = plt.subplots(figsize=(9,4))
+        fig, ax = plt.subplots(figsize=(9, 4))
         ax.plot(d["date"], d["index"], lw=1.2)
         if args.plot_log:
             ax.set_yscale("log")
         ax.set_title("BM20 Index" + (" (Log Scale)" if args.plot_log else ""))
         ax.grid(True, which="both", alpha=0.3)
-        png_path = os.path.join(args.out, "bm20_index.png" if not args.plot_log else "bm20_index_log.png")
-        fig.tight_layout(); fig.savefig(png_path, dpi=150)
+        png_path = os.path.join(
+            args.out,
+            "bm20_index.png" if not args.plot_log else "bm20_index_log.png"
+        )
+        fig.tight_layout()
+        fig.savefig(png_path, dpi=150)
         print(f"[OK] Chart saved -> {png_path}")
 
 
