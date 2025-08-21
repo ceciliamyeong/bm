@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>BM20 Methodology</title>
+  <style>
+    :root { --bg:#0a0a0b; --fg:#e8edf2; --muted:#97a3b1; --card:#111317; --accent:#67b0ff; }
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans,sans-serif}
+    .wrap{max-width:900px;margin:0 auto;padding:24px 18px}
+    h1{font-size:24px;margin:0 0 12px}
+    h2{font-size:18px;margin:22px 0 8px}
+    .card{background:var(--card);border:1px solid #1e2430;border-radius:14px;box-shadow:0 2px 16px rgba(0,0,0,.25);padding:14px 16px;margin:10px 0}
+    .muted{color:var(--muted)} .small{font-size:12px}
+    a{color:#8ec2ff}
+    .topbar{position:sticky;top:0;z-index:5;background:linear-gradient(180deg,rgba(10,10,11,.95),rgba(10,10,11,.85));backdrop-filter:saturate(140%) blur(6px);padding:10px;border-bottom:1px solid #1e2430}
+    .topbar .inner{max-width:900px;margin:0 auto;display:flex;gap:8px;align-items:center;justify-content:space-between}
+    .btn{padding:6px 10px;border-radius:10px;border:1px solid #2a3243;background:#182032;color:var(--fg);cursor:pointer;text-decoration:none}
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <div class="inner">
+    <div style="font-weight:700">BM20 Methodology</div>
+    <nav>
+      <a class="btn" href="./">← Hub</a>
+      <a class="btn" href="./bm20-dashboard-viewer.html">Dashboard</a>
+      <a class="btn" href="./bm20-vs-btc.html">BM20 vs BTC</a>
+    </nav>
+  </div>
+</div>
+
+<div class="wrap">
+  <h1>BM20 Index Methodology</h1>
+  <div class="muted">블록미디어 고유의 대형 코인 20개 지수</div>
+
+  <div class="card">
+    <h2>개요</h2>
+    <ul>
+      <li>지수 기준일: <b>2018-01-01 (=100)</b></li>
+      <li>코인 유니버스: <b>시가총액 상위 20종</b> (APT 제외, SUI 포함)</li>
+      <li>데이터 소스: CoinGecko(기본), 오류 시 Yahoo Finance 폴백</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>가중치</h2>
+    <ul>
+      <li>BTC <b>30%</b>, ETH <b>20%</b>, XRP <b>5%</b>, USDT <b>5%</b>, BNB <b>5%</b></li>
+      <li>나머지 15개 종목(도지·TON·SUI 포함)은 <b>잔여 35%</b>를 균등 배분(각 약 2.33%)</li>
+      <li>한국 3대 거래소(업비트·빗썸·코인원) 상장 종목은 <b>1.3배 가중치 보정</b></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>리밸런싱</h2>
+    <ul>
+      <li>분기 1회 정기 변경: <b>1, 4, 7, 10월</b> 첫 날 적용</li>
+      <li>산출식: 포트폴리오 가치 / 기준 가치 × 100</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>표현 규칙</h2>
+    <ul>
+      <li>KPI 문구: <b>Best 3</b>, <b>Worst 3</b></li>
+      <li>타임존: Asia/Seoul, 날짜 포맷 YYYY-MM-DD</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>활용</h2>
+    <ul>
+      <li>일일 시황 코멘터리의 기준 지수</li>
+      <li>장기적으로 ETF/펀드/파생상품 <b>벤치마크</b>로 확장 가능</li>
+      <li>히스토리컬 차트 공개, 코인별 기여도 분석, 자동 뉴스 문장 생성</li>
+    </ul>
+  </div>
+
+  <p class="small muted">© Blockmedia. 본 지수는 정보 제공 목적이며 투자 자문이 아닙니다.</p>
+</div>
+</body>
+</html>
