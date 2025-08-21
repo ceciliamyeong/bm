@@ -232,28 +232,57 @@ def compute_index_series(all_df, base_date=None, base_value=100.0, rebalance="qu
     df_out.to_csv(out_csv, index=False, encoding="utf-8")
     return out_csv, rows[0]["date"], rows[-1]["date"], len(rows)
 
+# === 아래부터 파일 하단 교체 ===
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
 
 def main():
-    # ... (앞부분 계산 및 CSV 저장 코드)
+    # 1) 인자 파싱
+    args = parse_args()
 
+    # 2) 데이터 로드
+    all_df = load_daily_csvs(args.archive)
+    if all_df.empty:
+        raise RuntimeError(f"No daily CSVs found under: {args.archive}")
+
+    # 3) 옵션/맵 읽기
+    cap_map = parse_caps(args.cap)               # --cap BTC:0.30 ...
+    mapping = read_map(args.map_path)            # 심볼 매핑/오버라이드
+    use_upbit = not args.no_upbit                # --no-upbit가 없으면 True
+
+    # 4) 지수 시리즈 계산 → CSV 저장 (경로/기간/일수 반환)
+    out_csv, d0, dN, n = compute_index_series(
+        all_df=all_df,
+        base_date=args.base_date,
+        base_value=args.base_value,
+        rebalance=args.rebalance,                # "daily" | "monthly" | "quarterly"
+        weights_source=args.weights_source,      # "csv" | "rules"
+        listed_bonus=args.listed_bonus,          # 예: 1.3
+        cap_map=cap_map,
+        mapping=mapping,
+        use_upbit=use_upbit,
+        dump_const=bool(args.dump_constituents), # 분기/월별 구성 스냅샷 CSV 저장
+        out_dir=args.out,                        # 출력 폴더
+        ret_cap=args.ret_cap                     # 수익률 winsorize 한계
+    )
+
+    # 5) 결과 로그
     print(f"[OK] Index series → {out_csv} ({d0} → {dN}, {n} days, "
           f"rebalance={args.rebalance}, weights={args.weights_source})")
 
-    # --- CSV → JSON 변환 ---
+    # 6) CSV → JSON (site/series.json)
     d = pd.read_csv(out_csv, dtype={"date": str})
-    series_json = os.path.join("site", "series.json")  # site 폴더에 저장
+    series_json = os.path.join("site", "series.json")
     os.makedirs("site", exist_ok=True)
     d.to_json(series_json, orient="records", force_ascii=False, indent=2)
     print(f"[OK] JSON saved -> {series_json}")
-    # ------------------------
 
+    # 7) (옵션) 플롯 저장
     if args.plot:
-        d = pd.read_csv(out_csv, parse_dates=["date"])
+        d_plot = pd.read_csv(out_csv, parse_dates=["date"])
         fig, ax = plt.subplots(figsize=(9, 4))
-        ax.plot(d["date"], d["index"], lw=1.2)
+        ax.plot(d_plot["date"], d_plot["index"], lw=1.2)
         if args.plot_log:
             ax.set_yscale("log")
         ax.set_title("BM20 Index" + (" (Log Scale)" if args.plot_log else ""))
@@ -266,6 +295,6 @@ def main():
         fig.savefig(png_path, dpi=150)
         print(f"[OK] Chart saved -> {png_path}")
 
-
 if __name__ == "__main__":
     main()
+# === 교체 끝 ===
