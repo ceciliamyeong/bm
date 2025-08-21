@@ -237,8 +237,10 @@ def main():
     all_df = load_daily_csvs(args.archive)
     if all_df.empty:
         print("[ERR] No CSV found in", args.archive); sys.exit(1)
+
     cap_map = parse_caps(args.cap)
     mapping = read_map(args.map_path) if args.map_path else read_map(None)
+
     out_csv, d0, dN, n = compute_index_series(
         all_df,
         base_date=args.base_date,
@@ -253,27 +255,17 @@ def main():
         out_dir=args.out,
         ret_cap=args.ret_cap
     )
+
     print(f"[OK] Index series → {out_csv} ({d0} → {dN}, {n} days, rebalance={args.rebalance}, weights={args.weights_source})")
 
-    # --- CSV를 읽어 JSON으로 변환 ---
+    # --- CSV → JSON 변환 ---
     import os, pandas as pd
     d = pd.read_csv(out_csv, dtype={"date": str})
     series_json = os.path.join("site", "series.json")  # site 폴더에 저장
     os.makedirs("site", exist_ok=True)
     d.to_json(series_json, orient="records", force_ascii=False, indent=2)
     print(f"[OK] JSON saved -> {series_json}")
-    # ----------------------------------
-
-    
-    # --- NEW: CSV → JSON 내보내기 (전역 df_out 사용하지 않음) ---
-    try:
-        d = pd.read_csv(out_csv, dtype={"date": str})
-        series_json = os.path.join(args.out, "series.json")
-        d.to_json(series_json, orient="records", force_ascii=False, indent=2)
-        print(f"[OK] JSON saved -> {series_json}")
-    except Exception as e:
-        print(f"[WARN] JSON export skipped: {e}")
-    # -----------------------------------------------------------
+    # ------------------------
 
     if args.plot:
         import matplotlib.pyplot as plt
@@ -288,11 +280,6 @@ def main():
         fig.tight_layout(); fig.savefig(png_path, dpi=150)
         print(f"[OK] Chart saved -> {png_path}")
 
-
-df_out.to_json(os.path.join(out_dir, "series.json"),
-               orient="records", date_format="iso", force_ascii=False)
-df_out.tail(1).to_json(os.path.join(out_dir, "latest.json"),
-                       orient="records", date_format="iso", force_ascii=False)
 
 if __name__ == "__main__":
     main()
