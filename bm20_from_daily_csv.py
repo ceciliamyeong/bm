@@ -259,16 +259,16 @@ def main():
     print(f"[OK] Index series → {out_csv} ({d0} → {dN}, {n} days, rebalance={args.rebalance}, weights={args.weights_source})")
    
     df_out.to_json(os.path.join(out_dir, "series.json"),
--                orient="records", force_ascii=False, indent=2)
+                orient="records", force_ascii=False, indent=2)
   
-    # --- CSV → JSON 변환 ---
-    import os, pandas as pd
+     import os, pandas as pd
+    
     d = pd.read_csv(out_csv, dtype={"date": str})
-    series_json = os.path.join("site", "series.json")  # site 폴더에 저장
     os.makedirs("site", exist_ok=True)
-    d.to_json(series_json, orient="records", force_ascii=False, indent=2)
-    print(f"[OK] JSON saved -> {series_json}")
-    # ------------------------
+    d.to_json(os.path.join("site", "series.json"),
+              orient="records", force_ascii=False, indent=2)
+    print(f"[OK] JSON saved -> site/series.json")
+
 
     if args.plot:
         import matplotlib.pyplot as plt
