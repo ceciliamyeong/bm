@@ -255,6 +255,16 @@ def main():
     )
     print(f"[OK] Index series → {out_csv} ({d0} → {dN}, {n} days, rebalance={args.rebalance}, weights={args.weights_source})")
 
+    # --- CSV를 읽어 JSON으로 변환 ---
+    import os, pandas as pd
+    d = pd.read_csv(out_csv, dtype={"date": str})
+    series_json = os.path.join("site", "series.json")  # site 폴더에 저장
+    os.makedirs("site", exist_ok=True)
+    d.to_json(series_json, orient="records", force_ascii=False, indent=2)
+    print(f"[OK] JSON saved -> {series_json}")
+    # ----------------------------------
+
+    
     # --- NEW: CSV → JSON 내보내기 (전역 df_out 사용하지 않음) ---
     try:
         d = pd.read_csv(out_csv, dtype={"date": str})
