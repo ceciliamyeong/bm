@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write  # index.html / archive / latest.html 커밋용
+      contents: write
 
     env:
       TZ: Asia/Seoul
@@ -32,17 +32,19 @@ jobs:
 
       - name: Install dependencies
         run: |
+          set -euo pipefail
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Install Korean fonts (Nanum + Noto CJK)
         run: |
+          set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y fonts-nanum fonts-noto-cjk fontconfig
           sudo fc-cache -f -v
 
-      # 1) 리포트 생성 (out/YYYY-MM-DD)
-      - name: Run BM20 generator (with retries)
+      # 1) 리포트 생성 (out/YYYY-MM-DD) — 1차: CoinGecko
+      - name: Run BM20 generator (CoinGecko, with retries)
         shell: bash
         env:
           OUT_DIR: out
@@ -51,14 +53,36 @@ jobs:
           COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
           MAX_ATTEMPTS: "3"
           RETRY_SLEEP_SECONDS: "45"
+          PRICE_SOURCE: "coingecko"
         run: |
+          set -euo pipefail
           chmod +x scripts/run_bm20.sh
-          scripts/run_bm20.sh      
+          scripts/run_bm20.sh
 
-      # 디버그용
+      # 1.5) 폴백: CoinGecko 실패/산출물 미존재 시 야후로 재시도
+      - name: Fallback — Run with Yahoo mapping if no output
+        shell: bash
+        env:
+          OUT_DIR: out
+          TZ: Asia/Seoul
+          BM20_KRW_BONUS: "1.0"
+          MAX_ATTEMPTS: "2"
+          RETRY_SLEEP_SECONDS: "30"
+          PRICE_SOURCE: "yahoo"      # 스크립트가 이 값을 읽어 야후로 동작하도록
+        run: |
+          set -euo pipefail
+          DATE=$(TZ=Asia/Seoul date +%F)
+          if [ -d "out/${DATE}" ] && [ -f "out/${DATE}/bm20_daily_data_${DATE}.csv" ]; then
+            echo "[INFO] Output exists. Skip Yahoo fallback."
+            exit 0
+          fi
+          echo "[WARN] No output found. Retrying with Yahoo mapping..."
+          scripts/run_bm20.sh
+
       - name: Debug — show out tree
         shell: bash
         run: |
+          set -euo pipefail
           echo "PWD=$(pwd)"
           ls -la
           echo "---- out ----"
@@ -66,14 +90,19 @@ jobs:
           echo "---- out recursive ----"
           find out -maxdepth 2 -type d -print || true
 
-      # 2) out → archive 복사 + latest.html 생성(스크립트 내부에서 처리)
-      - name: Generate site (latest + archive)
+      # 2) out → archive 복사 + latest.html 생성(스크립트 내부)
+      - name: Generate site (latest + archive + JSON)
         shell: bash
         run: |
+          set -euo pipefail
           python scripts/generate_report.py
+          # 필요 시 JSON 보강 (export_json.py가 별도일 경우)
+          if [ -f "export_json.py" ]; then
+            python export_json.py || true
+          fi
           echo "" > .nojekyll
 
-      # 2.5) latest 보강 — 아카이브/파일 없으면 '경고 출력 후 스킵'
+      # 2.5) latest 고정자산 생성
       - name: Publish latest (fixed assets)
         shell: bash
         run: |
@@ -94,14 +123,18 @@ jobs:
             fi
           done
 
-          # 캐시버스터 대응: ?v=타임스탬프까지 매칭하여 latest.*로 교체
           sed -E \
-            -e "s#bm20_bar_${DATE}\.png(\?v=[0-9]+)?#bm20_bar_latest.png#g" \
-            -e "s#bm20_trend_${DATE}\.png(\?v=[0-9]+)?#bm20_trend_latest.png#g" \
+            -e "s#bm20_bar_${DATE}\\.png(\\?v=[0-9]+)?#bm20_bar_latest.png#g" \
+            -e "s#bm20_trend_${DATE}\\.png(\\?v=[0-9]+)?#bm20_trend_latest.png#g" \
             "$SRC/bm20_daily_${DATE}.html" > latest.html
 
           cp "$SRC/bm20_bar_${DATE}.png"   bm20_bar_latest.png
           cp "$SRC/bm20_trend_${DATE}.png" bm20_trend_latest.png
+
+          # JSON이 있다면 캐시 무효화를 위한 타임스탬프 touch
+          if [ -f "site/bm20_latest.json" ]; then
+            touch site/bm20_latest.json
+          fi
 
       # 3) 커밋 & 푸시
       - name: Commit & Push (with pull --rebase)
@@ -109,7 +142,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set -e
+          set -euo pipefail
           BRANCH="${GITHUB_REF#refs/heads/}"
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
