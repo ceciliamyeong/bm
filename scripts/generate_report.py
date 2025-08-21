@@ -9,6 +9,21 @@ import os, re, shutil, html
 from pathlib import Path
 import datetime as dt
 
+DARK_STYLE = """
+body{font-family:-apple-system,BlinkMacSystemFont,"NanumGothic","Noto Sans CJK","Malgun Gothic",Arial,sans-serif;
+background:#0b1020;color:#e6ebff;margin:0}
+.wrap{max-width:820px;margin:0 auto;padding:20px}
+.card{background:#121831;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:20px;margin-bottom:16px}
+h1{font-size:22px;margin:0 0 8px 0;text-align:center}
+h2{font-size:15px;margin:16px 0 8px 0;color:#cfd6ff}
+.muted{color:#99a1b3;text-align:center}.center{text-align:center}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border:1px solid rgba(255,255,255,.08);padding:8px}
+th{background:#1a2240;color:#e6ebff}
+.footer{font-size:12px;color:#99a1b3;text-align:center;margin-top:16px}
+img{max-width:100%;background:#0f1429;border-radius:8px;border:1px solid rgba(255,255,255,.08)}
+"""
+
 ROOT  = Path(__file__).resolve().parents[1]
 OUT   = ROOT / "out"
 ARCH  = ROOT / "archive"
@@ -29,24 +44,47 @@ def find_latest_out_dir() -> Path | None:
         return sorted(dated, key=lambda p: p.name)[-1]
     return None
 
-def ensure_latest_dir() -> Path:
-    latest = find_latest_out_dir()
-    if latest:
-        return latest
+def ensure_daily_html(latest_dir: Path) -> Path | None:
+    """out/YYYY-MM-DD/ 아래에 bm20_daily_YYYY-MM-DD.html 없으면 자동 생성."""
+    ymd = latest_dir.name
+    html_path = latest_dir / f"bm20_daily_{ymd}.html"
+    if html_path.exists():
+        return html_path
 
-    # Fallback: out 루트에 파일만 떨어져있는 경우 임시 날짜 폴더 생성
-    root_files = list(OUT.glob("*"))
-    if not root_files:
-        raise SystemExit(f"[generate_report] no dated folder and no files under {OUT}")
-    ts = max(p.stat().st_mtime for p in root_files)
-    ymd = dt.datetime.fromtimestamp(ts).strftime("%Y-%m-%d")
-    tmp = OUT / ymd
-    tmp.mkdir(exist_ok=True)
-    for p in root_files:
-        if p.is_file():
-            shutil.move(str(p), tmp / p.name)
-    print(f"[fallback] created {tmp} from root files")
-    return tmp
+    # 필수 이미지/뉴스 확보
+    bar = latest_dir / f"bm20_bar_{ymd}.png"
+    trd = latest_dir / f"bm20_trend_{ymd}.png"
+    news_file = latest_dir / f"bm20_news_{ymd}.txt"
+    if not news_file.exists():
+        print("[ensure_daily_html] skip: news not found", news_file); return None
+
+    news = news_file.read_text(encoding="utf-8").strip()
+    news = html.escape(news).replace("\n","<br/>")
+    # 이미지 없어도 HTML은 생성(섹션만 비움)
+    bar_tag = f'<p class="center"><img src="bm20_bar_{ymd}.png" alt="Performance"></p>' if bar.exists() else ""
+    trd_tag = f'<p class="center"><img src="bm20_trend_{ymd}.png" alt="Trend"></p>' if trd.exists() else ""
+
+    tpl = f"""<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BM20 데일리 {ymd}</title>
+<style>{DARK_STYLE}</style></head><body>
+<div class="wrap">
+  <div class="card">
+    <h1>BM20 데일리 리포트</h1>
+    <div class="muted">{ymd}</div>
+  </div>
+  <div class="card">
+    <h2>코인별 퍼포먼스 (1D, USD)</h2>
+    {bar_tag}
+    <h2>BTC & ETH 7일 가격 추세</h2>
+    {trd_tag}
+  </div>
+  <div class="card"><h2>BM20 데일리 뉴스</h2><p>{news}</p></div>
+  <div class="footer">© Blockmedia · Data: CoinGecko, Upbit, Binance/Bybit</div>
+</div></body></html>"""
+    html_path.write_text(tpl, encoding="utf-8")
+    print("[auto] generated", html_path)
+    return html_path
 
 def copy_dir(src: Path) -> Path:
     dst = ARCH / src.name
