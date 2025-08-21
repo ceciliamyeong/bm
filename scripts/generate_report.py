@@ -197,6 +197,44 @@ def publish_latest(latest_dir: Path):
     print(f"[publish_latest] wrote {(target_root / 'latest.html').as_posix()}")
 # ---------------------------------------------------------------------
 
+def ensure_latest_dir() -> Path:
+    """
+    최신 out/YYYY-MM-DD 디렉터리를 보장하여 반환.
+    - 있으면 그대로 사용
+    - 없으면 ROOT/bm20의 고정 에셋(latest.html, *_latest.png)로
+      오늘 날짜 폴더를 생성해 채운 뒤 반환
+    - 이후 ensure_daily_html()로 일간 HTML 생성 시도
+    """
+    latest = find_latest_out_dir()
+    if latest is None:
+        today = dt.date.today().isoformat()
+        latest = OUT / today
+        latest.mkdir(parents=True, exist_ok=True)
+
+        fixed = ROOT / "bm20"
+        bar_fixed = fixed / "bm20_bar_latest.png"
+        trd_fixed = fixed / "bm20_trend_latest.png"
+        html_fixed = fixed / "latest.html"
+
+        # 고정 이미지 → 날짜 파일명으로 복사
+        if bar_fixed.exists():
+            shutil.copyfile(bar_fixed, latest / f"bm20_bar_{today}.png")
+        if trd_fixed.exists():
+            shutil.copyfile(trd_fixed, latest / f"bm20_trend_{today}.png")
+
+        # latest.html이 있으면 날짜 파일명으로 치환해 저장
+        if html_fixed.exists():
+            html_txt = html_fixed.read_text(encoding="utf-8")
+            html_txt = html_txt.replace("bm20_bar_latest.png",   f"bm20_bar_{today}.png")
+            html_txt = html_txt.replace("bm20_trend_latest.png", f"bm20_trend_{today}.png")
+            (latest / f"bm20_daily_{today}.html").write_text(html_txt, encoding="utf-8")
+
+    # 일간 HTML 없으면 뉴스/이미지 상황에 따라 자동 생성 시도(없어도 전체 플로우는 진행)
+    ensure_daily_html(latest)
+    return latest
+
+
+
 def main():
     latest = ensure_latest_dir()
     dst = copy_dir(latest)
