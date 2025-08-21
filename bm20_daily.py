@@ -10,6 +10,52 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import cm
 
+def plot_bm20_history(history_csv="out/history/bm20_index_history.csv",
+                      out_png="bm20_history_latest.png"):
+    if not os.path.exists(history_csv):
+        return False
+    try:
+        hist = pd.read_csv(history_csv)
+        # 예상 컬럼: date (YYYY-MM-DD), bm20_level (float)
+        hist["date"] = pd.to_datetime(hist["date"])
+        hist = hist.sort_values("date").dropna(subset=["bm20_level"])
+        if hist.empty:
+            return False
+    except Exception:
+        return False
+
+    # 다크 테마
+    plt.rcParams.update({
+        "figure.facecolor":"#0b1020",
+        "axes.facecolor":"#121831",
+        "axes.edgecolor":"#28324d",
+        "axes.labelcolor":"#e6ebff",
+        "xtick.color":"#cfd6ff",
+        "ytick.color":"#cfd6ff",
+        "text.color":"#e6ebff",
+        "savefig.facecolor":"#0b1020",
+        "savefig.bbox":"tight",
+        "font.size":11,
+    })
+
+    fig, ax = plt.subplots(figsize=(10,5), dpi=150)
+    ax.plot(hist["date"], hist["bm20_level"], linewidth=1.6)
+    ax.axhline(100, color="#3a4569", lw=1, linestyle="--")  # 2018-01-01=100 기준선
+    ax.set_title("BM20 Index (2018-01-01 = 100)")
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Index Level")
+    # 마지막 값 주석
+    last_date = hist["date"].iloc[-1]
+    last_val  = float(hist["bm20_level"].iloc[-1])
+    ax.annotate(f"{last_val:,.0f}",
+                xy=(last_date, last_val),
+                xytext=(10, 0), textcoords="offset points",
+                va="center")
+    fig.autofmt_xdate()
+    fig.savefig(out_png)
+    plt.close(fig)
+    return True
+
 # ===== 날짜/폴더 설정 (맨 위에서 정의) =====
 OUT_DIR = os.getenv("OUT_DIR", "out")
 os.makedirs(OUT_DIR, exist_ok=True)
