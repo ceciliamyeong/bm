@@ -1,27 +1,25 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" class="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>BM20 Index Viewer</title>
+  <title>BM20 Index Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
-    :root { color-scheme: light dark; }
-    .card { border-radius: 1rem; border: 1px solid hsl(0 0% 90% / 0.6); background: color-mix(in oklab, white 92%, transparent); box-shadow: 0 1px 2px rgba(0,0,0,.03); }
-    .dark .card { border-color: hsl(0 0% 20% / 0.7); background: color-mix(in oklab, rgb(23 23 23) 86%, transparent); }
+    :root { color-scheme: dark; }
+    .card { border-radius: 1rem; border: 1px solid rgb(42 50 67);
+            background: rgb(17 19 23 / .92); box-shadow: 0 2px 16px rgba(0,0,0,.25); }
     .kpi{ font-size:1.5rem; font-weight:600; letter-spacing:-.01em; }
-    .muted{ color: rgb(115 115 115); }
-    .dark .muted{ color: rgb(163 163 163); }
-    .positive{ color: rgb(5 150 105); }
-    .negative{ color: rgb(225 29 72); }
-    .badge{ display:inline-flex; align-items:center; gap:.4rem; font-size:.75rem; padding:.25rem .5rem; border-radius:999px; border:1px solid currentColor; }
+    .muted{ color: rgb(163 170 182); }
+    .positive{ color: rgb(16 185 129); }
+    .negative{ color: rgb(244 63 94); }
+    .badge{ display:inline-flex; align-items:center; gap:.4rem; font-size:.75rem; padding:.25rem .5rem;
+            border-radius:999px; border:1px solid currentColor; }
     .table th,.table td{ padding:.5rem .75rem; }
-    .skeleton{ background: linear-gradient(90deg,#eee,#f5f5f5,#eee); background-size:200% 100%; animation:s 1.2s infinite; border-radius:.5rem; height:1rem; }
-    @keyframes s{ 0%{background-position:200% 0} 100%{background-position:-200% 0} }
   </style>
 </head>
-<body class="bg-neutral-50/60 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-50">
+<body class="bg-neutral-950 text-neutral-50">
   <div class="mx-auto max-w-7xl p-4 md:p-8">
     <div class="flex items-end justify-between mb-4 gap-3">
       <div>
@@ -29,7 +27,7 @@
         <div id="updatedAt" class="muted text-sm mt-1">업데이트: -</div>
       </div>
       <div class="flex items-center gap-2">
-        <select id="rangeSelect" class="border rounded-xl px-3 py-2 text-sm bg-white dark:bg-neutral-900">
+        <select id="rangeSelect" class="border rounded-xl px-3 py-2 text-sm bg-neutral-900">
           <option value="3M">3M</option>
           <option value="6M" selected>6M</option>
           <option value="YTD">YTD</option>
@@ -39,7 +37,7 @@
       </div>
     </div>
 
-    <div id="rebalanceBanner" class="hidden mb-4 card px-4 py-3 text-amber-700 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/40">
+    <div id="rebalanceBanner" class="hidden mb-4 card px-4 py-3 text-amber-200 bg-amber-950/40">
       <span class="font-medium">정기 리밸런싱일</span>
       <span class="ml-2 text-sm opacity-80">(1, 4, 7, 10월 1일 적용)</span>
     </div>
@@ -84,7 +82,7 @@
       <div class="overflow-x-auto">
         <table class="min-w-full text-sm table">
           <thead>
-            <tr class="muted border-b">
+            <tr class="text-neutral-400 border-b border-neutral-800">
               <th class="text-left">Symbol</th>
               <th class="text-left">Name</th>
               <th class="text-left">Weight</th>
@@ -99,7 +97,7 @@
     </div>
 
     <div class="text-xs muted text-center mt-3">
-      데이터 소스: series.json (BM20), latest.json / contrib_top.json이 있으면 자동 반영. Asia/Seoul 기준. 기준일 2018-01-01 (=100).
+      데이터 소스: <code>series.json</code> (BM20), <code>latest.json</code> / <code>contrib_top.json</code> 있으면 자동 반영. Asia/Seoul 기준. 기준일 2018-01-01 (=100).
     </div>
   </div>
 
@@ -118,7 +116,6 @@ async function fetchMaybe(url){
 function normalizeSeries(json){
   if(!json) return [];
   if(Array.isArray(json)){
-    // infer keys
     return json.map(row=>{
       const d = row.date || row.Date || row.D || row[0];
       const v = row.index ?? row.Index ?? row.close ?? row.value ?? row.V ?? row[1];
@@ -131,7 +128,6 @@ function normalizeSeries(json){
   if(json.date && json.index && Array.isArray(json.date)){
     return json.date.map((d,i)=>({date: String(d).slice(0,10), index: Number((json.index||[])[i])})).filter(x=>x.date && !Number.isNaN(x.index));
   }
-  // last resort: take first array-like property pairs
   const keys = Object.keys(json);
   if(keys.length>=2 && Array.isArray(json[keys[0]]) && Array.isArray(json[keys[1]])){
     return json[keys[0]].map((d,i)=>({date: String(d).slice(0,10), index: Number(json[keys[1]][i])})).filter(x=>x.date && !Number.isNaN(x.index));
@@ -139,7 +135,7 @@ function normalizeSeries(json){
   return [];
 }
 
-function pct(a,b){ if(!a || !b) return null; return ((a/b)-1)*100; }
+function pct(a,b){ if(a==null || b==null) return null; return ((a/b)-1)*100; }
 
 function firstOnOrAfter(series, yyyy_mm_dd_start){
   for(const p of series){ if(p.date >= yyyy_mm_dd_start) return p; }
@@ -148,14 +144,14 @@ function firstOnOrAfter(series, yyyy_mm_dd_start){
 
 let LINE, BAR;
 async function main(){
-  // Load data generated by Actions
+  // Load data (same directory)
   const seriesJson = await fetchMaybe("./series.json");
   const latestJson = await fetchMaybe("./latest.json");
   const contribJson = (await fetchMaybe("./contrib_top.json")) || (await fetchMaybe("./site/contrib_top.json"));
 
   const series = normalizeSeries(seriesJson).sort((a,b)=>a.date.localeCompare(b.date));
   if(series.length === 0){
-    document.body.innerHTML = "<div class='mx-auto max-w-3xl p-8 text-center text-red-600'>series.json을 찾지 못했습니다. Actions가 out/series.json을 만들고 Stage에서 _site로 복사하는지 확인하세요.</div>";
+    document.body.innerHTML = "<div class='mx-auto max-w-3xl p-8 text-center text-red-400'>series.json을 찾지 못했습니다. Actions가 out/series.json을 만들고 Stage에서 _site로 복사하는지 확인하세요.</div>";
     return;
   }
 
@@ -206,13 +202,13 @@ async function main(){
   if(contribJson && (contribJson.best || contribJson.worst || Array.isArray(contribJson))){
     const best = contribJson.best || (Array.isArray(contribJson) ? contribJson.slice(0,3) : []);
     const worst = contribJson.worst || (Array.isArray(contribJson) ? contribJson.slice(-3) : []);
-    const norm = (arr, sign)=>arr.map(d => ({
+    const norm = (arr)=>arr.map(d => ({
       symbol: d.symbol || d.sym || d[0] || "?",
-      name: d.name || d.coin || d[1] || d.symbol || "?",
-      pctContribution: Number(d.pctContribution ?? d.contrib ?? d[2] ?? 0) * (sign||1)
+      name: d.name || d.coin || d[1] || (d.symbol||"?"),
+      pctContribution: Number(d.pctContribution ?? d.contrib ?? d[2] ?? 0)
     }));
-    const pos = norm(best, +1).sort((a,b)=>b.pctContribution-a.pctContribution).slice(0,3);
-    const neg = norm(worst, +1).sort((a,b)=>a.pctContribution-b.pctContribution).slice(0,3);
+    const pos = norm(best).sort((a,b)=>b.pctContribution-a.pctContribution).slice(0,3);
+    const neg = norm(worst).sort((a,b)=>a.pctContribution-b.pctContribution).slice(0,3);
     const barData = [...pos, ...neg];
     BAR = new Chart(document.getElementById("barChart"), {
       type: "bar",
@@ -225,12 +221,12 @@ async function main(){
     document.getElementById("contribEmpty").classList.remove("hidden");
   }
 
-  // Constituents (optional future: constituents.json)
+  // Constituents (optional: constituents.json)
   const constit = await fetchMaybe("./constituents.json");
   if(constit && Array.isArray(constit)){
     document.getElementById("constituentsNote").classList.add("hidden");
     document.getElementById("tableBody").innerHTML = constit.map(r=>`
-      <tr class="border-b last:border-b-0">
+      <tr class="border-b border-neutral-800 last:border-b-0">
         <td class="font-medium">${r.symbol||""}</td>
         <td>${r.name||""}</td>
         <td>${(r.weightPct??0).toFixed(2)}%</td>
