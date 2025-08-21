@@ -63,6 +63,7 @@ jobs:
           cp out/series.json _site/
           # 선택: latest.json, CSV, PNG도 같이 내보내기
           [ -f out/latest.json ] && cp out/latest.json _site/ || true
+          [ -f site/contrib_top.json ] && cp site/contrib_top.json _site/ || true
           [ -f out/bm20_index_from_csv.csv ] && cp out/bm20_index_from_csv.csv _site/ || true
           [ -f out/bm20_index.png ] && cp out/bm20_index.png _site/ || true
           [ -f out/bm20_index_log.png ] && cp out/bm20_index_log.png _site/ || true
