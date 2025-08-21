@@ -1,7 +1,8 @@
-
-<!doctype html><html lang="ko"><head>
+<!doctype html>
+<html lang="ko">
+<head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BM20 데일리 2025-08-21</title>
+<title id="doc_title">BM20 데일리</title>
 <style>
 body{font-family:-apple-system,BlinkMacSystemFont,"NanumGothic","Noto Sans CJK","Malgun Gothic",Arial,sans-serif;background:#fafbfc;color:#111;margin:0}
 .wrap{max-width:760px;margin:0 auto;padding:20px}
@@ -11,28 +12,31 @@ h1{font-size:22px;margin:0 0 8px 0;text-align:center} h2{font-size:15px;margin:1
 table{width:100%;border-collapse:collapse;font-size:14px} th,td{border:1px solid #e5e9f0;padding:8px} th{background:#eef4ff}
 .footer{font-size:12px;color:#666;text-align:center;margin-top:16px}
 img{max-width:100%}
-</style></head><body>
+</style>
+</head>
+<body>
 <div class="wrap">
   <div class="card">
     <h1>BM20 데일리 리포트</h1>
-    <div class="muted">2025-08-21</div>
+    <div class="muted"><span id="asOf">YYYY-MM-DD</span></div>
     <table style="margin-top:10px">
-      <tr><th>지수</th><td>57.99 pt</td></tr>
-      <tr><th>일간 변동</th><td>-0.79%</td></tr>
-      <tr><th>상승/하락</th><td>2 / 16</td></tr>
-      <tr><th>수익률(1D/7D/30D/MTD/YTD)</th><td>-0.07% / -43.72% / - / - / -</td></tr>
-      <tr><th>김치 프리미엄</th><td>3.46%</td></tr>
-      <tr><th>펀딩비(Binance)</th><td>BTC 집계 공란 / ETH 집계 공란</td></tr>
-      
+      <tr><th>지수</th><td id="bm20_level">—</td></tr>
+      <tr><th>일간 변동</th><td id="bm20_change">—</td></tr>
+      <tr><th>상승/하락</th><td id="breadth">—</td></tr>
+      <tr><th>수익률(1D/7D/30D/MTD/YTD)</th><td id="period_returns">—</td></tr>
+      <tr><th>김치 프리미엄</th><td id="kimchi">—</td></tr>
+      <tr><th>펀딩비(Binance)</th><td>BTC <span id="funding_btc">—</span> / ETH <span id="funding_eth">—</span></td></tr>
     </table>
   </div>
   <div class="card">
     <h2>Best/Worst (1D, USD)</h2>
-    <table><tr><th>Best</th><th style="text-align:right">등락률</th></tr>
-      <tr><td>TON</td><td style="text-align:right">+2.34%</td></tr><tr><td>ATOM</td><td style="text-align:right">+0.20%</td></tr><tr><td>USDT</td><td style="text-align:right">-0.02%</td></tr>
+    <table>
+      <thead><tr><th>Best</th><th style="text-align:right">등락률</th></tr></thead>
+      <tbody id="best3_tbody"><tr><td>—</td><td style="text-align:right">—</td></tr></tbody>
     </table><br>
-    <table><tr><th>Worst</th><th style="text-align:right">등락률</th></tr>
-      <tr><td>NEAR</td><td style="text-align:right">-2.56%</td></tr><tr><td>BNB</td><td style="text-align:right">-2.05%</td></tr><tr><td>SOL</td><td style="text-align:right">-1.90%</td></tr>
+    <table>
+      <thead><tr><th>Worst</th><th style="text-align:right">등락률</th></tr></thead>
+      <tbody id="worst3_tbody"><tr><td>—</td><td style="text-align:right">—</td></tr></tbody>
     </table>
   </div>
   <div class="card">
@@ -41,6 +45,58 @@ img{max-width:100%}
     <h2>BTC & ETH 7일 가격 추세</h2>
     <p class="center"><img src="bm20_trend_latest.png" alt="Trend"></p>
   </div>
-  <div class="card"><h2>BM20 데일리 뉴스</h2><p>BM20 0.79% 하락…지수 57.99pt, 김치프리미엄 3.46%<br/>BM20 지수가 2025-08-21 전일 대비 -0.79% 하락해 57.99포인트를 기록했다. 시장 폭은 상승 2·하락 16로 약세 우위다. BM20 Best 3: TON(+2.34%), ATOM(+0.20%), USDT(-0.02%) BM20 Worst 3: NEAR(-2.56%), BNB(-2.05%), SOL(-1.90%) 비트코인(BTC)는 -0.78% 하락한 113,382.3달러. 이더리움(ETH)는 -1.19% 하락한 4,282.9달러. 국내외 가격 차이를 나타내는 김치 프리미엄은 3.46%로, 국내 거래소가 소폭 할증되어 거래됐다. 바이낸스 기준 펀딩비는 BTC 집계 공란 / ETH 집계 공란로 집계됐다.</p></div>
-  <div class="footer">© Blockmedia · Data: Yahoo Finance, Upbit · Funding: Binance & Bybit</div>
-</div></body></html>
+  <div class="card"><h2>BM20 데일리 뉴스</h2><p id="news_body">—</p></div>
+  <div class="footer">© Blockmedia · Data: CoinGecko (fallback: Yahoo Finance) · Funding: Binance & Bybit</div>
+</div>
+
+<script>
+(async function(){
+  try{
+    const res = await fetch('./site/bm20_latest.json', {cache:'no-store'});
+    if(!res.ok) return; const d = await res.json();
+    const T = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v };
+
+    // 날짜/타이틀
+    if(d.asOf){ T('asOf', d.asOf); T('doc_title', `BM20 데일리 ${d.asOf}`); }
+
+    // 지수/변동
+    if(typeof d.bm20Level !== 'undefined'){ T('bm20_level', `${Number(d.bm20Level).toFixed(2)} pt`); }
+    if(typeof d.bm20ChangePct !== 'undefined'){
+      const sign = d.bm20ChangePct >= 0 ? '+' : '';
+      T('bm20_change', `${sign}${Number(d.bm20ChangePct).toFixed(2)}%`);
+    }
+
+    // 시장 지표
+    if(d.breadth){ T('breadth', d.breadth); }
+    if(d.kimchi){ T('kimchi', d.kimchi); }
+
+    // 기간 수익률: 문자열(periodReturns) 또는 객체(returns) 모두 허용
+    if(typeof d.periodReturns === 'string'){
+      T('period_returns', d.periodReturns);
+    } else if(d.returns){
+      const f = (x)=> (typeof x==='number'? `${x>=0?'+':''}${x.toFixed(2)}%` : (x??'-'));
+      const s = [f(d.returns.d1), f(d.returns.d7), f(d.returns.d30), f(d.returns.mtd), f(d.returns.ytd)].join(' / ');
+      T('period_returns', s);
+    }
+
+    // 펀딩비
+    if(d.funding){ T('funding_btc', d.funding.btc ?? '—'); T('funding_eth', d.funding.eth ?? '—'); }
+
+    // Best/Worst
+    const fill = (id, arr) => {
+      const tb = document.getElementById(id); if(!tb || !Array.isArray(arr)) return;
+      tb.innerHTML = arr.map(([name,ret])=>{
+        const sign = (ret ?? 0) >= 0 ? '+' : '';
+        return `<tr><td>${name}</td><td style="text-align:right">${sign}${Number(ret).toFixed(2)}%</td></tr>`;
+      }).join('');
+    };
+    fill('best3_tbody', d.best3);
+    fill('worst3_tbody', d.worst3);
+
+    // 뉴스 본문
+    if(d.news){ T('news_body', d.news); }
+  }catch(e){ /* no-op */ }
+})();
+</script>
+</body>
+</html>
