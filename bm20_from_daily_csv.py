@@ -257,7 +257,10 @@ def main():
     )
 
     print(f"[OK] Index series → {out_csv} ({d0} → {dN}, {n} days, rebalance={args.rebalance}, weights={args.weights_source})")
-
+   
+    df_out.to_json(os.path.join(out_dir, "series.json"),
+-                orient="records", force_ascii=False, indent=2)
+  
     # --- CSV → JSON 변환 ---
     import os, pandas as pd
     d = pd.read_csv(out_csv, dtype={"date": str})
