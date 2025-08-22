@@ -50,13 +50,42 @@ jobs:
           set -euo pipefail
           python bm20_daily.py
 
-      - name: Debug — show outputs
+      - name: Debug — where am I?
         run: |
           echo "PWD=$(pwd)"
-          echo "---- out ----"
-          find out -maxdepth 2 -type f | sort || true
-          echo "---- site ----"
-          find site -maxdepth 2 -type f | sort || true
+          echo "Repo tree (top 2 levels):"
+          find . -maxdepth 2 -type f | sort | sed -n '1,200p'
+      
+      - name: Reset base cache (when bumping base date)
+        run: rm -f out/base_cache.json || true
+      
+      - name: Run BM20 generator (auto-pick script)
+        env:
+          OUT_DIR: out
+          TZ: Asia/Seoul
+          BM20_BASE_DATE: "2024-01-01"
+          BM20_BASE_EXCLUDE_CONSISTENT: "0"
+        shell: bash
+        run: |
+          set -euo pipefail
+      
+          # 1) 스크립트 후보 자동 탐색 (루트 기준)
+          CANDIDATES=("bm20_daily.py" "bm20_daily_2024base.py" "scripts/bm20_daily.py" "src/bm20_daily.py")
+          FOUND=""
+          for p in "${CANDIDATES[@]}"; do
+            if [ -f "$p" ]; then
+              FOUND="$p"; break
+            fi
+          done
+      
+          if [ -z "$FOUND" ]; then
+            echo "::error::bm20_daily 스크립트를 찾지 못했습니다. 리포 루트에 bm20_daily.py 를 커밋했는지 확인하세요."
+            exit 1
+          fi
+      
+          echo "[INFO] Running: python $FOUND"
+          python "$FOUND"
+
 
       # 선택: 산출물 커밋 (site/**, out/** 중 최신 날짜)
       - name: Commit & Push outputs
