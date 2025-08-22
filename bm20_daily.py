@@ -145,15 +145,24 @@ def _yf_price_on_date(yf_ticker: str, date_ymd: str) -> Optional[float]:
     d0 = datetime.fromisoformat(date_ymd).replace(tzinfo=timezone.utc)
     d1 = d0 + timedelta(days=1)
     p1, p2 = int(d0.timestamp()), int(d1.timestamp())
-    j = _get(f"https://query2.finance.yahoo.com/v8/finance/chart/{yf_ticker}",
-             {"period1": p1, "period2": p2, "interval": "1d"})
     try:
+        j = _get(
+            f"https://query2.finance.yahoo.com/v8/finance/chart/{yf_ticker}",
+            {"period1": p1, "period2": p2, "interval": "1d"}
+        )
         closes = j["chart"]["result"][0]["indicators"]["quote"][0]["close"]
         if closes and closes[0] is not None:
             return float(closes[0])
+        return None
+    except requests.HTTPError as e:
+        # TON-USD 같이 해당 날짜 데이터가 없을 때 400/404가 자주 나옵니다.
+        code = getattr(e.response, "status_code", None)
+        if code in (400, 404):
+            return None
+        raise
     except Exception:
         return None
-    return None
+
 
 def _yf_history(yf_ticker: str, range_str: str = "7d", interval: str = "1h") -> List[Tuple[datetime, float]]:
     j = _get(f"https://query2.finance.yahoo.com/v8/finance/chart/{yf_ticker}",
