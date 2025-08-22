@@ -4,5 +4,49 @@
 <meta http-equiv="refresh" content="0; url=./latest.html">
 <link rel="canonical" href="./latest.html">
 </head><body>
-<noscript><a href="./latest.html">BM20 Latest로 이동</a></noscript>
+<script>
+(async () => {
+  try {
+    const url = './bm20_latest.json?t=' + Date.now();  // CDN/캐시 무력화
+    const resp = await fetch(url, { cache: 'no-store' });
+    const d = await resp.json();
+
+    const $all = sel => [...document.querySelectorAll(sel)];
+    const put  = (key, val) => $all(`[data-bm20="${key}"]`).forEach(el => el.textContent = val);
+    const pct  = x => (x >= 0 ? '+' : '') + Number(x).toFixed(2) + '%';
+    const num  = (x, n=2) => Number(x).toFixed(n);
+
+    // 지수/등락/날짜
+    put('index_level', num(d.bm20Level));
+    const chip = document.getElementById('chip-change');
+    if (chip) {
+      const abs  = d.bm20PointChange ?? (d.bm20Level - d.bm20PrevLevel);
+      const cpct = d.bm20ChangePct ?? 0;
+      chip.textContent = `${num(abs, 2)} (${pct(cpct)})`;
+      chip.classList.remove('up','down');
+      chip.classList.add(cpct >= 0 ? 'up' : 'down');
+    }
+    put('date_seoul', d.asOf);
+
+    // 수익률(이 JSON에는 1D만 존재 → 나머지는 보류)
+    put('ret_1d',  pct(d.bm20ChangePct ?? 0));
+    put('ret_7d',  '—'); put('ret_30d','—'); put('ret_mtd','—'); put('ret_ytd','—');
+
+    // Best/Worst: [["LINK",5.12], ...]
+    const bw = (arr, label) =>
+      `${label} — ` + (Array.isArray(arr) ? arr.map(([sym, r]) => `${sym} ${pct(r)}`).join(', ') : '—');
+    const bestBox  = document.getElementById('best3');
+    const worstBox = document.getElementById('worst3');
+    if (bestBox)  bestBox.textContent  = bw(d.best3,  'Best');
+    if (worstBox) worstBox.textContent = bw(d.worst3, 'Worst');
+
+    // 김치/펀딩
+    put('kimchi_prem', d.kimchi ?? '—');
+    put('funding_rate', d.funding ? `BTC ${d.funding.btc} / ETH ${d.funding.eth}` : '—');
+  } catch (e) {
+    console.error('BM20 load error', e);
+  }
+})();
+</script>
+
 </body></html>
