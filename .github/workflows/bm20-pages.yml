@@ -74,50 +74,79 @@ jobs:
           # 최종 체크
           test -f out/series.json || (echo "::error::out/series.json missing"; exit 1)
 
-    # BTC 정규화 시계열 생성 (scripts/build_btc_json.py가 있으면 사용, 없으면 내장 스크립트)
+# BTC 정규화 시계열 생성 (scripts/build_btc_json.py가 있으면 사용, 없으면 내장 스크립트)
       - name: Build BTC normalized JSON
         shell: bash
         run: |
           set -e
           if [ -f scripts/build_btc_json.py ]; then
-          echo "[INFO] Using scripts/build_btc_json.py"
-          python scripts/build_btc_json.py
+            echo "[INFO] Using scripts/build_btc_json.py"
+            python scripts/build_btc_json.py
           else
-          echo "[INFO] scripts/build_btc_json.py not found. Using inline builder..."
-          cat > _build_btc_json.py << 'PY'
+            echo "[INFO] scripts/build_btc_json.py not found. Using inline builder..."
+            cat > _build_btc_json.py << 'PY'
           import os, json
           import pandas as pd
           import yfinance as yf
-          
-          bm = "out/series.json" if os.path.exists("out/series.json") else "viewer/series.json"
-          if not os.path.exists(bm):
+      
+          def load_bm_series(path_json: str) -> pd.Series:
+          """
+          series.json이 아래 두 형태 어느 쪽이어도 받아들여서
+          index=날짜(Timestamp normalize), values=float 로 된 Series를 돌려줍니다.
+          1) [{"date": "YYYY-MM-DD", "index": 100.0}, ...]  (records)
+          2) [["YYYY-MM-DD", 100.0], ...]                   (pairs)
+          """
+          with open(path_json, "r", encoding="utf-8") as f:
+              data = json.load(f)
+      
+          # records 형태
+          if isinstance(data, list) and data and isinstance(data[0], dict) and "date" in data[0]:
+              df = pd.DataFrame(data)
+              # 컬럼명이 다를 가능성 방지
+              date_col = "date"
+              val_col  = "index" if "index" in df.columns else [c for c in df.columns if c != date_col][0]
+              df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
+              s = pd.Series(df[val_col].astype(float).values, index=df[date_col])
+          else:
+              # pairs 형태 가정
+              df = pd.DataFrame(data, columns=["date","index"])
+              df["date"] = pd.to_datetime(df["date"], errors="coerce")
+              s = pd.Series(df["index"].astype(float).values, index=df["date"])
+      
+          s.index = pd.to_datetime(s.index).tz_localize(None).normalize()
+          s = s.sort_index()
+          return s
+      
+          bm_path = "out/series.json" if os.path.exists("out/series.json") else "viewer/series.json"
+          if not os.path.exists(bm_path):
           raise SystemExit("BM20 series.json not found for BTC build.")
-          
-          df = pd.read_json(bm)
-          df["date"] = pd.to_datetime(df["date"]).dt.tz_localize(None)
-          df = df.sort_values("date").reset_index(drop=True)
-          
-          d0 = df["date"].min().date()
-          btc = yf.download("BTC-USD", start=str(d0), progress=False)["Close"].dropna()
-          btc.index = pd.to_datetime(btc.index).tz_localize(None).normalize()
-          
-          base = btc.iloc[0]
-          idx = (btc / base) * 100.0  # normalized BTC index
-          target_dates = df["date"].dt.normalize()
-         
-          aligned = pd.Series(index=target_dates, dtype="float64")
-          inter = idx.index.intersection(aligned.index)
-          aligned.loc[inter] = idx.loc[inter].values
-          aligned = aligned.sort_index().ffill()
-          
-          arr = [[d.strftime("%Y-%m-%d"), float(v)] for d, v in zip(df["date"], aligned)]
-          os.makedirs("viewer", exist_ok=True)
-          with open("viewer/btc_series.json","w",encoding="utf-8") as f:
-              json.dump(arr, f, ensure_ascii=False)
-          print("[OK] wrote viewer/btc_series.json", len(arr), "pts")
-          PY
-              python _build_btc_json.py
-              fi
+      
+          bm = load_bm_series(bm_path)
+          if bm.empty:
+          raise SystemExit("BM20 series is empty.")
+      
+      # BTC 종가 다운로드 (BM20 시작일 이후)
+          start_date = bm.index.min().date().isoformat()
+          btc_close = yf.download("BTC-USD", start=start_date, progress=False)["Close"].dropna()
+          btc_close.index = pd.to_datetime(btc_close.index).tz_localize(None).normalize()
+          btc_close = btc_close.sort_index()
+      
+      # 100 기준 정규화
+      base = float(btc_close.iloc[0])
+      btc_idx = (btc_close / base) * 100.0
+      
+      # BM20 날짜 인덱스에 맞춰 정렬 + 결측 전방채움
+      aligned = btc_idx.reindex(bm.index).ffill()
+      
+      # 출력: [["YYYY-MM-DD", 123.45], ...]
+      arr = [[d.strftime("%Y-%m-%d"), float(v)] for d, v in zip(aligned.index, aligned.values)]
+      os.makedirs("viewer", exist_ok=True)
+      with open("viewer/btc_series.json","w",encoding="utf-8") as f:
+          json.dump(arr, f, ensure_ascii=False)
+      print("[OK] wrote viewer/btc_series.json", len(arr), "pts")
+      PY
+            python _build_btc_json.py
+          fi
 
 
       # Pages 산출물을 /viewer 하위에만 배치 → 메인 루트와 충돌 없음
