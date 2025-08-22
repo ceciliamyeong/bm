@@ -132,21 +132,21 @@ jobs:
           btc_close = btc_close.sort_index()
       
       # 100 기준 정규화
-      base = float(btc_close.iloc[0])
-      btc_idx = (btc_close / base) * 100.0
+          base = float(btc_close.iloc[0])
+          btc_idx = (btc_close / base) * 100.0
       
       # BM20 날짜 인덱스에 맞춰 정렬 + 결측 전방채움
-      aligned = btc_idx.reindex(bm.index).ffill()
+          aligned = btc_idx.reindex(bm.index).ffill()
       
       # 출력: [["YYYY-MM-DD", 123.45], ...]
-      arr = [[d.strftime("%Y-%m-%d"), float(v)] for d, v in zip(aligned.index, aligned.values)]
-      os.makedirs("viewer", exist_ok=True)
-      with open("viewer/btc_series.json","w",encoding="utf-8") as f:
+          arr = [[d.strftime("%Y-%m-%d"), float(v)] for d, v in zip(aligned.index, aligned.values)]
+          os.makedirs("viewer", exist_ok=True)
+          with open("viewer/btc_series.json","w",encoding="utf-8") as f:
           json.dump(arr, f, ensure_ascii=False)
-      print("[OK] wrote viewer/btc_series.json", len(arr), "pts")
-      PY
-            python _build_btc_json.py
-          fi
+          print("[OK] wrote viewer/btc_series.json", len(arr), "pts")
+          PY
+               python _build_btc_json.py
+             fi
 
 
       # Pages 산출물을 /viewer 하위에만 배치 → 메인 루트와 충돌 없음
