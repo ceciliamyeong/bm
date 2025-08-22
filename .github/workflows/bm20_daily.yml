@@ -1,23 +1,23 @@
-name: BM20 Daily (Yahoo Only)
+name: BM20 Daily (Yahoo, 2024-base)
 
 on:
   schedule:
     - cron: "10 23 * * *"   # 매일 08:10 KST (UTC 23:10)
   workflow_dispatch:
 
-concurrency:
-  group: bm20-daily-${{ github.ref }}
-  cancel-in-progress: false
+permissions:
+  contents: write
 
 jobs:
   run:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-
     env:
-      TZ: Asia/Seoul   # 전역 타임존
+      TZ: Asia/Seoul
+      OUT_DIR: out
+      # ✅ 기준일: 코드가 os.getenv("BM20_BASE_DATE", "2024-01-01") 읽음
+      BM20_BASE_DATE: "2024-01-01"
+      # 옵션: 기준가에서 제외된 코인을 분자(당일/전일)에서도 제외하려면 "1"
+      BM20_BASE_EXCLUDE_CONSISTENT: "0"
 
     steps:
       - name: Checkout
@@ -33,115 +33,33 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install requests pandas matplotlib reportlab
 
       - name: Install Korean fonts (Nanum + Noto CJK)
         run: |
-          set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y fonts-nanum fonts-noto-cjk fontconfig
           sudo fc-cache -f -v
 
-      # ✅ 야후 전용 단일 실행
       - name: Reset base cache (when bumping base date)
         run: rm -f out/base_cache.json
-      
-      - name: Run BM20 generator (Yahoo only)
-        env:
-          OUT_DIR: out
-          TZ: Asia/Seoul
-          BM20_BASE_DATE: "2024-01-01"   # ✅ 새 기준일 지정
+
+      # ⚠️ 레포 루트에 bm20_daily_2024base.py를 커밋해둔 가정
+      - name: Run BM20 generator (Yahoo 2024-base)
         run: |
           set -euo pipefail
           python bm20_daily.py
 
-
-      - name: Debug — show out tree
-        shell: bash
+      - name: Debug — show outputs
         run: |
-          set -euo pipefail
           echo "PWD=$(pwd)"
-          ls -la
           echo "---- out ----"
-          ls -la out || true
-          echo "---- out recursive ----"
-          find out -maxdepth 2 -type d -print || true
+          find out -maxdepth 2 -type f | sort || true
+          echo "---- site ----"
+          find site -maxdepth 2 -type f | sort || true
 
-      # 2) out → archive 복사 + latest.html 생성(스크립트 내부에서 만든 산출물 사용)
-      - name: Generate site (latest + archive + JSON)
-        shell: bash
-        run: |
-          set -euo pipefail
-          python scripts/generate_report.py
-          if [ -f "export_json.py" ]; then
-            python export_json.py || true
-          fi
-          echo "" > .nojekyll
-
-      - name: Publish latest to repo root
-        shell: bash
-        run: |
-          set -euo pipefail
-          LATEST_DIR="$(ls -1d out/* | sort | tail -n1)"
-
-          # 필수 디렉터리
-          mkdir -p data archive
-
-          # 1) 날짜별 아카이브 스냅샷 보존
-          rsync -a --delete "$LATEST_DIR/" "archive/$(basename "$LATEST_DIR")/"
-
-          # 2) 루트 고정 자산(존재할 때만 복사)
-          [ -f "$LATEST_DIR/bm20_bar.png" ]   && cp "$LATEST_DIR/bm20_bar.png"   ./bm20_bar_latest.png
-          [ -f "$LATEST_DIR/bm20_trend.png" ] && cp "$LATEST_DIR/bm20_trend.png" ./bm20_trend_latest.png
-          [ -f "$LATEST_DIR/latest.json" ]    && cp "$LATEST_DIR/latest.json"    ./data/latest.json
-
-          # 3) 최신 페이지: index.html / latest.html
-          [ -f "$LATEST_DIR/latest.html" ] && cp "$LATEST_DIR/latest.html" ./index.html
-          [ -f "$LATEST_DIR/latest.html" ] && cp "$LATEST_DIR/latest.html" ./latest.html || true
-
-          # 4) Jekyll 무시 설정
-          touch .nojekyll
-
-      - name: Inject editorial into latest & index
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - << 'PY'
-          import json, io
-          from pathlib import Path
-          p = Path('data/latest.json')
-          if not p.exists():
-              raise SystemExit("data/latest.json not found")
-          with io.open(p, 'r', encoding='utf-8') as f:
-              d = json.load(f)
-          title = d.get('editorial', {}).get('title', '')
-          body  = d.get('editorial', {}).get('body', '')
-          date  = d.get('date', '')
-          for fn in ['latest.html', 'index.html']:
-              q = Path(fn)
-              if not q.exists():
-                  continue
-              s = q.read_text(encoding='utf-8')
-              s = s.replace('{{REPORT_TITLE}}',  title)
-              s = s.replace('{{REPORT_BODY}}',   body)
-              s = s.replace('{{REPORT_DATE}}',   date)
-              q.write_text(s, encoding='utf-8')
-          PY
-
-      - name: Copy latest JSON to /bm
-        shell: bash
-        run: |
-          set -euo pipefail
-          DATE=$(TZ=Asia/Seoul date +%F)
-          mkdir -p bm
-          if [ -f "out/${DATE}/bm20_latest.json" ]; then
-            cp "out/${DATE}/bm20_latest.json" "bm/bm20_latest.json"
-          else
-            echo "::warning:: out/${DATE}/bm20_latest.json not found"
-          fi
-
-      - name: Commit updated JSON
-        shell: bash
+      # 선택: 산출물 커밋 (site/**, out/** 중 최신 날짜)
+      - name: Commit & Push outputs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -149,19 +67,6 @@ jobs:
           DATE=$(TZ=Asia/Seoul date +%F)
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add bm/bm20_latest.json data/latest.json index.html latest.html bm20_bar_latest.png bm20_trend_latest.png || true
-          git commit -m "BM20 Yahoo publish ${DATE}" || echo "No changes"
+          git add -A site out/${DATE}
+          git commit -m "BM20 daily (base=${BM20_BASE_DATE}) ${DATE}" || echo "No changes"
           git push
-
-      - name: Commit & Push (with pull --rebase)
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          BRANCH="${GITHUB_REF#refs/heads/}"
-          git fetch origin "${BRANCH}"
-          git pull --rebase origin "${BRANCH}" || true
-          git add -A
-          git commit -m "BM20: finalize $(TZ=UTC date +%F)" || echo "No changes"
-          git push origin "${BRANCH}"
