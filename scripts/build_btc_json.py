@@ -30,12 +30,11 @@ def main():
     target_dates = bm["date"].dt.normalize()
     aligned = pd.Series(index=target_dates, dtype="float64")
 
-    # 동일 날짜에 값 채우기
-    aligned.loc[idx.index.intersection(aligned.index)] = idx.loc[idx.index.intersection(aligned.index)].values
-    # 과거값 앞으로 채우기
+    inter = idx.index.intersection(aligned.index)
+    aligned.loc[inter] = idx.loc[inter].values
     aligned = aligned.sort_index().ffill()
 
-    # JSON으로 저장: [ [date, index], ... ]
+    # JSON 저장: [ [date, index], ... ]
     arr = [[d.strftime("%Y-%m-%d"), float(v)] for d, v in zip(bm["date"], aligned)]
     os.makedirs(os.path.dirname(OUT_JSON), exist_ok=True)
     with open(OUT_JSON, "w", encoding="utf-8") as f:
