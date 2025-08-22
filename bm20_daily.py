@@ -140,28 +140,43 @@ def _yf_quote(symbols: List[str]) -> Dict[str, dict]:
     return out
 
 
-def _yf_price_on_date(yf_ticker: str, date_ymd: str) -> Optional[float]:
-    # UTC 00:00 ~ +1d 범위 1d 캔들
-    d0 = datetime.fromisoformat(date_ymd).replace(tzinfo=timezone.utc)
-    d1 = d0 + timedelta(days=1)
-    p1, p2 = int(d0.timestamp()), int(d1.timestamp())
+def _yf_price_on_or_first(yf_ticker: str, date_ymd: str) -> Optional[float]:
+    """
+    주어진 날짜(UTC 기준)의 종가가 있으면 그 값을,
+    없으면 해당 티커의 '최초 가용 종가'를 돌려준다.
+    Yahoo v8 chart(range=max)만 사용하므로 401/400을 회피할 수 있음.
+    """
     try:
         j = _get(
             f"https://query2.finance.yahoo.com/v8/finance/chart/{yf_ticker}",
-            {"period1": p1, "period2": p2, "interval": "1d"}
+            {"range": "max", "interval": "1d"}
         )
-        closes = j["chart"]["result"][0]["indicators"]["quote"][0]["close"]
-        if closes and closes[0] is not None:
-            return float(closes[0])
+        res = j["chart"]["result"][0]
+        ts = res.get("timestamp") or []
+        cl = (res.get("indicators", {}).get("quote", [{}])[0].get("close")) or []
+        if not ts or not cl:
+            return None
+
+        # 1) target 날짜 정확 매칭 시도
+        target = datetime.fromisoformat(date_ymd).date()
+        for t, v in zip(ts, cl):
+            if v is None:
+                continue
+            dt = datetime.fromtimestamp(t, timezone.utc).date()
+            if dt == target:
+                return float(v)
+
+        # 2) 없으면 '최초 가용 종가' 반환
+        for v in cl:
+            if v is not None:
+                return float(v)
         return None
     except requests.HTTPError as e:
-        # TON-USD 같이 해당 날짜 데이터가 없을 때 400/404가 자주 나옵니다.
-        code = getattr(e.response, "status_code", None)
-        if code in (400, 404):
-            return None
-        raise
+        # 400/404 같은 경우에도 None 반환 (크래시 방지)
+        return None
     except Exception:
         return None
+
 
 
 def _yf_history(yf_ticker: str, range_str: str = "7d", interval: str = "1h") -> List[Tuple[datetime, float]]:
@@ -242,12 +257,19 @@ def get_base_value() -> float:
                 return float(c["portfolio_value_usd"])
         except Exception:
             pass
+
     base_val = 0.0
     for s in UNIVERSE:
-        p = fetch_price_on_2018(s)
-        if p is not None:
-            base_val += p * W[s]
+        yf_t = YF_TICKER[s]
+        # ✅ 2018-01-01 가격이 없으면 '최초 가용 종가' 사용
+        p = _yf_price_on_or_first(yf_t, BASE_DATE_STR)
+        if p is None:
+            # 정말 없으면 스킵 (아주 예외적)
+            time.sleep(0.05)
+            continue
+        base_val += p * W[s]
         time.sleep(0.05)
+
     with open(BASE_CACHE_PATH, "w", encoding="utf-8") as f:
         json.dump({
             "base_date": BASE_DATE_STR,
@@ -256,6 +278,7 @@ def get_base_value() -> float:
             "portfolio_value_usd": round(base_val, 10)
         }, f, ensure_ascii=False)
     return base_val
+
 
 # ------------------------- Kimchi Premium -----------------------
 def _fetch_usdkrw_yahoo() -> Optional[float]:
