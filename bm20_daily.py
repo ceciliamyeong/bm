@@ -1,10 +1,9 @@
-# ===================== BM20 Daily — 0821 FINAL (KST, Rebase 2018-01-01=100) =====================
-# 기능: 유니버스/가중치(확정) → 시세 수집 → 전일/금일 포트폴리오 가치 → 리베이스 지수 산출
-#      김치 프리미엄 · 펀딩비 → Best/Worst → 뉴스 해석형 문장 → 차트(가로막대/7D) → JSON/TXT/CSV/PDF 저장
-# 산출물: out/YYYY-MM-DD/  (csv/txt/png/pdf),  site/bm20_latest.json
-# 주의: CoinGecko 호출이 실패하면 폴백 경로를 사용합니다. (Upbit/Binance/Yahoo/Bybit 등)
+# ===================== BM20 Daily — Yahoo Only (2018-01-01=100) =====================
+# 기능: 유니버스/가중치(확정) → Yahoo 시세 수집 → 전일/금일 포트폴리오 가치 → 리베이스 지수 산출
+#      김치 프리미엄 · 펀딩비 → Best/Worst → 뉴스 문장 → 차트(가로막대/7D) → JSON/TXT/CSV/PDF 저장
+# 산출물: out/YYYY-MM-DD/ (csv/txt/png/pdf), site/bm20_latest.json
 
-import os, json, time, random, math
+import os, json, time, math, random
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Tuple, Optional
 
@@ -34,41 +33,39 @@ os.makedirs(OUT_DIR_DATE, exist_ok=True)
 
 SITE_DIR = "site"
 os.makedirs(SITE_DIR, exist_ok=True)
-BASE_CACHE_PATH = os.path.join(OUT_DIR, "base_cache.json")  # 2018-01-01 기준 포트폴리오 가치 캐시
+BASE_CACHE_PATH = os.path.join(OUT_DIR, "base_cache.json")  # 2018-01-01 포트폴리오 가치 캐시
 
-# ------------------------- Constants ----------------------------
-CG = "https://api.coingecko.com/api/v3"
-REQ_UA = {"User-Agent":"Mozilla/5.0"}
-REQ_TIMEOUT = 15
-
-# BM20 Universe (20) — 0821 확정
+# ------------------------- Universe / Weights --------------------
 UNIVERSE: List[str] = [
     "BTC","ETH","XRP","USDT","BNB",
     "DOGE","TON","SUI","SOL","ADA","AVAX","DOT","MATIC","LINK","LTC","ATOM","NEAR","APT","FIL","ICP"
 ]
-# CoinGecko id 매핑
-CG_ID: Dict[str,str] = {
-    "BTC":"bitcoin","ETH":"ethereum","XRP":"ripple","USDT":"tether","BNB":"binancecoin",
-    "DOGE":"dogecoin","TON":"toncoin","SUI":"sui","SOL":"solana","ADA":"cardano","AVAX":"avalanche-2",
-    "DOT":"polkadot","MATIC":"polygon","LINK":"chainlink","LTC":"litecoin","ATOM":"cosmos",
-    "NEAR":"near","APT":"aptos","FIL":"filecoin","ICP":"internet-computer"
-}
 
-# 고정 가중치 (BTC 30 / ETH 20 / XRP·USDT·BNB 각 5 / 나머지 15종 = 35% 균등)
+# 가중치 확정 (BTC 30 / ETH 20 / XRP·USDT·BNB 각 5 / 나머지 15종 = 35% 균등)
 W: Dict[str,float] = {"BTC":0.30, "ETH":0.20, "XRP":0.05, "USDT":0.05, "BNB":0.05}
 OTHERS = [s for s in UNIVERSE if s not in W]
 eq = 0.35 / len(OTHERS)
 for s in OTHERS:
     W[s] = round(eq, 6)
 
-BASE_DATE_STR = "2018-01-01"  # 지수 기준일
+BASE_DATE_STR = "2018-01-01"
 
-# ------------------------- HTTP Utils ---------------------------
-def _get(url: str, params: dict=None, timeout: int=REQ_TIMEOUT, headers: dict=REQ_UA, retry: int=3, sleep: float=0.6):
+# ------------------------- Yahoo mapping -------------------------
+YF_TICKER: Dict[str,str] = {
+    "BTC":"BTC-USD","ETH":"ETH-USD","XRP":"XRP-USD","USDT":"USDT-USD","BNB":"BNB-USD",
+    "DOGE":"DOGE-USD","TON":"TON-USD","SUI":"SUI-USD","SOL":"SOL-USD","ADA":"ADA-USD",
+    "AVAX":"AVAX-USD","DOT":"DOT-USD","MATIC":"MATIC-USD","LINK":"LINK-USD","LTC":"LTC-USD",
+    "ATOM":"ATOM-USD","NEAR":"NEAR-USD","APT":"APT-USD","FIL":"FIL-USD","ICP":"ICP-USD"
+}
+
+# ------------------------- HTTP Utils (robust) -------------------
+UA = {"User-Agent":"Mozilla/5.0"}
+
+def _get(url: str, params: dict=None, timeout: int=15, retry: int=3, sleep: float=0.5) -> dict:
     last = None
     for i in range(retry):
         try:
-            r = requests.get(url, params=params, timeout=timeout, headers=headers)
+            r = requests.get(url, params=params, timeout=timeout, headers=UA)
             r.raise_for_status()
             return r.json()
         except Exception as e:
@@ -76,81 +73,114 @@ def _get(url: str, params: dict=None, timeout: int=REQ_TIMEOUT, headers: dict=RE
             time.sleep(sleep*(i+1) + 0.2*random.random())
     raise last
 
-def _safe_float(x, d: float=0.0) -> float:
+def _safe_float(x, d: float=None) -> Optional[float]:
     try:
         return float(x)
     except Exception:
         return d
 
+# ------------------------- Yahoo helpers ------------------------
+def _yf_quote(symbols: List[str]) -> Dict[str, dict]:
+    """
+    Yahoo quote API: 여러 티커 동시 조회
+    반환: {YF_TICKER: {price, prev_close, market_cap}}
+    """
+    tickers = ",".join([YF_TICKER[s] for s in symbols if s in YF_TICKER])
+    if not tickers:
+        return {}
+    j = _get("https://query1.finance.yahoo.com/v7/finance/quote", {"symbols": tickers})
+    out = {}
+    for q in j.get("quoteResponse", {}).get("result", []):
+        t = q.get("symbol")
+        out[t] = {
+            "price": q.get("regularMarketPrice"),
+            "prev_close": q.get("regularMarketPreviousClose"),
+            "market_cap": q.get("marketCap"),
+        }
+    return out
+
+def _yf_price_on_date(yf_ticker: str, date_ymd: str) -> Optional[float]:
+    # UTC 00:00 ~ +1d 범위 1d 캔들
+    d0 = datetime.fromisoformat(date_ymd).replace(tzinfo=timezone.utc)
+    d1 = d0 + timedelta(days=1)
+    p1, p2 = int(d0.timestamp()), int(d1.timestamp())
+    j = _get(f"https://query2.finance.yahoo.com/v8/finance/chart/{yf_ticker}",
+             {"period1": p1, "period2": p2, "interval": "1d"})
+    try:
+        closes = j["chart"]["result"][0]["indicators"]["quote"][0]["close"]
+        if closes and closes[0] is not None:
+            return float(closes[0])
+    except Exception:
+        return None
+    return None
+
+def _yf_history(yf_ticker: str, range_str: str = "7d", interval: str = "1h") -> List[Tuple[datetime, float]]:
+    j = _get(f"https://query2.finance.yahoo.com/v8/finance/chart/{yf_ticker}",
+             {"range": range_str, "interval": interval})
+    try:
+        res = j["chart"]["result"][0]
+        ts = res["timestamp"]
+        cl = res["indicators"]["quote"][0]["close"]
+        out = []
+        for t, v in zip(ts, cl):
+            if v is None:
+                continue
+            out.append((datetime.fromtimestamp(t, timezone.utc).astimezone(KST), float(v)))
+        return out
+    except Exception:
+        return []
+
 # ------------------------- Market Snapshot ----------------------
 def fetch_markets(symbols: List[str]) -> pd.DataFrame:
-    ids = ",".join([CG_ID[s] for s in symbols])
-    j = _get(f"{CG}/coins/markets", params={
-        "vs_currency":"usd","ids":ids,
-        "order":"market_cap_desc","per_page":len(symbols),"page":1,
-        "price_change_percentage":"24h"
-    })
+    q = _yf_quote(symbols)
     rows = []
-    for m in j:
-        # id → 심볼 역매핑 보정
-        sym = None
-        for k,v in CG_ID.items():
-            if v == m.get("id"):
-                sym = k; break
-        if not sym:
-            sym = m.get("symbol","?").upper()
+    for s in symbols:
+        t = YF_TICKER[s]
+        qq = q.get(t, {})
+        price = _safe_float(qq.get("price"))
+        prev = _safe_float(qq.get("prev_close"))
+        chg24 = ((price/prev - 1) * 100) if (price is not None and prev not in (None, 0)) else None
         rows.append({
-            "symbol": sym,
-            "current_price": _safe_float(m.get("current_price")),
-            "market_cap": _safe_float(m.get("market_cap")),
-            "chg24": _safe_float(m.get("price_change_percentage_24h")),
+            "symbol": s,
+            "current_price": price,
+            "previous_price": prev,   # 후속 보정 대상
+            "market_cap": _safe_float(qq.get("market_cap")),
+            "ret_1d": chg24
         })
-    df = pd.DataFrame(rows).set_index("symbol").reindex(symbols)
-    return df
-
+    return pd.DataFrame(rows).set_index("symbol").reindex(symbols)
 
 def fetch_yday_close(symbol: str) -> Optional[float]:
-    cid = CG_ID[symbol]
-    j = _get(f"{CG}/coins/{cid}/market_chart", params={"vs_currency":"usd","days":2})
-    prices = j.get("prices", [])
-    if not prices:
-        return None
-    yday = (datetime.now(KST) - timedelta(days=1)).date()
-    series = [(datetime.fromtimestamp(p[0]/1000, timezone.utc), p[1]) for p in prices]
-    yvals = [p for (t,p) in series if t.astimezone(KST).date()==yday]
-    if yvals:
-        return float(yvals[-1])
-    return float(series[-2][1]) if len(series)>=2 else float(series[-1][1])
-
+    t = YF_TICKER[symbol]
+    q = _yf_quote([symbol])
+    return _safe_float(q.get(t, {}).get("prev_close"))
 
 def fill_previous_prices(df: pd.DataFrame) -> pd.DataFrame:
+    # prev_close가 없거나 0이면 역산
     prevs = []
     for s in df.index:
-        v = None
-        try:
-            v = fetch_yday_close(s)
-        except Exception:
-            v = None
+        v = df.at[s, "previous_price"]
+        if v in (None, 0) or (isinstance(v, float) and math.isnan(v)):
+            # 재조회 시도
+            try:
+                v = fetch_yday_close(s)
+            except Exception:
+                v = None
         if v in (None, 0):
             cur = df.at[s, "current_price"]
-            ch = (df.at[s, "chg24"] or 0.0)/100.0
-            v = cur/(1+ch) if (cur and not math.isclose(ch, -1.0)) else cur
+            ch = df.at[s, "ret_1d"]
+            if cur not in (None, 0) and ch not in (None,):
+                try:
+                    v = cur / (1 + float(ch)/100.0)
+                except Exception:
+                    v = cur
         prevs.append(v)
-        time.sleep(0.12)
+        time.sleep(0.05)
     df["previous_price"] = prevs
     return df
 
 # ------------------------- Rebase (2018-01-01=100) --------------
-
 def fetch_price_on_2018(symbol: str) -> Optional[float]:
-    # CoinGecko history는 dd-mm-yyyy 포맷 요구
-    cid = CG_ID[symbol]
-    j = _get(f"{CG}/coins/{cid}/history", params={"date":"01-01-2018","localization":"false"})
-    try:
-        return float(j["market_data"]["current_price"]["usd"])
-    except Exception:
-        return None
-
+    return _yf_price_on_date(YF_TICKER[symbol], BASE_DATE_STR)
 
 def get_base_value() -> float:
     # 캐시 우선
@@ -165,10 +195,9 @@ def get_base_value() -> float:
     base_val = 0.0
     for s in UNIVERSE:
         p = fetch_price_on_2018(s)
-        if p is None:
-            continue
-        base_val += p * W[s]
-        time.sleep(0.12)
+        if p is not None:
+            base_val += p * W[s]
+        time.sleep(0.05)
     with open(BASE_CACHE_PATH, "w", encoding="utf-8") as f:
         json.dump({
             "base_date": BASE_DATE_STR,
@@ -179,63 +208,41 @@ def get_base_value() -> float:
     return base_val
 
 # ------------------------- Kimchi Premium -----------------------
-
 def _fetch_usdkrw_yahoo() -> Optional[float]:
     try:
-        j = _get("https://query1.finance.yahoo.com/v7/finance/quote", params={"symbols":"USDKRW=X"})
+        j = _get("https://query1.finance.yahoo.com/v7/finance/quote", {"symbols":"USDKRW=X"})
         q = j["quoteResponse"]["result"][0]
         return float(q["regularMarketPrice"])
     except Exception:
         return None
 
-
 def _fetch_btc_usd_binance() -> Optional[float]:
     try:
-        j = _get("https://api.binance.com/api/v3/ticker/price", params={"symbol":"BTCUSDT"})
+        j = _get("https://api.binance.com/api/v3/ticker/price", {"symbol":"BTCUSDT"})
         return float(j["price"])
     except Exception:
         return None
 
-
 def _fetch_btc_krw_upbit() -> Optional[float]:
     try:
-        j = _get("https://api.upbit.com/v1/ticker", params={"markets":"KRW-BTC"})
+        j = _get("https://api.upbit.com/v1/ticker", {"markets":"KRW-BTC"})
         return float(j[0]["trade_price"])
     except Exception:
         return None
-
 
 def compute_kimchi_premium(df: pd.DataFrame) -> Tuple[str, Dict]:
     btc_usd = _fetch_btc_usd_binance()
     btc_krw = _fetch_btc_krw_upbit()
     usdkrw = _fetch_usdkrw_yahoo()
 
-    # 폴백: CG simple price
-    if btc_usd is None or btc_krw is None or usdkrw is None:
-        try:
-            headers = {}
-            if os.getenv("COINGECKO_API_KEY"):
-                headers["x-cg-pro-api-key"] = os.getenv("COINGECKO_API_KEY")
-            j = _get(f"{CG}/simple/price", params={"ids":"bitcoin,tether","vs_currencies":"usd,krw"}, headers=headers)
-            btc_usd = btc_usd if btc_usd is not None else float(j["bitcoin"]["usd"])
-            # KRW는 업비트가 더 적합하지만 실패 시 CG 사용
-            btc_krw = btc_krw if btc_krw is not None else float(j["bitcoin"].get("krw", 0)) or None
-            if usdkrw is None:
-                # tether→KRW를 proxy FX로 사용
-                usdkrw = float(j["tether"]["krw"]) if (900 <= float(j["tether"]["krw"]) <= 2000) else None
-        except Exception:
-            pass
-
-    # 마지막 시도: df에서 btc usd 가격 재사용
+    # 부족하면 df 값으로 보조
     if btc_usd is None:
         try:
-            btc_usd = float(df.loc["BTC","current_price"]) if not pd.isna(df.loc["BTC","current_price"]) else None
+            btc_usd = float(df.loc["BTC","current_price"])
         except Exception:
             btc_usd = None
-
-    # 환율이 끝까지 없으면 1350 고정
     if usdkrw is None:
-        usdkrw = 1350.0
+        usdkrw = 1350.0  # 안전 기본값
 
     if not all([btc_usd, btc_krw, usdkrw]) or usdkrw <= 0:
         return "—", {"btc_usd": btc_usd, "btc_krw": btc_krw, "usdkrw": usdkrw, "note":"incomplete"}
@@ -244,42 +251,34 @@ def compute_kimchi_premium(df: pd.DataFrame) -> Tuple[str, Dict]:
     return f"{prem*100:+.2f}%", {"btc_usd": round(btc_usd,2), "btc_krw": round(btc_krw,0), "usdkrw": round(usdkrw,2)}
 
 # ------------------------- Funding Rates ------------------------
-
 def _funding_binance(symbol: str) -> Optional[float]:
     try:
-        j = _get("https://fapi.binance.com/fapi/v1/fundingRate", params={"symbol":symbol, "limit":1})
+        j = _get("https://fapi.binance.com/fapi/v1/fundingRate", {"symbol":symbol, "limit":1})
         if j and isinstance(j, list) and "fundingRate" in j[0]:
             return float(j[0]["fundingRate"]) * 100
     except Exception:
         return None
     return None
 
-
 def _funding_bybit(symbol: str) -> Optional[float]:
     try:
-        j = _get("https://api.bybit.com/v5/market/funding/history", params={"category":"linear","symbol":symbol,"limit":1})
+        j = _get("https://api.bybit.com/v5/market/funding/history",
+                 {"category":"linear","symbol":symbol,"limit":1})
         if j.get("retCode") == 0 and j.get("result",{}).get("list"):
             return float(j["result"]["list"][0]["fundingRate"]) * 100
     except Exception:
         return None
     return None
 
-
 def get_funding_display_pair() -> Tuple[str,str]:
     def fmt(x: Optional[float]) -> str:
-        if x is None:
-            return "중립권"
+        if x is None: return "중립권"
         return f"{x:+.4f}%"
-    btc = _funding_binance("BTCUSDT")
-    eth = _funding_binance("ETHUSDT")
-    if btc is None:
-        btc = _funding_bybit("BTCUSDT")
-    if eth is None:
-        eth = _funding_bybit("ETHUSDT")
+    btc = _funding_binance("BTCUSDT") or _funding_bybit("BTCUSDT")
+    eth = _funding_binance("ETHUSDT") or _funding_bybit("ETHUSDT")
     return fmt(btc), fmt(eth)
 
-# ------------------------- Charts (Dark) ------------------------
-
+# ------------------------- Charts -------------------------------
 def _set_dark_style():
     plt.rcParams.update({
         "figure.facecolor":"#0b1020",
@@ -294,37 +293,30 @@ def _set_dark_style():
         "font.size":11,
     })
 
-
 def plot_perf_barh(names: List[str], rets_pct: List[float], out_png: str):
     _set_dark_style()
     import numpy as np
     y = np.arange(len(names))
     vals = np.array(rets_pct, dtype=float)
     colors = np.where(vals>=0, "#2E7D32", "#C62828")
-
     fig, ax = plt.subplots(figsize=(10, 6), dpi=150)
     ax.barh(y, vals, color=colors, alpha=0.95)
     ax.axvline(0, color="#3a4569", lw=1)
     ax.set_yticks(y, labels=names)
     ax.set_xlabel("Daily Change (%)")
-    ax.invert_yaxis()  # TOP이 위로
-    # 라벨
+    ax.invert_yaxis()
     for yi, v in zip(y, vals):
         s = f"{v:+.2f}%"
-        ax.text(v + (0.05 if v>=0 else -0.05), yi, s, va="center", ha=("left" if v>=0 else "right"))
+        ax.text(v + (0.05 if v>=0 else -0.05), yi, s, va="center",
+                ha=("left" if v>=0 else "right"))
     ax.set_title(f"BM20 Daily Performance  ({YMD})")
     fig.savefig(out_png, dpi=180)
     plt.close(fig)
 
-
 def plot_btc_eth_trend_7d(out_png: str):
     _set_dark_style()
-    # CoinGecko: 7d market_chart
-    def mc(id):
-        j = _get(f"{CG}/coins/{id}/market_chart", params={"vs_currency":"usd","days":7})
-        return [(datetime.fromtimestamp(p[0]/1000, timezone.utc).astimezone(KST), p[1]) for p in j.get("prices", [])]
-    b = mc("bitcoin")
-    e = mc("ethereum")
+    b = _yf_history("BTC-USD", range_str="7d", interval="1h")
+    e = _yf_history("ETH-USD", range_str="7d", interval="1h")
     fig, ax = plt.subplots(figsize=(10,5), dpi=150)
     ax.plot([t for t,_ in b], [v for _,v in b], label="BTC")
     ax.plot([t for t,_ in e], [v for _,v in e], label="ETH")
@@ -337,12 +329,10 @@ def plot_btc_eth_trend_7d(out_png: str):
     plt.close(fig)
 
 # ------------------------- News Helpers -------------------------
-
 def _word_breadth(up: int, down: int) -> str:
     if up >= down + 3: return "상승 우위"
     if down >= up + 3: return "하락 우위"
     return "혼조"
-
 
 def _word_funding(btc: str, eth: str) -> str:
     def neutral(x: str) -> bool:
@@ -351,7 +341,6 @@ def _word_funding(btc: str, eth: str) -> str:
         except Exception:
             return True
     return "중립권" if neutral(btc) and neutral(eth) else "약한 편향"
-
 
 def build_news_long(d: Dict) -> str:
     breadth_word = _word_breadth(d.get("upCount",0), d.get("downCount",0))
@@ -393,9 +382,8 @@ def build_news_long(d: Dict) -> str:
     return text
 
 # ------------------------- Main Pipeline ------------------------
-
 def main():
-    # 1) Market snapshot
+    # 1) Market snapshot (Yahoo)
     df = fetch_markets(UNIVERSE)
     df = fill_previous_prices(df)
 
@@ -403,7 +391,6 @@ def main():
     base_val = get_base_value()  # USD
     df["weight"] = df.index.map(W)
 
-    # 포트폴리오 가치는 단순 가중 가격 합 (지수 산식에서 상대값이므로 통화단위 무관)
     port_prev = float((df["previous_price"] * df["weight"]).sum())
     port_now  = float((df["current_price"]  * df["weight"]).sum())
 
@@ -414,7 +401,8 @@ def main():
     rebased_multiple = (bm20_now / 100.0) if bm20_now else 0.0
 
     # 3) Per-asset returns & breadth
-    df["ret_1d"] = (df["current_price"] / df["previous_price"] - 1) * 100
+    if "ret_1d" not in df.columns or df["ret_1d"].isna().all():
+        df["ret_1d"] = (df["current_price"] / df["previous_price"] - 1) * 100
     up_count = int((df["ret_1d"] > 0).sum())
     down_count = int((df["ret_1d"] < 0).sum())
 
@@ -435,19 +423,16 @@ def main():
     eth_ret = df.at["ETH","ret_1d"] if "ETH" in df.index else 0.0
 
     # 6) Charts
-    # (a) Performance barh (TOP/WORST 3 묶음)
     perf_names = [x[0] for x in best3_list] + [x[0] for x in worst3_list]
     perf_vals  = [x[1] for x in best3_list] + [x[1] for x in worst3_list]
     bar_png = os.path.join(OUT_DIR_DATE, f"bm20_bar_{YMD}.png")
     plot_perf_barh(perf_names, perf_vals, bar_png)
 
-    # (b) BTC/ETH 7D trend
     trend_png = os.path.join(OUT_DIR_DATE, f"bm20_trend_{YMD}.png")
     try:
         plot_btc_eth_trend_7d(trend_png)
     except Exception:
-        # 실패해도 파이프라인 진행
-        pass
+        pass  # 트렌드 실패해도 전체 파이프라인 진행
 
     # 7) JSON for site
     d = {
@@ -475,15 +460,15 @@ def main():
     with open(os.path.join(SITE_DIR, "bm20_latest.json"), "w", encoding="utf-8") as f:
         json.dump(d, f, ensure_ascii=False)
 
-    # 8) CSV / TXT  (generate_report.py 호환: name, current_price, previous_price, weight_ratio [+ret_1d])
+    # 8) CSV / TXT  (generate_report.py 호환)
     df_out = df[["current_price","previous_price","ret_1d"]].copy()
-    df_out["name"] = df_out.index  # 심볼 대문자
+    df_out["name"] = df_out.index
     df_out["weight_ratio"] = df_out.index.map(W)
     df_out = df_out[["name","current_price","previous_price","weight_ratio","ret_1d"]]
     df_out.to_csv(os.path.join(OUT_DIR_DATE, f"bm20_daily_data_{YMD}.csv"), index=False, encoding="utf-8")
 
     with open(os.path.join(OUT_DIR_DATE, f"bm20_news_{YMD}.txt"), "w", encoding="utf-8") as f:
-        f.write(d["news"])  # 해석형 장문
+        f.write(d["news"])
 
     # 9) PDF (선택)
     if REPORTLAB_AVAILABLE:
@@ -494,7 +479,6 @@ def main():
         y = h - margin
         c.setFont("Helvetica-Bold", 14); c.drawString(margin, y, f"BM20 데일리 리포트  {YMD}")
         y -= 0.8*cm; c.setFont("Helvetica", 10)
-        # 뉴스 문단 줄바꿈
         text = d["news"]
         line_len = 68
         lines = [text[i:i+line_len] for i in range(0, len(text), line_len)]
@@ -515,7 +499,6 @@ def main():
           os.path.join(OUT_DIR_DATE, f"bm20_news_{YMD}.txt"),
           bar_png, trend_png,
           os.path.join(SITE_DIR, "bm20_latest.json"))
-
 
 if __name__ == "__main__":
     main()
