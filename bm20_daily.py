@@ -4,6 +4,7 @@ from typing import Dict, List, Tuple, Optional
 
 import requests
 import pandas as pd
+import numpy as np
 
 import matplotlib
 matplotlib.use("Agg")
@@ -396,13 +397,15 @@ def main():
     # 1일 수익률
     with pd.option_context('mode.use_inf_as_na', True):
         df["ret_1d"] = ((df["current_price"] / df["previous_price"]) - 1) * 100
-        df["ret_1d"] = df["ret_1d"].fillna(0.0)
+        df["ret_1d"].replace([np.inf, -np.inf], np.nan, inplace=True)
+        df["ret_1d"].fillna(0.0, inplace=True)
 
     up_count  = int((df["ret_1d"] > 0).sum())
     down_count= int((df["ret_1d"] < 0).sum())
 
     best3 = df.sort_values("ret_1d", ascending=False).head(3)[["ret_1d"]]
     worst3= df.sort_values("ret_1d", ascending=True ).head(3)[["ret_1d"]]
+    
     best3_list  = [[idx, float(val)] for idx, val in best3.itertuples()]
     worst3_list = [[idx, float(val)] for idx, val in worst3.itertuples()]
 
