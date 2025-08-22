@@ -101,11 +101,11 @@ jobs:
           btc = yf.download("BTC-USD", start=str(d0), progress=False)["Close"].dropna()
           btc.index = pd.to_datetime(btc.index).tz_localize(None).normalize()
           
-          base = btc.iloc[0]
-          idx = (btc / base) * 100.0  # normalized BTC index
-          target_dates = df["date"].dt.normalize()
-          
-          aligned = pd.Series(index=target_dates, dtype="float64")
+         base = btc.iloc[0]
+         idx = (btc / base) * 100.0  # normalized BTC index
+         target_dates = df["date"].dt.normalize()
+         
+         aligned = pd.Series(index=target_dates, dtype="float64")
           inter = idx.index.intersection(aligned.index)
           aligned.loc[inter] = idx.loc[inter].values
           aligned = aligned.sort_index().ffill()
