@@ -90,7 +90,7 @@ jobs:
           import yfinance as yf
           
           bm = "out/series.json" if os.path.exists("out/series.json") else "viewer/series.json"
-        if not os.path.exists(bm):
+          if not os.path.exists(bm):
           raise SystemExit("BM20 series.json not found for BTC build.")
           
           df = pd.read_json(bm)
@@ -101,11 +101,11 @@ jobs:
           btc = yf.download("BTC-USD", start=str(d0), progress=False)["Close"].dropna()
           btc.index = pd.to_datetime(btc.index).tz_localize(None).normalize()
           
-         base = btc.iloc[0]
-         idx = (btc / base) * 100.0  # normalized BTC index
-         target_dates = df["date"].dt.normalize()
+          base = btc.iloc[0]
+          idx = (btc / base) * 100.0  # normalized BTC index
+          target_dates = df["date"].dt.normalize()
          
-         aligned = pd.Series(index=target_dates, dtype="float64")
+          aligned = pd.Series(index=target_dates, dtype="float64")
           inter = idx.index.intersection(aligned.index)
           aligned.loc[inter] = idx.loc[inter].values
           aligned = aligned.sort_index().ffill()
@@ -116,7 +116,7 @@ jobs:
               json.dump(arr, f, ensure_ascii=False)
           print("[OK] wrote viewer/btc_series.json", len(arr), "pts")
           PY
-                python _build_btc_json.py
+              python _build_btc_json.py
               fi
 
 
