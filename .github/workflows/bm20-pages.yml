@@ -74,47 +74,50 @@ jobs:
           # 최종 체크
           test -f out/series.json || (echo "::error::out/series.json missing"; exit 1)
 
-      # BTC 정규화 시계열 생성 (scripts/build_btc_json.py가 있으면 사용, 없으면 내장 스크립트)
+    # BTC 정규화 시계열 생성 (scripts/build_btc_json.py가 있으면 사용, 없으면 내장 스크립트)
       - name: Build BTC normalized JSON
-        run: python scripts/build_btc_json.py
+        shell: bash
+        run: |
+          set -e
           if [ -f scripts/build_btc_json.py ]; then
-            python scripts/build_btc_json.py
+          echo "[INFO] Using scripts/build_btc_json.py"
+          python scripts/build_btc_json.py
           else
-            echo "[INFO] scripts/build_btc_json.py not found. Using inline builder..."
-            cat > _build_btc_json.py << 'PY'
-            import os, json
-            import pandas as pd
-            import yfinance as yf
-            
-            bm = "out/series.json" if os.path.exists("out/series.json") else "viewer/series.json"
-            if not os.path.exists(bm):
-                raise SystemExit("BM20 series.json not found for BTC build.")
-            
-            df = pd.read_json(bm)
-            df["date"] = pd.to_datetime(df["date"]).dt.tz_localize(None)
-            df = df.sort_values("date").reset_index(drop=True)
-            
-            d0 = df["date"].min().date()
-            btc = yf.download("BTC-USD", start=str(d0), progress=False)["Close"].dropna()
-            btc.index = pd.to_datetime(btc.index).tz_localize(None).normalize()
-            
-            base = btc.iloc[0]
-            idx = (btc / base) * 100.0  # normalized BTC index
-            target_dates = df["date"].dt.normalize()
-            
-            aligned = pd.Series(index=target_dates, dtype="float64")
-            inter = idx.index.intersection(aligned.index)
-            aligned.loc[inter] = idx.loc[inter].values
-            aligned = aligned.sort_index().ffill()
-            
-            arr = [[d.strftime("%Y-%m-%d"), float(v)] for d, v in zip(df["date"], aligned)]
-            os.makedirs("viewer", exist_ok=True)
-            with open("viewer/btc_series.json","w",encoding="utf-8") as f:
-                json.dump(arr, f, ensure_ascii=False)
-            print("[OK] wrote viewer/btc_series.json", len(arr), "pts")
-            PY
-                        python _build_btc_json.py
-                      fi
+          echo "[INFO] scripts/build_btc_json.py not found. Using inline builder..."
+          cat > _build_btc_json.py << 'PY'
+          import os, json
+          import pandas as pd
+          import yfinance as yf
+          
+          bm = "out/series.json" if os.path.exists("out/series.json") else "viewer/series.json"
+        if not os.path.exists(bm):
+          raise SystemExit("BM20 series.json not found for BTC build.")
+          
+          df = pd.read_json(bm)
+          df["date"] = pd.to_datetime(df["date"]).dt.tz_localize(None)
+          df = df.sort_values("date").reset_index(drop=True)
+          
+          d0 = df["date"].min().date()
+          btc = yf.download("BTC-USD", start=str(d0), progress=False)["Close"].dropna()
+          btc.index = pd.to_datetime(btc.index).tz_localize(None).normalize()
+          
+          base = btc.iloc[0]
+          idx = (btc / base) * 100.0  # normalized BTC index
+          target_dates = df["date"].dt.normalize()
+          
+          aligned = pd.Series(index=target_dates, dtype="float64")
+          inter = idx.index.intersection(aligned.index)
+          aligned.loc[inter] = idx.loc[inter].values
+          aligned = aligned.sort_index().ffill()
+          
+          arr = [[d.strftime("%Y-%m-%d"), float(v)] for d, v in zip(df["date"], aligned)]
+          os.makedirs("viewer", exist_ok=True)
+          with open("viewer/btc_series.json","w",encoding="utf-8") as f:
+              json.dump(arr, f, ensure_ascii=False)
+          print("[OK] wrote viewer/btc_series.json", len(arr), "pts")
+          PY
+                python _build_btc_json.py
+              fi
 
 
       # Pages 산출물을 /viewer 하위에만 배치 → 메인 루트와 충돌 없음
