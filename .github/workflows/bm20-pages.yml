@@ -58,6 +58,7 @@ jobs:
       # 데일리는 별도 데일리 워크플로가 /bm/daily/** 로 커밋해 둔 걸 집어서 배포.
       # ─────────────────────────────────────────────────────────────
       - name: Run BM20 Daily
+        continue-on-error: true
         run: |
           mkdir -p out
           PYTHONPATH=. python bm20_daily.py \
