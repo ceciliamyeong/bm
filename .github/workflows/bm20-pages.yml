@@ -57,10 +57,10 @@ jobs:
       # 허브용 데이터(시계열 등)만 빌드. "데일리"는 이 워크플로가 만들지 않음.
       # 데일리는 별도 데일리 워크플로가 /bm/daily/** 로 커밋해 둔 걸 집어서 배포.
       # ─────────────────────────────────────────────────────────────
-      - name: Run BM20 (produce series.json)
+      - name: Run BM20 Daily
         run: |
           mkdir -p out
-          python bm20.py \
+          python bm20_daily.py \
             --archive archive \
             --out out \
             --base-date 2018-01-01 \
@@ -69,6 +69,7 @@ jobs:
             --weights-source rules \
             --listed-bonus 1.3 \
             --cap BTC:0.30 --cap ETH:0.20 --cap XRP:0.05 --cap USDT:0.05
+
 
       - name: Build series.json (temporary minimal)
         run: |
