@@ -1,10 +1,10 @@
-# .github/workflows/bm20-pages.yml
-name: Build & Deploy BM20 Viewer (to /viewer)
+name: Build BM20 & Deploy Pages (to /viewer)
 
 on:
   workflow_dispatch: {}
   schedule:
-    - cron: "5 22 * * *"  # 매일 07:05 KST
+    # KST 07:05 실행 (UTC 22:05)
+    - cron: "5 22 * * *"
 
 permissions:
   contents: read
@@ -18,10 +18,13 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
@@ -30,7 +33,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install pandas numpy yfinance matplotlib requests
 
-      # 필요하다면 bm20.py 실행해 out/series.json 생성
+      - name: Sanity check input data
+        run: |
+          ls -1 archive/*/bm20_daily_data_*.csv | wc -l || true
+
+      # BM20 산출 (series.json을 out/에 생성하도록 bm20.py에 to_json 2~3줄 포함 권장)
       - name: Run BM20
         run: |
           mkdir -p out
@@ -44,21 +51,67 @@ jobs:
             --listed-bonus 1.3 \
             --cap BTC:0.30 --cap ETH:0.20 --cap XRP:0.05 --cap USDT:0.05
 
-      # btc_series.json 생성이 있다면 여기서 실행
+      # series.json 필수 확인 (없으면 CSV→JSON 임시 변환)
+      - name: Ensure series.json exists (fallback from CSV if missing)
+        run: |
+          if [ ! -f out/series.json ]; then
+            echo "series.json not found. Trying to build from CSV fallback..."
+            python - << 'PY'
+import os, json, pandas as pd
+csv = "out/bm20_index_from_csv.csv"
+if not os.path.exists(csv):
+    raise SystemExit("CSV missing; cannot fallback.")
+df = pd.read_csv(csv, parse_dates=["date"])
+df = df[["date","index"]].dropna()
+df["date"] = df["date"].dt.strftime("%Y-%m-%d")
+arr = df.to_dict(orient="records")
+os.makedirs("out", exist_ok=True)
+with open("out/series.json","w",encoding="utf-8") as f:
+    json.dump(arr, f, ensure_ascii=False)
+print("[OK] wrote out/series.json from CSV (fallback)")
+PY
+          fi
+          # 최종 체크
+          test -f out/series.json || (echo "::error::out/series.json missing"; exit 1)
+
+      # BTC 정규화 시계열 생성 (scripts/build_btc_json.py가 있으면 사용, 없으면 내장 스크립트)
       - name: Build BTC normalized JSON
         run: |
-          python scripts/build_btc_json.py
+          if [ -f scripts/build_btc_json.py ]; then
+            python scripts/build_btc_json.py
+          else
+            echo "scripts/build_btc_json.py not found. Using inline builder."
+            python - << 'PY'
+import os, json, pandas as pd, yfinance as yf
+bm = "out/series.json" if os.path.exists("out/series.json") else "viewer/series.json"
+if not os.path.exists(bm): raise SystemExit("BM20 series.json not found for BTC build.")
+df = pd.read_json(bm)
+df["date"] = pd.to_datetime(df["date"])
+d0 = df["date"].min().date()
+btc = yf.download("BTC-USD", start=str(d0))["Close"].dropna()
+base = btc.iloc[0]
+idx = (btc/base)*100.0
+aligned = df["date"].dt.normalize().map(idx.reindex(btc.index.normalize()).ffill())
+arr = [[d.strftime("%Y-%m-%d"), float(v)] for d, v in zip(df["date"], aligned)]
+os.makedirs("viewer", exist_ok=True)
+with open("viewer/btc_series.json","w",encoding="utf-8") as f:
+    json.dump(arr, f, ensure_ascii=False)
+print("[OK] wrote viewer/btc_series.json", len(arr), "pts")
+PY
+          fi
 
+      # Pages 산출물을 /viewer 하위에만 배치 → 메인 루트와 충돌 없음
       - name: Stage site to /viewer
         run: |
           mkdir -p _site/viewer
-          # 뷰어 파일들을 /viewer 로 배치
-          cp -r viewer/* _site/viewer/
-          # 데이터도 /viewer 로 배치
-          [ -f out/series.json ] && cp out/series.json _site/viewer/ || true
-          [ -f viewer/btc_series.json ] && cp viewer/btc_series.json _site/viewer/ || true
-          # (선택) 메인 루트 유지하려면 기존 정적 파일을 _site/ 루트에 복사
-          # cp -r site_root/* _site/ || true
+          # 정적 뷰어 파일
+          cp -r viewer/* _site/viewer/ 2>/dev/null || true
+          # 데이터 복사 (BM20 / BTC)
+          cp out/series.json _site/viewer/ || true
+          cp viewer/btc_series.json _site/viewer/ || true
+          # 옵션: 참고용 CSV/PNG도 함께 공개
+          [ -f out/bm20_index_from_csv.csv ] && cp out/bm20_index_from_csv.csv _site/viewer/ || true
+          cp out/bm20_index*.png _site/viewer/ 2>/dev/null || true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
