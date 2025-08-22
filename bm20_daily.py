@@ -1,4 +1,4 @@
-# ===================== BM20 Daily — Yahoo Only (2018-01-01=100) =====================
+# ===================== BM20 Daily — Yahoo Only (Safe: 401/400 handled) =====================
 # 기능: 유니버스/가중치(확정) → Yahoo 시세 수집 → 전일/금일 포트폴리오 가치 → 리베이스 지수 산출
 #      김치 프리미엄 · 펀딩비 → Best/Worst → 뉴스 문장 → 차트(가로막대/7D) → JSON/TXT/CSV/PDF 저장
 # 산출물: out/YYYY-MM-DD/ (csv/txt/png/pdf), site/bm20_latest.json
@@ -79,8 +79,7 @@ def _safe_float(x, d: float=None) -> Optional[float]:
     except Exception:
         return d
 
-# ------------------------- Yahoo helpers ------------------------
-# ------------------------- Yahoo helpers (patched) ------------------------
+# ------------------------- Yahoo helpers (v7→v8 폴백) ----------
 def _yf_quote_v7(symbols: List[str]) -> Dict[str, dict]:
     tickers = ",".join([YF_TICKER[s] for s in symbols if s in YF_TICKER])
     if not tickers:
@@ -96,10 +95,9 @@ def _yf_quote_v7(symbols: List[str]) -> Dict[str, dict]:
         }
     return out
 
-
 def _yf_quote_single_via_chart(yf_ticker: str) -> Dict[str, Optional[float]]:
     """
-    v8 chart로 2일 일봉을 받아 현재가/전일가를 산출 (인증 불필요, 401 회피)
+    v8 chart로 2일 일봉을 받아 현재가/전일가 산출 (인증 불필요, 401 회피)
     """
     j = _get(f"https://query2.finance.yahoo.com/v8/finance/chart/{yf_ticker}",
              {"range": "2d", "interval": "1d"})
@@ -114,7 +112,6 @@ def _yf_quote_single_via_chart(yf_ticker: str) -> Dict[str, Optional[float]]:
     except Exception:
         return {"price": None, "prev_close": None, "market_cap": None}
 
-
 def _yf_quote(symbols: List[str]) -> Dict[str, dict]:
     """
     1) v7 quote 일괄 조회 시도
@@ -123,29 +120,21 @@ def _yf_quote(symbols: List[str]) -> Dict[str, dict]:
     try:
         return _yf_quote_v7(symbols)
     except requests.HTTPError as e:
-        # 401 등 인증 문제 → chart 폴백
         if getattr(e.response, "status_code", None) != 401:
             raise
     except Exception:
-        # 기타 오류도 폴백으로 처리
         pass
 
-    # chart 폴백 (개별 요청)
     out = {}
     for s in symbols:
         t = YF_TICKER[s]
         q = _yf_quote_single_via_chart(t)
         out[t] = q
-        time.sleep(0.1)  # 과도한 요청 방지
+        time.sleep(0.1)
     return out
 
-
+# 안전 가격 로더: 날짜 가격 없으면 '최초 가용 종가'로 대체
 def _yf_price_on_or_first(yf_ticker: str, date_ymd: str) -> Optional[float]:
-    """
-    주어진 날짜(UTC 기준)의 종가가 있으면 그 값을,
-    없으면 해당 티커의 '최초 가용 종가'를 돌려준다.
-    Yahoo v8 chart(range=max)만 사용하므로 401/400을 회피할 수 있음.
-    """
     try:
         j = _get(
             f"https://query2.finance.yahoo.com/v8/finance/chart/{yf_ticker}",
@@ -157,27 +146,23 @@ def _yf_price_on_or_first(yf_ticker: str, date_ymd: str) -> Optional[float]:
         if not ts or not cl:
             return None
 
-        # 1) target 날짜 정확 매칭 시도
         target = datetime.fromisoformat(date_ymd).date()
         for t, v in zip(ts, cl):
             if v is None:
                 continue
-            dt = datetime.fromtimestamp(t, timezone.utc).date()
-            if dt == target:
+            if datetime.fromtimestamp(t, timezone.utc).date() == target:
                 return float(v)
 
-        # 2) 없으면 '최초 가용 종가' 반환
         for v in cl:
             if v is not None:
                 return float(v)
         return None
-    except requests.HTTPError as e:
-        # 400/404 같은 경우에도 None 반환 (크래시 방지)
-        return None
     except Exception:
         return None
 
-
+# (호환성) 과거 호출이 있어도 안전버전이 동작하도록 동일 이름으로 덮어쓰기
+def _yf_price_on_date(yf_ticker: str, date_ymd: str) -> Optional[float]:
+    return _yf_price_on_or_first(yf_ticker, date_ymd)
 
 def _yf_history(yf_ticker: str, range_str: str = "7d", interval: str = "1h") -> List[Tuple[datetime, float]]:
     j = _get(f"https://query2.finance.yahoo.com/v8/finance/chart/{yf_ticker}",
@@ -225,7 +210,6 @@ def fill_previous_prices(df: pd.DataFrame) -> pd.DataFrame:
     for s in df.index:
         v = df.at[s, "previous_price"]
         if v in (None, 0) or (isinstance(v, float) and math.isnan(v)):
-            # 재조회 시도
             try:
                 v = fetch_yday_close(s)
             except Exception:
@@ -245,7 +229,7 @@ def fill_previous_prices(df: pd.DataFrame) -> pd.DataFrame:
 
 # ------------------------- Rebase (2018-01-01=100) --------------
 def fetch_price_on_2018(symbol: str) -> Optional[float]:
-    return _yf_price_on_date(YF_TICKER[symbol], BASE_DATE_STR)
+    return _yf_price_on_or_first(YF_TICKER[symbol], BASE_DATE_STR)
 
 def get_base_value() -> float:
     # 캐시 우선
@@ -260,12 +244,8 @@ def get_base_value() -> float:
 
     base_val = 0.0
     for s in UNIVERSE:
-        yf_t = YF_TICKER[s]
-        # ✅ 2018-01-01 가격이 없으면 '최초 가용 종가' 사용
-        p = _yf_price_on_or_first(yf_t, BASE_DATE_STR)
+        p = fetch_price_on_2018(s)  # 2018-01-01 없으면 최초 가용가 사용
         if p is None:
-            # 정말 없으면 스킵 (아주 예외적)
-            time.sleep(0.05)
             continue
         base_val += p * W[s]
         time.sleep(0.05)
@@ -278,7 +258,6 @@ def get_base_value() -> float:
             "portfolio_value_usd": round(base_val, 10)
         }, f, ensure_ascii=False)
     return base_val
-
 
 # ------------------------- Kimchi Premium -----------------------
 def _fetch_usdkrw_yahoo() -> Optional[float]:
@@ -308,14 +287,13 @@ def compute_kimchi_premium(df: pd.DataFrame) -> Tuple[str, Dict]:
     btc_krw = _fetch_btc_krw_upbit()
     usdkrw = _fetch_usdkrw_yahoo()
 
-    # 부족하면 df 값으로 보조
     if btc_usd is None:
         try:
             btc_usd = float(df.loc["BTC","current_price"])
         except Exception:
             btc_usd = None
     if usdkrw is None:
-        usdkrw = 1350.0  # 안전 기본값
+        usdkrw = 1350.0
 
     if not all([btc_usd, btc_krw, usdkrw]) or usdkrw <= 0:
         return "—", {"btc_usd": btc_usd, "btc_krw": btc_krw, "usdkrw": usdkrw, "note":"incomplete"}
@@ -557,16 +535,13 @@ def main():
         lines = [text[i:i+line_len] for i in range(0, len(text), line_len)]
         for seg in lines:
             c.drawString(margin, y, seg); y -= 0.5*cm
-        # 차트 삽입 (bar)
-        bar_png_exists = os.path.exists(bar_png)
-        if bar_png_exists:
+        if os.path.exists(bar_png):
             y -= 0.3*cm
             img_w = w - 2*margin
             img_h = img_w * 0.5
             c.drawImage(bar_png, margin, margin, width=img_w, height=img_h, preserveAspectRatio=True, anchor='sw')
         c.showPage(); c.save()
 
-    # 10) 콘솔 알림
     print("Saved:",
           os.path.join(OUT_DIR_DATE, f"bm20_daily_data_{YMD}.csv"),
           os.path.join(OUT_DIR_DATE, f"bm20_news_{YMD}.txt"),
