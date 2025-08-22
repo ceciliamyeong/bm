@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 import os, json
 import pandas as pd
-import yfinance as yf
+import os, json, pandas as pd, yfinance as yf
+
 
 BM20_SERIES_LOCAL = "out/series.json"          # 액션에서 bm20.py가 생성하는 경로
 BM20_SERIES_FALLBACK = "viewer/series.json"    # (옵션) 이미 저장된 게 있으면 이걸 참고
-
+BM20_JSON = "out/series.json" if os.path.exists("out/series.json") else "viewer/series.json"
 OUT_JSON = "viewer/btc_series.json"
 
 def load_bm20_dates():
@@ -16,6 +17,20 @@ def load_bm20_dates():
     df["date"] = pd.to_datetime(df["date"]).dt.tz_localize(None)
     df = df.sort_values("date")
     return df["date"].iloc[0].date(), df["date"].iloc[-1].date(), df["date"]
+
+df = pd.read_json(BM20_JSON)
+df["date"] = pd.to_datetime(df["date"])
+d0 = df["date"].min().date()
+
+btc = yf.download("BTC-USD", start=str(d0))["Close"].dropna()
+base = btc.iloc[0]
+idx = (btc/base)*100.0
+aligned = df["date"].dt.normalize().to_series().map(idx.reindex(btc.index.normalize()).ffill().to_dict())
+arr = [[d.strftime("%Y-%m-%d"), float(v)] for d, v in zip(df["date"], aligned)]
+os.makedirs("viewer", exist_ok=True)
+json.dump(arr, open(OUT,"w",encoding="utf-8"), ensure_ascii=False)
+print("[OK]", OUT, len(arr), "pts")
+
 
 def main():
     d0, dN, bm_dates = load_bm20_dates()
