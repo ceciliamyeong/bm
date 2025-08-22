@@ -1,4 +1,4 @@
-name: BM20 Daily
+name: BM20 Daily (Yahoo Only)
 
 on:
   schedule:
@@ -17,8 +17,7 @@ jobs:
       contents: write
 
     env:
-      TZ: Asia/Seoul
-      COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
+      TZ: Asia/Seoul   # 전역 타임존
 
     steps:
       - name: Checkout
@@ -43,41 +42,17 @@ jobs:
           sudo apt-get install -y fonts-nanum fonts-noto-cjk fontconfig
           sudo fc-cache -f -v
 
-      # 1) 리포트 생성 (out/YYYY-MM-DD) — 1차: CoinGecko
-      - name: Run BM20 generator (CoinGecko, with retries)
+      # ✅ 야후 전용 단일 실행
+      - name: Run BM20 generator (Yahoo only)
         shell: bash
         env:
           OUT_DIR: out
           TZ: Asia/Seoul
           BM20_KRW_BONUS: "1.0"
-          COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
-          MAX_ATTEMPTS: "3"
-          RETRY_SLEEP_SECONDS: "45"
-          PRICE_SOURCE: "coingecko"
         run: |
           set -euo pipefail
-          chmod +x scripts/run_bm20.sh
-          scripts/run_bm20.sh
-
-      # 1.5) 폴백: CoinGecko 실패/산출물 미존재 시 야후로 재시도
-      - name: Fallback — Run with Yahoo mapping if no output
-        shell: bash
-        env:
-          OUT_DIR: out
-          TZ: Asia/Seoul
-          BM20_KRW_BONUS: "1.0"
-          MAX_ATTEMPTS: "2"
-          RETRY_SLEEP_SECONDS: "30"
-          PRICE_SOURCE: "yahoo"      # 스크립트가 이 값을 읽어 야후로 동작하도록
-        run: |
-          set -euo pipefail
-          DATE=$(TZ=Asia/Seoul date +%F)
-          if [ -d "out/${DATE}" ] && [ -f "out/${DATE}/bm20_daily_data_${DATE}.csv" ]; then
-            echo "[INFO] Output exists. Skip Yahoo fallback."
-            exit 0
-          fi
-          echo "[WARN] No output found. Retrying with Yahoo mapping..."
-          scripts/run_bm20.sh
+          mkdir -p out
+          python bm20_daily.py
 
       - name: Debug — show out tree
         shell: bash
@@ -90,19 +65,19 @@ jobs:
           echo "---- out recursive ----"
           find out -maxdepth 2 -type d -print || true
 
-      # 2) out → archive 복사 + latest.html 생성(스크립트 내부)
+      # 2) out → archive 복사 + latest.html 생성(스크립트 내부에서 만든 산출물 사용)
       - name: Generate site (latest + archive + JSON)
         shell: bash
         run: |
           set -euo pipefail
           python scripts/generate_report.py
-          # 필요 시 JSON 보강 (export_json.py가 별도일 경우)
           if [ -f "export_json.py" ]; then
             python export_json.py || true
           fi
           echo "" > .nojekyll
 
-      - name: Publish latest to /bm (root)
+      - name: Publish latest to repo root
+        shell: bash
         run: |
           set -euo pipefail
           LATEST_DIR="$(ls -1d out/* | sort | tail -n1)"
@@ -113,62 +88,69 @@ jobs:
           # 1) 날짜별 아카이브 스냅샷 보존
           rsync -a --delete "$LATEST_DIR/" "archive/$(basename "$LATEST_DIR")/"
 
-          # 2) 루트 고정 자산(상대경로 전제)
-          cp "$LATEST_DIR/bm20_bar.png"      ./bm20_bar_latest.png
-          cp "$LATEST_DIR/bm20_trend.png"    ./bm20_trend_latest.png
-          cp "$LATEST_DIR/latest.json"       ./data/latest.json
+          # 2) 루트 고정 자산(존재할 때만 복사)
+          [ -f "$LATEST_DIR/bm20_bar.png" ]   && cp "$LATEST_DIR/bm20_bar.png"   ./bm20_bar_latest.png
+          [ -f "$LATEST_DIR/bm20_trend.png" ] && cp "$LATEST_DIR/bm20_trend.png" ./bm20_trend_latest.png
+          [ -f "$LATEST_DIR/latest.json" ]    && cp "$LATEST_DIR/latest.json"    ./data/latest.json
 
-          # 3) 최신 페이지: index.html = 그날 산출 HTML
-          #    (latest.html은 선택: 필요 없으면 생략)
-          cp "$LATEST_DIR/latest.html"       ./index.html
-          cp "$LATEST_DIR/latest.html"       ./latest.html || true
+          # 3) 최신 페이지: index.html / latest.html
+          [ -f "$LATEST_DIR/latest.html" ] && cp "$LATEST_DIR/latest.html" ./index.html
+          [ -f "$LATEST_DIR/latest.html" ] && cp "$LATEST_DIR/latest.html" ./latest.html || true
 
           # 4) Jekyll 무시 설정
           touch .nojekyll
-
 
       - name: Inject editorial into latest & index
         shell: bash
         run: |
           set -euo pipefail
           python - << 'PY'
-          import json, io, sys
+          import json, io
           from pathlib import Path
-          
-          with io.open('data/latest.json', 'r', encoding='utf-8') as f:
+          p = Path('data/latest.json')
+          if not p.exists():
+              raise SystemExit("data/latest.json not found")
+          with io.open(p, 'r', encoding='utf-8') as f:
               d = json.load(f)
-          
           title = d.get('editorial', {}).get('title', '')
           body  = d.get('editorial', {}).get('body', '')
           date  = d.get('date', '')
-          
           for fn in ['latest.html', 'index.html']:
-              p = Path(fn)
-              if not p.exists():
+              q = Path(fn)
+              if not q.exists():
                   continue
-              s = p.read_text(encoding='utf-8')
+              s = q.read_text(encoding='utf-8')
               s = s.replace('{{REPORT_TITLE}}',  title)
               s = s.replace('{{REPORT_BODY}}',   body)
               s = s.replace('{{REPORT_DATE}}',   date)
-              p.write_text(s, encoding='utf-8')
+              q.write_text(s, encoding='utf-8')
           PY
 
-          # bm20_daily.yml 마지막 쯤에 추가
-      - name: Copy latest JSON to site root
+      - name: Copy latest JSON to /bm
+        shell: bash
         run: |
-          DATE=$(env TZ=Asia/Seoul date +%F)   # KST 기준 오늘 날짜
-          # out/YYYY-MM-DD/bm20_latest.json → 루트 bm/ 로 복사 (경로는 프로젝트에 맞게)
-          cp out/${DATE}/bm20_latest.json bm/bm20_latest.json
-      
-      - name: Commit updated JSON
-        run: |
-          git add bm/bm20_latest.json
-          git -c user.name="bm-bot" -c user.email="bot@blockmedia.co.kr" \
-            commit -m "update bm20_latest.json ${DATE}" || true
-          git push
-      
+          set -euo pipefail
+          DATE=$(TZ=Asia/Seoul date +%F)
+          mkdir -p bm
+          if [ -f "out/${DATE}/bm20_latest.json" ]; then
+            cp "out/${DATE}/bm20_latest.json" "bm/bm20_latest.json"
+          else
+            echo "::warning:: out/${DATE}/bm20_latest.json not found"
+          fi
 
-      # 3) 커밋 & 푸시
+      - name: Commit updated JSON
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          DATE=$(TZ=Asia/Seoul date +%F)
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add bm/bm20_latest.json data/latest.json index.html latest.html bm20_bar_latest.png bm20_trend_latest.png || true
+          git commit -m "BM20 Yahoo publish ${DATE}" || echo "No changes"
+          git push
+
       - name: Commit & Push (with pull --rebase)
         shell: bash
         env:
@@ -176,10 +158,8 @@ jobs:
         run: |
           set -euo pipefail
           BRANCH="${GITHUB_REF#refs/heads/}"
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin ${BRANCH}
-          git pull --rebase origin ${BRANCH} || true
+          git fetch origin "${BRANCH}"
+          git pull --rebase origin "${BRANCH}" || true
           git add -A
-          git commit -m "BM20: publish $(TZ=UTC date +%F)" || echo "No changes"
-          git push origin ${BRANCH}
+          git commit -m "BM20: finalize $(TZ=UTC date +%F)" || echo "No changes"
+          git push origin "${BRANCH}"
