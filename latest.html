@@ -1,46 +1,108 @@
-
-<!doctype html><html lang="ko"><head>
+<!doctype html><html lang="ko">
+<head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BM20 데일리 2025-08-21</title>
+<title>BM20 Latest</title>
 <style>
-body{font-family:-apple-system,BlinkMacSystemFont,"NanumGothic","Noto Sans CJK","Malgun Gothic",Arial,sans-serif;background:#fafbfc;color:#111;margin:0}
-.wrap{max-width:760px;margin:0 auto;padding:20px}
-.card{background:#fff;border:1px solid #e5e9f0;border-radius:12px;padding:20px;margin-bottom:16px}
-h1{font-size:22px;margin:0 0 8px 0;text-align:center} h2{font-size:15px;margin:16px 0 8px 0;color:#1A237E}
-.muted{color:#555;text-align:center} .center{text-align:center}
-table{width:100%;border-collapse:collapse;font-size:14px} th,td{border:1px solid #e5e9f0;padding:8px} th{background:#eef4ff}
-.footer{font-size:12px;color:#666;text-align:center;margin-top:16px}
-img{max-width:100%}
-</style></head><body>
-<div class="wrap">
-  <div class="card">
-    <h1>BM20 데일리 리포트</h1>
-    <div class="muted">2025-08-21</div>
-    <table style="margin-top:10px">
-      <tr><th>지수</th><td>57.91 pt</td></tr>
-      <tr><th>일간 변동</th><td>-0.93%</td></tr>
-      <tr><th>상승/하락</th><td>2 / 16</td></tr>
-      <tr><th>수익률(1D/7D/30D/MTD/YTD)</th><td>-0.21% / -43.80% / - / - / -</td></tr>
-      <tr><th>김치 프리미엄</th><td>3.48%</td></tr>
-      <tr><th>펀딩비(Binance)</th><td>BTC 집계 공란 / ETH 집계 공란</td></tr>
-      
-    </table>
+  :root{--up:#2E7D32;--down:#C62828;--navy:#1A237E;--card: #f7f8fa}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Pretendard,Apple SD Gothic Neo,sans-serif;background:#fff;color:#111}
+  header{background:var(--navy);color:#fff;padding:20px}
+  header .title{font-weight:700;font-size:24px}
+  .wrap{max-width:1100px;margin:0 auto;padding:16px}
+  .grid{display:grid;gap:16px}
+  @media(min-width:960px){.grid-2{grid-template-columns:1fr 1fr}}
+  .card{background:var(--card);border-radius:16px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+  .hero{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .hero .level{font-size:42px;font-weight:800}
+  .chip{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:700}
+  .up{color:var(--up);background:#e9f4ec}.down{color:var(--down);background:#fbecec}
+  .section-title{font-weight:800;margin:0 0 8px}
+  .kv{display:grid;gap:8px;grid-template-columns:repeat(5,minmax(0,1fr))}
+  .kv .k{font-size:12px;color:#666}.kv .v{font-weight:700}
+  .list{display:grid;gap:8px}
+  .cols-2{display:grid;gap:16px}@media(min-width:960px){.cols-2{grid-template-columns:2fr 1fr}}
+  footer{color:#666;padding:24px;font-size:13px}
+  img{max-width:100%;height:auto;border-radius:12px;display:block}
+  a{color:var(--navy);text-decoration:none}
+  .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .btn{padding:8px 12px;border-radius:12px;background:#eef1ff;color:#1A237E;font-weight:700}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="title">BM20 Index</div>
+    <div class="btns">
+      <a class="btn" href="./methodology/">What is BM20?</a>
+      <a class="btn" href="./news/">BM20 뉴스</a>
+      <a class="btn" href="./archive/">아카이브</a>
+    </div>
   </div>
-  <div class="card">
-    <h2>Best/Worst (1D, USD)</h2>
-    <table><tr><th>Best</th><th style="text-align:right">등락률</th></tr>
-      <tr><td>TON</td><td style="text-align:right">+1.75%</td></tr><tr><td>ATOM</td><td style="text-align:right">+0.20%</td></tr><tr><td>USDT</td><td style="text-align:right">-0.03%</td></tr>
-    </table><br>
-    <table><tr><th>Worst</th><th style="text-align:right">등락률</th></tr>
-      <tr><td>NEAR</td><td style="text-align:right">-2.64%</td></tr><tr><td>BNB</td><td style="text-align:right">-2.19%</td></tr><tr><td>DOGE</td><td style="text-align:right">-2.19%</td></tr>
-    </table>
+</header>
+
+<main class="wrap grid">
+  <!-- Hero -->
+  <section class="card">
+    <div class="hero">
+      <div class="level mono">{{INDEX_LEVEL}}</div>
+      <div class="chip {{CHANGE_SIGN}}">
+        {{CHANGE_ABS}} ({{CHANGE_PCT}})
+      </div>
+      <div style="font-size:13px;color:#eee;background:#222;border-radius:8px;padding:4px 8px;margin-left:auto">
+        {{DATE_SEOUL}}
+      </div>
+    </div>
+    <div class="kv" style="margin-top:12px">
+      <div><div class="k">1D</div><div class="v">{{RET_1D}}</div></div>
+      <div><div class="k">7D</div><div class="v">{{RET_7D}}</div></div>
+      <div><div class="k">30D</div><div class="v">{{RET_30D}}</div></div>
+      <div><div class="k">MTD</div><div class="v">{{RET_MTD}}</div></div>
+      <div><div class="k">YTD</div><div class="v">{{RET_YTD}}</div></div>
+    </div>
+  </section>
+
+  <!-- Charts + Best/Worst -->
+  <section class="cols-2">
+    <div class="card">
+      <div class="section-title">1D Performance (Constituents)</div>
+      <img alt="BM20 1D Performance" src="./bm20_bar_latest.png">
+    </div>
+    <aside class="card">
+      <div class="section-title">Best 3 / Worst 3</div>
+      <div class="list mono">
+        <div>Best — {{BEST1}}, {{BEST2}}, {{BEST3}}</div>
+        <div>Worst — {{WORST1}}, {{WORST2}}, {{WORST3}}</div>
+      </div>
+      <div style="height:8px"></div>
+      <div class="section-title">BTC &amp; ETH 7D</div>
+      <img alt="BTC/ETH 7D" src="./bm20_trend_latest.png">
+    </aside>
+  </section>
+
+  <!-- Market extras -->
+  <section class="grid grid-2">
+    <div class="card">
+      <div class="section-title">김치 프리미엄</div>
+      <div class="mono">{{KIMCHI_PREM}}</div>
+    </div>
+    <div class="card">
+      <div class="section-title">펀딩비 (Binance)</div>
+      <div class="mono">{{FUNDING_RATE}}</div>
+    </div>
+  </section>
+
+  <!-- News -->
+<section class="card">
+  <div class="section-title">BM20 데일리 리포트</div>
+  <div class="list">
+    <div><strong>{{REPORT_TITLE}}</strong></div>
+    <div>{{REPORT_SUMMARY}}</div>
+    <div><a href="./news/{{REPORT_SLUG}}/">전체 리포트 보기 →</a></div>
   </div>
-  <div class="card">
-    <h2>코인별 퍼포먼스 (1D, USD)</h2>
-    <p class="center"><img src="bm20_bar_latest.png" alt="Performance"></p>
-    <h2>BTC & ETH 7일 가격 추세</h2>
-    <p class="center"><img src="bm20_trend_latest.png" alt="Trend"></p>
-  </div>
-  <div class="card"><h2>BM20 데일리 뉴스</h2><p>BM20 0.93% 하락…지수 57.91pt, 김치프리미엄 3.48%<br/>BM20 지수가 2025-08-21 전일 대비 -0.93% 하락해 57.91포인트를 기록했다. 시장 폭은 상승 2·하락 16로 약세 우위다. BM20 Best 3: TON(+1.75%), ATOM(+0.20%), USDT(-0.03%) BM20 Worst 3: NEAR(-2.64%), BNB(-2.19%), DOGE(-2.19%) 비트코인(BTC)는 -0.91% 하락한 113,235.74달러. 이더리움(ETH)는 -1.74% 하락한 4,258.96달러. 국내외 가격 차이를 나타내는 김치 프리미엄은 3.48%로, 국내 거래소가 소폭 할증되어 거래됐다. 바이낸스 기준 펀딩비는 BTC 집계 공란 / ETH 집계 공란로 집계됐다.</p></div>
-  <div class="footer">© Blockmedia · Data: Yahoo Finance, Upbit · Funding: Binance & Bybit</div>
-</div></body></html>
+</section>
+</main>
+
+<footer class="wrap">
+  데이터: CoinGecko(기본), Yahoo Finance(폴백). 본 정보는 투자 자문이 아닙니다.
+</footer>
+</body></html>
