@@ -43,16 +43,18 @@ jobs:
           sudo fc-cache -f -v
 
       # ✅ 야후 전용 단일 실행
+      - name: Reset base cache (when bumping base date)
+        run: rm -f out/base_cache.json
+      
       - name: Run BM20 generator (Yahoo only)
-        shell: bash
         env:
           OUT_DIR: out
           TZ: Asia/Seoul
-          BM20_KRW_BONUS: "1.0"
+          BM20_BASE_DATE: "2024-01-01"   # ✅ 새 기준일 지정
         run: |
           set -euo pipefail
-          mkdir -p out
           python bm20_daily.py
+
 
       - name: Debug — show out tree
         shell: bash
