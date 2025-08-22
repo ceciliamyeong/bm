@@ -51,11 +51,27 @@ for s in OTHERS:
 BASE_DATE_STR = "2018-01-01"
 
 # ------------------------- Yahoo mapping -------------------------
-YF_TICKER: Dict[str,str] = {
-    "BTC":"BTC-USD","ETH":"ETH-USD","XRP":"XRP-USD","USDT":"USDT-USD","BNB":"BNB-USD",
-    "DOGE":"DOGE-USD","TON":"TON-USD","SUI":"SUI-USD","SOL":"SOL-USD","ADA":"ADA-USD",
-    "AVAX":"AVAX-USD","DOT":"DOT-USD","MATIC":"MATIC-USD","LINK":"LINK-USD","LTC":"LTC-USD",
-    "ATOM":"ATOM-USD","NEAR":"NEAR-USD","APT":"APT-USD","FIL":"FIL-USD","ICP":"ICP-USD"
+YF_TICKER: Dict[str, str] = {
+    "BTC":  "BTC-USD",
+    "ETH":  "ETH-USD",
+    "XRP":  "XRP-USD",
+    "USDT": "USDT-USD",
+    "BNB":  "BNB-USD",
+    "DOGE": "DOGE-USD",
+    "TON":  "TON11419-USD",  # ✅ Toncoin (Tokamak의 TON-USD 아님)
+    "SUI":  "SUI-USD",
+    "SOL":  "SOL-USD",
+    "ADA":  "ADA-USD",
+    "AVAX": "AVAX-USD",
+    "DOT":  "DOT-USD",
+    "MATIC":"MATIC-USD",
+    "LINK": "LINK-USD",
+    "LTC":  "LTC-USD",
+    "ATOM": "ATOM-USD",
+    "NEAR": "NEAR-USD",
+    "APT":  "APT-USD",
+    "FIL":  "FIL-USD",
+    "ICP":  "ICP-USD",
 }
 
 # ------------------------- HTTP Utils (robust) -------------------
