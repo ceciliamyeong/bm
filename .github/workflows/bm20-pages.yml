@@ -76,7 +76,7 @@ jobs:
 
       # BTC 정규화 시계열 생성 (scripts/build_btc_json.py가 있으면 사용, 없으면 내장 스크립트)
       - name: Build BTC normalized JSON
-        run: |
+        run: python scripts/build_btc_json.py
           if [ -f scripts/build_btc_json.py ]; then
             python scripts/build_btc_json.py
           else
