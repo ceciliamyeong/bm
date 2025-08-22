@@ -176,25 +176,42 @@ def _yf_price_on_or_first(yf_ticker: str, date_ymd: str) -> Optional[float]:
     except Exception:
         return None
 
-# (호환성) 과거 호출이 있어도 안전버전이 동작하도록 동일 이름으로 덮어쓰기
-def _yf_price_on_date(yf_ticker: str, date_ymd: str) -> Optional[float]:
-    return _yf_price_on_or_first(yf_ticker, date_ymd)
-
-def _yf_history(yf_ticker: str, range_str: str = "7d", interval: str = "1h") -> List[Tuple[datetime, float]]:
-    j = _get(f"https://query2.finance.yahoo.com/v8/finance/chart/{yf_ticker}",
-             {"range": range_str, "interval": interval})
+# ✅ 안전 버전: 해당 날짜가 없으면 '최초 가용 종가' 반환, result:null/400도 안전 처리
+def _yf_price_on_date(yf_ticker: str, date_ymd: str):
     try:
-        res = j["chart"]["result"][0]
-        ts = res["timestamp"]
-        cl = res["indicators"]["quote"][0]["close"]
-        out = []
+        j = _get(f"https://query2.finance.yahoo.com/v8/finance/chart/{yf_ticker}",
+                 {"range": "max", "interval": "1d"})
+        # chart 자체가 error를 주는 케이스(result:null 포함) 방어
+        ch = j.get("chart", {})
+        if ch.get("error"):  # {"code":"Bad Request", "description": "..."}
+            return None
+        res = (ch.get("result") or [None])[0]
+        if not res:
+            return None
+        ts = res.get("timestamp") or []
+        cl = (res.get("indicators", {}).get("quote", [{}])[0].get("close")) or []
+        if not ts or not cl:
+            return None
+
+        target = datetime.fromisoformat(date_ymd).date()
+        # 1) 목표 날짜 정확 매칭
         for t, v in zip(ts, cl):
             if v is None:
                 continue
-            out.append((datetime.fromtimestamp(t, timezone.utc).astimezone(KST), float(v)))
-        return out
+            if datetime.fromtimestamp(t, timezone.utc).date() == target:
+                return float(v)
+        # 2) 없으면 '최초 가용 종가'
+        for v in cl:
+            if v is not None:
+                return float(v)
+        return None
     except Exception:
-        return []
+        return None
+
+# 2018-01-01 기준가도 이 함수를 사용하도록 보장
+def fetch_price_on_2018(symbol: str):
+    return _yf_price_on_date(YF_TICKER[symbol], BASE_DATE_STR)
+
 
 # ------------------------- Market Snapshot ----------------------
 def fetch_markets(symbols: List[str]) -> pd.DataFrame:
