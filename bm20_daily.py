@@ -123,21 +123,40 @@ def fill_previous_prices(df:pd.DataFrame)->pd.DataFrame:
     return df
 
 # ------------------------- Rebase ---------------------------------
-def get_base_value()->float:
+# ------------------------- get_base_value() ----------------------
+def get_base_value() -> Tuple[float, list]:
+    # 캐시 사용 가능 여부 확인
     if os.path.exists(BASE_CACHE_PATH):
         try:
-            c=json.load(open(BASE_CACHE_PATH,"r",encoding="utf-8"))
-            if c.get("base_date")==BASE_DATE_STR:
-                return float(c["portfolio_value_usd"])
-        except: pass
-    base=0.0
+            with open(BASE_CACHE_PATH, "r", encoding="utf-8") as f:
+                c = json.load(f)
+            # 캐시 기준일과 현재 기준일이 일치하면 그대로 사용
+            if c.get("base_date") == BASE_DATE_STR and set(c.get("universe", [])) == set(UNIVERSE):
+                return float(c["portfolio_value_usd"]), c.get("excluded", [])
+        except Exception:
+            pass
+
+    # 새 기준가 계산
+    base_val = 0.0
+    excluded = []
     for s in UNIVERSE:
-        p=fetch_price_on_2018(s)
-        if p: base+=p*W[s]
-    json.dump({"base_date":BASE_DATE_STR,
-               "portfolio_value_usd":round(base,10)},
-              open(BASE_CACHE_PATH,"w",encoding="utf-8"))
-    return base
+        p = fetch_price_on_2018(s)
+        if p is None or p == 0:
+            excluded.append(s)
+            continue
+        base_val += p * W[s]
+        time.sleep(0.03)
+
+    # 새 캐시 저장
+    with open(BASE_CACHE_PATH, "w", encoding="utf-8") as f:
+        json.dump({
+            "base_date": BASE_DATE_STR,
+            "universe": UNIVERSE,
+            "weights": W,
+            "portfolio_value_usd": round(base_val, 10),
+            "excluded": excluded
+        }, f, ensure_ascii=False)
+    return base_val, excluded
 
 # ------------------------- Kimchi/Funding -------------------------
 def compute_kimchi_premium()->str:
