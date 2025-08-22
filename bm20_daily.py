@@ -17,12 +17,82 @@ try:
 except Exception:
     REPORTLAB_AVAILABLE = False
 
-# ★ Yahoo 가격 소스 사용 (레포 내 모듈)
+# --- 맨 위 import 근처 교체 ---
+import os, json, time, random, math
+# ... 생략 ...
+
 try:
     from bm20.price_sources.yahoo import get_price_usd  # (coin_id: str, date: Optional[date]) -> float
-except Exception as e:
-    # CI 환경에서 임포트 실패 시 명확한 메시지 출력
-    raise ImportError("bm20.price_sources.yahoo.get_price_usd 를 찾을 수 없습니다. PYTHONPATH=. 설정 또는 패키지 구조(bm20/__init__.py) 확인 바랍니다.") from e
+except Exception:
+    import requests
+    from datetime import datetime, timezone, timedelta, date as _date
+
+    _UA = {"User-Agent": "Mozilla/5.0"}
+    _Q = "https://query1.finance.yahoo.com/v8/finance/chart/{}"
+
+    # Coingecko ID -> Yahoo 심볼 매핑 (필요한 것만 우선)
+    _YH_SYMBOL = {
+        "bitcoin": "BTC-USD",
+        "ethereum": "ETH-USD",
+        "ripple": "XRP-USD",
+        "tether": "USDT-USD",
+        "binancecoin": "BNB-USD",
+        "dogecoin": "DOGE-USD",
+        "toncoin": "TON-USD",
+        "sui": "SUI-USD",
+        "solana": "SOL-USD",
+        "cardano": "ADA-USD",
+        "avalanche-2": "AVAX-USD",
+        "polkadot": "DOT-USD",
+        "polygon": "MATIC-USD",
+        "chainlink": "LINK-USD",
+        "litecoin": "LTC-USD",
+        "cosmos": "ATOM-USD",
+        "near": "NEAR-USD",
+        "aptos": "APT-USD",
+        "filecoin": "FIL-USD",
+        "internet-computer": "ICP-USD",
+    }
+
+    def _epoch(d: _date | None) -> int:
+        if d is None:
+            # now
+            return int(time.time())
+        return int(datetime(d.year, d.month, d.day, tzinfo=timezone.utc).timestamp())
+
+    def get_price_usd(coin_id: str, day: _date | None) -> float:
+        """
+        Yahoo Finance에서 당일(실시간 근사) 또는 특정 날짜 종가(UTC 기준 1일 캔들) 반환.
+        coin_id는 Coingecko ID 기준 (예: 'bitcoin', 'ethereum').
+        """
+        sym = _YH_SYMBOL.get(coin_id)
+        if not sym:
+            raise ValueError(f"Yahoo symbol not mapped for coin_id={coin_id}")
+
+        if day is None:
+            # 최근 가격: 1일 범위로 호출 후 마지막 클로즈 사용
+            params = {"period1": _epoch(datetime.utcnow().date() - timedelta(days=5)),
+                      "period2": _epoch(None), "interval": "1h"}
+        else:
+            # 해당 날짜의 일간 캔들
+            start = _epoch(day - timedelta(days=2))
+            end   = _epoch(day + timedelta(days=2))
+            params = {"period1": start, "period2": end, "interval": "1d"}
+
+        r = requests.get(_Q.format(sym), params=params, headers=_UA, timeout=15)
+        r.raise_for_status()
+        j = r.json()
+        res = j.get("chart", {}).get("result", [])
+        if not res:
+            raise RuntimeError(f"Yahoo chart empty for {sym}")
+        ind = res[0]["indicators"]["quote"][0]
+        closes = ind.get("close") or []
+        # 가장 마지막 유효값 반환
+        for v in reversed(closes):
+            if v is not None:
+                return float(v)
+        raise RuntimeError(f"No close data for {sym}")
+
 
 # ------------------------- Paths / Dates -------------------------
 OUT_DIR = os.getenv("OUT_DIR", "out")
