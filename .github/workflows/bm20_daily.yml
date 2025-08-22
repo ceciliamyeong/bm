@@ -102,39 +102,30 @@ jobs:
           fi
           echo "" > .nojekyll
 
-      # 2.5) latest 고정자산 생성
-      - name: Publish latest (fixed assets)
-        shell: bash
+      - name: Publish latest to /bm (root)
         run: |
           set -euo pipefail
-          DATE=$(TZ=Asia/Seoul date +%F)
-          SRC="archive/$DATE"
+          LATEST_DIR="$(ls -1d out/* | sort | tail -n1)"
 
-          echo "[DEBUG] Checking $SRC"
-          if [ ! -d "$SRC" ]; then
-            echo "[WARN] $SRC not found. Skip publish."
-            exit 0
-          fi
+          # 필수 디렉터리
+          mkdir -p data archive
 
-          for f in "bm20_daily_${DATE}.html" "bm20_bar_${DATE}.png" "bm20_trend_${DATE}.png"; do
-            if [ ! -f "$SRC/$f" ]; then
-              echo "[WARN] $SRC/$f not found. Skip publish."
-              exit 0
-            fi
-          done
+          # 1) 날짜별 아카이브 스냅샷 보존
+          rsync -a --delete "$LATEST_DIR/" "archive/$(basename "$LATEST_DIR")/"
 
-          sed -E \
-            -e "s#bm20_bar_${DATE}\\.png(\\?v=[0-9]+)?#bm20_bar_latest.png#g" \
-            -e "s#bm20_trend_${DATE}\\.png(\\?v=[0-9]+)?#bm20_trend_latest.png#g" \
-            "$SRC/bm20_daily_${DATE}.html" > latest.html
+          # 2) 루트 고정 자산(상대경로 전제)
+          cp "$LATEST_DIR/bm20_bar.png"      ./bm20_bar_latest.png
+          cp "$LATEST_DIR/bm20_trend.png"    ./bm20_trend_latest.png
+          cp "$LATEST_DIR/latest.json"       ./data/latest.json
 
-          cp "$SRC/bm20_bar_${DATE}.png"   bm20_bar_latest.png
-          cp "$SRC/bm20_trend_${DATE}.png" bm20_trend_latest.png
+          # 3) 최신 페이지: index.html = 그날 산출 HTML
+          #    (latest.html은 선택: 필요 없으면 생략)
+          cp "$LATEST_DIR/latest.html"       ./index.html
+          cp "$LATEST_DIR/latest.html"       ./latest.html || true
 
-          # JSON이 있다면 캐시 무효화를 위한 타임스탬프 touch
-          if [ -f "site/bm20_latest.json" ]; then
-            touch site/bm20_latest.json
-          fi
+          # 4) Jekyll 무시 설정
+          touch .nojekyll
+
 
       # 3) 커밋 & 푸시
       - name: Commit & Push (with pull --rebase)
