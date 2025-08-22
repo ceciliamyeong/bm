@@ -400,22 +400,24 @@ def main():
         df["ret_1d"].replace([np.inf, -np.inf], np.nan, inplace=True)
         df["ret_1d"].fillna(0.0, inplace=True)
 
-    up_count  = int((df["ret_1d"] > 0).sum())
-    down_count= int((df["ret_1d"] < 0).sum())
-
-    best3 = df.sort_values("ret_1d", ascending=False).head(3)[["ret_1d"]
-    worst3= df.sort_values("ret_1d", ascending=True ).head(3)[["ret_1d"]
+    up_count   = int((df["ret_1d"] > 0).sum())
+    down_count = int((df["ret_1d"] < 0).sum())
     
-    best3_list  = [[idx, float(val)] for idx, val in best3.itertuples()]
-    worst3_list = [[idx, float(val)] for idx, val in worst3.itertuples()]
-
+    # 상·하위 종목 리스트 (Series 기반)
+    best3  = df.sort_values("ret_1d", ascending=False).head(3)["ret_1d"]
+    worst3 = df.sort_values("ret_1d", ascending=True ).head(3)["ret_1d"]
+    
+    # Series.items() 사용 (itertuples() 아님)
+    best3_list  = [[idx, float(val)] for idx, val in best3.items()]
+    worst3_list = [[idx, float(val)] for idx, val in worst3.items()]
+    
     kimchi_str, _ = compute_kimchi_premium(df)
     fund_btc, fund_eth = get_funding_display_pair()
-
-    btc_price = df.at["BTC","current_price"] if "BTC" in df.index else None
-    eth_price = df.at["ETH","current_price"] if "ETH" in df.index else None
-    btc_ret   = df.at["BTC","ret_1d"] if "BTC" in df.index else 0.0
-    eth_ret   = df.at["ETH","ret_1d"] if "ETH" in df.index else 0.0
+    
+    btc_price = df.at["BTC", "current_price"] if "BTC" in df.index else None
+    eth_price = df.at["ETH", "current_price"] if "ETH" in df.index else None
+    btc_ret   = float(df.at["BTC", "ret_1d"]) if "BTC" in df.index and pd.notna(df.at["BTC", "ret_1d"]) else 0.0
+    eth_ret   = float(df.at["ETH", "ret_1d"]) if "ETH" in df.index and pd.notna(df.at["ETH", "ret_1d"]) else 0.0
 
     # Charts
     bar_png = os.path.join(OUT_DIR_DATE, f"bm20_bar_{YMD}.png")
