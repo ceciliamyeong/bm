@@ -403,8 +403,8 @@ def main():
 
     best3 = df.sort_values("ret_1d", ascending=False).head(3)[["ret_1d"]]
     worst3= df.sort_values("ret_1d", ascending=True ).head(3)[["ret_1d"]]
-    best3_list  = [[idx, float(r.ret_1d)] for idx, r in best3.itertuples()]
-    worst3_list = [[idx, float(r.ret_1d)] for idx, r in worst3.itertuples()]
+    best3_list  = [[idx, float(val)] for idx, val in best3.itertuples()]
+    worst3_list = [[idx, float(val)] for idx, val in worst3.itertuples()]
 
     kimchi_str, _ = compute_kimchi_premium(df)
     fund_btc, fund_eth = get_funding_display_pair()
