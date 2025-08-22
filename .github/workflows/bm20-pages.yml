@@ -1,10 +1,10 @@
-name: Build BM20 & Deploy Pages
+# .github/workflows/bm20-pages.yml
+name: Build & Deploy BM20 Viewer (to /viewer)
 
 on:
   workflow_dispatch: {}
   schedule:
-    # KST 07:05 실행 → UTC 기준으로 전날 22:05
-    - cron: "5 22 * * *"
+    - cron: "5 22 * * *"  # 매일 07:05 KST
 
 permissions:
   contents: read
@@ -19,11 +19,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
@@ -32,10 +30,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install pandas numpy yfinance matplotlib requests
 
-      - name: Sanity check input data
-        run: |
-          ls -1 archive/*/bm20_daily_data_*.csv | wc -l || true
-
+      # 필요하다면 bm20.py 실행해 out/series.json 생성
       - name: Run BM20
         run: |
           mkdir -p out
@@ -49,21 +44,21 @@ jobs:
             --listed-bonus 1.3 \
             --cap BTC:0.30 --cap ETH:0.20 --cap XRP:0.05 --cap USDT:0.05
 
-      - name: Prepare site artifact
+      # btc_series.json 생성이 있다면 여기서 실행
+      - name: Build BTC normalized JSON
         run: |
-          mkdir -p _site
-          # 뷰어(정적 파일)
-          cp -r viewer/* _site/
-          # 데이터(필요한 것만 복사: series.json이 없다면 CSV라도 제공)
-          if [ -f out/series.json ]; then
-            cp out/series.json _site/
-          fi
-          if [ -f out/latest.json ]; then
-            cp out/latest.json _site/
-          fi
-          cp out/bm20_index_from_csv.csv _site/ || true
-          # 옵션: 로그 차트 PNG도 포함 (bm20.py --plot --plot-log 쓴 경우)
-          cp out/bm20_index*.png _site/ 2>/dev/null || true
+          python scripts/build_btc_json.py
+
+      - name: Stage site to /viewer
+        run: |
+          mkdir -p _site/viewer
+          # 뷰어 파일들을 /viewer 로 배치
+          cp -r viewer/* _site/viewer/
+          # 데이터도 /viewer 로 배치
+          [ -f out/series.json ] && cp out/series.json _site/viewer/ || true
+          [ -f viewer/btc_series.json ] && cp viewer/btc_series.json _site/viewer/ || true
+          # (선택) 메인 루트 유지하려면 기존 정적 파일을 _site/ 루트에 복사
+          # cp -r site_root/* _site/ || true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
