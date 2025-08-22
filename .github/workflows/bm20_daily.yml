@@ -166,5 +166,5 @@ jobs:
           git fetch origin ${BRANCH}
           git pull --rebase origin ${BRANCH} || true
           git add -A
-          git commit -m "[skip ci] chore: auto daily report for $(date -u +'%Y-%m-%d')" || echo "nothing to commit"
-          git push origin HEAD:${BRANCH}
+          git commit -m "BM20: publish $(TZ=UTC date +%F)" || echo "No changes"
+          git push origin ${BRANCH}
