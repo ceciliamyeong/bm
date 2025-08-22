@@ -60,7 +60,7 @@ jobs:
       - name: Run BM20 Daily
         run: |
           mkdir -p out
-          python bm20_daily.py \
+          PYTHONPATH=. python bm20_daily.py \
             --archive archive \
             --out out \
             --base-date 2018-01-01 \
@@ -69,7 +69,6 @@ jobs:
             --weights-source rules \
             --listed-bonus 1.3 \
             --cap BTC:0.30 --cap ETH:0.20 --cap XRP:0.05 --cap USDT:0.05
-
 
       - name: Build series.json (temporary minimal)
         run: |
@@ -135,3 +134,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
+
