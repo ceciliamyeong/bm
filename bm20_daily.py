@@ -403,8 +403,8 @@ def main():
     up_count  = int((df["ret_1d"] > 0).sum())
     down_count= int((df["ret_1d"] < 0).sum())
 
-    best3 = df.sort_values("ret_1d", ascending=False).head(3)[["ret_1d"]]
-    worst3= df.sort_values("ret_1d", ascending=True ).head(3)[["ret_1d"]]
+    best3 = df.sort_values("ret_1d", ascending=False).head(3)[["ret_1d"]
+    worst3= df.sort_values("ret_1d", ascending=True ).head(3)[["ret_1d"]
     
     best3_list  = [[idx, float(val)] for idx, val in best3.itertuples()]
     worst3_list = [[idx, float(val)] for idx, val in worst3.itertuples()]
