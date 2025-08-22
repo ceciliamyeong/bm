@@ -153,6 +153,21 @@ jobs:
               p.write_text(s, encoding='utf-8')
           PY
 
+          # bm20_daily.yml 마지막 쯤에 추가
+      - name: Copy latest JSON to site root
+        run: |
+          DATE=$(env TZ=Asia/Seoul date +%F)   # KST 기준 오늘 날짜
+          # out/YYYY-MM-DD/bm20_latest.json → 루트 bm/ 로 복사 (경로는 프로젝트에 맞게)
+          cp out/${DATE}/bm20_latest.json bm/bm20_latest.json
+      
+      - name: Commit updated JSON
+        run: |
+          git add bm/bm20_latest.json
+          git -c user.name="bm-bot" -c user.email="bot@blockmedia.co.kr" \
+            commit -m "update bm20_latest.json ${DATE}" || true
+          git push
+      
+
       # 3) 커밋 & 푸시
       - name: Commit & Push (with pull --rebase)
         shell: bash
