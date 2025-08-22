@@ -1,9 +1,10 @@
-name: Publish BM20 Pages (Hub + Subpages)
+name: Build BM20 & Deploy Pages
 
 on:
   workflow_dispatch: {}
   schedule:
-    - cron: "5 22 * * *"   # 매일 07:05 KST (UTC 22:05)
+    # KST 07:05 실행 → UTC 기준으로 전날 22:05
+    - cron: "5 22 * * *"
 
 permissions:
   contents: read
@@ -11,57 +12,34 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"           # Pages 배포는 항상 1개만 수행
-  cancel-in-progress: true
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      PUBLISH_DIR: publish
-      VIEWER_DIR: publish/bm/viewer
-      DAILY_DIR: publish/bm/daily
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
       - name: Install deps
         run: |
           python -m pip install --upgrade pip
-          pip install pandas numpy requests yfinance gspread google-auth google-auth-oauthlib google-auth-httplib2
-          pip install reportlab Pillow
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pandas numpy yfinance matplotlib requests
 
-      - name: Install Korean fonts (optional)
+      - name: Sanity check input data
         run: |
-          sudo apt-get update
-          sudo apt-get install -y fonts-nanum
+          ls -1 archive/*/bm20_daily_data_*.csv | wc -l || true
 
-      # ─────────────────────────────────────────────────────────────
-      # 허브용 데이터(시계열 등)만 빌드. "데일리"는 이 워크플로가 만들지 않음.
-      # 데일리는 별도 데일리 워크플로가 /bm/daily/** 로 커밋해 둔 걸 집어서 배포.
-      # ─────────────────────────────────────────────────────────────
-      - name: Run BM20 Daily
-        continue-on-error: true
+      - name: Run BM20
         run: |
           mkdir -p out
-          PYTHONPATH=. python bm20_daily.py \
+          python bm20.py \
             --archive archive \
             --out out \
             --base-date 2018-01-01 \
@@ -71,69 +49,34 @@ jobs:
             --listed-bonus 1.3 \
             --cap BTC:0.30 --cap ETH:0.20 --cap XRP:0.05 --cap USDT:0.05
 
-      - name: Build series.json (temporary minimal)
+      - name: Prepare site artifact
         run: |
-          set -eo pipefail
-          mkdir -p out
-          python -u scripts/build_series.py
-          ls -al out || true
-
-      - name: Ensure series.json exists
-        run: |
-          test -s out/series.json || (echo "::error::out/series.json missing or empty" && exit 1)
-
-      - name: Build BTC normalized JSON (optional)
-        run: |
-          set -eo pipefail
-          if ! python -u scripts/build_btc_json.py; then
-            echo "::warning::build_btc_json.py failed (optional)."
+          mkdir -p _site
+          # 뷰어(정적 파일)
+          cp -r viewer/* _site/
+          # 데이터(필요한 것만 복사: series.json이 없다면 CSV라도 제공)
+          if [ -f out/series.json ]; then
+            cp out/series.json _site/
           fi
-
-      # ─────────────────────────────────────────────────────────────
-      # 배포 트리 구성: /bm/viewer + /bm/daily 를 artifact에 함께 담음
-      # ─────────────────────────────────────────────────────────────
-      - name: Stage site (hub + subpages + data)
-        run: |
-          set -euo pipefail
-          rm -rf "$PUBLISH_DIR"
-          mkdir -p "$VIEWER_DIR" "$DAILY_DIR"
-
-          # 1) Viewer(허브) 정적 페이지
-          rsync -a viewer/ "$VIEWER_DIR"/
-
-          # 2) 허브가 쓰는 데이터 파일을 viewer 밑으로 배치
-          [ -f out/series.json ]     && cp -f out/series.json     "$VIEWER_DIR"/
-          [ -f out/btc_series.json ] && cp -f out/btc_series.json "$VIEWER_DIR"/
-          [ -f out/latest.json ]     && cp -f out/latest.json     "$VIEWER_DIR"/
-          [ -f site/contrib_top.json ] && cp -f site/contrib_top.json "$VIEWER_DIR"/
-
-          # 3) Daily는 이 리포지토리의 /bm/daily/** 커밋본을 그대로 포함
-          latest_dir="$(ls -d out/20* 2>/dev/null | sort | tail -n1 || true)"
-          if [ -n "${latest_dir:-}" ]; then
-            rsync -a "$latest_dir"/ "$DAILY_DIR"/
-          else
-            echo "::warning::no dated output under out/, skipping daily copy"
+          if [ -f out/latest.json ]; then
+            cp out/latest.json _site/
           fi
-
-          # 4) Pages에서 Jekyll 해제
-          touch "$PUBLISH_DIR/.nojekyll"
-
-          echo "=== publish tree ==="; find "$PUBLISH_DIR" -maxdepth 3 -type f | sed "s|^|  |"
-
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
+          cp out/bm20_index_from_csv.csv _site/ || true
+          # 옵션: 로그 차트 PNG도 포함 (bm20.py --plot --plot-log 쓴 경우)
+          cp out/bm20_index*.png _site/ 2>/dev/null || true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: publish
+          path: _site
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
-
