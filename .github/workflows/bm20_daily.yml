@@ -127,6 +127,32 @@ jobs:
           touch .nojekyll
 
 
+      - name: Inject editorial into latest & index
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - << 'PY'
+          import json, io, sys
+          from pathlib import Path
+          
+          with io.open('data/latest.json', 'r', encoding='utf-8') as f:
+              d = json.load(f)
+          
+          title = d.get('editorial', {}).get('title', '')
+          body  = d.get('editorial', {}).get('body', '')
+          date  = d.get('date', '')
+          
+          for fn in ['latest.html', 'index.html']:
+              p = Path(fn)
+              if not p.exists():
+                  continue
+              s = p.read_text(encoding='utf-8')
+              s = s.replace('{{REPORT_TITLE}}',  title)
+              s = s.replace('{{REPORT_BODY}}',   body)
+              s = s.replace('{{REPORT_DATE}}',   date)
+              p.write_text(s, encoding='utf-8')
+          PY
+
       # 3) 커밋 & 푸시
       - name: Commit & Push (with pull --rebase)
         shell: bash
