@@ -108,10 +108,11 @@ jobs:
           [ -f site/contrib_top.json ] && cp -f site/contrib_top.json "$VIEWER_DIR"/
 
           # 3) Daily는 이 리포지토리의 /bm/daily/** 커밋본을 그대로 포함
-          if [ -d bm/daily ]; then
-            rsync -a bm/daily/ "$DAILY_DIR"/
+          latest_dir="$(ls -d out/20* 2>/dev/null | sort | tail -n1 || true)"
+          if [ -n "${latest_dir:-}" ]; then
+            rsync -a "$latest_dir"/ "$DAILY_DIR"/
           else
-            echo "::warning::bm/daily not found. (Daily commit workflow가 먼저 돌아야 합니다)"
+            echo "::warning::no dated output under out/, skipping daily copy"
           fi
 
           # 4) Pages에서 Jekyll 해제
