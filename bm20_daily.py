@@ -80,11 +80,8 @@ def _safe_float(x, d: float=None) -> Optional[float]:
         return d
 
 # ------------------------- Yahoo helpers ------------------------
-def _yf_quote(symbols: List[str]) -> Dict[str, dict]:
-    """
-    Yahoo quote API: 여러 티커 동시 조회
-    반환: {YF_TICKER: {price, prev_close, market_cap}}
-    """
+# ------------------------- Yahoo helpers (patched) ------------------------
+def _yf_quote_v7(symbols: List[str]) -> Dict[str, dict]:
     tickers = ",".join([YF_TICKER[s] for s in symbols if s in YF_TICKER])
     if not tickers:
         return {}
@@ -98,6 +95,50 @@ def _yf_quote(symbols: List[str]) -> Dict[str, dict]:
             "market_cap": q.get("marketCap"),
         }
     return out
+
+
+def _yf_quote_single_via_chart(yf_ticker: str) -> Dict[str, Optional[float]]:
+    """
+    v8 chart로 2일 일봉을 받아 현재가/전일가를 산출 (인증 불필요, 401 회피)
+    """
+    j = _get(f"https://query2.finance.yahoo.com/v8/finance/chart/{yf_ticker}",
+             {"range": "2d", "interval": "1d"})
+    try:
+        res = j["chart"]["result"][0]
+        closes = res["indicators"]["quote"][0]["close"]  # 보통 [전일, 금일]
+        if not closes:
+            return {"price": None, "prev_close": None, "market_cap": None}
+        if len(closes) == 1:
+            return {"price": float(closes[0]), "prev_close": None, "market_cap": None}
+        return {"price": float(closes[-1]), "prev_close": float(closes[-2]), "market_cap": None}
+    except Exception:
+        return {"price": None, "prev_close": None, "market_cap": None}
+
+
+def _yf_quote(symbols: List[str]) -> Dict[str, dict]:
+    """
+    1) v7 quote 일괄 조회 시도
+    2) 실패(특히 401) 시 v8 chart 로 개별 폴백
+    """
+    try:
+        return _yf_quote_v7(symbols)
+    except requests.HTTPError as e:
+        # 401 등 인증 문제 → chart 폴백
+        if getattr(e.response, "status_code", None) != 401:
+            raise
+    except Exception:
+        # 기타 오류도 폴백으로 처리
+        pass
+
+    # chart 폴백 (개별 요청)
+    out = {}
+    for s in symbols:
+        t = YF_TICKER[s]
+        q = _yf_quote_single_via_chart(t)
+        out[t] = q
+        time.sleep(0.1)  # 과도한 요청 방지
+    return out
+
 
 def _yf_price_on_date(yf_ticker: str, date_ymd: str) -> Optional[float]:
     # UTC 00:00 ~ +1d 범위 1d 캔들
@@ -132,27 +173,27 @@ def _yf_history(yf_ticker: str, range_str: str = "7d", interval: str = "1h") -> 
 
 # ------------------------- Market Snapshot ----------------------
 def fetch_markets(symbols: List[str]) -> pd.DataFrame:
-    q = _yf_quote(symbols)
+    q = _yf_quote(symbols)  # v7 or v8(chart) 폴백
     rows = []
     for s in symbols:
         t = YF_TICKER[s]
-        qq = q.get(t, {})
+        qq = q.get(t, {}) or {}
         price = _safe_float(qq.get("price"))
-        prev = _safe_float(qq.get("prev_close"))
+        prev  = _safe_float(qq.get("prev_close"))
         chg24 = ((price/prev - 1) * 100) if (price is not None and prev not in (None, 0)) else None
         rows.append({
             "symbol": s,
             "current_price": price,
             "previous_price": prev,   # 후속 보정 대상
-            "market_cap": _safe_float(qq.get("market_cap")),
+            "market_cap": _safe_float(qq.get("market_cap")),  # chart 폴백이면 None
             "ret_1d": chg24
         })
     return pd.DataFrame(rows).set_index("symbol").reindex(symbols)
 
 def fetch_yday_close(symbol: str) -> Optional[float]:
     t = YF_TICKER[symbol]
-    q = _yf_quote([symbol])
-    return _safe_float(q.get(t, {}).get("prev_close"))
+    q = _yf_quote_single_via_chart(t)
+    return _safe_float(q.get("prev_close"))
 
 def fill_previous_prices(df: pd.DataFrame) -> pd.DataFrame:
     # prev_close가 없거나 0이면 역산
