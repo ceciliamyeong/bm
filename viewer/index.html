@@ -18,8 +18,31 @@
     .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
     .stat .k{color:var(--muted);font-size:12px}.stat .v{font-size:18px;font-weight:700}
     .muted{color:var(--muted)} .small{font-size:12px}
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+ <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script>
+(async function(){
+  const res = await fetch('./series.json?'+Date.now());
+  const data = await res.json();
+
+  // 데이터: [{"date":"YYYY-MM-DD","index":123.4}, ...] 가정
+  const rows = Array.isArray(data)
+    ? data
+    : (data.series || []); // 혹시 {"series":[...]} 형태면 대응
+
+  const dates = rows.map(r=>r.date);
+  const values = rows.map(r=>Number(r.index));
+
+  const chart = echarts.init(document.getElementById('chart'));
+  chart.setOption({
+    tooltip:{trigger:'axis'},
+    grid:{left:40,right:20,top:20,bottom:35},
+    xAxis:{type:'category',data:dates},
+    yAxis:{type:'value',name:'BM20',scale:true},
+    series:[{type:'line',name:'BM20',data:values,showSymbol:false,smooth:true}]
+  });
+  window.addEventListener('resize',()=>chart.resize());
+})();
+</script>
 </head>
 <body>
 <div class="wrap">
