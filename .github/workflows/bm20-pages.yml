@@ -37,7 +37,7 @@ jobs:
         run: |
           ls -1 archive/*/bm20_daily_data_*.csv | wc -l || true
 
-      # BM20 산출 (series.json을 out/에 생성하도록 bm20.py에 to_json 2~3줄 포함 권장)
+      # BM20 산출 
       - name: Run BM20
         run: |
           mkdir -p out
@@ -51,7 +51,7 @@ jobs:
             --listed-bonus 1.3 \
             --cap BTC:0.30 --cap ETH:0.20 --cap XRP:0.05 --cap USDT:0.05
 
-      # series.json 필수 확인 (없으면 CSV→JSON 임시 변환)
+      # series.json 
       - name: Ensure series.json exists (fallback from CSV if missing)
         run: |
           if [ ! -f out/series.json ]; then
