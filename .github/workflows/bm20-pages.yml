@@ -99,56 +99,56 @@ jobs:
           import pandas as pd
           import yfinance as yf
 
-def load_bm_series(path_json: str) -> pd.Series:
-    """
-    series.json 형식:
-      1) [{"date":"YYYY-MM-DD","index":100.0}, ...]  (records)
-      2) [["YYYY-MM-DD", 100.0], ...]               (pairs)
-    """
-    with open(path_json, "r", encoding="utf-8") as f:
-        data = json.load(f)
+          def load_bm_series(path_json: str) -> pd.Series:
+          """
+          series.json 형식:
+            1) [{"date":"YYYY-MM-DD","index":100.0}, ...]  (records)
+            2) [["YYYY-MM-DD", 100.0], ...]               (pairs)
+          """
+          with open(path_json, "r", encoding="utf-8") as f:
+              data = json.load(f)
+      
+          if isinstance(data, list) and data and isinstance(data[0], dict) and "date" in data[0]:
+              df = pd.DataFrame(data)
+              date_col = "date"
+              val_col  = "index" if "index" in df.columns else [c for c in df.columns if c != date_col][0]
+              df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
+              s = pd.Series(df[val_col].astype(float).values, index=df[date_col])
+          else:
+              df = pd.DataFrame(data, columns=["date","index"])
+              df["date"] = pd.to_datetime(df["date"], errors="coerce")
+              s = pd.Series(df["index"].astype(float).values, index=df["date"])
+      
+          s.index = pd.to_datetime(s.index).tz_localize(None).normalize()
+          s = s.sort_index()
+          return s
 
-    if isinstance(data, list) and data and isinstance(data[0], dict) and "date" in data[0]:
-        df = pd.DataFrame(data)
-        date_col = "date"
-        val_col  = "index" if "index" in df.columns else [c for c in df.columns if c != date_col][0]
-        df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
-        s = pd.Series(df[val_col].astype(float).values, index=df[date_col])
-    else:
-        df = pd.DataFrame(data, columns=["date","index"])
-        df["date"] = pd.to_datetime(df["date"], errors="coerce")
-        s = pd.Series(df["index"].astype(float).values, index=df["date"])
-
-    s.index = pd.to_datetime(s.index).tz_localize(None).normalize()
-    s = s.sort_index()
-    return s
-
-bm_path = "out/series.json" if os.path.exists("out/series.json") else "viewer/series.json"
-if not os.path.exists(bm_path):
-    raise SystemExit("BM20 series.json not found for BTC build.")
-
-bm = load_bm_series(bm_path)
-if bm.empty:
-    raise SystemExit("BM20 series is empty.")
-
-start_date = bm.index.min().date().isoformat()
-btc_close = yf.download("BTC-USD", start=start_date, progress=False)["Close"].dropna()
-btc_close.index = pd.to_datetime(btc_close.index).tz_localize(None).normalize()
-btc_close = btc_close.sort_index()
-
-base = float(btc_close.iloc[0])
-btc_idx = (btc_close / base) * 100.0
-
-aligned = btc_idx.reindex(bm.index).ffill()
-
-arr = [[d.strftime("%Y-%m-%d"), float(v)] for d, v in zip(aligned.index, aligned.values)]
-os.makedirs("viewer", exist_ok=True)
-with open("viewer/btc_series.json","w",encoding="utf-8") as f:
-    json.dump(arr, f, ensure_ascii=False)
-print("[OK] wrote viewer/btc_series.json", len(arr), "pts")
-PY
-            python _build_btc_json.py
-          fi
+          bm_path = "out/series.json" if os.path.exists("out/series.json") else "viewer/series.json"
+          if not os.path.exists(bm_path):
+              raise SystemExit("BM20 series.json not found for BTC build.")
+          
+          bm = load_bm_series(bm_path)
+          if bm.empty:
+              raise SystemExit("BM20 series is empty.")
+          
+          start_date = bm.index.min().date().isoformat()
+          btc_close = yf.download("BTC-USD", start=start_date, progress=False)["Close"].dropna()
+          btc_close.index = pd.to_datetime(btc_close.index).tz_localize(None).normalize()
+          btc_close = btc_close.sort_index()
+          
+          base = float(btc_close.iloc[0])
+          btc_idx = (btc_close / base) * 100.0
+          
+          aligned = btc_idx.reindex(bm.index).ffill()
+          
+          arr = [[d.strftime("%Y-%m-%d"), float(v)] for d, v in zip(aligned.index, aligned.values)]
+          os.makedirs("viewer", exist_ok=True)
+          with open("viewer/btc_series.json","w",encoding="utf-8") as f:
+              json.dump(arr, f, ensure_ascii=False)
+          print("[OK] wrote viewer/btc_series.json", len(arr), "pts")
+          PY
+                      python _build_btc_json.py
+                    fi
 
       # Pages 산출물을 /viewer 하위에만 배치 → 메인 루트와 충돌 없음
       - name: Stage site to /viewer
@@ -168,16 +168,16 @@ PY
 
           # 간단한 index.html (404 방지 & 링크 확인용)
           cat > _site/viewer/index.html <<'HTML'
-<!doctype html><meta charset="utf-8">
-<title>BM20 Viewer</title>
-<h1>BM20 Viewer</h1>
-<ul>
-  <li><a href="./series.json">series.json</a></li>
-  <li><a href="./btc_series.json">btc_series.json</a></li>
-  <li><a href="./bm20_index_from_csv.csv">bm20_index_from_csv.csv</a> (optional)</li>
-</ul>
-<p>배포 루트는 <code>/viewer/</code> 입니다.</p>
-HTML
+          <!doctype html><meta charset="utf-8">
+          <title>BM20 Viewer</title>
+          <h1>BM20 Viewer</h1>
+          <ul>
+            <li><a href="./series.json">series.json</a></li>
+            <li><a href="./btc_series.json">btc_series.json</a></li>
+            <li><a href="./bm20_index_from_csv.csv">bm20_index_from_csv.csv</a> (optional)</li>
+          </ul>
+          <p>배포 루트는 <code>/viewer/</code> 입니다.</p>
+          HTML
 
           echo "[LIST] _site/viewer:"
           ls -l _site/viewer
