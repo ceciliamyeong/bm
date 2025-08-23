@@ -45,6 +45,13 @@ jobs:
       - name: Reset base cache (optional)
         run: rm -f out/base_cache.json || true
 
+      - name: Debug — find downCount
+        run: |
+          echo "Searching for downCount..."
+          grep -n "{downCount}" bm20_daily.py || true
+          grep -nE '\bdownCount\b' bm20_daily.py || true
+
+
       - name: Run BM20 generator
         run: |
           set -euo pipefail
