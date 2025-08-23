@@ -201,7 +201,7 @@ function formatFunding(f){
 
 async function loadLatest(){
   try{
-    const latestCand = ['latest.json','bm20_latest.json','bm/latest.json','bm/bm20_latest.json'];
+    const latestCand = ['bm20_latest.json','latest.json','bm/bm20_latest.json','bm/latest.json'];
     const { url, json: j } = await fetchAny(latestCand);
 
     const asof = j.asOf || j.as_of || j.date || j.day || '';
@@ -246,7 +246,7 @@ async function loadSeries(){
   const host = qs('#svgHost');
   const svg = qs('svg', host);
   try{
-    const seriesCand = ['series.json', 'bm20_series.json', 'bm/series.json', 'bm/bm20_series.json'];
+    const seriesCand = ['bm20_series.json','series.json','bm/bm20_series.json','bm/series.json'];
     const { url, json: arr } = await fetchAny(seriesCand);
 
     const points = arr.map(d=>({
