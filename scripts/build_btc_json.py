@@ -31,8 +31,7 @@ def main():
     aligned = pd.Series(index=target_dates, dtype="float64")
 
     inter = idx.index.intersection(aligned.index)
-    aligned.loc[inter] = idx.loc[inter].values
-    aligned = aligned.sort_index().ffill()
+    aligned.update(idx)  # 또는: aligned = btc_idx.reindex(bm.index).ffill()
 
     # JSON 저장: [ [date, index], ... ]
     arr = [[d.strftime("%Y-%m-%d"), float(v)] for d, v in zip(bm["date"], aligned)]
