@@ -175,27 +175,36 @@ function setImg(id, src){
 }
 
 // -------- load latest.json --------
+async function fetchAny(urls){
+  for (const u of urls){
+    try{ const r = await fetch(u); if(r.ok) return {url:u, json: await r.json()}; }catch(e){}
+  }
+  throw new Error('no json in candidates');
+}
+
 async function loadLatest(){
   try{
-    const r = await fetch('latest.json');
-    if (!r.ok) throw new Error('no latest.json');
-    const j = await r.json();
+    // try multiple paths
+    const cand = ['latest.json','bm20_latest.json','bm/latest.json','bm/bm20_latest.json'];
+    const {url, json:j} = await fetchAny(cand);
 
     // as-of date
-    const asof = findKey(j, ['date','asof','as_of','day']) || '';
+    const asof = findKey(j, ['date','asof','asOf','as_of','day']) || '';
     if(asof) qs('#asof').textContent = `기준: ${asof}`;
 
     // level
-    const level = findKey(j, ['level','index','value','close']);
+    const level = findKey(j, ['level','index','value','close','bm20Level']);
     qs('#level').textContent = fmtNum(level);
 
     // returns
     const returns = findKey(j, ['returns','perf','performance']) || {};
-    const r1 = findKey(returns, ['1D','d1','one_day','ret_1d','change1d','change_1d']);
+    let r1 = findKey(returns, ['1D','d1','one_day','ret_1d','change1d','change_1d']);
     const r7 = findKey(returns, ['7D','d7','seven_day','ret_7d']);
     const r30= findKey(returns, ['30D','d30','thirty_day','ret_30d']);
     const rMTD= findKey(returns, ['MTD','mtd']);
     const rYTD= findKey(returns, ['YTD','ytd']);
+    // fallback: top-level daily change ex) bm20ChangePct
+    if (r1==null) r1 = findKey(j, ['bm20ChangePct','changePct']);
 
     qs('#r1d').textContent = fmtPct(r1);
     qs('#r7d').textContent = fmtPct(r7);
@@ -206,28 +215,93 @@ async function loadLatest(){
 
     // extras
     const kimchi = findKey(j, ['kimchi_premium','kimchi','krw_premium']);
-    const funding = findKey(j, ['funding_rate','funding','funding_bps']);
+    const funding = findKey(j, ['funding_rate','funding','funding_bps','fundingRate']);
     qs('#kimchi').textContent = kimchi!=null? (typeof kimchi==='number'? fmtPct(kimchi) : kimchi) : '—';
     qs('#funding').textContent = funding!=null? (typeof funding==='number'? fmtPct(funding) : funding) : '—';
 
     // news (optional)
     const news = findKey(j, ['news_file','news_path','news']);
     if (news && typeof news === 'string'){
-      const a = qs('#newsLink');
-      a.href = news; a.classList.remove('hide');
+      const a = qs('#newsLink'); a.href = news; a.classList.remove('hide');
     } else {
-      // common fallback
       fetch('bm20_news_latest.txt').then(x=>{if(x.ok){const a=qs('#newsLink');a.href='bm20_news_latest.txt';a.classList.remove('hide');}});
     }
 
     // pretty dump
-    qs('#latestDump').textContent = JSON.stringify(j,null,2);
+    qs('#latestDump').textContent = `${url}
+` + JSON.stringify(j,null,2);
   }catch(e){
     qs('#latestDump').textContent = 'latest.json을 불러오지 못했습니다.';
   }
 }
 
 // -------- load series.json + draw --------
+async function loadSeries(){
+  const host = qs('#svgHost');
+  const svg = qs('svg', host);
+  try{
+    const cand = ['series.json','bm20_series.json','bm/series.json','bm/bm20_series.json'];
+    const {url, json:arr} = await fetchAny(cand);
+
+    // Expect array of {date, level} or similar
+    const points = arr.map(d=>({
+      t: new Date(findKey(d,['date','day','asof','asOf'])||d[0]||Date.now()),
+      v: +(findKey(d,['level','index','value','close','bm20Level']) ?? d.level ?? d[1])
+    })).filter(x=>isFinite(x.v)).sort((a,b)=>a.t-b.t);
+
+    // dump tail
+    qs('#seriesDump').textContent = `${url}
+` + JSON.stringify(points.slice(-20), null, 2);
+
+    let domain = points;
+    let mode = 0; // 1Y -> YTD -> ALL
+    const computeDomain = () => {
+      if (mode === 1){
+        const y0 = new Date(new Date().getFullYear(),0,1);
+        return points.filter(p=>p.t>=y0);
+      } else if (mode === 0){
+        const d = new Date(); d.setFullYear(d.getFullYear()-1);
+        return points.filter(p=>p.t>=d);
+      } else { return points; }
+    };
+
+    function draw(data){
+      svg.innerHTML='';
+      const pad=24, W=svg.clientWidth||host.clientWidth, H=svg.clientHeight||host.clientHeight;
+      const minX = +data[0].t, maxX = +data[data.length-1].t;
+      const minV = Math.min(...data.map(p=>p.v)), maxV = Math.max(...data.map(p=>p.v));
+      const x = t=> pad + ( (t-minX)/(maxX-minX) ) * (W-2*pad);
+      const y = v=> H-pad - ( (v-minV)/(maxV-minV||1) ) * (H-2*pad);
+      const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+      const axes = document.createElementNS('http://www.w3.org/2000/svg','path');
+      axes.setAttribute('d',`M${pad} ${pad}V${H-pad}H${W-pad}`);
+      axes.setAttribute('stroke','#2b3d59'); axes.setAttribute('fill','none');
+      g.appendChild(axes);
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      let d = '';
+      data.forEach((p,i)=>{ d += (i? 'L':'M') + x(+p.t) + ' ' + y(p.v) + ' '; });
+      path.setAttribute('d', d.trim());
+      path.setAttribute('fill','none');
+      path.setAttribute('stroke', getComputedStyle(document.documentElement).getPropertyValue('--accent'));
+      path.setAttribute('stroke-width','2');
+      svg.appendChild(g); svg.appendChild(path);
+      const last = data[data.length-1];
+      const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      dot.setAttribute('cx', x(+last.t)); dot.setAttribute('cy', y(last.v)); dot.setAttribute('r','3.5');
+      dot.setAttribute('fill', 'white');
+      dot.setAttribute('stroke', getComputedStyle(document.documentElement).getPropertyValue('--accent'));
+      svg.appendChild(dot);
+    }
+
+    const doDraw = ()=>{ const d = computeDomain(); if(d.length>1) draw(d); };
+    doDraw();
+    qs('#btnZoom').addEventListener('click',()=>{ mode = (mode+1)%3; qs('#btnZoom').textContent = ['범위: 1Y ▾','범위: YTD ▾','범위: ALL ▾'][mode]; doDraw(); });
+
+  }catch(e){
+    qs('#seriesDump').textContent = 'series.json을 불러오지 못했습니다.';
+  }
+}
+
 async function loadSeries(){
   const host = qs('#svgHost');
   const svg = qs('svg', host);
