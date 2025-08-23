@@ -66,11 +66,7 @@ jobs:
       - name: Enrich latest.json (kimchi & funding)
         run: |
           set -euo pipefail
-          if [ -f augment_latest.py ]; then
-            python augment_latest.py || true
-          else
-            echo "augment_latest.py not found; skip enrichment"
-          fi
+          python augment_latest.py || echo "enrich failed; keep going"
 
       # ✅ 산출물은 루트로 복사 (index.html이 루트에서 읽음)
 
@@ -120,23 +116,21 @@ jobs:
 
       - name: Commit & Push outputs
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set -euo pipefail
-          DATE=$(TZ=Asia/Seoul date +%F)
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-
-
-          # 루트 산출물 + site/ + out/DATE 모두 커밋
-          git add -A site \
-                     latest.json series.json \
-                     bm20_bar_latest.png bm20_trend_latest.png bm20_vs_btc.png || true
-          git add -A out/${DATE} || true
-
-          git commit -m "BM20 daily (base=${BM20_BASE_DATE}) ${DATE}" || echo "No changes"
-          git pull --rebase
-          git push
-
-       
+            set -euo pipefail
+            DATE=$(TZ=Asia/Seoul date +%F)
+            git config user.name  "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+        
+            # 변경사항 스테이징
+            git add -A site \
+                       latest.json series.json \
+                       bm20_latest.json bm20_series.json \
+                       bm20_bar_latest.png bm20_trend_latest.png bm20_vs_btc.png || true
+            git add -A out/${DATE} || true
+        
+            # 먼저 커밋 → 그 다음 rebase pull (autostash) → 푸시
+            git commit -m "BM20 daily (base=${BM20_BASE_DATE}) ${DATE}" || echo "No changes"
+            git pull --rebase --autostash
+            git push
