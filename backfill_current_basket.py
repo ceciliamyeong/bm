@@ -195,3 +195,115 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
+# ===== CSV 생성 이후에 추가 =====
+import os, json, datetime as dt, tempfile
+from pathlib import Path
+import pandas as pd
+
+def _write_atomic(path: Path, data: dict | list):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    # tmp에 쓰고 rename (원자적 치환)
+    with tempfile.NamedTemporaryFile('w', delete=False, dir=str(path.parent), encoding='utf-8') as tmp:
+        json.dump(data, tmp, ensure_ascii=False, indent=2)
+        temp_name = tmp.name
+    os.replace(temp_name, path)  # atomic on POSIX
+
+def _pct(a: float, b: float):
+    try:
+        return a / b - 1.0
+    except Exception:
+        return None
+
+def _nearest_past_value(df: pd.DataFrame, target_date: dt.date) -> float | None:
+    # df: columns ['date','index'] with 'date' as string YYYY-MM-DD
+    # target보다 과거(<=target) 중 가장 가까운 값
+    d = pd.to_datetime(df['date']).dt.date
+    mask = d <= target_date
+    if not mask.any():
+        return None
+    i = d[mask].argmax()  # 마지막 True의 위치
+    return float(df.loc[mask].iloc[-1]['index'])
+
+def export_jsons_from_csv(csv_path: str,
+                          series_out: str = "bm20_series.json",
+                          latest_out: str = "bm20_latest.json"):
+    csv_path = Path(csv_path)
+    if not csv_path.exists():
+        print(f"[WARN] CSV not found: {csv_path}")
+        return
+
+    df = pd.read_csv(csv_path, dtype={'date': str})
+    # 컬럼명 표준화: index/level/value 중 하나 사용
+    if 'index' not in df.columns:
+        for alt in ('level', 'value', 'close'):
+            if alt in df.columns:
+                df = df.rename(columns={alt: 'index'})
+                break
+    if 'index' not in df.columns:
+        raise ValueError("CSV must contain 'index' (or 'level'/'value').")
+
+    df = df[['date', 'index']].dropna().copy()
+    df['date'] = pd.to_datetime(df['date']).dt.strftime('%Y-%m-%d')
+    df = df.sort_values('date')
+
+    # --- 1) bm20_series.json ---
+    series = [{'date': d, 'level': float(v)} for d, v in df[['date', 'index']].itertuples(index=False, name=None)]
+    _write_atomic(Path(series_out), series)
+
+    # --- 2) bm20_latest.json ---
+    last_date = dt.datetime.strptime(df.iloc[-1]['date'], "%Y-%m-%d").date()
+    last_val  = float(df.iloc[-1]['index'])
+    prev_val  = float(df.iloc[-2]['index']) if len(df) >= 2 else last_val
+
+    # helper: 과거 기준 수익률
+    def ret_back(days: int):
+        base = _nearest_past_value(df, last_date - dt.timedelta(days=days))
+        return None if base is None else _pct(last_val, base)
+
+    r_1d  = _pct(last_val, prev_val) if len(df) >= 2 else None
+    r_7d  = ret_back(7)
+    r_30d = ret_back(30)
+    r_1y  = ret_back(365)
+
+    # YTD: 올해 1월 1일(또는 그 이전 가장 가까운 값)
+    y0 = dt.date(last_date.year, 1, 1)
+    y0_base = _nearest_past_value(df, y0)
+    r_ytd = None if y0_base is None else _pct(last_val, y0_base)
+
+    latest = {
+        "asOf": last_date.strftime("%Y-%m-%d"),
+        "bm20Level": round(last_val, 6),
+        "bm20PrevLevel": round(prev_val, 6),
+        "bm20PointChange": round(last_val - prev_val, 6),
+        "bm20ChangePct": r_1d,  # 1D
+        "returns": {
+            "1D":  r_1d,
+            "7D":  r_7d,
+            "30D": r_30d,
+            "1Y":  r_1y,
+            "YTD": r_ytd
+        }
+        # 필요하면 나중에 kimchi/funding/best3/worst3도 여기에 추가
+    }
+    _write_atomic(Path(latest_out), latest)
+
+    print(f"✅ wrote {series_out} ({len(series)} pts), {latest_out} (asOf {latest['asOf']})")
+
+# === main() 끝난 직후 호출 예시 ===
+if __name__ == "__main__":
+    """
+    기존 main()이 백필 CSV를 out/backfill_current_basket.csv 로 저장한다고 가정합니다.
+    만약 다른 경로/파일명이라면 아래 경로만 바꿔주세요.
+    """
+    csv_result = Path("out/backfill_current_basket.csv")
+    if csv_result.exists():
+        export_jsons_from_csv(str(csv_result),
+                              series_out="bm20_series.json",
+                              latest_out="bm20_latest.json")
+    else:
+        print("[WARN] backfill CSV not found; skip JSON export.")
