@@ -22,6 +22,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 🔒 레포 내 남아있는 '2024base' 문자열을 방지 (워크플로 혼동 차단)
+      - name: Guard — no leftover "2024base" refs
+        run: |
+          if grep -R "2024base" .github/workflows/ >/dev/null 2>&1; then
+            echo "::error::Found forbidden string '2024base' in workflow files."
+            grep -R --line-number "2024base" .github/workflows/ || true
+            exit 1
+          fi
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -33,7 +44,7 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install --upgrade pip
-          pip install requests pandas matplotlib reportlab
+          pip install requests pandas matplotlib python-dateutil reportlab
 
       - name: Install Korean fonts (Nanum + Noto CJK)
         run: |
@@ -41,53 +52,25 @@ jobs:
           sudo apt-get install -y fonts-nanum fonts-noto-cjk fontconfig
           sudo fc-cache -f -v
 
-      - name: Reset base cache (when bumping base date)
-        run: rm -f out/base_cache.json
+      # 필요 시 기준일 바꿀 때 캐시 초기화 (수동 실행 시만 켜는 걸 권장)
+      # - name: Reset base cache (optional)
+      #   run: rm -f out/base_cache.json || true
 
-      # ⚠️ 레포 루트에 bm20_daily_2024base.py를 커밋해둔 가정
-      - name: Run BM20 generator (Yahoo 2024-base)
+      - name: Run BM20 generator
         run: |
           set -euo pipefail
-          python bm20_daily.py
-
-      - name: Debug — where am I?
-        run: |
-          echo "PWD=$(pwd)"
-          echo "Repo tree (top 2 levels):"
-          find . -maxdepth 2 -type f | sort | sed -n '1,200p'
-      
-      - name: Reset base cache (when bumping base date)
-        run: rm -f out/base_cache.json || true
-      
-      - name: Run BM20 generator (auto-pick script)
-        env:
-          OUT_DIR: out
-          TZ: Asia/Seoul
-          BM20_BASE_DATE: "2024-01-01"
-          BM20_BASE_EXCLUDE_CONSISTENT: "0"
-        shell: bash
-        run: |
-          set -euo pipefail
-      
-          # 1) 스크립트 후보 자동 탐색 (루트 기준)
-          CANDIDATES=("bm20_daily.py" "bm20_daily_2024base.py" "scripts/bm20_daily.py" "src/bm20_daily.py")
-          FOUND=""
-          for p in "${CANDIDATES[@]}"; do
-            if [ -f "$p" ]; then
-              FOUND="$p"; break
-            fi
-          done
-      
-          if [ -z "$FOUND" ]; then
-            echo "::error::bm20_daily 스크립트를 찾지 못했습니다. 리포 루트에 bm20_daily.py 를 커밋했는지 확인하세요."
+          if [ ! -f bm20_daily.py ]; then
+            echo "::error::bm20_daily.py not found at repo root."
+            echo "Tip: 커밋 누락 여부와 파일 경로를 확인하세요."
             exit 1
           fi
-      
-          echo "[INFO] Running: python $FOUND"
-          python "$FOUND"
+          python bm20_daily.py
 
+      - name: Debug — tree (top 2 levels)
+        run: |
+          echo "PWD=$(pwd)"
+          find . -maxdepth 2 -type f | sort | sed -n '1,200p'
 
-      # 선택: 산출물 커밋 (site/**, out/** 중 최신 날짜)
       - name: Commit & Push outputs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -98,4 +81,5 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A site out/${DATE}
           git commit -m "BM20 daily (base=${BM20_BASE_DATE}) ${DATE}" || echo "No changes"
+          git pull --rebase
           git push
