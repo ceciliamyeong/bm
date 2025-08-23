@@ -34,12 +34,17 @@ jobs:
           pip install pandas numpy yfinance matplotlib requests
 
       - name: Sanity check input data
+        shell: bash
         run: |
+          set -e
+          echo "[INFO] CSV files in archive/*/ :"
           ls -1 archive/*/bm20_daily_data_*.csv | wc -l || true
 
-      # BM20 산출 
+      # BM20 산출
       - name: Run BM20
+        shell: bash
         run: |
+          set -e
           mkdir -p out
           python bm20.py \
             --archive archive \
@@ -51,30 +56,35 @@ jobs:
             --listed-bonus 1.3 \
             --cap BTC:0.30 --cap ETH:0.20 --cap XRP:0.05 --cap USDT:0.05
 
-      # series.json 
+      # series.json 보장 (CSV에서 폴백)
       - name: Ensure series.json exists (fallback from CSV if missing)
+        shell: bash
         run: |
+          set -e
           if [ ! -f out/series.json ]; then
-            echo "series.json not found. Trying to build from CSV fallback..."
-            python - << 'PY'
-          import os, json, pandas as pd
-          csv = "out/bm20_index_from_csv.csv"
-          if not os.path.exists(csv):
-              raise SystemExit("CSV missing; cannot fallback.")
-          df = pd.read_csv(csv, parse_dates=["date"])
-          df = df[["date","index"]].dropna()
-          df["date"] = df["date"].dt.strftime("%Y-%m-%d")
-          arr = df.to_dict(orient="records")
-          os.makedirs("out", exist_ok=True)
-          with open("out/series.json","w",encoding="utf-8") as f:
-              json.dump(arr, f, ensure_ascii=False)
-          print("[OK] wrote out/series.json from CSV (fallback)")
-          PY
+            echo "[INFO] series.json not found. Building from CSV fallback..."
+            python - <<'PY'
+import os, json
+import pandas as pd
+
+csv = "out/bm20_index_from_csv.csv"
+if not os.path.exists(csv):
+    raise SystemExit("CSV missing; cannot fallback.")
+
+df = pd.read_csv(csv, parse_dates=["date"])
+df = df[["date","index"]].dropna()
+df["date"] = df["date"].dt.strftime("%Y-%m-%d")
+
+arr = df.to_dict(orient="records")
+os.makedirs("out", exist_ok=True)
+with open("out/series.json","w",encoding="utf-8") as f:
+    json.dump(arr, f, ensure_ascii=False)
+print("[OK] wrote out/series.json from CSV (fallback)")
+PY
           fi
-          # 최종 체크
           test -f out/series.json || (echo "::error::out/series.json missing"; exit 1)
 
-       # BTC 정규화 시계열 생성 
+      # BTC 정규화 시계열 생성 (스크립트 없으면 인라인)
       - name: Build BTC normalized JSON
         shell: bash
         run: |
@@ -84,83 +94,93 @@ jobs:
             python scripts/build_btc_json.py
           else
             echo "[INFO] scripts/build_btc_json.py not found. Using inline builder..."
-            cat > _build_btc_json.py << 'PY'
-          import os, json
-          import pandas as pd
-          import yfinance as yf
-      
-          def load_bm_series(path_json: str) -> pd.Series:
-          """
-          series.json이 아래 두 형태 어느 쪽이어도 받아들여서
-          index=날짜(Timestamp normalize), values=float 로 된 Series를 돌려줍니다.
-          1) [{"date": "YYYY-MM-DD", "index": 100.0}, ...]  (records)
-          2) [["YYYY-MM-DD", 100.0], ...]                   (pairs)
-          """
-          with open(path_json, "r", encoding="utf-8") as f:
-              data = json.load(f)
-          
-          # records 형태
-          if isinstance(data, list) and data and isinstance(data[0], dict) and "date" in data[0]:
-              df = pd.DataFrame(data)
-              # 컬럼명이 다를 가능성 방지
-              date_col = "date"
-              val_col  = "index" if "index" in df.columns else [c for c in df.columns if c != date_col][0]
-              df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
-              s = pd.Series(df[val_col].astype(float).values, index=df[date_col])
-          else:
-              # pairs 형태 가정
-              df = pd.DataFrame(data, columns=["date","index"])
-              df["date"] = pd.to_datetime(df["date"], errors="coerce")
-              s = pd.Series(df["index"].astype(float).values, index=df["date"])
-      
-          s.index = pd.to_datetime(s.index).tz_localize(None).normalize()
-          s = s.sort_index()
-          return s
-      
-          bm_path = "out/series.json" if os.path.exists("out/series.json") else "viewer/series.json"
-          if not os.path.exists(bm_path):
-          raise SystemExit("BM20 series.json not found for BTC build.")
-      
-          bm = load_bm_series(bm_path)
-          if bm.empty:
-          raise SystemExit("BM20 series is empty.")
-      
-      # BTC 종가 다운로드 (BM20 시작일 이후)
-          start_date = bm.index.min().date().isoformat()
-          btc_close = yf.download("BTC-USD", start=start_date, progress=False)["Close"].dropna()
-          btc_close.index = pd.to_datetime(btc_close.index).tz_localize(None).normalize()
-          btc_close = btc_close.sort_index()
-      
-      # 100 기준 정규화
-          base = float(btc_close.iloc[0])
-          btc_idx = (btc_close / base) * 100.0
-      
-      # BM20 날짜 인덱스에 맞춰 정렬 + 결측 전방채움
-          aligned = btc_idx.reindex(bm.index).ffill()
-      
-      # 출력: [["YYYY-MM-DD", 123.45], ...]
-          arr = [[d.strftime("%Y-%m-%d"), float(v)] for d, v in zip(aligned.index, aligned.values)]
-          os.makedirs("viewer", exist_ok=True)
-          with open("viewer/btc_series.json","w",encoding="utf-8") as f:
-          json.dump(arr, f, ensure_ascii=False)
-          print("[OK] wrote viewer/btc_series.json", len(arr), "pts")
-          PY
-               python _build_btc_json.py
-             fi
+            cat > _build_btc_json.py <<'PY'
+import os, json
+import pandas as pd
+import yfinance as yf
 
+def load_bm_series(path_json: str) -> pd.Series:
+    """
+    series.json 형식:
+      1) [{"date":"YYYY-MM-DD","index":100.0}, ...]  (records)
+      2) [["YYYY-MM-DD", 100.0], ...]               (pairs)
+    """
+    with open(path_json, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    if isinstance(data, list) and data and isinstance(data[0], dict) and "date" in data[0]:
+        df = pd.DataFrame(data)
+        date_col = "date"
+        val_col  = "index" if "index" in df.columns else [c for c in df.columns if c != date_col][0]
+        df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
+        s = pd.Series(df[val_col].astype(float).values, index=df[date_col])
+    else:
+        df = pd.DataFrame(data, columns=["date","index"])
+        df["date"] = pd.to_datetime(df["date"], errors="coerce")
+        s = pd.Series(df["index"].astype(float).values, index=df["date"])
+
+    s.index = pd.to_datetime(s.index).tz_localize(None).normalize()
+    s = s.sort_index()
+    return s
+
+bm_path = "out/series.json" if os.path.exists("out/series.json") else "viewer/series.json"
+if not os.path.exists(bm_path):
+    raise SystemExit("BM20 series.json not found for BTC build.")
+
+bm = load_bm_series(bm_path)
+if bm.empty:
+    raise SystemExit("BM20 series is empty.")
+
+start_date = bm.index.min().date().isoformat()
+btc_close = yf.download("BTC-USD", start=start_date, progress=False)["Close"].dropna()
+btc_close.index = pd.to_datetime(btc_close.index).tz_localize(None).normalize()
+btc_close = btc_close.sort_index()
+
+base = float(btc_close.iloc[0])
+btc_idx = (btc_close / base) * 100.0
+
+aligned = btc_idx.reindex(bm.index).ffill()
+
+arr = [[d.strftime("%Y-%m-%d"), float(v)] for d, v in zip(aligned.index, aligned.values)]
+os.makedirs("viewer", exist_ok=True)
+with open("viewer/btc_series.json","w",encoding="utf-8") as f:
+    json.dump(arr, f, ensure_ascii=False)
+print("[OK] wrote viewer/btc_series.json", len(arr), "pts")
+PY
+            python _build_btc_json.py
+          fi
 
       # Pages 산출물을 /viewer 하위에만 배치 → 메인 루트와 충돌 없음
       - name: Stage site to /viewer
+        shell: bash
         run: |
+          set -e
+          rm -rf _site
           mkdir -p _site/viewer
-          # 정적 뷰어 파일
-          cp -r viewer/* _site/viewer/ 2>/dev/null || true
+
           # 데이터 복사 (BM20 / BTC)
           cp out/series.json _site/viewer/ || true
           cp viewer/btc_series.json _site/viewer/ || true
-          # 옵션: 참고용 CSV/PNG도 함께 공개
+
+          # 참고용 CSV/PNG (있으면)
           [ -f out/bm20_index_from_csv.csv ] && cp out/bm20_index_from_csv.csv _site/viewer/ || true
           cp out/bm20_index*.png _site/viewer/ 2>/dev/null || true
+
+          # 간단한 index.html (404 방지 & 링크 확인용)
+          cat > _site/viewer/index.html <<'HTML'
+<!doctype html><meta charset="utf-8">
+<title>BM20 Viewer</title>
+<h1>BM20 Viewer</h1>
+<ul>
+  <li><a href="./series.json">series.json</a></li>
+  <li><a href="./btc_series.json">btc_series.json</a></li>
+  <li><a href="./bm20_index_from_csv.csv">bm20_index_from_csv.csv</a> (optional)</li>
+</ul>
+<p>배포 루트는 <code>/viewer/</code> 입니다.</p>
+HTML
+
+          echo "[LIST] _site/viewer:"
+          ls -l _site/viewer
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
