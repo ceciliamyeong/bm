@@ -192,9 +192,10 @@ function formatFunding(f){           // 펀딩 표시 예쁘게
 async function loadLatest(){
   try{
     // 여러 후보 경로 시도
-    const cand = ['bm20_latest.json','bm/bm20_latest.json'];
-    const j = await fetchAny(cand);
-
+    const latestCand = ['latest.json', 'bm20_latest.json', 'bm/latest.json', 'bm/bm20_latest.json'];
+    const j = await fetchAny(latestCand);
+    const { json: arr } = await fetchAny(seriesCand);
+    
     // as-of date
     const asof = j.asOf || j.as_of || j.date || j.day || '';
     if(asof) qs('#asof').textContent = `기준: ${asof}`;
@@ -219,12 +220,10 @@ async function loadLatest(){
     setDeltaBadge(r1);
 
     // extras
-    const kimchi  = j.kimchi_premium ?? j.kimchi ?? j.krw_premium;
-    const funding = j.funding_rate ?? j.fundingRate ?? j.funding;
+    const kimchi = findKey(j, ['kimchi_premium','kimchi','krw_premium']);
+    const funding = findKey(j, ['funding_rate','funding','funding_bps','fundingRate']);
     
-    qs('#kimchi').textContent  = 
-      (typeof kimchi==='number') ? fmtPct(kimchi) : (kimchi ?? '—');
-    
+    qs('#kimchi').textContent = kimchi!=null? (typeof kimchi==='number'? fmtPct(kimchi) : kimchi) : '—';
     qs('#funding').textContent = formatFunding(funding);
 
     // news (optional)
@@ -248,7 +247,7 @@ async function loadSeries(){
   const host = qs('#svgHost');
   const svg = qs('svg', host);
   try{
-    const cand = ['series.json','bm20_series.json','bm/series.json'];
+    const seriesCand = ['series.json', 'bm20_series.json', 'bm/series.json', 'bm/bm20_series.json'];
     const {url, json:arr} = await fetchAny(cand);
 
     // Expect array of {date, level} or similar
