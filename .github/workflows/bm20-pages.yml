@@ -100,13 +100,13 @@ jobs:
           import yfinance as yf
 
           def load_bm_series(path_json: str) -> pd.Series:
-            """
-          series.json 형식:
-            1) [{"date":"YYYY-MM-DD","index":100.0}, ...]  (records)
-            2) [["YYYY-MM-DD", 100.0], ...]               (pairs)
-          """
-          with open(path_json, "r", encoding="utf-8") as f:
-              data = json.load(f)
+              """
+              series.json 형식:
+                1) [{"date":"YYYY-MM-DD","index":100.0}, ...]  (records)
+                2) [["YYYY-MM-DD", 100.0], ...]               (pairs)
+              """
+              with open(path_json, "r", encoding="utf-8") as f:
+                  data = json.load(f)
       
           if isinstance(data, list) and data and isinstance(data[0], dict) and "date" in data[0]:
               df = pd.DataFrame(data)
