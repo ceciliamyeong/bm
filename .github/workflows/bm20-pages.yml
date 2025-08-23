@@ -64,23 +64,23 @@ jobs:
           if [ ! -f out/series.json ]; then
             echo "[INFO] series.json not found. Building from CSV fallback..."
             python - <<'PY'
-import os, json
-import pandas as pd
-
-csv = "out/bm20_index_from_csv.csv"
-if not os.path.exists(csv):
-    raise SystemExit("CSV missing; cannot fallback.")
-
-df = pd.read_csv(csv, parse_dates=["date"])
-df = df[["date","index"]].dropna()
-df["date"] = df["date"].dt.strftime("%Y-%m-%d")
-
-arr = df.to_dict(orient="records")
-os.makedirs("out", exist_ok=True)
-with open("out/series.json","w",encoding="utf-8") as f:
-    json.dump(arr, f, ensure_ascii=False)
-print("[OK] wrote out/series.json from CSV (fallback)")
-PY
+          import os, json
+          import pandas as pd
+          
+          csv = "out/bm20_index_from_csv.csv"
+          if not os.path.exists(csv):
+              raise SystemExit("CSV missing; cannot fallback.")
+          
+          df = pd.read_csv(csv, parse_dates=["date"])
+          df = df[["date","index"]].dropna()
+          df["date"] = df["date"].dt.strftime("%Y-%m-%d")
+          
+          arr = df.to_dict(orient="records")
+          os.makedirs("out", exist_ok=True)
+          with open("out/series.json","w",encoding="utf-8") as f:
+              json.dump(arr, f, ensure_ascii=False)
+          print("[OK] wrote out/series.json from CSV (fallback)")
+          PY
           fi
           test -f out/series.json || (echo "::error::out/series.json missing"; exit 1)
 
@@ -95,9 +95,9 @@ PY
           else
             echo "[INFO] scripts/build_btc_json.py not found. Using inline builder..."
             cat > _build_btc_json.py <<'PY'
-import os, json
-import pandas as pd
-import yfinance as yf
+          import os, json
+          import pandas as pd
+          import yfinance as yf
 
 def load_bm_series(path_json: str) -> pd.Series:
     """
