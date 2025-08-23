@@ -192,7 +192,7 @@ function formatFunding(f){           // 펀딩 표시 예쁘게
 async function loadLatest(){
   try{
     // 여러 후보 경로 시도
-    const cand = ['bm20_latest.json','latest.json','bm/bm20_latest.json','bm/latest.json'];
+    const cand = ['bm20_latest.json','bm/bm20_latest.json'];
     const j = await fetchAny(cand);
 
     // as-of date
@@ -221,7 +221,10 @@ async function loadLatest(){
     // extras
     const kimchi  = j.kimchi_premium ?? j.kimchi ?? j.krw_premium;
     const funding = j.funding_rate ?? j.fundingRate ?? j.funding;
-    qs('#kimchi').textContent  = (typeof kimchi==='number') ? fmtPct(kimchi) : (kimchi ?? '—');
+    
+    qs('#kimchi').textContent  = 
+      (typeof kimchi==='number') ? fmtPct(kimchi) : (kimchi ?? '—');
+    
     qs('#funding').textContent = formatFunding(funding);
 
     // news (optional)
