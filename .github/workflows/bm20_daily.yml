@@ -51,7 +51,7 @@ jobs:
           grep -n "{downCount}" bm20_daily.py || true
           grep -nE '\bdownCount\b' bm20_daily.py || true
 
-      - name: Run BM20 generator
+      - name: Run BM20 daily 
         run: |
           set -euo pipefail
           if [ ! -f bm20_daily.py ]; then
@@ -60,7 +60,7 @@ jobs:
           fi
           python bm20_daily.py
 
-      # ✅ 김치/펀딩 추가 (augment_latest.py를 레포 루트에 두었다고 가정)
+      # ✅ 김치/펀딩 추가 
       - name: Enrich latest.json (kimchi & funding)
         run: |
           set -euo pipefail
