@@ -248,7 +248,7 @@ async function loadSeries(){
   const host = qs('#svgHost');
   const svg = qs('svg', host);
   try{
-    const cand = ['series.json','bm20_series.json','bm/series.json','bm/bm20_series.json'];
+    const cand = ['series.json','bm20_series.json','bm/series.json'];
     const {url, json:arr} = await fetchAny(cand);
 
     // Expect array of {date, level} or similar
