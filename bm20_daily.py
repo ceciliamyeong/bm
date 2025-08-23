@@ -360,7 +360,7 @@ def main():
         "rebasedMultiple": round(rebased_multiple, 2),
         "total": len(UNIVERSE),
         "upCount": up_count,
-        "downCount": down_count,
+        "downcount": down_count,
         "breadth": f"{up_count} ↑ / {down_count} ↓",
         "best3": best3_list,
         "worst3": worst3_list,
