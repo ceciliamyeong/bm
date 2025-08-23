@@ -122,3 +122,42 @@ jobs:
           git pull --rebase
           git push
 
+          - name: Prepare site artifacts at repo root
+  run: |
+    set -euo pipefail
+
+    copy_if_present () {
+      src="$1"; dest="$2"
+      if [ -f "$src" ]; then
+        if [ -f "$dest" ] && [ "$src" -ef "$dest" ]; then
+          echo "skip: $src == $dest"
+        else
+          cp -f "$src" "$dest"
+          echo "copied: $src -> $dest"
+        fi
+      fi
+    }
+
+    # latest.json 후보 -> 루트
+    copy_if_present latest.json latest.json
+    copy_if_present bm20_latest.json latest.json
+    copy_if_present site/latest.json latest.json
+    copy_if_present site/bm20_latest.json latest.json
+    # out/날짜 폴더에서 최신 파일 하나 찾아서 루트로
+    LATEST_IN_OUT=$(find out -maxdepth 2 -type f -name "bm20_latest.json" | sort | tail -n1 || true)
+    if [ -n "${LATEST_IN_OUT:-}" ]; then copy_if_present "$LATEST_IN_OUT" latest.json; fi
+
+    # series.json 후보 -> 루트
+    copy_if_present series.json series.json
+    copy_if_present bm20_series.json series.json
+    copy_if_present bm/series.json series.json
+    copy_if_present bm/bm20_series.json series.json
+    copy_if_present site/series.json series.json
+    copy_if_present site/bm20_series.json series.json
+    SERIES_IN_OUT=$(find out -maxdepth 2 -type f -name "bm20_series.json" -o -name "series.json" | sort | tail -n1 || true)
+    if [ -n "${SERIES_IN_OUT:-}" ]; then copy_if_present "$SERIES_IN_OUT" series.json; fi
+
+    echo "---- present at root ----"
+    ls -l latest.json series.json || true
+
+
