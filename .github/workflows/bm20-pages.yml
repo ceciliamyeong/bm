@@ -74,7 +74,7 @@ jobs:
           # 최종 체크
           test -f out/series.json || (echo "::error::out/series.json missing"; exit 1)
 
-      # BTC 정규화 시계열 생성 
+       # BTC 정규화 시계열 생성 
       - name: Build BTC normalized JSON
         shell: bash
         run: |
