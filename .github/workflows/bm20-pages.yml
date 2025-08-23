@@ -74,7 +74,7 @@ jobs:
           # 최종 체크
           test -f out/series.json || (echo "::error::out/series.json missing"; exit 1)
 
-      # BTC 정규화 시계열 생성 (scripts/build_btc_json.py가 있으면 사용, 없으면 내장 스크립트)
+      # BTC 정규화 시계열 생성 
       - name: Build BTC normalized JSON
         shell: bash
         run: |
@@ -98,7 +98,7 @@ jobs:
           """
           with open(path_json, "r", encoding="utf-8") as f:
               data = json.load(f)
-      
+          
           # records 형태
           if isinstance(data, list) and data and isinstance(data[0], dict) and "date" in data[0]:
               df = pd.DataFrame(data)
