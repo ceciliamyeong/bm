@@ -100,7 +100,7 @@ jobs:
           import yfinance as yf
 
           def load_bm_series(path_json: str) -> pd.Series:
-          """
+            """
           series.json 형식:
             1) [{"date":"YYYY-MM-DD","index":100.0}, ...]  (records)
             2) [["YYYY-MM-DD", 100.0], ...]               (pairs)
