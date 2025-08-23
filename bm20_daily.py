@@ -361,7 +361,7 @@ def main():
         "total": len(UNIVERSE),
         "upCount": up_count,
         "downCount": down_count,
-        "breadth": f"{up_count} ↑ / {downCount} ↓",
+        "breadth": f"{up_count} ↑ / {down_count} ↓",
         "best3": best3_list,
         "worst3": worst3_list,
         "btcPrice": (f"${btc_price:,.0f}" if btc_price else "—"),
