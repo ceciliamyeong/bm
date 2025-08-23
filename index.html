@@ -192,9 +192,8 @@ function formatFunding(f){           // 펀딩 표시 예쁘게
 async function loadLatest(){
   try{
     // 여러 후보 경로 시도
-    const latestCand = ['latest.json', 'bm20_latest.json', 'bm/latest.json', 'bm/bm20_latest.json'];
-    const j = await fetchAny(latestCand);
-    const { json: arr } = await fetchAny(seriesCand);
+    const cand = ['latest.json','bm20_latest.json','bm/latest.json','bm/bm20_latest.json'];
+    const { url, json: j } = await fetchAny(cand);
     
     // as-of date
     const asof = j.asOf || j.as_of || j.date || j.day || '';
