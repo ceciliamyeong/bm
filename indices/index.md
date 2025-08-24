@@ -1,7 +1,8 @@
 ---
-title: BM20 개요
+title: "BM20 개요"
 layout: default
-permalink: /bm/indices/
+permalink: /indices/
+---
 
 {% include bm_index_nav.html active="overview" %}
 
