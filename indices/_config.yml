@@ -1,10 +1,18 @@
-title: BM Indices
-theme: minima
+title: "BM Indices"
 
-url: https://ceciliamyeong.github.io
-baseurl: /bm          # ← 꼭!
+url: "https://ceciliamyeong.github.io"
+baseurl: "/bm"            # 리포 이름이 bm일 때 필수
 
-header_pages:         # 헤더 메뉴에 올릴 문서 경로(사이트 루트 기준)
-  - bm20/overview.md
-  - bm20/components.md
-  - bm20/daily-template.md
+# 테마 제거: 커스텀 `_layouts/default.html` 사용
+# theme: minima
+
+# 블로그 기능 안 쓰면 생략
+markdown: kramdown
+kramdown:
+  input: GFM
+
+# GitHub Pages 기본 플러그인 외 추가 없음
+plugins: []
+
+# (선택) permalink 기본 패턴 — 페이지(front matter의 permalink)가 우선
+permalink: pretty
