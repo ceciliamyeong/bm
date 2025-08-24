@@ -1,9 +1,9 @@
 ---
-title: BM20 구성·가중치
+title: BM20 포트폴리오 (2025.3Q)
 layout: default
-permalink: /bm/indices/weights/
+permalink: /bm/indices/portfolio-2025q3/
 ---
-{% include bm_index_nav.html active="weights" %}
+{% include bm_index_nav.html active="components" %}
 
 
 # 분기별 구성·가중치
