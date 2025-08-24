@@ -5,7 +5,6 @@ permalink: /indices/weights/
 active: weights
 ---
 
-{% include bm_index_nav.html active="components" %}
 
 
 # 분기별 구성·가중치
