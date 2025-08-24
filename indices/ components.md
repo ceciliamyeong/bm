@@ -5,7 +5,6 @@ permalink: /indices/components/
 active: components
 ---
 
-{% include bm_index_nav.html active="components" %}
 
 # BM20 구성
 - (구성 테이블)
