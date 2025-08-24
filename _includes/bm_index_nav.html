@@ -1,35 +1,23 @@
-<nav style="display:flex; gap:12px; margin:12px 0 24px;">
-  {% assign items = 
-    site.data.bmnav | default: 
-    ( 
-      "" | split: "" 
-    ) 
+<nav style="display:flex; gap:12px; flex-wrap:wrap; margin:12px 0 24px;">
+  {% assign tabs = 
+    "overview:/indices/overview/,components:/indices/components/,methodology:/indices/methodology/,performance:/indices/performance/,weights:/indices/weights/,portfolio:/indices/portfolio-2025q3/" 
+    | split: "," 
   %}
-  {% if items == empty %}
-    {% assign items = 
-      "overview:/indices/overview/,components:/indices/components/,daily:/indices/daily-template/" 
-      | split: "," 
-    %}
-  {% endif %}
-
-  {% for pair in items %}
-    {% assign kv = pair | split: ":" %}
+  {% for item in tabs %}
+    {% assign kv = item | split: ":" %}
     {% assign key = kv[0] | strip %}
     {% assign href = kv[1] | strip %}
-
-    {% assign label = 
-      key | replace: "overview","Overview" 
-          | replace: "components","Components" 
-          | replace: "daily","Daily Template" 
+    {% assign label = key 
+      | replace: "overview","Overview"
+      | replace: "components","Components"
+      | replace: "methodology","Methodology"
+      | replace: "performance","Performance"
+      | replace: "weights","Weights"
+      | replace: "portfolio","Portfolio 2025Q3"
     %}
-
     <a href="{{ href | relative_url }}"
-       style="padding:6px 10px; border-radius:10px; text-decoration:none;
-              {% if include.active == key %} 
-                font-weight:700; border:1px solid #222; 
-              {% else %} 
-                color:#333; border:1px solid #ddd; 
-              {% endif %}">
+       style="padding:8px 14px;border-radius:12px;border:1px solid #ddd;text-decoration:none;
+              {% if page.active == key %}font-weight:700;border-color:#222;{% else %}color:#333;{% endif %}">
       {{ label }}
     </a>
   {% endfor %}
