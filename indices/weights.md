@@ -1,8 +1,10 @@
 ---
-title: BM20 포트폴리오 (2025.3Q)
+title: "Weights"
 layout: default
-permalink: /bm/indices/portfolio-2025q3/
+permalink: /indices/weights/
+active: weights
 ---
+
 {% include bm_index_nav.html active="components" %}
 
 
