@@ -1,8 +1,10 @@
 ---
 title: BM20 성과
 layout: default
+permalink: /bm/indices/performance/
 ---
 {% include bm_index_nav.html active="performance" %}
+
 
 # 성과 요약
 
