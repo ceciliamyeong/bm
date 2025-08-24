@@ -1,8 +1,10 @@
 ---
+title: "Overview"
 layout: default
-title: BM20 개요
-permalink: /bm20/
+permalink: /indices/overview/
+active: overview
 ---
+
 
 {% include bm_index_nav.html active="overview" %}
 
