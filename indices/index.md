@@ -81,3 +81,4 @@ fetchCsv().then(parseCsv).then(renderChart).catch(err => {
   document.getElementById("bm20-meta").textContent = "데이터 로드 실패: " + err.message;
 });
 </script>
+
