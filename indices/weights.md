@@ -1,8 +1,10 @@
 ---
 title: BM20 구성·가중치
 layout: default
+permalink: /bm/indices/weights/
 ---
 {% include bm_index_nav.html active="weights" %}
+
 
 # 분기별 구성·가중치
 
