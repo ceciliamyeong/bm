@@ -1,14 +1,36 @@
-<!-- _includes/bm_index_nav.html -->
-<nav class="bm-subnav">
-  <a href="{{ site.baseurl }}/bm/indices/"                 class="{% if include.active == 'overview' %}on{% endif %}">Index</a>
-  <a href="{{ site.baseurl }}/bm/indices/performance/"     class="{% if include.active == 'performance' %}on{% endif %}">성과</a>
-  <a href="{{ site.baseurl }}/bm/indices/methodology/"     class="{% if include.active == 'methodology' %}on{% endif %}">지수 산정</a>
-  <a href="{{ site.baseurl }}/bm/indices/weights/"         class="{% if include.active == 'weights' %}on{% endif %}">가중치</a>
-  <a href="{{ site.baseurl }}/bm/indices/portfolio-2025q3/" class="{% if include.active == 'components' %}on{% endif %}">포트폴리오</a>
-</nav>
+<nav style="display:flex; gap:12px; margin:12px 0 24px;">
+  {% assign items = 
+    site.data.bmnav | default: 
+    ( 
+      "" | split: "" 
+    ) 
+  %}
+  {% if items == empty %}
+    {% assign items = 
+      "overview:/indices/overview/,components:/indices/components/,daily:/indices/daily-template/" 
+      | split: "," 
+    %}
+  {% endif %}
 
-<style>
-.bm-subnav{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 16px;border-bottom:1px solid #eee;padding-bottom:8px}
-.bm-subnav a{padding:6px 10px;border-radius:6px;text-decoration:none;color:#444}
-.bm-subnav a.on{background:#f2f4f8;font-weight:600}
-</style>
+  {% for pair in items %}
+    {% assign kv = pair | split: ":" %}
+    {% assign key = kv[0] | strip %}
+    {% assign href = kv[1] | strip %}
+
+    {% assign label = 
+      key | replace: "overview","Overview" 
+          | replace: "components","Components" 
+          | replace: "daily","Daily Template" 
+    %}
+
+    <a href="{{ href | relative_url }}"
+       style="padding:6px 10px; border-radius:10px; text-decoration:none;
+              {% if include.active == key %} 
+                font-weight:700; border:1px solid #222; 
+              {% else %} 
+                color:#333; border:1px solid #ddd; 
+              {% endif %}">
+      {{ label }}
+    </a>
+  {% endfor %}
+</nav>
