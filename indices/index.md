@@ -1,7 +1,8 @@
 ---
-title: "BM20 개요"
+title: "BM20 Index"
 layout: default
 permalink: /indices/
+active: overview
 ---
 
 {% include bm_index_nav.html active="overview" %}
