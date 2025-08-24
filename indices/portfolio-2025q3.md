@@ -1,8 +1,10 @@
 ---
+title: "Portfolio 2025Q3"
 layout: default
-title: BM20 포트폴리오 (2025.3Q)
-permalink: /bm20/portfolio-2025q3/
+permalink: /indices/portfolio-2025q3/
+active: portfolio
 ---
+
 
 {% include bm_index_nav.html active="components" %}
 
