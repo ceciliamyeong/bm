@@ -1,8 +1,10 @@
 ---
-title: BM20 산정기준
+title: "Methodology"
 layout: default
-permalink: /bm/indices/methodology/
+permalink: /indices/methodology/
+active: methodology
 ---
+
 {% include bm_index_nav.html active="methodology" %}
 
 
