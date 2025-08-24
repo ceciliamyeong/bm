@@ -1,8 +1,10 @@
 ---
-title: BM20 성과
+title: "Performance"
 layout: default
-permalink: /bm/indices/performance/
+permalink: /indices/performance/
+active: performance
 ---
+
 {% include bm_index_nav.html active="performance" %}
 
 
