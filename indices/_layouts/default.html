@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ page.title }} · BM20</title>
+
+  <link rel="stylesheet" href="{{ site.baseurl }}/assets/css/custom.css">
+  <style>
+    body{font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:1000px;margin:32px auto;padding:0 16px}
+    h1{margin:0 0 8px}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>BM20 Index</h1>
+    {% include bm_index_nav.html active=page.active %}
+  </header>
+
+  <main>
+    {{ content }}
+  </main>
+
+  <footer style="margin-top:40px;color:#666;font-size:12px">
+    © Blockmedia
+  </footer>
+</body>
+</html>
