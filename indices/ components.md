@@ -1,7 +1,8 @@
 ---
+title: "Components"
 layout: default
-title: BM20 구성
-permalink: /bm20/components/
+permalink: /indices/components/
+active: components
 ---
 
 {% include bm_index_nav.html active="components" %}
