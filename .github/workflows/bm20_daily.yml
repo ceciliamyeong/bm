@@ -1,4 +1,4 @@
-name: BM20 Daily (BMindex)
+name: BM20 Daily (Auto)
 
 on:
   schedule:
@@ -13,13 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TZ: Asia/Seoul
-      BM20_OUTPUT_ROOT: out
-
+      BM20_SHEET_ID: ${{ secrets.BM20_SHEET_ID }}
+      GSPREAD_SA_JSON: ${{ secrets.GSPREAD_SA_JSON }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        with: { fetch-depth: 0 }
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -27,110 +26,11 @@ jobs:
           python-version: "3.11"
           cache: "pip"
 
-      - name: Install dependencies
+      - name: Install deps
         run: |
-          set -euo pipefail
           python -m pip install --upgrade pip
-          pip install pandas numpy matplotlib python-dateutil
+          pip install gspread google-auth google-auth-oauthlib google-auth-httplib2 pandas yfinance requests
 
-      - name: Install Korean fonts (Nanum + Noto CJK)
+      - name: Run BM20 daily updater
         run: |
-          sudo apt-get update
-          sudo apt-get install -y fonts-nanum fonts-noto-cjk fontconfig
-          sudo fc-cache -f -v
-
-      # (옵션) 캐시 파일 초기화가 필요할 때만 유지
-      - name: Reset base cache (optional)
-        run: rm -f out/base_cache.json || true
-
-      - name: Run BM20 daily
-        run: |
-          set -euo pipefail
-          if [ ! -f bm20_daily.py ]; then
-            echo "::error::bm20_daily.py not found at repo root."
-            exit 1
-          fi
-          python bm20_daily.py
-
-      # === 퍼블리셔/JSON 없이 TXT → latest.html 직접 생성 ===
-      - name: Prepare site artifacts (copy TXT/PNG/PDF and build latest.html)
-        run: |
-          set -euo pipefail
-
-          DATE=$(TZ=Asia/Seoul date +%F)
-          OUTDIR="out/${DATE}"
-
-          if [ ! -d "$OUTDIR" ]; then
-            echo "::error::Output dir not found: $OUTDIR"
-            exit 1
-          fi
-
-          mkdir -p bm
-
-          # 1) 데일리/주/월간 산출물 복사 (있으면 복사)
-          for f in \
-            "${OUTDIR}/BM20_daily_${DATE}.txt" \
-            "${OUTDIR}/kimchi_premium_${DATE}.png" \
-            "${OUTDIR}/kimchi_premium_${DATE}.pdf" \
-            "${OUTDIR}/BM20_weekly_${DATE}.txt" \
-            "${OUTDIR}/BM20_weekly_${DATE}.pdf" \
-            "${OUTDIR}/BM20_monthly_${DATE}.txt" \
-            "${OUTDIR}/BM20_monthly_${DATE}.pdf"
-          do
-            if [ -f "$f" ]; then
-              cp -f "$f" bm/
-              cp -f "$f" .
-              echo "copied: $f"
-            fi
-          done
-
-          # 2) TXT → latest.html
-          TXT="${OUTDIR}/BM20_daily_${DATE}.txt"
-          if [ -f "$TXT" ]; then
-            echo "Building latest.html from ${TXT}"
-            {
-              echo '<!doctype html><meta charset="utf-8"><title>BM20 — Latest</title>'
-              echo '<style>body{font-family:-apple-system,BlinkMacSystemFont,"NanumGothic","Noto Sans CJK","Malgun Gothic",Arial,sans-serif;background:#fafbfc;color:#111;max-width:760px;margin:40px auto;padding:0 16px}pre{white-space:pre-wrap;line-height:1.7}</style>'
-              echo "<h1>BM20 데일리 (${DATE})</h1>"
-              echo "<pre>"
-              sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g' "$TXT"
-              echo "</pre>"
-              IMG="kimchi_premium_${DATE}.png"
-              if [ -f "bm/${IMG}" ]; then
-                echo "<h2>Kimchi Premium</h2><img src=\"bm/${IMG}\" style=\"max-width:100%;height:auto;\"/>"
-              fi
-            } > latest.html
-            cp -f latest.html bm/latest.html
-          else
-            echo "::warning::Daily TXT not found, latest.html skipped"
-          fi
-
-          echo "---- files at repo root ----"
-          ls -l latest.html || true
-          ls -l BM20_* || true
-          ls -l kimchi_premium_* || true
-          echo "---- files under bm/ ----"
-          ls -l bm/ || true
-
-      - name: Commit & Push outputs
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          DATE=$(TZ=Asia/Seoul date +%F)
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          git add -A \
-            latest.html \
-            bm/latest.html \
-            bm/BM20_daily_${DATE}.txt \
-            bm/kimchi_premium_${DATE}.png \
-            bm/kimchi_premium_${DATE}.pdf \
-            bm/BM20_weekly_${DATE}.txt bm/BM20_weekly_${DATE}.pdf \
-            bm/BM20_monthly_${DATE}.txt bm/BM20_monthly_${DATE}.pdf \
-            "out/${DATE}" || true
-
-          git commit -m "BM20 daily (BMindex) ${DATE}" || echo "No changes"
-          git pull --rebase --autostash
-          git push
+          python bm20_daily_auto.py
