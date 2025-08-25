@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-BM20 vs BTC 비교 차트
-- BM20: series.json (환경변수 BM20_SERIES_URL 로 변경 가능)
-- BTC: 우선 yfinance(BTC-USD) 사용, 실패하면 Yahoo CSV로 폴백
-- 출력: bm20_vs_btc.png (BM20_VS_BTC_OUT 로 변경 가능)
+BM20 vs BTC 비교 차트 (최종)
+- BM20: series.json (env BM20_SERIES_URL 로 변경 가능)
+- BTC: yfinance(BTC-USD) 우선, 실패 시 Yahoo CSV 폴백
+- 출력: bm20_vs_btc.png (env BM20_VS_BTC_OUT 로 변경 가능)
 필요 패키지: pandas, matplotlib, requests, yfinance
 """
 
@@ -47,10 +47,9 @@ def load_bm20_series(url: str) -> pd.DataFrame:
     df = df.dropna(subset=["date","bm20"]).sort_values("date").set_index("date")
     return df
 
-# ===== BTC 로딩 (우선 yfinance, 실패 시 폴백) =====
+# ===== BTC 로딩 (yfinance → 실패 시 CSV 폴백) =====
 def load_btc_yfinance(start_date: dt.date) -> pd.Series:
-    import yfinance as yf  # 의존 유지
-    # download이 빈 프레임을 줄 때가 있어 재시도
+    import yfinance as yf
     for i in range(3):
         df = yf.download("BTC-USD", start=str(start_date), progress=False)
         if isinstance(df, pd.DataFrame) and not df.empty and "Close" in df.columns:
