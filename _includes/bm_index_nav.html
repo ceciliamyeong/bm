@@ -8,7 +8,6 @@
     {% assign key = kv[0] | strip %}
     {% assign href = kv[1] | strip %}
     {% assign label = key 
-      | replace: "overview","Overview"
       | replace: "components","Components"
       | replace: "methodology","Methodology"
       | replace: "performance","Performance"
