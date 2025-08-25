@@ -149,17 +149,18 @@ def _load_daily_returns_today() -> Optional[pd.DataFrame]:
         c_date = _col(df, "date", "날짜")
         c_sym  = _col(df, "symbol", "티커", "코드")
         c_ret  = _col(df, "ret_pct", "d1", "chg_pct", "return_pct", "수익률(%)")
+
         if c_date and c_sym and c_ret:
             df = df[[c_date, c_sym, c_ret]].copy()
             df.columns = ["date", "symbol", "ret_pct"]
-            df["date"] = _as_date(df["date"])
-            df = df[df["date"] == TODAY]
-            df["ret_pct"] = pd.to_numeric(df["ret_pct"], errors="coerce")
-            df = df.dropna(subset=["symbol", "ret_pct"])
-            return df[["symbol","ret_pct"]]
+            ...
+            return df
+        else:
+            return None   # 컬럼 없으면 스킵
+
     except Exception:
-        pass
-    return None
+        return None
+
 
 # =============================
 # Snapshot & history
