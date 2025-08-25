@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-# Find latest out/YYYY-MM-DD, copy to archive/YYYY-MM-DD, and update index.html
-# + Publish latest: creates bm20/latest.html and bm20_bar_latest.png / bm20_trend_latest.png
-# - Injects news preview (reads bm20_news_YYYY-MM-DD.txt)
-# - Creates .nojekyll to avoid Jekyll processing
-# - Robust when out/ has no dated folder (falls back to root files)
+# -*- coding: utf-8 -*-
+# Publish latest BM20 to /bm/latest.html without touching main page
+# - Copies out/YYYY-MM-DD -> archive/YYYY-MM-DD
+# - Generates /bm/latest.html and /bm/bm20_bar_latest.png /bm/bm20_trend_latest.png
+# - Creates .nojekyll
+# - If out/ has no dated folder, falls back to existing /bm/latest.html & *_latest.png
 
-import os, re, shutil, html
+import re, shutil, html
 from pathlib import Path
 import datetime as dt
 
@@ -24,10 +25,10 @@ th{background:#1a2240;color:#e6ebff}
 img{max-width:100%;background:#0f1429;border-radius:8px;border:1px solid rgba(255,255,255,.08)}
 """
 
-ROOT  = Path(__file__).resolve().parents[1]
-OUT   = ROOT / "out"
-ARCH  = ROOT / "archive"
-INDEX = ROOT / "index.html"
+ROOT = Path(__file__).resolve().parents[1]
+OUT  = ROOT / "out"
+ARCH = ROOT / "archive"
+BM   = ROOT / "bm"        # ← 메인 페이지가 있는 폴더(메인은 건드리지 않음)
 
 def is_ymd(name: str) -> bool:
     try:
@@ -40,27 +41,26 @@ def find_latest_out_dir() -> Path | None:
     if not OUT.exists():
         return None
     dated = [p for p in OUT.iterdir() if p.is_dir() and is_ymd(p.name)]
-    if dated:
-        return sorted(dated, key=lambda p: p.name)[-1]
-    return None
+    return sorted(dated, key=lambda p: p.name)[-1] if dated else None
 
-def ensure_daily_html(latest_dir: Path) -> Path | None:
-    """out/YYYY-MM-DD/ 아래에 bm20_daily_YYYY-MM-DD.html 없으면 자동 생성."""
+def ensure_daily_html(latest_dir: Path, require_news: bool = False) -> Path | None:
+    """out/YYYY-MM-DD/bm20_daily_YYYY-MM-DD.html 없으면 자동 생성(뉴스 없어도 생성)."""
     ymd = latest_dir.name
     html_path = latest_dir / f"bm20_daily_{ymd}.html"
     if html_path.exists():
         return html_path
 
-    # 필수 이미지/뉴스 확보
     bar = latest_dir / f"bm20_bar_{ymd}.png"
     trd = latest_dir / f"bm20_trend_{ymd}.png"
     news_file = latest_dir / f"bm20_news_{ymd}.txt"
-    if not news_file.exists():
-        print("[ensure_daily_html] skip: news not found", news_file); return None
 
-    news = news_file.read_text(encoding="utf-8").strip()
-    news = html.escape(news).replace("\n","<br/>")
-    # 이미지 없어도 HTML은 생성(섹션만 비움)
+    news = ""
+    if news_file.exists():
+        news = html.escape(news_file.read_text(encoding="utf-8").strip()).replace("\n", "<br/>")
+    elif require_news:
+        print("[ensure_daily_html] skip: news required but not found", news_file)
+        return None
+
     bar_tag = f'<p class="center"><img src="bm20_bar_{ymd}.png" alt="Performance"></p>' if bar.exists() else ""
     trd_tag = f'<p class="center"><img src="bm20_trend_{ymd}.png" alt="Trend"></p>' if trd.exists() else ""
 
@@ -79,7 +79,7 @@ def ensure_daily_html(latest_dir: Path) -> Path | None:
     <h2>BTC & ETH 7일 가격 추세</h2>
     {trd_tag}
   </div>
-  <div class="card"><h2>BM20 데일리 뉴스</h2><p>{news}</p></div>
+  <div class="card"><h2>BM20 데일리 뉴스</h2><p>{news or "—"}</p></div>
   <div class="footer">© Blockmedia · Data: CoinGecko, Upbit, Binance/Bybit</div>
 </div></body></html>"""
     html_path.write_text(tpl, encoding="utf-8")
@@ -95,114 +95,44 @@ def copy_dir(src: Path) -> Path:
     print("[copy]", src, "→", dst)
     return dst
 
-def read_news_preview(latest_dir: Path, max_chars: int = 380) -> str | None:
-    """bm20_news_YYYY-MM-DD.txt 읽어서 미리보기(짧은 문단) 반환"""
-    ymd = latest_dir.name
-    news_file = latest_dir / f"bm20_news_{ymd}.txt"
-    if not news_file.exists():
-        return None
-    txt = news_file.read_text(encoding="utf-8").strip()
-    if not txt:
-        return None
-    # 첫 문단 위주로, 너무 길면 자르고 … 처리
-    txt = txt.replace("\r\n", "\n").replace("\r", "\n")
-    para = txt.split("\n")[0] if "\n" in txt else txt
-    if len(para) > max_chars:
-        para = para[:max_chars].rstrip() + "…"
-    return html.escape(para)
-
-def update_index(latest_dir: Path):
-    """index.html의 <!--LATEST_START--> ... <!--LATEST_END--> 블록을 오늘자 프리뷰로 교체"""
-    if not INDEX.exists():
-        print("[warn] index.html not found; skip update")
-        return
-
-    ymd = latest_dir.name
-    files = {p.name: p for p in latest_dir.iterdir() if p.is_file()}
-
-    links = []
-    if f"bm20_daily_{ymd}.html" in files:
-        links.append(f'<a href="archive/{ymd}/bm20_daily_{ymd}.html">HTML</a>')
-    if f"bm20_daily_{ymd}.pdf" in files:
-        links.append(f'<a href="archive/{ymd}/bm20_daily_{ymd}.pdf">PDF</a>')
-
-    img_tag = ""
-    if f"bm20_bar_{ymd}.png" in files:
-        img_tag = (
-            f'<img src="archive/{ymd}/bm20_bar_{ymd}.png" alt="performance" '
-            f'style="max-width:100%;border:1px solid #eee;border-radius:8px;margin-top:8px;" />'
-        )
-
-    news_html = ""
-    preview = read_news_preview(latest_dir)
-    if preview:
-        news_html = (
-            f'<div style="margin-top:10px;padding:10px;border:1px dashed #e0e0e0;'
-            f'background:#fafafa;border-radius:8px">'
-            f'<strong>BM20 데일리 뉴스</strong><br>{preview}'
-            f'</div>'
-        )
-
-    block = f"""
-<div>
-  <strong>Latest: {ymd}</strong> — {' | '.join(links) if links else 'no files'}
-  {img_tag}
-  {news_html}
-</div>
-""".strip()
-
-    html_src = INDEX.read_text(encoding="utf-8")
-    new_html = re.sub(
-        r"(<!--LATEST_START-->)(.*?)(<!--LATEST_END-->)",
-        lambda m: f"{m.group(1)}\n{block}\n{m.group(3)}",
-        html_src, flags=re.S
-    )
-    INDEX.write_text(new_html, encoding="utf-8")
-    print("[update] index.html latest block (with news) updated")
-
-# --- publish latest (fixed assets) -----------------------------------
-def publish_latest(latest_dir: Path):
+def publish_latest_to_bm(dst_daily_dir: Path):
     """
-    Always create under bm20/:
-      - bm20/latest.html
-      - bm20/bm20_bar_latest.png
-      - bm20/bm20_trend_latest.png
+    /bm/ 아래에 고정 산출물만 생성/교체:
+      - /bm/latest.html
+      - /bm/bm20_bar_latest.png
+      - /bm/bm20_trend_latest.png
+    (메인 index.html 은 절대 수정하지 않음)
     """
-    ymd = latest_dir.name
-    html_src = latest_dir / f"bm20_daily_{ymd}.html"
-    bar_src  = latest_dir / f"bm20_bar_{ymd}.png"
-    trd_src  = latest_dir / f"bm20_trend_{ymd}.png"
+    ymd = dst_daily_dir.name
+    html_src = dst_daily_dir / f"bm20_daily_{ymd}.html"
+    bar_src  = dst_daily_dir / f"bm20_bar_{ymd}.png"
+    trd_src  = dst_daily_dir / f"bm20_trend_{ymd}.png"
 
     if not html_src.exists():
         print("[publish_latest] skip: html not found", html_src)
         return
-    if not bar_src.exists() or not trd_src.exists():
-        print("[publish_latest] skip: image(s) not found", bar_src, trd_src)
-        return
 
-    # 항상 bm20/ 아래로 배포
-    target_root = ROOT / "bm20"
-    target_root.mkdir(parents=True, exist_ok=True)
+    BM.mkdir(parents=True, exist_ok=True)
 
     # latest.html: 이미지 경로를 고정 파일명으로 치환
     html_txt = html_src.read_text(encoding="utf-8")
     html_txt = html_txt.replace(f"bm20_bar_{ymd}.png",   "bm20_bar_latest.png")
     html_txt = html_txt.replace(f"bm20_trend_{ymd}.png", "bm20_trend_latest.png")
-    (target_root / "latest.html").write_text(html_txt, encoding="utf-8")
+    (BM / "latest.html").write_text(html_txt, encoding="utf-8")
 
-    # 최신 이미지 고정 파일명으로 복사
-    shutil.copyfile(bar_src, target_root / "bm20_bar_latest.png")
-    shutil.copyfile(trd_src, target_root / "bm20_trend_latest.png")
+    # 최신 이미지 고정 파일명으로 복사(없으면 건너뜀)
+    if bar_src.exists():
+        shutil.copyfile(bar_src, BM / "bm20_bar_latest.png")
+    if trd_src.exists():
+        shutil.copyfile(trd_src, BM / "bm20_trend_latest.png")
 
-    print(f"[publish_latest] wrote {(target_root / 'latest.html').as_posix()}")
-# ---------------------------------------------------------------------
+    print(f"[publish_latest] wrote {(BM / 'latest.html').as_posix()}")
 
 def ensure_latest_dir() -> Path:
     """
     최신 out/YYYY-MM-DD 디렉터리를 보장하여 반환.
     - 있으면 그대로 사용
-    - 없으면 ROOT/bm20의 고정 에셋(latest.html, *_latest.png)로
-      오늘 날짜 폴더를 생성해 채운 뒤 반환
+    - 없으면 /bm 의 고정 에셋(latest.html, *_latest.png)로 오늘 폴더를 생성해 채운 뒤 반환
     - 이후 ensure_daily_html()로 일간 HTML 생성 시도
     """
     latest = find_latest_out_dir()
@@ -211,10 +141,9 @@ def ensure_latest_dir() -> Path:
         latest = OUT / today
         latest.mkdir(parents=True, exist_ok=True)
 
-        fixed = ROOT / "bm20"
-        bar_fixed = fixed / "bm20_bar_latest.png"
-        trd_fixed = fixed / "bm20_trend_latest.png"
-        html_fixed = fixed / "latest.html"
+        bar_fixed  = BM / "bm20_bar_latest.png"
+        trd_fixed  = BM / "bm20_trend_latest.png"
+        html_fixed = BM / "latest.html"
 
         # 고정 이미지 → 날짜 파일명으로 복사
         if bar_fixed.exists():
@@ -229,19 +158,16 @@ def ensure_latest_dir() -> Path:
             html_txt = html_txt.replace("bm20_trend_latest.png", f"bm20_trend_{today}.png")
             (latest / f"bm20_daily_{today}.html").write_text(html_txt, encoding="utf-8")
 
-    # 일간 HTML 없으면 뉴스/이미지 상황에 따라 자동 생성 시도(없어도 전체 플로우는 진행)
-    ensure_daily_html(latest)
+    # 일간 HTML 보장(뉴스 없어도 생성)
+    ensure_daily_html(latest, require_news=False)
     return latest
-
-
 
 def main():
     latest = ensure_latest_dir()
-    dst = copy_dir(latest)
-    update_index(dst)
-    publish_latest(dst)  # ★ 최신 고정 링크/이미지 생성
+    dst = copy_dir(latest)          # archive/YYYY-MM-DD
+    publish_latest_to_bm(dst)       # /bm/latest.html & *_latest.png
     (ROOT / ".nojekyll").write_text("", encoding="utf-8")
-    print("[done] site updated")
+    print("[done] site updated (bm/latest only)")
 
 if __name__ == "__main__":
     main()
