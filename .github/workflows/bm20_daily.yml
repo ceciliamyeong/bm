@@ -119,7 +119,6 @@ jobs:
           python bm20_publish.py
 
 
-
       - name: Commit & Push outputs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
