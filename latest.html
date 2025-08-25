@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BM20 — Latest</title>
+  <meta name="color-scheme" content="dark" />
+  <style>
+    :root{--bg:#0b1020;--card:#11172a;--muted:#90a0b7;--text:#e8f0ff;--accent:#4c74f2;--line:#26354a;}
+    *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,sans-serif}
+    a{color:#aecdff;text-decoration:none} a:hover{text-decoration:underline}
+    header{position:sticky;top:0;background:linear-gradient(180deg,rgba(17,23,42,.95),rgba(17,23,42,.75));backdrop-filter:saturate(1.2) blur(8px);border-bottom:1px solid #233;z-index:10}
+    .wrap{max-width:1100px;margin:0 auto;padding:16px}
+    .brand{display:flex;gap:10px;align-items:center}
+    .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent)}
+    nav{display:flex;gap:16px;align-items:center}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:16px}
+    .row{display:flex;gap:12px;align-items:center;justify-content:space-between}
+    .mini{color:var(--muted);font-size:12px}
+    .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}
+    @media(min-width:720px){.stats{grid-template-columns:repeat(6,1fr)}}
+    .stat{padding:12px;border:1px solid var(--line);border-radius:12px;background:rgba(22,28,48,.6)}
+    .k{color:var(--muted);font-size:12px} .v{font-weight:800;font-size:22px}
+    .imgbox{display:grid;grid-template-columns:1fr;gap:12px}
+    @media(min-width:880px){.imgbox{grid-template-columns:1fr 1fr}}
+    img{width:100%;max-width:100%;border:1px solid var(--line);border-radius:10px;background:#0f1429}
+    .code{white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;background:#0c1326;border:1px solid var(--line);border-radius:10px;padding:12px;max-height:380px;overflow:auto}
+    footer{margin:36px 0 60px;text-align:center;color:var(--muted);font-size:12px}
+    .pill{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:6px 10px;background:rgba(22,28,48,.6)}
+    .hide{display:none}
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap row">
+    <div class="brand"><span class="dot"></span>
+      <div>
+        <div style="font-weight:800">BM20 Index</div>
+        <div class="mini">Blockmedia Large‑Cap Crypto 20</div>
+      </div>
+    </div>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/bm/latest.html">Latest</a>
+      <a href="/bm/indices/performance/">Charts</a>
+      <a href="/bm/indices/components/">Data</a>
+      <a href="/bm/indices/overview/">About</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- 헤더 블록 -->
+  <section class="card">
+    <div class="row">
+      <div>
+        <div style="font-weight:700">오늘의 BM20</div>
+        <div id="asof" class="mini">데이터 로딩 중…</div>
+      </div>
+      <div class="pill"><span id="delta">—</span></div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="k">지수 레벨</div><div class="v" id="lvl">—</div></div>
+      <div class="stat"><div class="k">1D</div><div class="v" id="r1d">—</div></div>
+      <div class="stat"><div class="k">7D</div><div class="v" id="r7d">—</div></div>
+      <div class="stat"><div class="k">30D</div><div class="v" id="r30d">—</div></div>
+      <div class="stat"><div class="k">1Y</div><div class="v" id="r1y">—</div></div>
+      <div class="stat"><div class="k">YTD</div><div class="v" id="rytd">—</div></div>
+    </div>
+  </section>
+
+  <!-- 이미지(있을 때만 표시) -->
+  <section class="card">
+    <div class="row"><div style="font-weight:700">이미지 차트</div><div class="mini">파일이 없으면 자동 숨김</div></div>
+    <div class="imgbox">
+      <div><div class="mini">1D Performance</div><img id="bar" alt="bar"></div>
+      <div><div class="mini">BTC & ETH 7D</div><img id="trend" alt="trend"></div>
+    </div>
+  </section>
+
+  <!-- JSON 미리보기 -->
+  <section class="card">
+    <div class="row"><div style="font-weight:700">latest.json</div><a id="src" class="mini" href="#" target="_blank">원본 열기</a></div>
+    <pre id="dump" class="code">—</pre>
+  </section>
+</main>
+
+<footer>
+  © Blockmedia · Built from <code>latest.json</code>. 이미지가 없으면 자동으로 숨겨집니다.
+</footer>
+
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  const fmtPct = v => (v==null||isNaN(v)) ? "—" : ((v>0?"+":"")+ (v*100).toFixed(2) + "%");
+  const fmtNum = v => (v==null||isNaN(v)) ? "—" : new Intl.NumberFormat('en-US',{maximumFractionDigits:2}).format(v);
+
+  // 여러 위치 중 먼저 응답 오는 JSON 사용
+  const candidates = [
+    "/bm/bm20_latest.json",
+    "/bm/latest.json",
+    "/latest.json"
+  ];
+
+  (async () => {
+    let j=null, used=null;
+    for (const u of candidates){
+      try{
+        const r = await fetch(u, {cache:"no-store"});
+        if (!r.ok) continue;
+        j = await r.json(); used = u; break;
+      }catch(e){}
+    }
+    if(!j){ $('#dump').textContent = "latest.json을 찾을 수 없습니다."; return; }
+
+    $('#src').href = used;
+
+    // 구조 느슨하게 대응
+    const asOf = j.asOf || j.as_of || j.date || j.day || "";
+    const level = j.bm20Level ?? j.level ?? j.index ?? j.value;
+    const R = j.returns || {};
+    const r1d  = j.bm20ChangePct ?? R["1D"];
+    const r7d  = R["7D"]; const r30d = R["30D"];
+    const r1y  = R["1Y"]; const rytd = R["YTD"];
+
+    $('#asof').textContent = asOf ? `기준: ${asOf}` : "—";
+    $('#lvl').textContent  = fmtNum(level);
+    $('#r1d').textContent  = fmtPct(r1d);
+    $('#r7d').textContent  = fmtPct(r7d);
+    $('#r30d').textContent = fmtPct(r30d);
+    $('#r1y').textContent  = fmtPct(r1y);
+    $('#rytd').textContent = fmtPct(rytd);
+
+    const d = $('#delta');
+    d.textContent = (r1d==null||isNaN(r1d)) ? "—" : ((r1d>=0?"▲ ":"▼ ")+fmtPct(r1d));
+    d.style.color = (r1d>=0) ? "#2E7D32" : "#C62828";
+
+    // 이미지(없으면 hide)
+    const tryImg = (id, srcList) => {
+      const img = $(id);
+      const sources = srcList;
+      let i=0;
+      const tryNext = () => {
+        if (i>=sources.length){ img.closest('div').style.display='none'; return; }
+        img.src = sources[i++];
+        img.onerror = tryNext;
+      };
+      tryNext();
+    };
+    tryImg('#bar',   ['/bm/bm20_bar_latest.png','/bm20_bar_latest.png','bm20_bar_latest.png']);
+    tryImg('#trend', ['/bm/bm20_trend_latest.png','/bm20_trend_latest.png','bm20_trend_latest.png']);
+
+    // 원본 덤프
+    $('#dump').textContent = JSON.stringify(j, null, 2);
+  })();
+})();
+</script>
+</body>
+</html>
