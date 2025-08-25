@@ -52,31 +52,56 @@ def read_json(p: Path) -> dict | None:
 
 # ---------- load data ----------
 def load_latest_and_series():
-    # 1) 루트 우선
-    latest = read_json(ROOT / "latest.json")
-    series = read_json(ROOT / "series.json")
+    latest_src = series_src = None
+
+    # 1) 루트 + bm/ 도 함께 후보에 포함  ←★추가
+    latest = None
+    for p in [
+        ROOT / "latest.json",
+        ROOT / "bm20_latest.json",
+        ROOT / "bm" / "latest.json",         # ← 추가
+        ROOT / "bm" / "bm20_latest.json",    # ← 추가
+    ]:
+        latest = read_json(p)
+        if latest:
+            latest_src = p.as_posix()
+            break
+
+    series = None
+    for p in [
+        ROOT / "series.json",
+        ROOT / "bm20_series.json",
+        ROOT / "bm" / "series.json",         # ← 추가
+        ROOT / "bm" / "bm20_series.json",    # ← 추가
+    ]:
+        series = read_json(p)
+        if series:
+            series_src = p.as_posix()
+            break
 
     # 2) out/YYYY-MM-DD 보조
     latest_dir = find_latest_dir()
     if latest is None and latest_dir:
-        cand = [
+        for p in [
             latest_dir / "latest.json",
             latest_dir / f"bm20_meta_{latest_dir.name}.json",
             latest_dir / f"bm20_latest.json",
-        ]
-        for p in cand:
+        ]:
             latest = read_json(p)
             if latest:
+                latest_src = p.as_posix()
                 break
-
     if series is None and latest_dir:
         for p in [latest_dir / "series.json", latest_dir / "bm20_series.json"]:
             series = read_json(p)
             if series:
+                series_src = p.as_posix()
                 break
 
+    print(f"[load] latest.json => {latest_src or 'NOT FOUND'}")
+    print(f"[load] series.json => {series_src or 'NOT FOUND'}")
     return latest, series, latest_dir
-
+  
 def load_optional(latest_dir: Path):
     """perf(top/worst), kimchi/funding 있으면 읽어옴(없어도 무시)"""
     top3, worst3 = [], []
