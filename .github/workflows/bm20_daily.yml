@@ -130,12 +130,12 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
       
           # 변경사항 스테이징
-          git add -A site \
-                     latest.json series.json \
-                     bm20_latest.json bm20_series.json \
-                     bm20_bar_latest.png bm20_trend_latest.png bm20_vs_btc.png \
-                     latest.html bm/latest.html || true
-          git add -A "out/${DATE}" || true
+          git add -A \
+            latest.json series.json \
+            latest.html \
+            bm/latest.html \
+            bm/bm20_bar_latest.png bm/bm20_trend_latest.png bm/bm20_vs_btc.png \
+            "out/${DATE}" || true
       
           git commit -m "BM20 daily (base=${BM20_BASE_DATE}) ${DATE}" || echo "No changes"
           git pull --rebase --autostash
