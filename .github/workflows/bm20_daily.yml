@@ -113,6 +113,14 @@ jobs:
           echo "PWD=$(pwd)"
           find . -maxdepth 2 -type f | sort | sed -n '1,200p'
 
+      - name: Publish latest.html
+        run: |
+          if [ -f out/*/bm20_daily_*.html ]; then
+            LATEST_HTML=$(ls -t out/*/bm20_daily_*.html | head -n1)
+            cp -f "$LATEST_HTML" bm/latest.html
+            echo "published: $LATEST_HTML -> bm/latest.html"
+          fi
+
 
       - name: Commit & Push outputs
         env:
