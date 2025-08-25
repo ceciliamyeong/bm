@@ -1,12 +1,16 @@
-name: BM20 Daily (Auto)
+name: BM20 Daily (Auto, Yahoo)
 
 on:
   schedule:
-    - cron: "10 23 * * *"   # 매일 08:10 KST (UTC 23:10)
+    - cron: "10 23 * * *"   # 매일 08:10 KST
   workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: "bm20-daily-main"
+  cancel-in-progress: true
 
 jobs:
   run:
@@ -15,10 +19,31 @@ jobs:
       TZ: Asia/Seoul
       BM20_SHEET_ID: ${{ secrets.BM20_SHEET_ID }}
       GSPREAD_SA_JSON: ${{ secrets.GSPREAD_SA_JSON }}
+      # 선택: weights CSV가 공개 URL이면 여기로 주입 (없으면 생략 가능)
+      URL_WEIGHTS: ${{ secrets.URL_WEIGHTS }}
+      BM20_OUTPUT_ROOT: out
     steps:
-      - name: Checkout
+      - name: Checkout (main)
         uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Debug: current ref & file snippet
+        run: |
+          echo "REF=$GITHUB_REF"
+          echo "SHA=$GITHUB_SHA"
+          git log -1 --oneline
+          echo "== Have files? =="
+          ls -la
+          if [ -f bm20_daily_auto.py ]; then
+            echo "--- bm20_daily_auto.py head ---"
+            sed -n '1,60p' bm20_daily_auto.py || true
+          fi
+          if [ -f bm20_daily.py ]; then
+            echo "--- bm20_daily.py (140~165) ---"
+            sed -n '140,165p' bm20_daily.py || true
+          fi
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -26,11 +51,29 @@ jobs:
           python-version: "3.11"
           cache: "pip"
 
-      - name: Install deps
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install gspread google-auth google-auth-oauthlib google-auth-httplib2 pandas yfinance requests
 
-      - name: Run BM20 daily updater
+      - name: Run BM20 daily (Yahoo per-symbol returns)
         run: |
+          set -euo pipefail
+          if [ ! -f bm20_daily_auto.py ]; then
+            echo "::error::bm20_daily_auto.py not found at repo root."
+            exit 1
+          fi
           python bm20_daily_auto.py
+
+      # (선택) 산출물 업로드 예시
+      - name: Package out/
+        if: always()
+        run: |
+          mkdir -p out
+          echo "ok" > out/.keep
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bm20-out
+          path: out
