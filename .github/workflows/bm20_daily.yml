@@ -17,11 +17,13 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TZ: Asia/Seoul
-      BM20_SHEET_ID: ${{ secrets.BM20_SHEET_ID }}
-      GSPREAD_SA_JSON: ${{ secrets.GSPREAD_SA_JSON }}
-      # 선택: weights CSV가 공개 URL이면 여기로 주입 (없으면 생략 가능)
-      URL_WEIGHTS: ${{ secrets.URL_WEIGHTS }}
+      # 시크릿/변수 이름 폴백(당신 레포에 있는 키: SHEET_ID, GOOGLE_SERVICE_ACCOUNT_JSON)
+      BM20_SHEET_ID: ${{ secrets.BM20_SHEET_ID || secrets.SHEET_ID || vars.BM20_SHEET_ID || vars.SHEET_ID }}
+      GSPREAD_SA_JSON: ${{ secrets.GSPREAD_SA_JSON || secrets.GOOGLE_SERVICE_ACCOUNT_JSON || vars.GSPREAD_SA_JSON || vars.GOOGLE_SERVICE_ACCOUNT_JSON }}
+      URL_WEIGHTS: ${{ secrets.URL_WEIGHTS || vars.URL_WEIGHTS }}
+      COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY || vars.COINGECKO_API_KEY }}
       BM20_OUTPUT_ROOT: out
+      
     steps:
       - name: Checkout (main)
         uses: actions/checkout@v4
