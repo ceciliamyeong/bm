@@ -143,23 +143,117 @@ def _load_weights_today() -> Optional[pd.DataFrame]:
             pass
     return None
 
-def _load_daily_returns_today() -> Optional[pd.DataFrame]:
+# === Yahoo Finance 기반: 종목별 1D 수익률 생성 ===
+# - weights CSV(또는 URL)에서 Top20 심볼을 읽고
+# - yfinance로 최근 2영업일 종가 가져와 (오늘/어제 - 1) 계산
+# - 반환: DataFrame[symbol, ret_pct]
+import pandas as pd
+import numpy as np
+import datetime as dt
+import yfinance as yf
+
+# 선택: weights CSV URL이 있다면 지정 (예: 구글시트 publish to CSV)
+# 없으면 None 두세요. 그럼 로컬 weights.csv(있으면) 또는 실패 시 None 반환.
+URL_WEIGHTS = globals().get("URL_WEIGHTS", None)
+
+def _get_symbols_top20_from_weights(url_weights: str | None) -> list[str] | None:
     try:
-        df = pd.read_csv(URL_SUMMARY_PERF)
-        c_date = _col(df, "date", "날짜")
-        c_sym  = _col(df, "symbol", "티커", "코드")
-        c_ret  = _col(df, "ret_pct", "d1", "chg_pct", "return_pct", "수익률(%)")
-
-        if c_date and c_sym and c_ret:
-            df = df[[c_date, c_sym, c_ret]].copy()
-            df.columns = ["date", "symbol", "ret_pct"]
-            ...
-            return df
+        if url_weights:
+            w = pd.read_csv(url_weights)
         else:
-            return None   # 컬럼 없으면 스킵
-
+            try:
+                w = pd.read_csv("weights.csv")  # 레포에 있으면 사용
+            except Exception:
+                return None
+        cols = {c.strip().lower(): c for c in w.columns}
+        if "symbol" not in cols:
+            return None
+        sym_col = cols["symbol"]
+        w[sym_col] = w[sym_col].astype(str).str.upper().str.strip()
+        if "weight" in cols:
+            w["__w__"] = pd.to_numeric(w[cols["weight"]], errors="coerce")
+            w = w.sort_values("__w__", ascending=False)
+        return w[sym_col].dropna().astype(str).str.upper().str.strip().head(20).tolist()
     except Exception:
         return None
+
+def _map_to_yf(symbols: list[str]) -> dict[str, str]:
+    # 심플 룰: SYMBOL-USD
+    m = {}
+    for s in (symbols or []):
+        s = str(s).upper().strip()
+        if not s:
+            continue
+        m[s] = f"{s}-USD"
+    return m
+
+def _download_last2_closes_yf(tickers: list[str]) -> pd.DataFrame:
+    if not tickers:
+        return pd.DataFrame(columns=["yf_ticker","date","close"])
+    now = pd.Timestamp.utcnow()
+    start = now - pd.Timedelta(days=10)
+    end   = now + pd.Timedelta(days=1)
+    data = yf.download(
+        tickers=" ".join(tickers),
+        start=start.strftime("%Y-%m-%d"),
+        end=end.strftime("%Y-%m-%d"),
+        interval="1d",
+        group_by="ticker",
+        auto_adjust=False,
+        threads=False,
+        progress=False,
+    )
+    rows = []
+    if isinstance(data.columns, pd.MultiIndex):
+        for tkr in tickers:
+            try:
+                closes = data[(tkr, "Close")].dropna().sort_index()
+                if len(closes) >= 2:
+                    rows.append(pd.DataFrame({"yf_ticker": tkr, "date": closes.index, "close": closes.values}))
+            except Exception:
+                continue
+    else:
+        # 단일 티커 케이스
+        closes = data["Close"].dropna().sort_index()
+        if len(closes) >= 2:
+            rows.append(pd.DataFrame({"yf_ticker": tickers[0], "date": closes.index, "close": closes.values}))
+    return pd.concat(rows, ignore_index=True) if rows else pd.DataFrame(columns=["yf_ticker","date","close"])
+
+def _load_daily_returns_today() -> pd.DataFrame | None:
+    """
+    Yahoo Finance로 종목별 일일 수익률을 계산해 반환.
+    실패/데이터 없음 시 None 반환 (리포트 쪽에서 안전 스킵).
+    """
+    try:
+        symbols = _get_symbols_top20_from_weights(URL_WEIGHTS)
+        if not symbols:
+            return None
+        yf_map = _map_to_yf(symbols)
+        tickers = list(dict.fromkeys(yf_map.values()))  # unique
+        raw = _download_last2_closes_yf(tickers)
+        if raw.empty:
+            return None
+
+        raw = raw.sort_values(["yf_ticker","date"])
+        last2 = raw.groupby("yf_ticker").tail(2).copy()
+        last2["rn"] = last2.groupby("yf_ticker").cumcount()
+        piv = last2.pivot(index="yf_ticker", columns="rn", values="close").rename(columns={0:"prev",1:"cur"})
+        piv = piv.dropna(subset=["prev","cur"]).reset_index()
+        piv["ret_pct"] = piv["cur"] / piv["prev"] - 1.0
+
+        inv = {v:k for k,v in yf_map.items()}  # yf_ticker -> symbol
+        piv["symbol"] = piv["yf_ticker"].map(inv)
+        out = piv[["symbol","ret_pct"]].dropna()
+        out["symbol"] = out["symbol"].astype(str).str.upper().str.strip()
+        out = out[out["symbol"].isin(symbols)].copy()  # Top20만
+        if out.empty:
+            return None
+        # 소수점 자리수 약간 제한
+        out["ret_pct"] = pd.to_numeric(out["ret_pct"], errors="coerce").round(6)
+        return out[["symbol","ret_pct"]]
+    except Exception:
+        return None
+ 
 
 
 # =============================
