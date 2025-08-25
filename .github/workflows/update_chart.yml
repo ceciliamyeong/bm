@@ -2,31 +2,59 @@ name: Update BM20 vs BTC Chart
 
 on:
   schedule:
-    - cron: "0 3 * * *"  # 매일 오전 3시 UTC (한국시간 12시) 실행
+    - cron: "0 3 * * *"  # 매일 03:00 UTC (KST 12:00)
   workflow_dispatch:
+
+permissions:
+  contents: write   # 푸시 권한 필요
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Seoul
+      # 스크립트가 참조할 환경변수 (원하면 수정 가능)
+      BM20_SERIES_URL: "https://ceciliamyeong.github.io/bm/series.json"
+      BM20_BASE_DATE:  "2018-01-01"
+      BM20_VS_BTC_OUT: "bm/bm20_vs_btc.png"   # 산출물을 /bm 아래로 고정 저장
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: "pip"
 
       - name: Install dependencies
         run: |
-          pip install pandas matplotlib yfinance
+          python -m pip install --upgrade pip
+          pip install pandas matplotlib requests yfinance
 
       - name: Generate BM20 vs BTC chart
-        run: python bm20_vs_btc.py
-
-      - name: Commit and push
         run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git add bm20_vs_btc.png
+          set -euo pipefail
+          python bm20_vs_btc.py
+          file "${BM20_VS_BTC_OUT}" || (echo "output not found"; exit 1)
+
+      - name: Commit & push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # 산출물 스테이징
+          git add -A "${BM20_VS_BTC_OUT}" || true
+
+          # 변경 없으면 커밋 생략
           git commit -m "Auto-update BM20 vs BTC chart" || echo "No changes"
+
+          # 충돌 방지: rebase pull 후 push
+          git pull --rebase --autostash
           git push
