@@ -3,7 +3,6 @@
 # Publish latest BM20 to /bm/latest.html without touching main page
 # - Copies out/YYYY-MM-DD -> archive/YYYY-MM-DD
 # - Generates /bm/latest.html and /bm/bm20_bar_latest.png /bm/bm20_trend_latest.png
-# - Creates .nojekyll
 # - If out/ has no dated folder, falls back to existing /bm/latest.html & *_latest.png
 
 import re, shutil, html
@@ -166,7 +165,6 @@ def main():
     latest = ensure_latest_dir()
     dst = copy_dir(latest)          # archive/YYYY-MM-DD
     publish_latest_to_bm(dst)       # /bm/latest.html & *_latest.png
-    (ROOT / ".nojekyll").write_text("", encoding="utf-8")
     print("[done] site updated (bm/latest only)")
 
 if __name__ == "__main__":
