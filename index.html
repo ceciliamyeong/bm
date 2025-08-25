@@ -69,10 +69,12 @@
         <div class="mini">Blockmedia Large‑Cap Crypto 20</div>
       </div></div>
       <nav>
-        <a href="#latest">Latest</a>
-        <a href="#charts">Charts</a>
-        <a href="#data">Data</a>
-        <a href="#about">About</a>
+        <!-- 메인 ↔ 서브페이지(인디스)로 실제 이동 -->
+        <a href="{{ '/' | relative_url }}">Home</a>
+        <a href="{{ '/latest.html' | relative_url }}">Latest</a>                <!-- /bm/latest.html -->
+        <a href="{{ '/indices/performance/' | relative_url }}">Charts (Full)</a><!-- /bm/indices/performance/ -->
+        <a href="{{ '/indices/components/'  | relative_url }}">Data</a>         <!-- /bm/indices/components/ -->
+        <a href="{{ '/indices/overview/'    | relative_url }}">About</a>        <!-- /bm/indices/overview/ -->
       </nav>
     </div>
   </header>
