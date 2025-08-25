@@ -115,30 +115,43 @@ jobs:
 
       - name: Publish latest.html
         run: |
-          if [ -f out/*/bm20_daily_*.html ]; then
-            LATEST_HTML=$(ls -t out/*/bm20_daily_*.html | head -n1)
+          set -euo pipefail
+          # 최신 일간 HTML 찾기 (없으면 skip)
+          LATEST_HTML="$(find out -maxdepth 2 -type f -name 'bm20_daily_*.html' -printf '%T@ %p\n' | sort -nr | head -n1 | cut -d' ' -f2- || true)"
+          if [ -n "${LATEST_HTML:-}" ]; then
+            echo "latest daily html: $LATEST_HTML"
+      
+            # 사이트 루트용 latest.html (=> https://.../bm/latest.html)
+            cp -f "$LATEST_HTML" latest.html
+      
+            # (선택) bm/ 아래에도 동일 파일 복사해두기 (혹시 내부 링크가 이 경로를 가리킬 경우 대비)
+            mkdir -p bm
             cp -f "$LATEST_HTML" bm/latest.html
-            echo "published: $LATEST_HTML -> bm/latest.html"
+      
+            echo "published: $LATEST_HTML -> latest.html and bm/latest.html"
+          else
+            echo "No daily HTML found under out/; skip publishing latest.html"
           fi
+
 
 
       - name: Commit & Push outputs
         env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-            set -euo pipefail
-            DATE=$(TZ=Asia/Seoul date +%F)
-            git config user.name  "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-        
-            # 변경사항 스테이징
-            git add -A site \
-                       latest.json series.json \
-                       bm20_latest.json bm20_series.json \
-                       bm20_bar_latest.png bm20_trend_latest.png bm20_vs_btc.png || true
-            git add -A out/${DATE} || true
-        
-            # 먼저 커밋 → 그 다음 rebase pull (autostash) → 푸시
-            git commit -m "BM20 daily (base=${BM20_BASE_DATE}) ${DATE}" || echo "No changes"
-            git pull --rebase --autostash
-            git push
+          set -euo pipefail
+          DATE=$(TZ=Asia/Seoul date +%F)
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+          # 변경사항 스테이징
+          git add -A site \
+                     latest.json series.json \
+                     bm20_latest.json bm20_series.json \
+                     bm20_bar_latest.png bm20_trend_latest.png bm20_vs_btc.png \
+                     latest.html bm/latest.html || true
+          git add -A "out/${DATE}" || true
+      
+          git commit -m "BM20 daily (base=${BM20_BASE_DATE}) ${DATE}" || echo "No changes"
+          git pull --rebase --autostash
+          git push
