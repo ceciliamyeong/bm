@@ -1,4 +1,4 @@
-name: BM20 Daily (Yahoo, 2024-base)
+name: BM20 Daily (BMindex, 2018-base)
 
 on:
   schedule:
@@ -13,7 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TZ: Asia/Seoul
-      OUT_DIR: out
+      BM20_OUTPUT_ROOT: out
+      # 아래 두 값은 bm20_daily.py에서는 안 씁니다. 필요 없으면 지워도 OK.
       BM20_BASE_DATE: "2024-01-01"
       BM20_BASE_EXCLUDE_CONSISTENT: "0"
 
@@ -33,7 +34,7 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install --upgrade pip
-          pip install requests pandas matplotlib python-dateutil reportlab
+          pip install pandas numpy matplotlib python-dateutil
 
       - name: Install Korean fonts (Nanum + Noto CJK)
         run: |
@@ -45,13 +46,7 @@ jobs:
       - name: Reset base cache (optional)
         run: rm -f out/base_cache.json || true
 
-      - name: Debug — find downCount
-        run: |
-          echo "Searching for downCount..."
-          grep -n "{downCount}" bm20_daily.py || true
-          grep -nE '\bdownCount\b' bm20_daily.py || true
-
-      - name: Run BM20 daily 
+      - name: Run BM20 daily
         run: |
           set -euo pipefail
           if [ ! -f bm20_daily.py ]; then
@@ -60,64 +55,66 @@ jobs:
           fi
           python bm20_daily.py
 
-        
-
-      # ✅ 김치/펀딩 추가 
-      - name: Enrich latest.json (kimchi & funding)
+      # ⬇️ 최신 산출물 루트/서브경로로 복사 + 간단 latest.html 생성
+      - name: Prepare site artifacts (copy TXT/PNG/PDF and build latest.html)
         run: |
           set -euo pipefail
-          python augment_latest.py || echo "enrich failed; keep going"
 
-      # ✅ 산출물은 루트로 복사 (index.html이 루트에서 읽음)
+          DATE=$(TZ=Asia/Seoul date +%F)
+          OUTDIR="out/${DATE}"
 
-      - name: Prepare site artifacts at repo root
-        run: |
-          set -euo pipefail
-      
-          copy_if_present () {
-            src="$1"; dest="$2"
-            if [ -f "$src" ]; then
-              if [ -f "$dest" ] && [ "$src" -ef "$dest" ]; then
-                echo "skip: $src == $dest"
-              else
-                cp -f "$src" "$dest"
-                echo "copied: $src -> $dest"
-              fi
+          if [ ! -d "$OUTDIR" ]; then
+            echo "::error::Output dir not found: $OUTDIR"
+            exit 1
+          fi
+
+          mkdir -p bm
+
+          # 1) 데일리 TXT/이미지/PDF를 bm/와 루트로 동시 복사
+          for f in \
+            "${OUTDIR}/BM20_daily_${DATE}.txt" \
+            "${OUTDIR}/kimchi_premium_${DATE}.png" \
+            "${OUTDIR}/kimchi_premium_${DATE}.pdf" \
+            "${OUTDIR}/BM20_weekly_${DATE}.txt" \
+            "${OUTDIR}/BM20_weekly_${DATE}.pdf" \
+            "${OUTDIR}/BM20_monthly_${DATE}.txt" \
+            "${OUTDIR}/BM20_monthly_${DATE}.pdf"
+          do
+            if [ -f "$f" ]; then
+              cp -f "$f" bm/
+              cp -f "$f" .
+              echo "copied: $f"
             fi
-          }
-      
-          # latest.json 후보 -> 루트
-          copy_if_present latest.json latest.json
-          copy_if_present bm20_latest.json latest.json
-          copy_if_present site/latest.json latest.json
-          copy_if_present site/bm20_latest.json latest.json
-          # out/날짜 폴더에서 최신 파일 하나 찾아서 루트로
-          LATEST_IN_OUT=$(find out -maxdepth 2 -type f -name "bm20_latest.json" | sort | tail -n1 || true)
-          if [ -n "${LATEST_IN_OUT:-}" ]; then copy_if_present "$LATEST_IN_OUT" latest.json; fi
-      
-          # series.json 후보 -> 루트
-          copy_if_present series.json series.json
-          copy_if_present bm20_series.json series.json
-          copy_if_present bm/series.json series.json
-          copy_if_present bm/bm20_series.json series.json
-          copy_if_present site/series.json series.json
-          copy_if_present site/bm20_series.json series.json
-          SERIES_IN_OUT=$(find out -maxdepth 2 -type f -name "bm20_series.json" -o -name "series.json" | sort | tail -n1 || true)
-          if [ -n "${SERIES_IN_OUT:-}" ]; then copy_if_present "$SERIES_IN_OUT" series.json; fi
-      
-          echo "---- present at root ----"
-          ls -l latest.json series.json || true 
+          done
 
-      - name: Debug — tree (top 2 levels)
-        run: |
-          echo "PWD=$(pwd)"
-          find . -maxdepth 2 -type f | sort | sed -n '1,200p'
+          # 2) 데일리 TXT를 간단한 latest.html로 변환 (뉴스 미니페이지)
+          TXT="${OUTDIR}/BM20_daily_${DATE}.txt"
+          if [ -f "$TXT" ]; then
+            echo "Building latest.html from ${TXT}"
+            {
+              echo '<!doctype html><meta charset="utf-8"><title>BM20 — Latest</title>'
+              echo '<style>body{font-family:-apple-system,BlinkMacSystemFont,"NanumGothic","Noto Sans CJK","Malgun Gothic",Arial,sans-serif;background:#fafbfc;color:#111;max-width:760px;margin:40px auto;padding:0 16px}pre{white-space:pre-wrap;line-height:1.7}</style>'
+              echo "<h1>BM20 데일리 (${DATE})</h1>"
+              echo "<pre>"
+              cat "$TXT"
+              echo "</pre>"
+              # 김치 프리미엄 이미지가 있으면 아래에 표시
+              IMG="kimchi_premium_${DATE}.png"
+              if [ -f "bm/${IMG}" ]; then
+                echo "<h2>Kimchi Premium</h2><img src=\"bm/${IMG}\" style=\"max-width:100%;height:auto;\"/>"
+              fi
+            } > latest.html
+            cp -f latest.html bm/latest.html
+          else
+            echo "::warning::Daily TXT not found, latest.html skipped"
+          fi
 
-      - name: Publish latest.html (뉴스리포트)
-        run: |
-          set -euo pipefail
-          python bm20_publish.py
-
+          echo "---- files at repo root ----"
+          ls -l latest.html || true
+          ls -l BM20_* || true
+          ls -l kimchi_premium_* || true
+          echo "---- files under bm/ ----"
+          ls -l bm/ || true
 
       - name: Commit & Push outputs
         env:
@@ -127,15 +124,17 @@ jobs:
           DATE=$(TZ=Asia/Seoul date +%F)
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-      
-          # 변경사항 스테이징
+
           git add -A \
-            latest.json series.json \
             latest.html \
             bm/latest.html \
-            bm/bm20_bar_latest.png bm/bm20_trend_latest.png bm/bm20_vs_btc.png \
+            bm/BM20_daily_${DATE}.txt \
+            bm/kimchi_premium_${DATE}.png \
+            bm/kimchi_premium_${DATE}.pdf \
+            bm/BM20_weekly_${DATE}.txt bm/BM20_weekly_${DATE}.pdf \
+            bm/BM20_monthly_${DATE}.txt bm/BM20_monthly_${DATE}.pdf \
             "out/${DATE}" || true
-      
-          git commit -m "BM20 daily (base=${BM20_BASE_DATE}) ${DATE}" || echo "No changes"
+
+          git commit -m "BM20 daily (BMindex) ${DATE}" || echo "No changes"
           git pull --rebase --autostash
           git push
