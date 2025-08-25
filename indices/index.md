@@ -4,7 +4,6 @@ layout: default
 permalink: /indices/
 ---
 
-{% include bm_index_nav.html active="overview" %}
 
 # BM Indices
 
