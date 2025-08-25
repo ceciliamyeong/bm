@@ -1,4 +1,4 @@
-name: BM20 Daily (BMindex, 2018-base)
+name: BM20 Daily (BMindex)
 
 on:
   schedule:
@@ -14,9 +14,6 @@ jobs:
     env:
       TZ: Asia/Seoul
       BM20_OUTPUT_ROOT: out
-      # 아래 두 값은 bm20_daily.py에서는 안 씁니다. 필요 없으면 지워도 OK.
-      BM20_BASE_DATE: "2024-01-01"
-      BM20_BASE_EXCLUDE_CONSISTENT: "0"
 
     steps:
       - name: Checkout
@@ -42,7 +39,7 @@ jobs:
           sudo apt-get install -y fonts-nanum fonts-noto-cjk fontconfig
           sudo fc-cache -f -v
 
-      # 필요 시 기준일 바꿀 때 캐시 초기화 (옵션)
+      # (옵션) 캐시 파일 초기화가 필요할 때만 유지
       - name: Reset base cache (optional)
         run: rm -f out/base_cache.json || true
 
@@ -55,7 +52,7 @@ jobs:
           fi
           python bm20_daily.py
 
-      # ⬇️ 최신 산출물 루트/서브경로로 복사 + 간단 latest.html 생성
+      # === 퍼블리셔/JSON 없이 TXT → latest.html 직접 생성 ===
       - name: Prepare site artifacts (copy TXT/PNG/PDF and build latest.html)
         run: |
           set -euo pipefail
@@ -70,7 +67,7 @@ jobs:
 
           mkdir -p bm
 
-          # 1) 데일리 TXT/이미지/PDF를 bm/와 루트로 동시 복사
+          # 1) 데일리/주/월간 산출물 복사 (있으면 복사)
           for f in \
             "${OUTDIR}/BM20_daily_${DATE}.txt" \
             "${OUTDIR}/kimchi_premium_${DATE}.png" \
@@ -87,7 +84,7 @@ jobs:
             fi
           done
 
-          # 2) 데일리 TXT를 간단한 latest.html로 변환 (뉴스 미니페이지)
+          # 2) TXT → latest.html
           TXT="${OUTDIR}/BM20_daily_${DATE}.txt"
           if [ -f "$TXT" ]; then
             echo "Building latest.html from ${TXT}"
@@ -96,9 +93,8 @@ jobs:
               echo '<style>body{font-family:-apple-system,BlinkMacSystemFont,"NanumGothic","Noto Sans CJK","Malgun Gothic",Arial,sans-serif;background:#fafbfc;color:#111;max-width:760px;margin:40px auto;padding:0 16px}pre{white-space:pre-wrap;line-height:1.7}</style>'
               echo "<h1>BM20 데일리 (${DATE})</h1>"
               echo "<pre>"
-              cat "$TXT"
+              sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g' "$TXT"
               echo "</pre>"
-              # 김치 프리미엄 이미지가 있으면 아래에 표시
               IMG="kimchi_premium_${DATE}.png"
               if [ -f "bm/${IMG}" ]; then
                 echo "<h2>Kimchi Premium</h2><img src=\"bm/${IMG}\" style=\"max-width:100%;height:auto;\"/>"
