@@ -10,9 +10,6 @@ permalink: /indices/
 
 BM20 지수 관련 주요 페이지들을 모아둔 허브입니다. 아래 링크를 클릭하면 각 세부 페이지로 이동합니다.
 
-- [Overview]({{ '/indices/overview/' | relative_url }})  
-  → BM20 지수의 개요와 목적, 산정 배경
-
 - [Components]({{ '/indices/components/' | relative_url }})  
   → 지수 구성 종목과 주요 데이터 테이블
 
