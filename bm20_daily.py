@@ -149,7 +149,7 @@ def _load_daily_returns_today() -> Optional[pd.DataFrame]:
         c_date = _col(df, "date", "날짜")
         c_sym  = _col(df, "symbol", "티커", "코드")
         c_ret  = _col(df, "ret_pct", "d1", "chg_pct", "return_pct", "수익률(%)")
-        if c_date, c_sym, c_ret:
+        for c_date, c_sym, c_ret in rows:
             df = df[[c_date, c_sym, c_ret]].copy()
             df.columns = ["date", "symbol", "ret_pct"]
             df["date"] = _as_date(df["date"])
