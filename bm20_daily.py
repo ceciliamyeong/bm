@@ -269,7 +269,7 @@ def get_recent_history(days: int = 60) -> pd.DataFrame:
     return df[["date","index_level","index_ret_pct"]]
 
 @dataclass
-class Bm20Snapshot  # re-declared for type checkers
+class Bm20Snapshot:  # re-declared for type checkers
 class Bm20Snapshot:
     pass
 
