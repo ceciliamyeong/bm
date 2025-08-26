@@ -4,16 +4,36 @@ on:
   workflow_dispatch:        # 수동 실행
   schedule:
     - cron: "20 23 * * *"   # 매일 08:20 KST (23:20 UTC)
+  workflow_run:
+    workflows: ["BM20 Daily (Yahoo, 2024-base)"]  # Daily 이름과 정확히 일치
+    types: [completed]
 
 permissions:
   contents: write
+  actions: read   # ← 다른 워크플로우 아티팩트 읽기 위해 필요
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # 🔽 Daily에서 올린 최신 아티팩트를 받아서 out/에 푼다
+      - name: Download latest bm20-out artifact
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: bm20_daily.yml              # Daily 파일명이 이거면 그대로, 다르면 파일명으로 교체
+          workflow_conclusion: success
+          branch: main                          # 기본 브랜치가 main이 아닐 경우 교체(ex: master)
+          name: bm20-out                        # Daily에서 업로드한 아티팩트 이름과 일치해야 함
+          path: out                             # 다운받은 파일을 out/로 풀기
+
+      - name: Debug — tree out/
+        run: |
+          echo "---- out/ tree ----"
+          ls -R out || true
 
       - name: Copy latest output to docs/
         run: |
@@ -21,10 +41,10 @@ jobs:
           SITE_SRC="docs"
           mkdir -p "$SITE_SRC"
 
-          # 가장 최근 out/DATE 디렉토리 찾기
-          LAST_DIR=$(ls -d out/* 2>/dev/null | sort -r | head -n 1 || true)
+          # 'YYYY-MM-DD' 형태의 날짜 디렉터리만 대상으로
+          LAST_DIR=$(ls -d out/* 2>/dev/null | grep -E 'out/[0-9]{4}-[0-9]{2}-[0-9]{2}$' | sort -r | head -n 1 || true)
           if [ -z "${LAST_DIR:-}" ] || [ ! -d "$LAST_DIR" ]; then
-            echo "No out/DATE directory found"; exit 0
+            echo "::error::No dated directory found under out/"; exit 1
           fi
           echo "Found latest output dir: $LAST_DIR"
 
@@ -33,19 +53,25 @@ jobs:
             if [ -f "$SRC" ]; then
               cp "$SRC" "$SITE_SRC/$DST"
               echo "✓ $SRC -> $SITE_SRC/$DST"
+            else
+              echo "… missing: $SRC"
             fi
           }
 
+          # latest
           copy_if_exists "$LAST_DIR/latest.json" latest.json
           copy_if_exists "$LAST_DIR/bm20_latest.json" latest.json
 
+          # series
           copy_if_exists "$LAST_DIR/series.json" series.json
           copy_if_exists "$LAST_DIR/bm20_series.json" series.json
           copy_if_exists "$LAST_DIR/bm20_index_history.json" series.json
 
+          # contrib (옵션)
           copy_if_exists "$LAST_DIR/contrib_top.json" contrib_top.json
           copy_if_exists "$LAST_DIR/bm20_contrib_top.json" contrib_top.json
 
+          # (옵션) 최신 PNG
           for f in bm20_bar_latest.png bm20_trend_latest.png; do
             if [ -f "$LAST_DIR/$f" ]; then
               cp "$LAST_DIR/$f" "$SITE_SRC/$f"
@@ -53,8 +79,12 @@ jobs:
             fi
           done
 
+          echo "Published files in $SITE_SRC/:"
+          ls -l "$SITE_SRC"/*.json || true
+
       - name: Commit & Push
         run: |
+          set -euo pipefail
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add docs/
