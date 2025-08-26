@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>BM20 Index — Latest</title>
+<style>
+:root{--bg:#0b1020;--card:#11172a;--muted:#8aa0b5;--text:#e8f0ff;--up:#2E7D32;--down:#C62828;--brand:#1A237E;}
+*{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:18px}
+.card{background:var(--card);border:1px solid #1b2440;border-radius:14px;padding:16px;margin:12px 0}
+h1{margin:0 0 6px 0;font-size:20px}
+.kv{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.kv .lv{font-size:34px;font-weight:700}
+.kv small{font-size:14px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media (min-width:900px){.grid{grid-template-columns:repeat(4,1fr)}}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th,.tbl td{padding:8px;border-bottom:1px solid #223}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-weight:600}
+.up{color:var(--up)} .down{color:var(--down)}
+.sub{color:var(--muted);font-size:13px}
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div id="head" class="kv">
+      <div class="lv" id="idx-level">BM20 Index</div>
+      <div id="idx-change" class="badge"></div>
+      <small id="idx-date"></small>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card"><h3>요약</h3><div id="summary" class="sub">로딩 중…</div></div>
+    <div class="card"><h3>Best 3</h3><table class="tbl" id="best"></table></div>
+    <div class="card"><h3>Worst 3</h3><table class="tbl" id="worst"></table></div>
+    <div class="card"><h3>BTC & ETH 7일 추세</h3><div id="line-btceth" style="height:220px"></div></div>
+  </div>
+
+  <div class="card"><h3>코인별 퍼포먼스 (1D, %)</h3><div id="bar-1d" style="height:300px"></div></div>
+
+  <div class="card"><h3>BM20 데일리 뉴스</h3><div id="news">자동 요약이 없으면 이 영역은 생략됩니다.</div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
+<script>
+const v = Date.now();
+
+// === 구글시트 CSV(실시간) ===
+// 구성/수익률(1D)이 있는 시트: (사용자가 준 공개 CSV)
+const COMPONENTS_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTndyrPd3WWwFtfzv2CZxJeDcH-l8ibQIdO5ouYS4HsaGpbeXQQbs6WEr9qPqqZbRoT6cObdFxJpief/pub?gid=1533548287&single=true&output=csv&v="+v;
+// 인덱스 히스토리 시트: (마지막 행이 최신)
+const HISTORY_CSV    = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTndyrPd3WWwFtfzv2CZxJeDcH-l8ibQIdO5ouYS4HsaGpbeXQQbs6WEr9qPqqZbRoT6cObdFxJpief/pub?gid=352245628&single=true&output=csv&v="+v;
+
+// (선택) 있으면 보조로 활용할 latest.json — 없으면 무시
+const LATEST_JSON    = "/bm/data/latest.json?v="+v;
+
+async function fetchText(u){const r=await fetch(u);if(!r.ok)throw new Error("fetch fail "+u);return r.text();}
+async function fetchJSON(u){const r=await fetch(u);if(!r.ok)throw new Error("fetch fail "+u);return r.json();}
+function csvParse(t){
+  const rows=t.trim().split(/\r?\n/).map(l=>l.split(",").map(s=>s.trim()));
+  const header=rows[0]; return rows.slice(1).map(r=>Object.fromEntries(header.map((h,i)=>[h.trim(),r[i]??""])));
+}
+function num(x, d=null){const n=+String(x).replace(/[, ]/g,""); return isFinite(n)?n:d;}
+function pctStr(p){return (p>=0?"+":"")+(p).toFixed(2)+"%";}
+
+(async ()=>{
+  // 1) 히스토리에서 인덱스 레벨/일간 변동 계산
+  let level="—", chPct=null, dateLabel="";
+  try{
+    const hist = csvParse(await fetchText(HISTORY_CSV));
+    // 열 이름 추정: date, bm20_index (또는 bm20, index, value)
+    const last  = hist[hist.length-1]||{};
+    const prev  = hist[hist.length-2]||{};
+    const dcol  = Object.keys(last).find(k=>/date/i.test(k))||"date";
+    const icol  = Object.keys(last).find(k=>/bm20|index|value/i.test(k))||"bm20_index";
+    const lastVal = num(last[icol]);
+    const prevVal = num(prev[icol]);
+    if(lastVal!=null){ level = lastVal.toLocaleString(undefined,{maximumFractionDigits:2}); }
+    if(lastVal!=null && prevVal!=null){ chPct = ((lastVal/prevVal)-1)*100; }
+    dateLabel = last[dcol]||"";
+  }catch(e){ console.warn("history load fail", e); }
+
+  document.getElementById("idx-level").innerHTML = `BM20 Index <span class="lv">${level}</span>`;
+  const chEl = document.getElementById("idx-change");
+  if(chPct==null){ chEl.textContent="—"; }
+  else{
+    chEl.textContent = pctStr(chPct);
+    chEl.className = "badge "+(chPct>=0?"up":"down");
+  }
+  document.getElementById("idx-date").textContent = dateLabel?("• "+dateLabel):"";
+
+  // 2) 구성 시트에서 1D 수익률/Best/Worst/바차트
+  let perfRows=[];
+  try{
+    const comps = csvParse(await fetchText(COMPONENTS_CSV));
+    // 열명 추정: Symbol, Name, Price, 24h Change, change_24h, ret_1d, 1D 등
+    const symK = ["symbol","Symbol","SYM"].find(k=>k in comps[0])||"symbol";
+    const r1K  = Object.keys(comps[0]).find(k=>/ret_?1d|1d.*(chg|ret)|24h.*(chg|ret)|change_24h/i.test(k)) || "change_24h";
+    perfRows = comps.map(o=>({symbol:(o[symK]||"").toUpperCase(), r1d:num(o[r1K], null)}))
+                    .filter(o=>o.r1d!=null && isFinite(o.r1d));
+    // Best/Worst 3
+    const sorted=[...perfRows].sort((a,b)=>b.r1d-a.r1d);
+    const best=sorted.slice(0,3), worst=sorted.slice(-3).reverse();
+    const row = x=>`<tr><td>${x.symbol}</td><td style="text-align:right" class="${x.r1d>=0?'up':'down'}">${x.r1d.toFixed(2)}%</td></tr>`;
+    document.getElementById("best").innerHTML  = `<tr><th>Symbol</th><th>1D</th></tr>${best.map(row).join("")}`;
+    document.getElementById("worst").innerHTML = `<tr><th>Symbol</th><th>1D</th></tr>${worst.map(row).join("")}`;
+
+    // 바차트(모든 코인)
+    const bar = echarts.init(document.getElementById('bar-1d'));
+    const xs = perfRows.sort((a,b)=>a.r1d-b.r1d);
+    bar.setOption({
+      tooltip:{},
+      xAxis:{type:'category', data: xs.map(x=>x.symbol)},
+      yAxis:{type:'value', axisLabel:{formatter:'{value}%'}},
+      series:[{type:'bar', data: xs.map(x=>+x.r1d.toFixed(2))}]
+    });
+  }catch(e){ console.warn("components load fail", e); }
+
+  // 3) 보조 latest.json이 있으면 요약/뉴스/BTC·ETH 7D를 채움 (없으면 graceful degrade)
+  let summaryHtml = "";
+  try{
+    const d = await fetchJSON(LATEST_JSON);
+    if(d?.returns){
+      const r=d.returns;
+      summaryHtml += `수익률 1D ${r.d1?.toFixed?.(2)??'—'}% · 7D ${r.d7?.toFixed?.(2)??'—'}% · 30D ${r.d30?.toFixed?.(2)??'—'}% · MTD ${r.mtd?.toFixed?.(2)??'—'}% · YTD ${r.ytd?.toFixed?.(2)??'—'}%`;
+    }
+    if(d?.kimchi_premium_pct!=null){ summaryHtml += ` · 김치 ${d.kimchi_premium_pct.toFixed(2)}%`; }
+    if(d?.funding){ summaryHtml += ` · Funding BTC ${d.funding.btc??'—'} / ETH ${d.funding.eth??'—'}`; }
+    if(!summaryHtml) summaryHtml="실시간 CSV 기준 요약치 계산 중";
+    document.getElementById("summary").innerHTML = summaryHtml;
+
+    // 뉴스
+    if(d?.news?.title||d?.news?.body){
+      document.getElementById("news").innerHTML = `<strong>${d.news.title||'BM20 Daily'}</strong><br>${d.news.body||''}`;
+    } else {
+      document.getElementById("news").parentElement.style.display="none";
+    }
+
+    // BTC/ETH 7D
+    if(d?.btc?.ret_7d || d?.eth?.ret_7d){
+      const line = echarts.init(document.getElementById('line-btceth'));
+      const n = Math.max(d.btc?.ret_7d?.length||0, d.eth?.ret_7d?.length||0) || 7;
+      line.setOption({
+        tooltip:{trigger:'axis'},
+        legend:{data:['BTC','ETH']},
+        xAxis:{type:'category',data:Array(n).fill(0).map((_,i)=>`${i-n+1}d`)},
+        yAxis:{type:'value',axisLabel:{formatter:'{value}%'}},
+        series:[
+          {name:'BTC',type:'line',data:d.btc?.ret_7d||[]},
+          {name:'ETH',type:'line',data:d.eth?.ret_7d||[]}
+        ]
+      });
+    } else {
+      // latest.json 없으면 섹션 숨김
+      document.getElementById("line-btceth").parentElement.style.display="none";
+    }
+  }catch(e){
+    document.getElementById("summary").textContent = "실시간 CSV 기준: 히스토리에서 전일 대비만 계산했습니다.";
+    document.getElementById("line-btceth").parentElement.style.display="none";
+    document.getElementById("news").parentElement.style.display="none";
+  }
+})();
+</script>
+</body>
+</html>
