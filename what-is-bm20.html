@@ -73,32 +73,110 @@
   </header>
 
   <main class="wrap">
-    <!-- 1) 타이틀 + 개요 -->
-    <section class="hero">
-      <h1>What is BM20?</h1>
-      <p>BM20은 글로벌 암호화폐 시장을 대표하는 <strong>대형 코인 20개</strong>로 구성된 블록미디어 고유 지수입니다. 한국 3대 거래소(업비트·빗썸·코인원) 상장 코인에는 <strong>1.3× 가중치</strong>를 적용하고, <strong>분기 1회</strong>(1·4·7·10월) 정기 리밸런싱합니다. 지수 기준일은 <strong>2018-01-01 (=100)</strong>입니다.</p>
-      <p class="mini" style="margin-top:6px">가중치 상한: BTC 30%, ETH 20%, XRP/USDT/BNB 각 5%, 나머지 15종 균등(총 35%). 데이터 소스: Coingecko(기본), Yahoo Finance(폴백).</p>
-    </section>
+   <section class="bm-hero" style="padding:48px 0 16px;background:linear-gradient(180deg,#0b1020 0%,#0b1020 60%,#0e1426 100%);color:#e8f0ff;font:16px/1.7 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Noto Sans',sans-serif">
+  <div style="max-width:980px;margin:0 auto;padding:0 16px">
+    <h1 style="margin:0 0 6px 0;font-size:34px;letter-spacing:.2px">What is BM20?</h1>
+    <p style="margin:6px 0 0 0;color:#a7b4c8">한국 투자자 관점에서 시장의 <b>방향</b>과 <b>강도</b>를 한눈에 보여주는 대형 코인 20종 대표 지수</p>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:18px">
+      <span style="background:#18223b;border:1px solid #243255;padding:6px 10px;border-radius:999px">Base: <b>2025-01-01 = 100pt</b></span>
+      <span style="background:#18223b;border:1px solid #243255;padding:6px 10px;border-radius:999px">Currency: <b>USD</b></span>
+      <span style="background:#18223b;border:1px solid #243255;padding:6px 10px;border-radius:999px">Universe: <b>Top 20 by Market Cap</b></span>
+      <span style="background:#18223b;border:1px solid #243255;padding:6px 10px;border-radius:999px">Rebalancing: <b>Monthly</b></span>
+    </div>
+  </div>
+</section>
 
-    <!-- 2) 구성 종목 (실시간 CSV) -->
-    <section class="card section">
-      <div class="h">구성 종목 (실시간)</div>
-      <div class="mini" id="asof">—</div>
-      <div style="overflow:auto;margin-top:10px">
-        <table class="tbl" id="tbl"><tr><td class="mini">로딩 중…</td></tr></table>
-      </div>
-    </section>
+<section style="background:#0e1426;color:#e8f0ff">
+  <div style="max-width:980px;margin:0 auto;padding:24px 16px">
+    <h2 style="font-size:22px;margin:12px 0 8px">BM20 개요</h2>
+    <p>BM20 Index는 글로벌 시가총액 상위 디지털 자산 20종을 하나의 바스켓으로 구성하여 한국 투자자에게 가장 중요한 시장의 “대표성”과 “체감 유동성”을 동시에 담아낸 지수입니다. CoinDesk 20의 표준형 프레임을 존중하되, 국내 3대 거래소(KRW 마켓) 상장 종목에 보정계수(예: ×1.3)를 적용하고 상한 규칙(예: BTC 30%, 기타 15%)으로 쏠림을 제어해 한국 시장 현실에 최적화했습니다. 지수는 ETF/ETP 전환까지 염두에 두고 설계되어 산출·유지·배포 전 과정의 투명성과 재현성을 중시합니다. :contentReference[oaicite:0]{index=0}</p>
 
-    <!-- 3) FAQ -->
-    <section class="card section">
-      <div class="h">FAQ</div>
-      <div class="faq">
-        <details open><summary>BM20은 무엇인가?</summary><p class="mini">대형 20개 코인의 성과를 추적하는 블록미디어 고유 지수입니다. 일일 시황·차트·뉴스에 기준으로 사용합니다.</p></details>
-        <details><summary>언제 출시됐나?</summary><p class="mini">지수 기준일은 2018-01-01이며, 2025년 정식 공개를 목표로 개편/자동화를 진행 중입니다.</p></details>
-        <details><summary>왜 만들었나?</summary><p class="mini">복잡한 종목 개별 노이즈를 지수 하나로 요약해 일간/주간/월간 흐름을 명확히 보여주고, 장기적으로 ETF·파생 벤치마크로 확장하기 위함입니다.</p></details>
-        <details><summary>어떤 점이 다른가?</summary><p class="mini">국내 상장 코인 1.3× 보정, 상한 규칙(BTC 30·ETH 20·XRP/USDT/BNB 5), 분기 리밸런싱을 명시적으로 공개합니다.</p></details>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:14px 0">
+      <div style="background:#11172a;border:1px solid #1b2540;border-radius:14px;padding:14px">
+        <b>설계 원칙</b>
+        <ul style="margin:8px 0 0 18px;color:#a7b4c8">
+          <li>대표성: 대형·고유동성 중심</li>
+          <li>단순성: 시총가중을 기본, 최소 보정</li>
+          <li>현지 적합성: KRW 마켓 상장 반영</li>
+          <li>투명성: 산출 스크립트·변경로그 공개</li>
+        </ul>
+        <div style="margin-top:8px;color:#90a2bd">:contentReference[oaicite:1]{index=1}</div>
       </div>
-    </section>
+      <div style="background:#11172a;border:1px solid #1b2540;border-radius:14px;padding:14px">
+        <b>핵심 차별점</b>
+        <ul style="margin:8px 0 0 18px;color:#a7b4c8">
+          <li>국내 상장 보정(×1.3)으로 체감 유동성 반영</li>
+          <li>상한 규칙으로 쏠림 방지(BTC 30%·기타 15%)</li>
+          <li>정기 리밸런싱과 변경 공시</li>
+        </ul>
+        <div style="margin-top:8px;color:#90a2bd">:contentReference[oaicite:2]{index=2}</div>
+      </div>
+    </div>
+
+    <h2 style="font-size:22px;margin:20px 0 8px">구성(유니버스) & 편입·제외 기준</h2>
+    <p>1차 후보군은 전 세계 상장 디지털 자산 중 시가총액 상위 30~40개입니다. 이후 ①30일 평균 거래대금, ②상장 거래소 수, ③스프레드·체결 신뢰도 등 유동성 요건을 통과한 자산을 대상으로, 데이터 품질·국내 상장 여부까지 종합평가하여 최종 상위 20개를 편입합니다(동률 시 거래대금·상장 범위 우선). 스테이블코인·래핑/스테이킹·가스/유틸리티 전용·프라이버시·밈 토큰은 기본 지수에서 제외합니다. :contentReference[oaicite:3]{index=3}</p>
+
+    <h2 style="font-size:22px;margin:20px 0 8px">가중치(Weights) & 상한(Cap)</h2>
+    <ol style="margin:10px 0 0 18px;color:#a7b4c8">
+      <li>기본 시총가중(유통량 기준 자유유통 시가총액)</li>
+      <li>국내 상장 보정계수: 업비트·빗썸·코인원 상장 시 ×1.3 가중</li>
+      <li>상한 규칙: BTC 최대 30%, 기타 종목 최대 15%</li>
+      <li>정규화: 합계 100%로 재조정</li>
+    </ol>
+    <p style="color:#90a2bd;margin-top:6px">:contentReference[oaicite:4]{index=4}</p>
+
+    <div style="background:#10182e;border:1px dashed #243255;border-radius:12px;padding:12px;margin-top:10px;color:#a7b4c8">
+      <b>계산 예시(설명용)</b><br/>
+      보정 후 BTC 비중이 45.5%라도 상한 30%로 컷하고 초과분은 잔여 종목으로 재분배합니다. ETH도 동일 원칙을 적용한 뒤 전체 합계를 100%로 정규화합니다. :contentReference[oaicite:5]{index=5}
+    </div>
+
+    <h2 style="font-size:22px;margin:20px 0 8px">산출 방식(Index Calculation)</h2>
+    <ul style="margin:8px 0 0 18px;color:#a7b4c8">
+      <li>지수 통화: USD</li>
+      <li><b>기준일(Base): 2025-01-01 = 100.00pt</b></li>
+      <li>라스파이레스형: <code style="background:#0c1224;border:1px solid #1b2540;border-radius:6px;padding:1px 6px">BM20ₜ = 100 × Σ[ Wᵢ × (Pᵢ,ₜ / Pᵢ,base) ]</code></li>
+      <li>공식 공표: 일일 마감 값(대시보드는 근실시간 참고용)</li>
+    </ul>
+    <p style="color:#90a2bd;margin-top:6px">:contentReference[oaicite:6]{index=6}</p>
+
+    <h2 style="font-size:22px;margin:20px 0 8px">리밸런싱·메인터넌스</h2>
+    <p>BM20은 <b>월간 리밸런싱</b>을 기본으로 하며(버퍼 룰로 잦은 교체 최소화), 포크/에어드롭·상장폐지·거래중단 등 이벤트가 발생하면 위원회 심의를 거쳐 수시로 교체할 수 있습니다. 모든 변경은 사유와 함께 로그로 공개합니다. :contentReference[oaicite:7]{index=7}</p>
+
+    <h2 style="font-size:22px;margin:20px 0 8px">거버넌스 & 통제</h2>
+    <p><b>BM Index Committee</b>(내부 지수팀 + 외부 전문가)가 월간 리밸런싱 승인, 예외 편입·편출, 방법론 개정을 심의합니다. 운영은 IOSCO 금융벤치마크 원칙에 부합하도록 설계하며, 회의록 요약·편입/편출 사유·가중치 변경폭을 정기 공시하고 코드/데이터 스냅샷 기반의 감사 추적성을 유지합니다. :contentReference[oaicite:8]{index=8}</p>
+
+    <h2 style="font-size:22px;margin:20px 0 8px">데이터 소스 & 품질 관리</h2>
+    <p>가격·시총은 다중 거래소를 집계하고(이상치 제거·체결 신뢰도 필터), 유동성은 30일 거래대금과 상장 거래소 수를 봅니다. 국내 상장은 KRW 마켓 실거래 여부를 확인합니다. 결측·비정상 캔들은 자동 탐지 후 재수집/대체가격·재가중으로 처리합니다. :contentReference[oaicite:9]{index=9}</p>
+
+    <h2 style="font-size:22px;margin:20px 0 8px">활용(뉴스·대시보드·투자상품)</h2>
+    <ul style="margin:8px 0 0 18px;color:#a7b4c8">
+      <li>콘텐츠: 1D/7D/30D/90D/YTD 수익률, 52주 고저, 섹터 비중, 종목별 기여도 등 지표를 일간 코멘터리에 활용</li>
+      <li>오토메이션: “오늘 BM20 +2.3%, BTC·ETH가 상승 견인” 등 자동 문장 생성</li>
+      <li>상품화: 산출/배포 SLA, 데이터 보존·감사, 라이선스 정책 정비로 ETF/ETP·파생상품 연계</li>
+    </ul>
+    <p style="color:#90a2bd;margin-top:6px">:contentReference[oaicite:10]{index=10}</p>
+
+    <h2 style="font-size:22px;margin:20px 0 8px">FAQ</h2>
+    <details style="background:#11172a;border:1px solid #1b2540;border-radius:12px;padding:14px;margin-bottom:10px">
+      <summary style="cursor:pointer"><b>왜 ‘국내 상장 보정’을 쓰나요?</b></summary>
+      <div style="margin-top:8px;color:#a7b4c8">KRW 마켓 상장 여부는 국내 투자자 입장에서 체감 유동성과 접근성에 직결됩니다. ×1.3 보정은 이 현실을 지수에 반영해 대표성을 높입니다. :contentReference[oaicite:11]{index=11}</div>
+    </details>
+    <details style="background:#11172a;border:1px solid #1b2540;border-radius:12px;padding:14px;margin-bottom:10px">
+      <summary style="cursor:pointer"><b>시총가중인데 왜 상한(Cap)을 두나요?</b></summary>
+      <div style="margin-top:8px;color:#a7b4c8">과도한 쏠림을 방지하고 다양한 섹터의 움직임을 균형 있게 반영하기 위해 BTC 30%, 기타 15% 상한을 적용합니다. 초과분은 잔여 종목으로 재분배합니다. :contentReference[oaicite:12]{index=12}</div>
+    </details>
+    <details style="background:#11172a;border:1px solid #1b2540;border-radius:12px;padding:14px;margin-bottom:10px">
+      <summary style="cursor:pointer"><b>지수 값은 실시간인가요?</b></summary>
+      <div style="margin-top:8px;color:#a7b4c8">대시보드에서는 근실시간 수치를 보더라도, 공식 공표치는 일일 마감 값입니다(뉴스·리포트용). :contentReference[oaicite:13]{index=13}</div>
+    </details>
+
+    <h2 style="font-size:22px;margin:20px 0 8px">변경 로그(예시 템플릿)</h2>
+    <ul style="margin:8px 0 0 18px;color:#a7b4c8">
+      <li><b>2025-01-01</b>: 기준일 100pt 설정, 베타 → 운영 전환</li>
+      <li><b>2025-Q1~Q4</b>: 월간 리밸런싱·보정/상한 파라미터 검증, 변경 로그 공시</li>
+    </ul>
+  </div>
+</section>
 
     <!-- 4) 뉴스 섹션 -->
     <section class="news-card section" id="newsBox" style="display:none">
