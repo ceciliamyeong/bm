@@ -13,7 +13,7 @@ active: portfolio
 <script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
 <script>
 // ✅ 구글 시트 CSV (공개 퍼블리시 상태여야 합니다)
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTndyrPd3WWwFtfzv2CZxJeDcH-l8ibQIdO5ouYS4HsaGpbeXQQbs6WEr9qPqqZbRoT6cObdFxJpief/pub?gid=1533548287&single=true&output=csv";
+const CSV_WEIGHTS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTndyrPd3WWwFtfzv2CZxJeDcH-l8ibQIdO5ouYS4HsaGpbeXQQbs6WEr9qPqqZbRoT6cObdFxJpief/pub?gid=1533548287&single=true&output=csv";
 
 // 1) CSV fetch (캐시 무효화)
 async function fetchCsv(url){
