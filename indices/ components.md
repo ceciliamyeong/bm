@@ -12,7 +12,7 @@ active: components
 <script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
 <script>
 (async function(){
-  const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTndyrPd3WWwFtfzv2CZxJeDcH-l8ibQIdO5ouYS4HsaGpbeXQQbs6WEr9qPqqZbRoT6cObdFxJpief/pub?gid=1533548287&single=true&output=csv";
+  const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTndyrPd3WWwFtfzv2CZxJeDcH-l8ibQIdO5ouYS4HsaGpbeXQQbs6WEr9qPqqZbRoT6cObdFxJpief/pub?gid=352245628&single=true&output=csv";
   
   // CSV fetch
   const res = await fetch(CSV_URL+"?t="+Date.now(), {cache:"no-store"});
