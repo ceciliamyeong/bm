@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BM20 Index — Latest</title>
+  <meta name="color-scheme" content="light dark" />
+  <style>
+    :root{
+      --bg:#0b1020; --card:#11172a; --text:#e8f0ff; --muted:#8aa0b5;
+      --up:#2E7D32; --down:#C62828; --border:#1f2740; --accent:#1A237E;
+    }
+    html,body{margin:0;background:var(--bg);color:var(--text);
+      font:14px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Pretendard,Noto Sans KR,sans-serif}
+    .wrap{max-width:1060px;margin:0 auto;padding:22px}
+    header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+    .badge{font-weight:800;background:var(--accent);color:#fff;border-radius:10px;padding:6px 10px}
+    h1{margin:0;font-size:22px}
+    .sub{color:var(--muted);font-size:13px;margin:2px 0 18px}
+    .grid{display:grid;gap:14px;grid-template-columns:1fr}
+    @media (min-width:900px){.grid{grid-template-columns:1.15fr .85fr}}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
+    .row{display:flex;gap:14px;flex-wrap:wrap}
+    .kpi{flex:1 1 120px;background:rgba(255,255,255,.02);border:1px dashed var(--border);border-radius:12px;padding:12px}
+    .kpi h3{margin:0 0 6px;font-size:12px;color:var(--muted);font-weight:700}
+    .kpi .val{font-size:18px;font-weight:800}
+    .chg{font-weight:800}
+    .up{color:var(--up)} .down{color:var(--down)}
+    .foot{margin-top:14px;color:var(--muted);font-size:12px}
+    .split{display:grid;gap:12px;grid-template-columns:1fr}
+    @media (min-width:560px){.split{grid-template-columns:1fr 1fr}}
+    .list{display:grid;gap:8px}
+    .pill{display:flex;justify-content:space-between;gap:10px;background:rgba(255,255,255,.02);
+      border:1px solid var(--border);border-radius:12px;padding:8px 10px}
+    .pill b{font-weight:800}
+    .hint{color:var(--muted);font-size:13px}
+    a{color:#9bbcff;text-decoration:none} a:hover{text-decoration:underline}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="badge">BM20</div>
+    <div>
+      <h1>BM20 Index — Latest</h1>
+      <div class="sub" id="asof">로딩 중…</div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- LEFT -->
+    <div class="card">
+      <div id="chart" style="height:360px;"></div>
+
+      <div class="row" style="margin-top:12px;">
+        <div class="kpi"><h3>BM20 레벨</h3><div class="val" id="kpi-level">—</div></div>
+        <div class="kpi"><h3>전일 대비</h3><div class="val chg" id="kpi-d1">—</div></div>
+        <div class="kpi"><h3>7D</h3><div class="val chg" id="kpi-7d">—</div></div>
+        <div class="kpi"><h3>30D</h3><div class="val chg" id="kpi-30d">—</div></div>
+        <div class="kpi"><h3>YTD</h3><div class="val chg" id="kpi-ytd">—</div></div>
+        <div class="kpi"><h3>1Y</h3><div class="val chg" id="kpi-1y">—</div></div>
+      </div>
+
+      <div class="row" style="margin-top:8px;">
+        <div class="kpi"><h3>김치 프리미엄</h3><div class="val chg" id="kpi-kimchi">—</div></div>
+        <div class="kpi"><h3>Funding (BTC)</h3><div class="val chg" id="kpi-f-btc">—</div></div>
+        <div class="kpi"><h3>Funding (ETH)</h3><div class="val chg" id="kpi-f-eth">—</div></div>
+      </div>
+
+      <div class="foot">소스: <code>series.json</code>, <code>latest.json</code>(또는 <code>bm20_latest.json</code>), <code>contrib_top.json</code></div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="card">
+      <h3 style="margin:0 0 10px">Best 3 / Worst 3 (기여도)</h3>
+      <div class="split">
+        <div>
+          <div class="hint" style="margin:0 0 6px">Best 3</div>
+          <div class="list" id="best-list"><div class="hint">로딩 중…</div></div>
+        </div>
+        <div>
+          <div class="hint" style="margin:0 0 6px">Worst 3</div>
+          <div class="list" id="worst-list"><div class="hint">로딩 중…</div></div>
+        </div>
+      </div>
+      <div id="bwChart" style="height:220px;margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    빠른 링크:
+    <a href="./series.json">series.json</a> ·
+    <a href="./latest.json">latest.json</a> ·
+    <a href="./bm20_latest.json">bm20_latest.json</a> ·
+    <a href="./contrib_top.json">contrib_top.json</a>
+  </div>
+</div>
+
+<script>
+(async () => {
+  // helpers
+  const fmtPct = x => (x==null||isNaN(x)) ? "—" : (x>=0? "+" : "") + (100*x).toFixed(2) + "%";
+  const fmtNum = x => (x==null||isNaN(x)) ? "—" : Number(x).toLocaleString(undefined,{maximumFractionDigits:2});
+  const setText = (id, html) => { const el=document.getElementById(id); if(el) el.innerHTML = html; };
+  const setChg = (id, v) => { const el=document.getElementById(id); if(!el) return;
+    el.classList.remove("up","down"); if(v==null||isNaN(v)) return; el.classList.add(v>=0?"up":"down"); };
+
+  const getJSON = async p => { try{ const r=await fetch(p,{cache:"no-store"}); if(!r.ok) throw 0; return await r.json(); }catch{ return null; } };
+
+  const [series, latest, contrib] = await Promise.all([
+    getJSON("./series.json"),
+    (async()=> (await getJSON("./latest.json")) || (await getJSON("./bm20_latest.json")))(),
+    getJSON("./contrib_top.json")
+  ]);
+
+  // latest box
+  if (latest) {
+    const asOf = latest.asOf || latest.date || (Array.isArray(series)&&series.length? series.at(-1).date : null);
+    document.getElementById("asof").textContent = `업데이트: ${asOf || "알 수 없음"}`;
+    setText("kpi-level", fmtNum(latest.bm20Level));
+    setText("kpi-d1", fmtPct(latest.bm20ChangePct)); setChg("kpi-d1", latest.bm20ChangePct);
+    const r = latest.returns || {};
+    [["kpi-7d","7D"],["kpi-30d","30D"],["kpi-ytd","YTD"],["kpi-1y","1Y"]].forEach(([id,k])=>{
+      setText(id, fmtPct(r[k])); setChg(id, r[k]);
+    });
+    if ("kimchi" in latest){ setText("kpi-kimchi", fmtPct(latest.kimchi)); setChg("kpi-kimchi", latest.kimchi); }
+    if (latest.funding){ setText("kpi-f-btc", fmtPct(latest.funding.btc)); setText("kpi-f-eth", fmtPct(latest.funding.eth)); }
+  } else {
+    document.getElementById("asof").textContent = "업데이트: latest.json 없음";
+  }
+
+  // line chart
+  const chart = echarts.init(document.getElementById('chart'));
+  if (Array.isArray(series) && series.length){
+    const xs=[], ys=[];
+    for (const row of series){
+      if (Array.isArray(row) && row.length>=2){ xs.push(String(row[0])); ys.push(Number(row[1])); }
+      else if (row && "date" in row){ xs.push(String(row.date)); ys.push(Number(row.level ?? row.index ?? row.value ?? row.close ?? row.bm20Level)); }
+    }
+    chart.setOption({
+      backgroundColor:'transparent', tooltip:{trigger:'axis'},
+      grid:{left:30,right:10,top:18,bottom:24},
+      xAxis:{type:'category',data:xs,axisLabel:{color:'#9bbcff',fontSize:11}},
+      yAxis:{type:'value',axisLabel:{color:'#9bbcff',fontSize:11}},
+      series:[{type:'line',data:ys,smooth:true,showSymbol:false,lineStyle:{width:2}}]
+    });
+  } else {
+    chart.setOption({title:{text:'series.json 없음',left:'center',textStyle:{color:'#9bbcff'}}});
+  }
+
+  // contrib best/worst
+  const bestEl = document.getElementById("best-list"), worstEl = document.getElementById("worst-list");
+  const bwChart = echarts.init(document.getElementById('bwChart'));
+  let best=[], worst=[];
+  if (contrib){
+    if (Array.isArray(contrib.top) || Array.isArray(contrib.best)) best = (contrib.top || contrib.best);
+    if (Array.isArray(contrib.bottom) || Array.isArray(contrib.worst)) worst = (contrib.bottom || contrib.worst);
+    if ((!best.length || !worst.length) && Array.isArray(contrib)){
+      const norm = contrib.map(x=>({sym:String(x.symbol||x.sym||x.ticker||x.name||"?"),
+                                    v:Number(x.contrib||x.contribution||x.value||x.weight||0)}))
+                          .filter(x=>Number.isFinite(x.v));
+      norm.sort((a,b)=>b.v-a.v);
+      best = norm.slice(0,3);
+      worst = norm.slice(-3).reverse();
+    }
+  }
+  const draw = (el, arr, pos=true) => {
+    el.innerHTML=''; if(!arr||!arr.length){ el.innerHTML='<div class="hint">데이터 없음</div>'; return; }
+    arr.slice(0,3).forEach(x=>{
+      const v=Number(x.v ?? x.value ?? x.contrib ?? x.contribution ?? 0);
+      const li=document.createElement('div'); li.className='pill';
+      li.innerHTML = `<b>${x.sym||x.symbol||x.ticker||x.name}</b>
+                      <span class="chg ${ (pos? v>=0 : v<=0) ? 'up':'down' }">${fmtPct(v)}</span>`;
+      el.appendChild(li);
+    });
+  };
+  draw(bestEl,best,true); draw(worstEl,worst,false);
+
+  const bCats=(best||[]).slice(0,3).map(x=>x.sym||x.symbol||x.ticker||x.name||'?');
+  const bVals=(best||[]).slice(0,3).map(x=>Number(x.v ?? x.value ?? x.contrib ?? x.contribution ?? 0));
+  const wCats=(worst||[]).slice(0,3).map(x=>x.sym||x.symbol||x.ticker||x.name||'?');
+  const wVals=(worst||[]).slice(0,3).map(x=>Number(x.v ?? x.value ?? x.contrib ?? x.contribution ?? 0));
+  const cats=bCats.concat(wCats), vals=bVals.concat(wVals.map(v=>-Math.abs(v)));
+  bwChart.setOption({
+    backgroundColor:'transparent', grid:{left:40,right:10,top:10,bottom:24},
+    xAxis:{type:'category',data:cats,axisLabel:{color:'#9bbcff'}},
+    yAxis:{type:'value',axisLabel:{color:'#9bbcff'},splitLine:{show:true}},
+    tooltip:{trigger:'axis'},
+    series:[{type:'bar',data:vals, itemStyle:{color:(p)=> p.value>=0 ? '#2E7D32' : '#C62828'}}]
+  });
+})();
+</script>
+</body>
+</html>
