@@ -32,7 +32,63 @@ active: performance
   </div>
 </div>
 
+<div id="bm20-trend" style="height:380px;max-width:1100px;margin:12px 0;"></div>
 <script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
+<script>
+(function(){
+  // GitHub Pages baseurl 대응: _config.yml의 baseurl: /bm
+  const BASE = '{{ site.baseurl | default: "" }}';
+  const SERIES_URL = BASE + '/series.json';          // 예: /bm/series.json
+  const RAW_URL    = BASE + '/series_raw.json';      // 있으면 2라인, 없으면 1라인만
+
+  const el = document.getElementById('bm20-trend');
+  const chart = echarts.init(el);
+
+  function fmt(x){ return (x||0).toFixed(2); }
+
+  fetch(SERIES_URL).then(r=>r.json()).then(bmArr=>{
+    // 예상 포맷: [{date:"YYYY-MM-DD", level: 6905.28}, ...]
+    const dates = bmArr.map(o=>o.date);
+    const bm20  = bmArr.map(o=>+((o.level ?? o.index)));
+
+    // RAW가 있으면 같이 그려주고, 없으면 BM20만
+    fetch(RAW_URL).then(r=> r.ok ? r.json() : null).then(rawArr=>{
+      const hasRaw = Array.isArray(rawArr) && rawArr.length;
+      const raw = hasRaw ? rawArr.map(o=>+((o.level ?? o.index))) : null;
+
+      const series = [{
+        name: 'BM20',
+        type: 'line',
+        showSymbol: false,
+        data: bm20
+      }];
+      if (hasRaw) {
+        series.unshift({
+          name: 'Raw',
+          type: 'line',
+          showSymbol: false,
+          lineStyle: {type:'dashed'},
+          data: raw
+        });
+      }
+
+      chart.setOption({
+        backgroundColor: 'transparent',
+        tooltip: { trigger: 'axis', valueFormatter: v=>fmt(v) },
+        legend: { top: 0 },
+        grid: { left: 40, right: 20, top: 30, bottom: 40 },
+        xAxis: { type: 'category', data: dates },
+        yAxis: { type: 'value', scale: true },
+        series
+      });
+      window.addEventListener('resize', ()=>chart.resize());
+    });
+  }).catch(err=>{
+    console.error('BM20 trend load error:', err);
+  });
+})();
+</script>
+
 <script>
 // ✅ Index history CSV (Raw vs BM20 Index)
 const CSV_INDEX_COMPARE = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTndyrPd3WWwFtfzv2CZxJeDcH-l8ibQIdO5ouYS4HsaGpbeXQQbs6WEr9qPqqZbRoT6cObdFxJpief/pub?gid=1685318213&single=true&output=csv";
