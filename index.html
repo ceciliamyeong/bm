@@ -300,5 +300,50 @@ qs('#btnToggleSeries').addEventListener('click',()=>qs('#seriesDump').classList.
 
 loadLatest(); loadSeries(); tryImages();
 </script>
+  <script>
+async function loadComponentsAndRenderBars(){
+  const tryFetch = async (u)=>{ try{ const r=await fetch(u,{cache:'no-store'}); if(r.ok) return r.json(); }catch(e){} };
+  const data = await (tryFetch('latest_components.json') ||
+                      tryFetch('bm/latest_components.json') ||
+                      tryFetch('bm20_components.json'));
+  if(!data || !Array.isArray(data.components)) return;
+
+  const rows = data.components.filter(r=>r.ret_1d!=null);
+  // 1D 수익률 내림차순 정렬
+  rows.sort((a,b)=>(b.ret_1d??-Infinity)-(a.ret_1d??-Infinity));
+
+  // Best/Worst 3 텍스트 교체
+  const top3 = rows.slice(0,3).map(r=>r.symbol).join(' · ');
+  const bot3 = rows.slice(-3).reverse().map(r=>r.symbol).join(' · ');
+  const bestEl = document.getElementById('best3');
+  const worstEl = document.getElementById('worst3');
+  if(bestEl) bestEl.textContent = top3 || '—';
+  if(worstEl) worstEl.textContent = bot3 || '—';
+
+  // 뉴스 카드 내 막대 영역(.bm-bars) 채우기 (상위 12개만 표시)
+  const host = document.querySelector('.bm-bars');
+  if(!host) return;
+  const topN = rows.slice(0,12);
+
+  // 가시화용: 1D 수익률 절댓값 최대치 기준 너비 계산
+  const maxAbs = Math.max(...topN.map(r=>Math.abs(r.ret_1d || 0))) || 1;
+
+  host.innerHTML = topN.map(r=>{
+    const pct = (r.ret_1d*100);
+    const w   = Math.max(2, Math.round(Math.abs(pct)/maxAbs*100)); // 최소 2%
+    const signClass = pct>=0 ? '' : 'filter: hue-rotate(160deg) saturate(1.2); background:#C62828';
+    return `
+      <div class="bm-row">
+        <div class="bm-ticker">${r.symbol}</div>
+        <div class="bm-shell">
+          <div class="bm-bar" style="width:${w}%; ${pct>=0?'':'background:#C62828'}"></div>
+        </div>
+        <div class="bm-pct" style="${pct>=0?'color:#9ef3b4':'color:#ffd1d1'}">${pct>=0?'+':''}${pct.toFixed(2)}%</div>
+      </div>`;
+  }).join('');
+}
+loadComponentsAndRenderBars();
+</script>
+
 </body>
 </html>
