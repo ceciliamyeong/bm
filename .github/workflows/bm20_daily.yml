@@ -64,43 +64,48 @@ jobs:
           python augment_latest.py || echo "enrich failed; keep going"
       # ✅ 산출물은 루트로 복사 (index.html이 루트에서 읽음)
 
-      - name: Prepare site artifacts at repo root
+      - name: Prepare site artifacts to docs/
         run: |
           set -euo pipefail
+      
+          SITE_SRC="docs"
+          mkdir -p "$SITE_SRC"
       
           copy_if_present () {
             src="$1"; dest="$2"
             if [ -f "$src" ]; then
-              if [ -f "$dest" ] && [ "$src" -ef "$dest" ]; then
-                echo "skip: $src == $dest"
-              else
-                cp -f "$src" "$dest"
-                echo "copied: $src -> $dest"
-              fi
+              cp -f "$src" "$SITE_SRC/$dest"
+              echo "copied: $src -> $SITE_SRC/$dest"
             fi
           }
       
-          # latest.json 후보 -> 루트
+          # latest.json 후보 → docs/
           copy_if_present latest.json latest.json
           copy_if_present bm20_latest.json latest.json
           copy_if_present site/latest.json latest.json
           copy_if_present site/bm20_latest.json latest.json
-          # out/날짜 폴더에서 최신 파일 하나 찾아서 루트로
-          LATEST_IN_OUT=$(find out -maxdepth 2 -type f -name "bm20_latest.json" | sort | tail -n1 || true)
+      
+          # out/ 날짜 폴더에서 최신 파일도 폴백
+          LATEST_IN_OUT=$(find out -maxdepth 2 -type f -name "bm20_latest.json" -o -name "latest.json" | sort | tail -n1 || true)
           if [ -n "${LATEST_IN_OUT:-}" ]; then copy_if_present "$LATEST_IN_OUT" latest.json; fi
       
-          # series.json 후보 -> 루트
+          # series.json 후보 → docs/
           copy_if_present series.json series.json
           copy_if_present bm20_series.json series.json
           copy_if_present bm/series.json series.json
           copy_if_present bm/bm20_series.json series.json
           copy_if_present site/series.json series.json
           copy_if_present site/bm20_series.json series.json
-          SERIES_IN_OUT=$(find out -maxdepth 2 -type f -name "bm20_series.json" -o -name "series.json" | sort | tail -n1 || true)
+          SERIES_IN_OUT=$(find out -maxdepth 2 -type f -name "bm20_series.json" -o -name "series.json" -o -name "bm20_index_history.json" | sort | tail -n1 || true)
           if [ -n "${SERIES_IN_OUT:-}" ]; then copy_if_present "$SERIES_IN_OUT" series.json; fi
       
-          echo "---- present at root ----"
-          ls -l latest.json series.json || true 
+          # (선택) 기여도 Top/Bottom → docs/
+          CONTRIB_IN_OUT=$(find out -maxdepth 2 -type f -name "contrib_top.json" -o -name "bm20_contrib_top.json" | sort | tail -n1 || true)
+          if [ -n "${CONTRIB_IN_OUT:-}" ]; then copy_if_present "$CONTRIB_IN_OUT" contrib_top.json; fi
+      
+          echo "---- present under docs/ ----"
+          ls -l docs/latest.json docs/series.json || true
+
 
       - name: Debug — tree (top 2 levels)
         run: |
@@ -110,6 +115,7 @@ jobs:
         run: |
           set -euo pipefail
           python bm20_publish.py
+          
       - name: Commit & Push outputs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -119,9 +125,8 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
       
-          # 변경사항 스테이징
           git add -A \
-            latest.json series.json \
+            docs/latest.json docs/series.json docs/contrib_top.json \
             latest.html \
             bm/latest.html \
             bm/bm20_bar_latest.png bm/bm20_trend_latest.png bm/bm20_vs_btc.png \
