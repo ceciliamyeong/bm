@@ -256,58 +256,7 @@ def _load_daily_returns_today() -> pd.DataFrame | None:
  
 
 
-# =============================
-# Snapshot & history
-# =============================
-def get_recent_history(days: int = 60) -> pd.DataFrame:
-    try:
-        df = load_bm_index_full()
-    except Exception:
-        df = load_index_history_fallback()
-    if days and len(df) > days:
-        df = df.tail(days).copy()
-    return df[["date","index_level","index_ret_pct"]]
 
-@dataclass
-class Bm20Snapshot:  # re-declared for type checkers
-class Bm20Snapshot:
-    pass
-
-def get_today_snapshot() -> Bm20Snapshot:
-    try:
-        full = load_bm_index_full()
-    except Exception:
-        full = load_index_history_fallback()
-    latest = full.iloc[-1]
-    prev   = full.iloc[-2] if len(full) >= 2 else latest
-
-    weights = _load_weights_today()
-    rets    = _load_daily_returns_today()
-
-    top_movers_df = None
-    contrib_df = None
-    if weights is not None and rets is not None and len(rets) > 0:
-        contrib_df = weights.merge(rets, on="symbol", how="left")
-        contrib_df["ret_pct"] = pd.to_numeric(contrib_df["ret_pct"], errors="coerce").fillna(0.0)
-        contrib_df["contrib_bps"] = contrib_df["weight"] * contrib_df["ret_pct"] * 100.0
-        top_movers_df = contrib_df[["symbol","name","ret_pct","contrib_bps"]].copy()
-
-    mcap_total = float("nan")
-    turnover_usd = float("nan")
-    etf_flow_usd = None
-    cex_netflow_usd = None
-
-    return Bm20Snapshot(
-        date=latest["date"],
-        index_level=float(latest["index_level"]),
-        index_chg_pct=float(latest["index_ret_pct"]),
-        mcap_total=mcap_total,
-        turnover_usd=turnover_usd,
-        etf_flow_usd=etf_flow_usd,
-        cex_netflow_usd=cex_netflow_usd,
-        top_movers=top_movers_df,
-        contributions=contrib_df
-    )
 
 # =============================
 # News sentence generator
