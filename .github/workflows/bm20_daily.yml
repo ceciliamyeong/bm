@@ -1,51 +1,27 @@
-name: BM20 Daily (Auto, Yahoo)
+name: BM20 Daily (Yahoo, 2024-base)
 
 on:
   schedule:
-    - cron: "10 23 * * *"   # 매일 08:10 KST
+    - cron: "10 23 * * *"   # 매일 08:10 KST (UTC 23:10)
   workflow_dispatch:
 
 permissions:
   contents: write
-
-concurrency:
-  group: "bm20-daily-main"
-  cancel-in-progress: true
 
 jobs:
   run:
     runs-on: ubuntu-latest
     env:
       TZ: Asia/Seoul
-      # 시크릿/변수 이름 폴백(당신 레포에 있는 키: SHEET_ID, GOOGLE_SERVICE_ACCOUNT_JSON)
-      BM20_SHEET_ID: ${{ secrets.BM20_SHEET_ID || secrets.SHEET_ID || vars.BM20_SHEET_ID || vars.SHEET_ID }}
-      GSPREAD_SA_JSON: ${{ secrets.GSPREAD_SA_JSON || secrets.GOOGLE_SERVICE_ACCOUNT_JSON || vars.GSPREAD_SA_JSON || vars.GOOGLE_SERVICE_ACCOUNT_JSON }}
-      URL_WEIGHTS: ${{ secrets.URL_WEIGHTS || vars.URL_WEIGHTS }}
-      COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY || vars.COINGECKO_API_KEY }}
-      BM20_OUTPUT_ROOT: out
-      
+      OUT_DIR: out
+      BM20_BASE_DATE: "2024-01-01"
+      BM20_BASE_EXCLUDE_CONSISTENT: "0"
+
     steps:
-      - name: Checkout (main)
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: main
           fetch-depth: 0
-
-      - name: Debug:"current ref & file snippet"
-        run: |
-          echo "REF=$GITHUB_REF"
-          echo "SHA=$GITHUB_SHA"
-          git log -1 --oneline
-          echo "== Have files? =="
-          ls -la
-          if [ -f bm20_daily_auto.py ]; then
-            echo "--- bm20_daily_auto.py head ---"
-            sed -n '1,60p' bm20_daily_auto.py || true
-          fi
-          if [ -f bm20_daily.py ]; then
-            echo "--- bm20_daily.py (140~165) ---"
-            sed -n '140,165p' bm20_daily.py || true
-          fi
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -55,27 +31,102 @@ jobs:
 
       - name: Install dependencies
         run: |
+          set -euo pipefail
           python -m pip install --upgrade pip
-          pip install gspread google-auth google-auth-oauthlib google-auth-httplib2 pandas yfinance requests
+          pip install requests pandas matplotlib python-dateutil reportlab
+      - name: Install Korean fonts (Nanum + Noto CJK)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-nanum fonts-noto-cjk fontconfig
+          sudo fc-cache -f -v
+      # 필요 시 기준일 바꿀 때 캐시 초기화 (옵션)
+      - name: Reset base cache (optional)
+        run: rm -f out/base_cache.json || true
 
-      - name: Run BM20 daily (Yahoo per-symbol returns)
+      - name: Debug — find downCount
+        run: |
+          echo "Searching for downCount..."
+          grep -n "{downCount}" bm20_daily.py || true
+          grep -nE '\bdownCount\b' bm20_daily.py || true
+      - name: Run BM20 daily 
         run: |
           set -euo pipefail
-          if [ ! -f bm20_daily_auto.py ]; then
-            echo "::error::bm20_daily_auto.py not found at repo root."
+          if [ ! -f bm20_daily.py ]; then
+            echo "::error::bm20_daily.py not found at repo root."
             exit 1
           fi
-          python bm20_daily_auto.py
-
-      # (선택) 산출물 업로드 예시
-      - name: Package out/
-        if: always()
+          python bm20_daily.py
+        
+      # ✅ 김치/펀딩 추가 
+      - name: Enrich latest.json (kimchi & funding)
         run: |
-          mkdir -p out
-          echo "ok" > out/.keep
-      - name: Upload artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: bm20-out
-          path: out
+          set -euo pipefail
+          python augment_latest.py || echo "enrich failed; keep going"
+      # ✅ 산출물은 루트로 복사 (index.html이 루트에서 읽음)
+
+      - name: Prepare site artifacts at repo root
+        run: |
+          set -euo pipefail
+      
+          copy_if_present () {
+            src="$1"; dest="$2"
+            if [ -f "$src" ]; then
+              if [ -f "$dest" ] && [ "$src" -ef "$dest" ]; then
+                echo "skip: $src == $dest"
+              else
+                cp -f "$src" "$dest"
+                echo "copied: $src -> $dest"
+              fi
+            fi
+          }
+      
+          # latest.json 후보 -> 루트
+          copy_if_present latest.json latest.json
+          copy_if_present bm20_latest.json latest.json
+          copy_if_present site/latest.json latest.json
+          copy_if_present site/bm20_latest.json latest.json
+          # out/날짜 폴더에서 최신 파일 하나 찾아서 루트로
+          LATEST_IN_OUT=$(find out -maxdepth 2 -type f -name "bm20_latest.json" | sort | tail -n1 || true)
+          if [ -n "${LATEST_IN_OUT:-}" ]; then copy_if_present "$LATEST_IN_OUT" latest.json; fi
+      
+          # series.json 후보 -> 루트
+          copy_if_present series.json series.json
+          copy_if_present bm20_series.json series.json
+          copy_if_present bm/series.json series.json
+          copy_if_present bm/bm20_series.json series.json
+          copy_if_present site/series.json series.json
+          copy_if_present site/bm20_series.json series.json
+          SERIES_IN_OUT=$(find out -maxdepth 2 -type f -name "bm20_series.json" -o -name "series.json" | sort | tail -n1 || true)
+          if [ -n "${SERIES_IN_OUT:-}" ]; then copy_if_present "$SERIES_IN_OUT" series.json; fi
+      
+          echo "---- present at root ----"
+          ls -l latest.json series.json || true 
+
+      - name: Debug — tree (top 2 levels)
+        run: |
+          echo "PWD=$(pwd)"
+          find . -maxdepth 2 -type f | sort | sed -n '1,200p'
+      - name: Publish latest.html (뉴스리포트)
+        run: |
+          set -euo pipefail
+          python bm20_publish.py
+      - name: Commit & Push outputs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          DATE=$(TZ=Asia/Seoul date +%F)
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+          # 변경사항 스테이징
+          git add -A \
+            latest.json series.json \
+            latest.html \
+            bm/latest.html \
+            bm/bm20_bar_latest.png bm/bm20_trend_latest.png bm/bm20_vs_btc.png \
+            "out/${DATE}" || true
+      
+          git commit -m "BM20 daily (base=${BM20_BASE_DATE}) ${DATE}" || echo "No changes"
+          git pull --rebase --autostash
+          git push
