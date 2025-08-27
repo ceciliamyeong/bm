@@ -437,6 +437,153 @@ def upload_if_configured(local_path: str) -> None:
     except Exception as e:
         print(f"[WARN] Upload skipped or failed for {local_path}: {e}")
 
+
+
+
+# =============================
+# Snapshot builder (drop-in)
+# =============================
+import os, json, datetime as dt
+from pathlib import Path
+
+def _read_json_first(paths):
+    """여러 경로 후보 중 존재하는 첫 JSON을 로드."""
+    for p in paths:
+        try:
+            pp = Path(p)
+            if pp.is_file():
+                with open(pp, "r", encoding="utf-8") as f:
+                    return json.load(f)
+        except Exception as e:
+            print(f"[WARN] JSON read failed: {p} -> {e}")
+    return None
+
+def _load_bm20_from_history(csv_path="out/history/bm20_index_history.csv"):
+    """히스토리 CSV에서 최신값/전일비를 계산 (폴백)."""
+    import pandas as pd
+    try:
+        df = pd.read_csv(csv_path)
+        # 컬럼 정규화
+        cols = {c.lower(): c for c in df.columns}
+        date_col = next(c for c in df.columns if c.lower() == "date")
+        idx_col  = next(c for c in df.columns if c.lower() in ("index","level","bm20_index","bm20","index_level"))
+        df = df[[date_col, idx_col]].rename(columns={date_col:"date", idx_col:"index_level"})
+        df["date"] = pd.to_datetime(df["date"])
+        df = df.sort_values("date").reset_index(drop=True)
+        last = df.iloc[-1]
+        prev = df.iloc[-2] if len(df) >= 2 else last
+        level = float(last["index_level"])
+        prev_level = float(prev["index_level"]) if float(prev["index_level"]) != 0 else level
+        chg = level - prev_level
+        chg_pct = (chg / prev_level * 100.0) if prev_level != 0 else 0.0
+        return {
+            "date": str(last["date"].date()),
+            "bm20": {"index_level": level, "d1_change": chg, "d1_change_pct": chg_pct}
+        }
+    except Exception as e:
+        print(f"[WARN] load_bm20_from_history failed: {e}")
+        return None
+
+def _safe_float(x, default=None):
+    try:
+        return float(x)
+    except Exception:
+        return default
+
+def _try_fetch_btc_eth_yf():
+    """yfinance가 설치되어 있으면 BTC/ETH 종가(또는 최근가) 폴백 로드."""
+    try:
+        import yfinance as yf
+        # 최근 2일치 받았다가 마지막 유효값 사용
+        btc = yf.Ticker("BTC-USD").history(period="5d", interval="1d")["Close"]
+        eth = yf.Ticker("ETH-USD").history(period="5d", interval="1d")["Close"]
+        btc_v = float(btc.dropna().iloc[-1]) if len(btc.dropna()) else None
+        eth_v = float(eth.dropna().iloc[-1]) if len(eth.dropna()) else None
+        return {"btc_usd": btc_v, "eth_usd": eth_v}
+    except Exception as e:
+        print(f"[WARN] yfinance fetch failed: {e}")
+        return {"btc_usd": None, "eth_usd": None}
+
+def get_today_snapshot():
+    """
+    가능한 소스에서 오늘 스냅샷을 구성:
+    1) docs/latest.json 또는 out/latest/latest.json 계열
+    2) out/history/bm20_index_history.csv 폴백
+    3) BTC/ETH는 latest.json → 실패 시 yfinance 폴백
+    """
+    # 1) 후보 JSON 로드
+    latest = _read_json_first([
+        "docs/latest.json",
+        "docs/bm20_latest.json",
+        "site/latest.json",
+        "site/bm20_latest.json",
+        "out/latest/latest.json",
+        "out/latest/bm20_latest.json",
+        "latest.json",
+        "bm20_latest.json",
+    ])
+
+    snap = {
+        "date": dt.datetime.now(KST).date().isoformat(),
+        "bm20": {"index_level": None, "d1_change": None, "d1_change_pct": None},
+        "btc_usd": None,
+        "eth_usd": None,
+        # 선택 필드 (있으면 build_news_sentences가 활용 가능)
+        "bm20_over_btc": None,
+        "bm20_over_eth": None,
+    }
+
+    # 2) latest.json에서 추출 시도
+    if isinstance(latest, dict):
+        # 흔한 키들 최대한 포괄
+        # BM20 level
+        lvl = (latest.get("bm20_level") or latest.get("index_level") or
+               latest.get("bm20", {}).get("index_level"))
+        chg = (latest.get("bm20_d1_change") or latest.get("d1_change") or
+               latest.get("bm20", {}).get("d1_change"))
+        chg_pct = (latest.get("bm20_d1_change_pct") or latest.get("d1_change_pct") or
+                   latest.get("bm20", {}).get("d1_change_pct"))
+        snap["bm20"]["index_level"] = _safe_float(lvl)
+        snap["bm20"]["d1_change"] = _safe_float(chg)
+        snap["bm20"]["d1_change_pct"] = _safe_float(chg_pct)
+
+        # BTC/ETH 가격
+        btc = (latest.get("btc_usd") or latest.get("btc", {}).get("usd") or latest.get("btc_price_usd"))
+        eth = (latest.get("eth_usd") or latest.get("eth", {}).get("usd") or latest.get("eth_price_usd"))
+        snap["btc_usd"] = _safe_float(btc)
+        snap["eth_usd"] = _safe_float(eth)
+
+        # 상대지수(있으면)
+        snap["bm20_over_btc"] = _safe_float(latest.get("bm20_over_btc"))
+        snap["bm20_over_eth"] = _safe_float(latest.get("bm20_over_eth"))
+
+        # 날짜
+        date_key = (latest.get("date") or latest.get("asof") or latest.get("as_of"))
+        if date_key:
+            try:
+                snap["date"] = str(pd.to_datetime(date_key).date())
+            except Exception:
+                pass
+
+    # 3) BM20이 비어 있으면 히스토리 폴백
+    if snap["bm20"]["index_level"] is None:
+        hist_fallback = _load_bm20_from_history()
+        if hist_fallback:
+            snap["date"] = hist_fallback["date"]
+            snap["bm20"] = hist_fallback["bm20"]
+
+    # 4) BTC/ETH가 비어 있으면 yfinance 폴백
+    if snap["btc_usd"] is None or snap["eth_usd"] is None:
+        fx = _try_fetch_btc_eth_yf()
+        snap["btc_usd"] = snap["btc_usd"] or fx["btc_usd"]
+        snap["eth_usd"] = snap["eth_usd"] or fx["eth_usd"]
+
+    return snap
+
+
+
+
+
 # =============================
 # Main
 # =============================
