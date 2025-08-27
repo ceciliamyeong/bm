@@ -128,15 +128,24 @@ jobs:
           test -f bm/api/diag_btc.json    || (echo "ERR: diag_btc.json missing"; exit 1)
           test -f bm/api/contrib_top.json || (echo "ERR: contrib_top.json missing"; exit 1)
 
-
-      # ---- Commit & push (NO deploy-pages) ----
+      # ---- Commit & push (safe with autostash) ----
       - name: Commit & push
         run: |
           set -e
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # 원격 최신 반영 (작업트리 변경은 자동 스태시)
+          git fetch origin
+          git pull --rebase --autostash
+
+          # bm/api만 스테이지 → 변경 있으면 커밋/푸시
           git add -A bm/api
-          git diff --cached --quiet && echo "no changes" || \
+          if ! git diff --cached --quiet; then
             git commit -m "[skip ci] data: update BM20 API $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-          git pull --rebase
-          git push
+            git push
+          else
+            echo "no changes"
+          fi
+
+      
