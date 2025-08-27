@@ -38,11 +38,19 @@ def coingecko_ohlc_daily(coin_id: str, vs: str="usd", days: str="max") -> pd.Dat
     df = df.drop_duplicates("date").sort_values("date").reset_index(drop=True)
     return df
 
+# util_price.py
+
+def load_cg_close(coin_id: str, start_date: str="2017-01-01", vs: str="usd") -> pd.DataFrame:
+    df = coingecko_ohlc_daily(coin_id, vs=vs, days="max")
+    df = df[df["date"] >= pd.to_datetime(start_date).date()].reset_index(drop=True)
+    return df
+
 def load_btc_close(start_date: str="2017-01-01", vs: str="usd") -> pd.DataFrame:
     return load_cg_close("bitcoin", start_date, vs)
 
 def load_eth_close(start_date: str="2017-01-01", vs: str="usd") -> pd.DataFrame:
     return load_cg_close("ethereum", start_date, vs)
+
 
 def load_bm20_index_history(csv_path: str="out/history/bm20_index_history.csv") -> pd.DataFrame:
     df = pd.read_csv(csv_path)
