@@ -48,6 +48,7 @@ jobs:
           echo "Searching for downCount..."
           grep -n "{downCount}" bm20_daily.py || true
           grep -nE '\bdownCount\b' bm20_daily.py || true
+   
       - name: Run BM20 daily 
         run: |
           set -euo pipefail
@@ -56,6 +57,12 @@ jobs:
             exit 1
           fi
           python bm20_daily.py
+
+      # ✅ BM20 vs BTC/ETH 비교 지수/차트 생성
+      - name: Build BM20 vs BTC/ETH charts
+        run: |
+          set -euo pipefail
+          python -m scripts.bm20_vs_bench
         
       # ✅ 김치/펀딩 추가 
       - name: Enrich latest.json (kimchi & funding)
