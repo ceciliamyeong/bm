@@ -89,7 +89,6 @@ jobs:
           }
 
           # latest.json 후보 → root
-          copy_if_present latest.json latest.json
           copy_if_present bm20_latest.json latest.json
           copy_if_present site/latest.json latest.json
           copy_if_present site/bm20_latest.json latest.json
@@ -99,7 +98,6 @@ jobs:
           if [ -n "${LATEST_IN_OUT:-}" ]; then copy_if_present "$LATEST_IN_OUT" latest.json; fi
 
           # series.json 후보 → root
-          copy_if_present series.json series.json
           copy_if_present bm20_series.json series.json
           copy_if_present bm/series.json series.json
           copy_if_present bm/bm20_series.json series.json
