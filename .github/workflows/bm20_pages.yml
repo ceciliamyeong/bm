@@ -112,6 +112,19 @@ jobs:
           echo "---- bm/api ----"
           find bm/api -maxdepth 1 -type f -print | sort || true
 
+     
+      # ---- Sanity check files (JSON only) ----
+      - name: Sanity check files (JSON only)
+        run: |
+          echo "---- bm/api listing ----"
+          ls -la bm/api || true
+          test -f bm/api/series.json      || (echo "ERR: series.json missing"; exit 1)
+          test -f bm/api/latest.json      || (echo "ERR: latest.json missing"; exit 1)
+          test -f bm/api/stats.json       || (echo "ERR: stats.json missing"; exit 1)
+          test -f bm/api/diag_btc.json    || (echo "ERR: diag_btc.json missing"; exit 1)
+          test -f bm/api/contrib_top.json || (echo "ERR: contrib_top.json missing"; exit 1)
+
+
       # ---- Commit & push (NO deploy-pages) ----
       - name: Commit & push
         run: |
