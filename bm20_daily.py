@@ -706,7 +706,7 @@ def get_today_snapshot():
         "site/bm20_latest.json",
     ])
  
- snap = {
+         snap = {
         "date": dt.datetime.now(KST).date().isoformat(),
         "bm20": {"index_level": None, "d1_change": None, "d1_change_pct": None},
         "btc_usd": None,
