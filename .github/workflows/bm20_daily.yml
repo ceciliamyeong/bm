@@ -127,7 +127,7 @@ jobs:
       - name: Publish latest.html (뉴스리포트)
         run: |
           set -euo pipefail
-          python bm20_publish.py
+          python scripts/generate_report.py
 
       - name: Archive latest report
         run: |
