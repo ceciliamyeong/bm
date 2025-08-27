@@ -75,8 +75,8 @@ jobs:
       - name: Prepare site artifacts to docs/
         run: |
           set -euo pipefail
-      
-          SITE_SRC="docs"
+    
+          SITE_SRC="."
           mkdir -p "$SITE_SRC"
       
           copy_if_present () {
