@@ -35,13 +35,17 @@ jobs:
 
       # ---- Sheet → map CSV ----
       - name: Sync bm20_map from Google Sheets
-        if: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON != '' && secrets.SHEET_ID != '' }}
         env:
           GSPREAD_SA_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
           BM20_SHEET_ID:   ${{ secrets.SHEET_ID }}
         run: |
-          python pull_sheet_map.py
-          head -n 10 bm20_map_btc30.csv || true
+          if [ -z "$GSPREAD_SA_JSON" ] || [ -z "$BM20_SHEET_ID" ]; then
+            echo "Secrets missing, skip sheet sync"
+          else
+            python pull_sheet_map.py
+            head -n 10 bm20_map_btc30.csv || true
+          fi
+
 
       # ---- Build (daily CSV → index) ----
       - name: Build index from CSVs
