@@ -72,6 +72,37 @@ def _as_date(col: pd.Series) -> pd.Series:
     return pd.to_datetime(col, errors="coerce").dt.date
 
 # =============================
+# Ensure news fields (attr guard)
+# =============================
+import math
+from types import SimpleNamespace
+
+def ensure_news_fields(s: SimpleNamespace) -> SimpleNamespace:
+    """
+    build_news_sentences()가 기대하는 필드를 s에 보장.
+    없으면 안전한 기본값으로 채운다.
+    """
+    defaults = {
+        "index_level": None,
+        "index_chg": None,
+        "index_chg_pct": 0.0,   # 없으면 '보합' 처리
+        "mcap_total": float("nan"),
+        "turnover_usd": float("nan"),
+        "etf_flow_usd": None,
+        "top_movers": None,
+        "contributions": None,
+        "btc_usd": None,
+        "eth_usd": None,
+        "bm20_over_btc": None,
+        "bm20_over_eth": None,
+        "date": "",
+    }
+    for k, v in defaults.items():
+        if not hasattr(s, k):
+            setattr(s, k, v)
+    return s
+
+# =============================
 # Snapshot adapter (dict -> attr object)
 # =============================
 from types import SimpleNamespace
@@ -382,20 +413,24 @@ def _fmt_usd(x: Optional[float]) -> str:
         return f"{sign}{ax:,.0f}달러"
 
 def build_news_sentences(s) -> List[str]:
-    headline_dir = "하락" if s.index_chg_pct < 0 else ("상승" if s.index_chg_pct > 0 else "보합")
-    chg = _fmt_pct(s.index_chg_pct)
+    idx_pct = getattr(s, "index_chg_pct", 0.0) or 0.0
+    headline_dir = "하락" if idx_pct < 0 else ("상승" if idx_pct > 0 else "보합")
+    chg = _fmt_pct(idx_pct)
 
     sentences: List[str] = []
     sentences.append(f"BM20 지수 {DATE_STR} {headline_dir}. 전일 대비 {chg}를 기록했다.")
 
-    if not (math.isnan(s.mcap_total) or math.isnan(s.turnover_usd)):
+    mcap_total = getattr(s, "mcap_total", float("nan"))
+    turnover_usd = getattr(s, "turnover_usd", float("nan"))
+    if not (math.isnan(mcap_total) or math.isnan(turnover_usd)):
         sentences.append(
-            f"시가총액은 약 {s.mcap_total/1e9:.1f}억달러, 24시간 거래대금은 {s.turnover_usd/1e9:.1f}억달러로 집계됐다."
+            f"시가총액은 약 {mcap_total/1e9:.1f}억달러, 24시간 거래대금은 {turnover_usd/1e9:.1f}억달러로 집계됐다."
         )
 
-    if s.etf_flow_usd is not None:
-        etf_flow_txt = "순유입" if s.etf_flow_usd > 0 else ("순유출" if s.etf_flow_usd < 0 else "변동 미미")
-        sentences.append(f"현물 ETF 자금은 {etf_flow_txt}을 보이며 {_fmt_usd(s.etf_flow_usd)} 규모로 추정된다.")
+    etf_flow = getattr(s, "etf_flow_usd", None)
+    if etf_flow is not None:
+        etf_flow_txt = "순유입" if etf_flow > 0 else ("순유출" if etf_flow < 0 else "변동 미미")
+        sentences.append(f"현물 ETF 자금은 {etf_flow_txt}을 보이며 {_fmt_usd(etf_flow)} 규모로 추정된다.")
 
     if s.top_movers is not None and len(s.top_movers) > 0:
         top = s.top_movers.nlargest(3, "contrib_bps").copy()
