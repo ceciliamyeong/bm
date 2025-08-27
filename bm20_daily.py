@@ -705,16 +705,14 @@ def get_today_snapshot():
         "site/latest.json",
         "site/bm20_latest.json",
     ])
- 
-         snap = {
+
+    snap = {
         "date": dt.datetime.now(KST).date().isoformat(),
         "bm20": {"index_level": None, "d1_change": None, "d1_change_pct": None},
         "btc_usd": None,
         "eth_usd": None,
-        # 선택 필드 (있으면 build_news_sentences가 활용 가능)
-        "bm20_over_btc": None,
-        "bm20_over_eth": None,
     }
+
 
     # 2) latest.json에서 추출 시도
     if isinstance(latest, dict):
