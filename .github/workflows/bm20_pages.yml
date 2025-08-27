@@ -15,7 +15,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  SITE_SRC: docs   # index.html 있는 폴더(예: docs, 또는 docs/bm)
+  SITE_SRC: .
+  BM20_BASE_DATE: "2024-01-01"   # 공개지수 기준일
 
 jobs:
   build:
@@ -72,25 +73,41 @@ jobs:
             cp out/bm20_index_from_csv.csv out/bm20_index_merged.csv
           fi
 
-      # ---- Soft sanity: first ≈ 100 (로그만) ----
-      - name: Sanity (first must be ~100) [soft]
+      # ---- Soft sanity: log first value ----
+      - name: Sanity (log first value)
         run: |
           python - <<'PY'
           import pandas as pd
           df = pd.read_csv('out/bm20_index_merged.csv')
-          print("first index value =", float(df['index'].iloc[0]))
+          print("first index value (merged) =", float(df['index'].iloc[0]))
           PY
 
-      # ---- Export JSON for web ----
+      # ---- Rebase to base = 2024-01-01 (=100) ----
+      - name: Rebase merged index to base=2024-01-01
+        run: |
+          python - <<'PY'
+          from scripts.rebase import rebase_csv
+          rebase_csv(
+            in_csv="out/bm20_index_merged.csv",
+            out_csv="out/bm20_index_rebased.csv",
+            date_col="date",
+            value_col="index",
+            base_date="${{ env.BM20_BASE_DATE }}",
+            base_value=100.0
+          )
+          PY
+          head -n 3 out/bm20_index_rebased.csv
+
+      # ---- Export JSON for web (rebased CSV 사용) ----
       - name: Export JSON for web
         run: |
-          python export_json.py out/bm20_index_merged.csv site
+          python export_json.py out/bm20_index_rebased.csv site
 
       # ---- Diagnostics (corr/beta) – robust ----
       - name: BTC diagnostics (robust)
         run: |
           python diagnostics_btc_compare.py \
-            --merged out/bm20_index_merged.csv \
+            --merged out/bm20_index_rebased.csv \
             --out-json site/diag_btc.json \
             --start 2018-01-01 || true
           [ -s site/diag_btc.json ] || echo '{"status":"partial","reason":"script did not write"}' > site/diag_btc.json
@@ -100,10 +117,31 @@ jobs:
         run: |
           python contrib_report.py --map bm20_map_btc30.csv --out-json site/contrib_top.json
 
-      # ---- Copy static assets (index.html 등) ----
+      # ---- Copy static pages (root → site/) ----
       - name: Copy static pages to site/
         run: |
-          cp -R "$SITE_SRC"/. site/
+          set -euo pipefail
+          mkdir -p site site/bm
+
+          # 페이지
+          [ -f index.html ]      && cp -f index.html      site/index.html      || true
+          [ -f latest.html ]     && cp -f latest.html     site/latest.html     || true
+          [ -f bm/latest.html ]  && cp -f bm/latest.html  site/bm/latest.html  || true
+
+          # 허브 자산(있다면)
+          for f in main.css main.js favicon.ico; do
+            [ -f "$f" ] && cp -f "$f" site/ || true
+          done
+
+          # 리포트 자산(있다면)
+          for f in bm20_btc_eth_line.png bm20_over_btc.png bm20_over_eth.png bm20_vs_bench.csv; do
+            [ -f "$f" ] && cp -f "$f" site/ || true
+          done
+
+          # bm/ 내부 PNG 등(있다면)
+          for f in bm/bm20_bar_latest.png bm/bm20_trend_latest.png; do
+            [ -f "$f" ] && cp -f "$f" site/bm/ || true
+          done
 
       # ---- Final sanity for required files ----
       - name: Sanity check files
