@@ -85,3 +85,29 @@ os.makedirs(os.path.dirname(args.out_json) or ".", exist_ok=True)
 with open(args.out_json, "w", encoding="utf-8") as f:
     json.dump(out, f, ensure_ascii=False)
 print(f"[OK] contrib → {args.out_json}")
+
+# --- 기존 코드 마지막 줄 바로 아래 추가 ---
+# 1D 퍼포먼스 Top/Down
+perf_up, perf_down = [], []
+try:
+    # 마지막 두 날 종가 기준으로 1일 수익률 계산
+    last2 = prices.tail(2)
+    if len(last2) == 2:
+        ret1d = (last2.iloc[-1] / last2.iloc[-2] - 1.0) * 100.0
+        ret1d = ret1d.dropna().astype(float).sort_values(ascending=False)
+        def _mk(items):
+            return [{"symbol": sym, "ret_24h_pct": round(float(v), 4)} for sym, v in items]
+        perf_up   = _mk(ret1d.head(10).items())
+        perf_down = _mk(ret1d.tail(10).items())
+except Exception as e:
+    print("[WARN] daily perf build skipped:", e)
+
+# perf_up.json / perf_down.json 같이 저장
+out_dir = os.path.dirname(args.out_json) or "."
+with open(os.path.join(out_dir, "perf_up.json"), "w", encoding="utf-8") as f:
+    json.dump({"date": out.get("asof"), "top": perf_up}, f, ensure_ascii=False, indent=2)
+with open(os.path.join(out_dir, "perf_down.json"), "w", encoding="utf-8") as f:
+    json.dump({"date": out.get("asof"), "bottom": perf_down}, f, ensure_ascii=False, indent=2)
+print(f"[OK] perf_up/perf_down → {out_dir}")
+# --- 추가 끝 ---
+
