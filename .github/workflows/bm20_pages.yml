@@ -1,4 +1,4 @@
-name: BM20 Pages (Actions)
+name: BM20 Pages (commit data only)
 
 on:
   workflow_dispatch:
@@ -7,15 +7,12 @@ on:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 concurrency:
-  group: pages
+  group: bm20-pages
   cancel-in-progress: true
 
 env:
-  SITE_SRC: .
   BM20_BASE_DATE: "2024-01-01"   # 공개지수 기준일
 
 jobs:
@@ -27,8 +24,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - uses: actions/configure-pages@v5
+          cache: 'pip'
 
       # ---- Deps ----
       - name: Install deps
@@ -39,6 +35,7 @@ jobs:
 
       # ---- Sheet → map CSV ----
       - name: Sync bm20_map from Google Sheets
+        if: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON != '' && secrets.SHEET_ID != '' }}
         env:
           GSPREAD_SA_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
           BM20_SHEET_ID:   ${{ secrets.SHEET_ID }}
@@ -49,7 +46,7 @@ jobs:
       # ---- Build (daily CSV → index) ----
       - name: Build index from CSVs
         run: |
-          mkdir -p out site
+          mkdir -p out bm/api
           python bm20_from_daily_csv.py --archive ./archive --out ./out \
             --rebalance quarterly --weights-source rules \
             --listed-bonus 1.3 --cap BTC:0.30 --cap ETH:0.20 \
@@ -73,15 +70,6 @@ jobs:
             cp out/bm20_index_from_csv.csv out/bm20_index_merged.csv
           fi
 
-      # ---- Soft sanity: log first value ----
-      - name: Sanity (log first value)
-        run: |
-          python - <<'PY'
-          import pandas as pd
-          df = pd.read_csv('out/bm20_index_merged.csv')
-          print("first index value (merged) =", float(df['index'].iloc[0]))
-          PY
-
       # ---- Rebase to base = 2024-01-01 (=100) ----
       - name: Rebase merged index to base=2024-01-01
         run: |
@@ -98,74 +86,40 @@ jobs:
           PY
           head -n 3 out/bm20_index_rebased.csv
 
-      # ---- Export JSON for web (rebased CSV 사용) ----
-      - name: Export JSON for web
+      # ---- Export JSON for web (→ bm/api/) ----
+      - name: Export JSON/CSV for web (bm/api)
         run: |
-          python export_json.py out/bm20_index_rebased.csv site
+          mkdir -p bm/api
+          python export_json.py out/bm20_index_rebased.csv bm/api
+          cp -f out/bm20_index_rebased.csv bm/api/bm20_index_rebased.csv
 
-      # ---- Diagnostics (corr/beta) – robust ----
+      # ---- Diagnostics / Contribution (→ bm/api/) ----
       - name: BTC diagnostics (robust)
         run: |
           python diagnostics_btc_compare.py \
             --merged out/bm20_index_rebased.csv \
-            --out-json site/diag_btc.json \
+            --out-json bm/api/diag_btc.json \
             --start 2018-01-01 || true
-          [ -s site/diag_btc.json ] || echo '{"status":"partial","reason":"script did not write"}' > site/diag_btc.json
+          [ -s bm/api/diag_btc.json ] || echo '{"status":"partial","reason":"no output"}' > bm/api/diag_btc.json
 
-      # ---- Contribution report (Top) ----
       - name: Contribution report (top)
         run: |
-          python contrib_report.py --map bm20_map_btc30.csv --out-json site/contrib_top.json
+          python contrib_report.py --map bm20_map_btc30.csv --out-json bm/api/contrib_top.json
 
-      # ---- Copy static pages (root → site/) ----
-      - name: Copy static pages to site/
+      # ---- Sanity (list) ----
+      - name: List bm/api payload
         run: |
-          set -euo pipefail
-          mkdir -p site site/bm
+          echo "---- bm/api ----"
+          find bm/api -maxdepth 1 -type f -print | sort || true
 
-          # 페이지
-          [ -f index.html ]      && cp -f index.html      site/index.html      || true
-          [ -f latest.html ]     && cp -f latest.html     site/latest.html     || true
-          [ -f bm/latest.html ]  && cp -f bm/latest.html  site/bm/latest.html  || true
-
-          # 허브 자산(있다면)
-          for f in main.css main.js favicon.ico; do
-            [ -f "$f" ] && cp -f "$f" site/ || true
-          done
-
-          # 리포트 자산(있다면)
-          for f in bm20_btc_eth_line.png bm20_over_btc.png bm20_over_eth.png bm20_vs_bench.csv; do
-            [ -f "$f" ] && cp -f "$f" site/ || true
-          done
-
-          # bm/ 내부 PNG 등(있다면)
-          for f in bm/bm20_bar_latest.png bm/bm20_trend_latest.png; do
-            [ -f "$f" ] && cp -f "$f" site/bm/ || true
-          done
-
-      # ---- Final sanity for required files ----
-      - name: Sanity check files
+      # ---- Commit & push (NO deploy-pages) ----
+      - name: Commit & push
         run: |
-          echo "---- site/ listing ----"
-          ls -la site
-          test -f site/index.html       || (echo "ERR: index.html missing"; exit 1)
-          test -f site/series.json      || (echo "ERR: series.json missing"; exit 1)
-          test -f site/latest.json      || (echo "ERR: latest.json missing"; exit 1)
-          test -f site/stats.json       || (echo "ERR: stats.json missing";  exit 1)
-          test -f site/diag_btc.json    || (echo "ERR: diag_btc.json missing"; exit 1)
-          test -f site/contrib_top.json || (echo "ERR: contrib_top.json missing"; exit 1)
-
-      # ---- Upload artifact for Pages ----
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A bm/api
+          git diff --cached --quiet && echo "no changes" || \
+            git commit -m "[skip ci] data: update BM20 API $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          git pull --rebase
+          git push
