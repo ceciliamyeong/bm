@@ -22,7 +22,7 @@ jobs:
           echo "---- out/ tree ----"
           ls -R out || true
 
-      - name: Copy latest output to docs/
+      - name: Copy latest output to root/
         run: |
           set -euo pipefail
           SITE_SRC="."
