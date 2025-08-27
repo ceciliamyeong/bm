@@ -1,4 +1,4 @@
-name: BM20 from Daily CSV → JSON & Pages
+name: BM20 data (CSV→Index→JSON commit)
 
 on:
   workflow_dispatch:
@@ -7,8 +7,6 @@ on:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 jobs:
   build:
@@ -27,10 +25,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # 1) CSV 아카이브를 모아 BM20 지수 재계산
+      - name: Prepare dirs
+        run: |
+          mkdir -p out bm/api
+
+      # 1) CSV 아카이브 → 인덱스 재계산 (out/)
       - name: Build index from CSVs
         run: |
-          mkdir -p out site
           python bm20_from_daily_csv.py \
             --archive ./archive \
             --out ./out \
@@ -41,29 +42,21 @@ jobs:
             --map bm20_map_btc30.csv
           ls -l out || true
 
-      # 2) 웹에서 읽을 JSON/CSV 생성
-      - name: Export JSON for web
+      # 2) 웹에서 바로 쓰는 JSON(+CSV 사본) 생성 → bm/api/
+      - name: Export JSON/CSV for web (bm/api)
         run: |
-          python export_json.py out/bm20_index_from_csv.csv site
+          python export_json.py out/bm20_index_from_csv.csv bm/api
+          cp -f out/bm20_index_from_csv.csv bm/api/bm20_index_from_csv.csv
+          echo "---- bm/api ----"
+          find bm/api -maxdepth 1 -type f -print | sort || true
 
-      # 디버그: 배포 페이로드 확인
-      - name: List site payload (debug)
+      # 3) 레포에 커밋 & 푸시 (브랜치 배포 방식 유지, 페이지 덮어쓰기 없음)
+      - name: Commit & push
         run: |
-          echo "---- site ----"
-          find site -type f -maxdepth 2 -print || true
-
-      # 3) GitHub Pages용 아티팩트 업로드 (이름=github-pages)
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add bm/api/*
+          git commit -m "[skip ci] data: update BM20 API $(date -u +'%Y-%m-%dT%H:%M:%SZ')" || echo "no changes"
+          git pull --rebase
+          git push
