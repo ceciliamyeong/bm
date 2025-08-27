@@ -57,6 +57,10 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add docs/
-          git commit -m "Publish BM20 JSON to docs/" || echo "No changes"
+          git add latest.json series.json contrib_top.json \
+           latest.html bm20_vs_bench.csv \
+           bm20_btc_eth_line.png bm20_over_btc.png bm20_over_eth.png \
+           bm/ || true
+
+          git commit -m "Publish BM20 JSON & reports to root" || echo "No changes"
           git push
