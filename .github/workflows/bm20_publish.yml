@@ -25,7 +25,7 @@ jobs:
       - name: Copy latest output to docs/
         run: |
           set -euo pipefail
-          SITE_SRC="docs"
+          SITE_SRC="."
           mkdir -p "$SITE_SRC"
 
           # YYYY-MM-DD 형태만 대상
