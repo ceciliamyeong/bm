@@ -692,21 +692,21 @@ def get_today_snapshot():
     3) BTC/ETH는 latest.json → 실패 시 yfinance 폴백
     """
     # 1) 후보 JSON 로드
-       latest = _read_json_first([
+    latest = _read_json_first([
         # 1) 루트(정식 위치)
         "latest.json",
         "bm20_latest.json",
-    
+
         # 2) out/latest 폴백
         "out/latest/latest.json",
         "out/latest/bm20_latest.json",
-    
+
         # 3) site/ 폴백 (Pages 빌드 산출물)
         "site/latest.json",
         "site/bm20_latest.json",
-        
     ])
-    snap = {
+ 
+ snap = {
         "date": dt.datetime.now(KST).date().isoformat(),
         "bm20": {"index_level": None, "d1_change": None, "d1_change_pct": None},
         "btc_usd": None,
