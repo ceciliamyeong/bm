@@ -707,11 +707,13 @@ def get_today_snapshot():
     ])
 
     snap = {
-        "date": dt.datetime.now(KST).date().isoformat(),
-        "bm20": {"index_level": None, "d1_change": None, "d1_change_pct": None},
-        "btc_usd": None,
-        "eth_usd": None,
-    }
+    "date": dt.datetime.now(KST).date().isoformat(),
+    "bm20": {"index_level": None, "d1_change": None, "d1_change_pct": None},
+    "btc_usd": None,
+    "eth_usd": None,
+    "bm20_over_btc": None,
+    "bm20_over_eth": None,
+  }
 
 
     # 2) latest.json에서 추출 시도
