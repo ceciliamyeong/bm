@@ -704,17 +704,16 @@ def get_today_snapshot():
         # 3) site/ 폴백 (Pages 빌드 산출물)
         "site/latest.json",
         "site/bm20_latest.json",
+     
     ])
-
     snap = {
-    "date": dt.datetime.now(KST).date().isoformat(),
-    "bm20": {"index_level": None, "d1_change": None, "d1_change_pct": None},
-    "btc_usd": None,
-    "eth_usd": None,
-    "bm20_over_btc": None,
-    "bm20_over_eth": None,
-  }
-
+        "date": dt.datetime.now(KST).date().isoformat(),
+        "bm20": {"index_level": None, "d1_change": None, "d1_change_pct": None},
+        "btc_usd": None,
+        "eth_usd": None,
+        "bm20_over_btc": None,
+        "bm20_over_eth": None,
+    }
 
     # 2) latest.json에서 추출 시도
     if isinstance(latest, dict):
