@@ -768,10 +768,11 @@ def get_today_snapshot():
 def main():
     snap = get_today_snapshot()          # dict 반환
     s = coerce_snapshot_to_attr(snap)    # ✅ dict → 속성 객체로 변환
+    s = ensure_news_fields(s)
     sentences = build_news_sentences(s)  # ✅ 속성 접근 사용
     txt_path = save_daily_news_txt(sentences, DAILY_DIR)
     upload_if_configured(txt_path)
-
+  
     try:
         idx = pd.date_range(TODAY, periods=24*12, freq='5min', tz=KST)
         rng = np.random.default_rng(7)
