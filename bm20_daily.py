@@ -687,7 +687,7 @@ def _try_fetch_btc_eth_yf():
 def get_today_snapshot():
     """
     가능한 소스에서 오늘 스냅샷을 구성:
-    1) docs/latest.json 또는 out/latest/latest.json 계열
+    1) out/latest/latest.json 계열
     2) out/history/bm20_index_history.csv 폴백
     3) BTC/ETH는 latest.json → 실패 시 yfinance 폴백
     """
@@ -704,10 +704,7 @@ def get_today_snapshot():
         # 3) site/ 폴백 (Pages 빌드 산출물)
         "site/latest.json",
         "site/bm20_latest.json",
-    
-        # 4) docs/ 폴백 (구버전 잔재)
-        "docs/latest.json",
-        "docs/bm20_latest.json",
+        
     ])
     snap = {
         "date": dt.datetime.now(KST).date().isoformat(),
