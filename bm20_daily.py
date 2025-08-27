@@ -72,6 +72,111 @@ def _as_date(col: pd.Series) -> pd.Series:
     return pd.to_datetime(col, errors="coerce").dt.date
 
 # =============================
+# Snapshot adapter (dict -> attr object)
+# =============================
+from types import SimpleNamespace
+import math
+import pandas as pd
+
+def _to_float_or_nan(x):
+    try:
+        return float(x)
+    except Exception:
+        return float("nan")
+
+def _to_float_or_none(x):
+    try:
+        return float(x)
+    except Exception:
+        return None
+
+def _df_or_none(obj, expected_cols=None):
+    """
+    obj가 list[dict] 또는 dict의 리스트 형태라면 DataFrame으로, 아니면 None.
+    expected_cols가 주어지면 해당 컬럼이 없더라도 일단 DataFrame 생성 후 진행.
+    """
+    try:
+        if obj is None:
+            return None
+        if isinstance(obj, pd.DataFrame):
+            return obj
+        if isinstance(obj, list):
+            df = pd.DataFrame(obj)
+            return df
+        # dict인 경우 values가 list라면 시도
+        if isinstance(obj, dict):
+            # 가장 '길이 있는' 값 후보를 고름
+            for v in obj.values():
+                if isinstance(v, list) and len(v) > 0 and isinstance(v[0], dict):
+                    return pd.DataFrame(v)
+        return None
+    except Exception:
+        return None
+
+def coerce_snapshot_to_attr(snap: dict) -> SimpleNamespace:
+    """
+    build_news_sentences()가 기대하는 속성:
+      - index_chg_pct (float)
+      - index_level (float, optional)
+      - index_chg (float, optional)
+      - mcap_total (float, NaN 허용)
+      - turnover_usd (float, NaN 허용)
+      - etf_flow_usd (float or None)
+      - top_movers (DataFrame or None)  # columns: name, symbol, ret_pct, contrib_bps
+      - contributions (DataFrame or None)  # columns: symbol, weight
+      - date (str)
+    누락되면 안전한 기본값을 채움.
+    """
+    bm20 = (snap or {}).get("bm20", {}) if isinstance(snap, dict) else {}
+
+    # BM20 지수 변화
+    index_level   = _to_float_or_none(bm20.get("index_level"))
+    index_chg     = _to_float_or_none(bm20.get("d1_change"))
+    index_chg_pct = _to_float_or_none(bm20.get("d1_change_pct"))
+    if index_chg_pct is None:
+        # 기본 0.0이면 상승/하락 판정에서 '보합'으로 처리됨
+        index_chg_pct = 0.0
+
+    # 시총/거래대금 (없으면 NaN으로 채워 math.isnan 체크에 안전)
+    mcap_total  = _to_float_or_nan(snap.get("mcap_total"))
+    turnover_usd = _to_float_or_nan(snap.get("turnover_usd"))
+
+    # ETF 자금 유입/유출 (없으면 None → 문장 생략)
+    etf_flow_usd = _to_float_or_none(snap.get("etf_flow_usd"))
+
+    # BTC/ETH (있으면 사용, 없어도 build_news_sentences는 사용 안해도 됨)
+    btc_usd = _to_float_or_none(snap.get("btc_usd"))
+    eth_usd = _to_float_or_none(snap.get("eth_usd"))
+
+    # 상대지수(있으면 사용)
+    bm20_over_btc = _to_float_or_none(snap.get("bm20_over_btc"))
+    bm20_over_eth = _to_float_or_none(snap.get("bm20_over_eth"))
+
+    # Top movers / contributions (list[dict] 또는 DF 예상)
+    top_movers = _df_or_none(snap.get("top_movers"))
+    contributions = _df_or_none(snap.get("contributions"))
+
+    # 날짜
+    date_str = str(snap.get("date") or "")
+
+    return SimpleNamespace(
+        index_level=index_level,
+        index_chg=index_chg,
+        index_chg_pct=index_chg_pct,
+        mcap_total=mcap_total,
+        turnover_usd=turnover_usd,
+        etf_flow_usd=etf_flow_usd,
+        btc_usd=btc_usd,
+        eth_usd=eth_usd,
+        bm20_over_btc=bm20_over_btc,
+        bm20_over_eth=bm20_over_eth,
+        top_movers=top_movers,
+        contributions=contributions,
+        date=date_str,
+    )
+
+
+# =============================
 # Data types
 # =============================
 @dataclass
@@ -437,6 +542,46 @@ def upload_if_configured(local_path: str) -> None:
     except Exception as e:
         print(f"[WARN] Upload skipped or failed for {local_path}: {e}")
 
+# =============================
+# Snapshot adapter (dict -> attr)
+# =============================
+from types import SimpleNamespace
+
+def _to_float(x, default=0.0):
+    try:
+        return float(x)
+    except Exception:
+        return default
+
+def coerce_snapshot_to_attr(snap: dict) -> SimpleNamespace:
+    """
+    build_news_sentences()가 s.index_chg_pct 같은 속성 접근을 쓰는 경우를 대비해
+    dict 스냅샷을 속성 객체로 변환한다.
+    기대 속성(추정):
+      - index_level, index_chg, index_chg_pct
+      - btc_usd, eth_usd
+      - bm20_over_btc, bm20_over_eth
+      - date
+    누락 시 안전한 기본값(0.0 또는 '' )을 채운다.
+    """
+    bm20 = snap.get("bm20", {}) if isinstance(snap, dict) else {}
+    return SimpleNamespace(
+        # BM20 지수 수준/변화
+        index_level   = _to_float(bm20.get("index_level")),
+        index_chg     = _to_float(bm20.get("d1_change")),
+        index_chg_pct = _to_float(bm20.get("d1_change_pct")),
+
+        # BTC/ETH USD
+        btc_usd = _to_float(snap.get("btc_usd")),
+        eth_usd = _to_float(snap.get("eth_usd")),
+
+        # 상대지수(있으면)
+        bm20_over_btc = _to_float(snap.get("bm20_over_btc")),
+        bm20_over_eth = _to_float(snap.get("bm20_over_eth")),
+
+        # 날짜
+        date = str(snap.get("date") or ""),
+    )
 
 
 
@@ -582,14 +727,13 @@ def get_today_snapshot():
 
 
 
-
-
 # =============================
 # Main
 # =============================
 def main():
-    snap = get_today_snapshot()
-    sentences = build_news_sentences(snap)
+    snap = get_today_snapshot()          # dict 반환
+    s = coerce_snapshot_to_attr(snap)    # ✅ dict → 속성 객체로 변환
+    sentences = build_news_sentences(s)  # ✅ 속성 접근 사용
     txt_path = save_daily_news_txt(sentences, DAILY_DIR)
     upload_if_configured(txt_path)
 
