@@ -74,7 +74,7 @@ jobs:
           set -euo pipefail
           python contrib_report.py \
             --map bm20_map_btc30.csv \
-            --out-dir bm/api
+            --out-dir api 
 
           echo "---- after contrib ----"
           ls -l bm/bm/api || true
