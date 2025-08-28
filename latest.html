@@ -128,7 +128,7 @@ function formatFunding(f){
 async function loadLatest(){
   // latest.json 우선순위 (API → 루트 → 예전)
   const j = await fetchAny([
-    "bm/bm/api/latest.json",
+    "bm20_latest.json",
     "bm/api/latest.json",
     "latest.json",
     "bm/bm20_latest.json",
