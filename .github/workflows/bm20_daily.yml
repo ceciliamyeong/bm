@@ -199,9 +199,10 @@ jobs:
           DATE=$(TZ=Asia/Seoul date +%F)
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
+      
           git add \
-            bm/bm20_*.json bm/*.json bm/bm/api/*.json \
+            bm/bm/api/*.json \
+            bm20_latest.json bm20_series.json stats.json \
             latest.json series.json contrib_top.json perf_up.json perf_down.json \
             bm20_vs_bench.csv \
             bm20_btc_eth_line.png bm20_over_btc.png bm20_over_eth.png \
@@ -209,11 +210,12 @@ jobs:
             bm/latest.html \
             bm/bm20_bar_latest.png bm/bm20_trend_latest.png \
             "out/${DATE}" || true
-
+      
           git add archive/*.html || true
           if [ -d "archive/${DATE}" ]; then
             git add "archive/${DATE}"/* || true
           fi
+
 
           git commit -m "BM20 daily: normalize filenames + aliases" || echo "No changes"
           git push
