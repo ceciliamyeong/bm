@@ -79,6 +79,36 @@ jobs:
             --map bm20_map_btc30.csv \
             --out-json bm/api/contrib_top.json
       
+      - name: Normalize JSON filenames (BM20 canonical + aliases)
+        run: |
+          set -euo pipefail
+          mkdir -p bm bm/api
+
+          # 소스 선택(bm/api 우선, 과거 경로 폴백)
+          pick() { for f in "$@"; do [ -f "$f" ] && { echo "$f"; return; }; done; }
+          LATEST_SRC=$(pick bm/api/latest.json site/bm20_latest.json site/latest.json latest.json bm20_latest.json)
+          SERIES_SRC=$(pick bm/api/series.json site/bm20_series.json site/series.json series.json bm20_series.json)
+          STATS_SRC=$(pick  bm/api/stats.json  site/bm20_stats.json  site/stats.json  stats.json  bm20_stats.json)
+
+          # 정식 파일명 → bm/bm20_*.json (메인이 이걸 읽음)
+          [ -n "${LATEST_SRC:-}" ] && cp -f "$LATEST_SRC" bm/bm20_latest.json
+          [ -n "${SERIES_SRC:-}" ] && cp -f "$SERIES_SRC" bm/bm20_series.json
+          [ -n "${STATS_SRC:-}"  ] && cp -f "$STATS_SRC"  bm/bm20_stats.json
+
+          # 별칭(API) → bm/api/*.json (외부/다른 소비자용)
+          [ -f bm/bm20_latest.json ] && cp -f bm/bm20_latest.json bm/api/latest.json
+          [ -f bm/bm20_series.json ] && cp -f bm/bm20_series.json bm/api/series.json
+          [ -f bm/bm20_stats.json  ] && cp -f bm/bm20_stats.json  bm/api/stats.json
+
+          # 퍼포먼스/기여도도 API→bm 별칭 제공
+          for j in perf_up.json perf_down.json contrib_top.json; do
+            [ -f "bm/api/$j" ] && cp -f "bm/api/$j" "bm/$j"
+          done
+
+          echo "Aliased:"
+          ls -l bm/bm20_*.json bm/*.json bm/api/*.json || true
+
+
 
       - name: Prepare site artifacts to root/  # root는 프리뷰/보기용만
         run: |
@@ -154,7 +184,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git add \
-            bm/api/*.json \
+            bm/bm20_*.json bm/*.json bm/api/*.json \
             latest.json series.json contrib_top.json perf_up.json perf_down.json \
             bm20_vs_bench.csv \
             bm20_btc_eth_line.png bm20_over_btc.png bm20_over_eth.png \
@@ -168,6 +198,6 @@ jobs:
             git add "archive/${DATE}"/* || true
           fi
 
-          git commit -m "BM20 daily: API+site artifacts" || echo "No changes"
+          git commit -m "BM20 daily: normalize filenames + aliases" || echo "No changes"
           git push
 
