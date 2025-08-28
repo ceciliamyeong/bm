@@ -1,228 +1,38 @@
-<!doctype html>
-<html lang="ko">
-<head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>BM20 Daily — <!-- {date_str} --></title>
-  <style>
-    body{font-family:-apple-system,BlinkMacSystemFont,"NanumGothic","Noto Sans CJK","Malgun Gothic",Arial,sans-serif;background:#fafbfc;color:#111;margin:0}
-    .wrap{max-width:760px;margin:0 auto;padding:20px}
-    .card{background:#fff;border:1px solid #e5e9f0;border-radius:12px;padding:20px;margin-bottom:16px}
-    h1{font-size:22px;margin:0 0 8px 0;text-align:center}
-    h2{font-size:15px;margin:16px 0 8px 0;color:#1A237E}
-    .muted{color:#555;text-align:center}
-    nav{display:flex;gap:14px;justify-content:center;margin:8px 0 16px}
-    nav a{color:#1A237E;text-decoration:none}
-    nav a:hover{text-decoration:underline}
-    table{width:100%;border-collapse:collapse;font-size:14px}
-    th,td{border:1px solid #e5e9f0;padding:8px}
-    th{background:#eef4ff}
-    img{max-width:100%;background:#0f1429;border:1px solid #e5e9f0;border-radius:8px}
-    .center{text-align:center}
-    .footer{font-size:12px;color:#666;text-align:center;margin-top:16px}
-  </style>
-</head>
+<!doctype html><html lang='ko'><meta charset='utf-8'>
+<title>BM20 데일리 리포트</title>
+
+    <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; margin: 24px; color:#111; }
+    header { margin-bottom: 16px; }
+    h1 { font-size: 24px; margin: 0 0 4px 0; }
+    .date { color:#555; font-size:14px; }
+    section { margin-top: 24px; }
+    h2 { font-size: 18px; margin: 0 0 12px 0; border-bottom: 1px solid #eee; padding-bottom: 6px; }
+    .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    ul { margin: 8px 0 0 18px; padding: 0; }
+    li { line-height: 1.6; }
+    .up  { color: #1565C0; }
+    .down{ color: #C62828; }
+    .imgrow { display:flex; gap:10px; flex-wrap: wrap; margin-top:10px; }
+    .imgrow img { max-width: 48%; border:1px solid #eee; border-radius: 8px; }
+    .muted { color:#777; }
+    footer { margin-top: 32px; font-size: 12px; color:#666; }
+    </style>
+    
 <body>
-<div class="wrap">
-
-  <!-- 헤더 & 네비 (절대주소) -->
-  <div class="card">
-    <h1><a href="https://ceciliamyeong.github.io/bm/" style="text-decoration:none;color:inherit">BM20 데일리 리포트</a></h1>
-    <div class="muted"><!-- {date_str} --></div>
-    <nav>
-      <a href="https://ceciliamyeong.github.io/bm/">Home</a>
-      <a href="https://ceciliamyeong.github.io/bm/latest.html">Latest</a>
-      <a href="https://ceciliamyeong.github.io/bm/indices/performance/">Charts</a>
-      <a href="https://ceciliamyeong.github.io/bm/indices/overview/">Data</a>
-      <a href="https://ceciliamyeong.github.io/bm/what-is-bm20.html">About</a>
-    </nav>
-
-    <!-- KPI 테이블 (latest.json 등에서 자동 주입) -->
-   <table>
-      <tr><th>지수</th><td><span id="level">—</span></td></tr>
-      <tr><th>전일</th><td><span id="prev">—</span></td></tr>
-      <tr><th>포인트/변동률</th>
-          <td><span id="chgpt">—</span> / <span id="chgp">—</span></td></tr>
-      <tr><th>수익률(1D/7D/30D/MTD/YTD)</th>
-          <td><span id="r1d">—</span> / <span id="r7d">—</span> / <span id="r30d">—</span> /
-              <span id="rmtd">—</span> / <span id="rytd">—</span></td></tr>
-      <tr><th>김치 프리미엄</th><td><span id="kimchi">—</span></td></tr>
-      <tr><th>펀딩비(Binance)</th><td><span id="funding">—</span></td></tr>
-    </table>
-  </div>
-
-  <!-- 1D Performance + Top/Worst (있으면 이미지/표 표시) -->
-  <div class="card">
-    <h2>코인별 퍼포먼스 (1D, USD)</h2>
-    <!-- 퍼블리셔가 있으면 아래 img를 넣음: src="bm20_bar_latest.png" -->
-    <p class="center"><!-- <img src="bm20_bar_latest.png" alt="Performance"> --></p>
-
-    <h2>상승/하락 TOP3</h2>
-    <!-- 상승 TOP3 -->
-    <table>
-      <tr><th>상승</th><th style="text-align:right">등락률</th></tr>
-      <!-- 퍼블리셔가 perf 상위 3개를 행으로 채움. 없으면 colspan=2로 — 표시 -->
-      <!-- <tr><td>LINK</td><td style="text-align:right">+5.42%</td></tr> ... -->
-    </table>
-    <br>
-    <!-- 하락 TOP3 -->
-    <table>
-      <tr><th>하락</th><th style="text-align:right">등락률</th></tr>
-      <!-- <tr><td>BTC</td><td style="text-align:right">-1.18%</td></tr> ... -->
-    </table>
-  </div>
-
-  <!-- BTC & ETH 7일 추세 (있으면 표시) -->
-  <div class="card">
-    <h2>BTC & ETH 7일 가격 추세</h2>
-    <!-- 퍼블리셔가 있으면 아래 img를 넣음: src="bm20_trend_latest.png" -->
-    <p class="center"><!-- <img src="bm20_trend_latest.png" alt="Trend"> --></p>
-  </div>
-
-  <!-- (선택) BM20 vs BTC 비교 차트 섹션: 시리즈 존재 시 자동 삽입 -->
-  <!--
-  <div class="card">
-    <h2>BM20 vs BTC (2018-01-01 = 100, Log)</h2>
-    <p class="center"><img src="bm20_vs_btc.png" alt="BM20 vs BTC"></p>
-  </div>
-  -->
-
-  <div class="footer">© Blockmedia · Data: latest.json / series.json (+ optional perf/kimchi/funding)</div>
+<header>
+<h1>BM20 데일리 리포트</h1>
+<div class='date'>기준일: 2025-08-28</div>
+</header>
+<div class="imgrow"><img src="bm20_bar_latest.png" alt="bm20_bar_latest.png"/><img src="bm20_trend_latest.png" alt="bm20_trend_latest.png"/><img src="bm20_over_btc_latest.png" alt="bm20_over_btc_latest.png"/><img src="bm20_over_eth_latest.png" alt="bm20_over_eth_latest.png"/><img src="bm20_btc_eth_line_latest.png" alt="bm20_btc_eth_line_latest.png"/><img src="kimchi_premium_latest.png" alt="kimchi_premium_latest.png"/></div>
+<div class='twocol'>
+<section><h2>코인별 퍼포먼스 (상승 TOP 10)</h2><ul><li class='up'>1. SOL <b>+5.13%</b></li><li class='up'>2. SHIB <b>+5.08%</b></li><li class='up'>3. KAS <b>+3.38%</b></li><li class='up'>4. ARB <b>+3.22%</b></li><li class='up'>5. DOT <b>+3.14%</b></li><li class='up'>6. OP <b>+3.14%</b></li><li class='up'>7. INJ <b>+2.52%</b></li><li class='up'>8. ETH <b>+2.26%</b></li><li class='up'>9. ALGO <b>+2.23%</b></li><li class='up'>10. DOGE <b>+2.22%</b></li></ul></section>
+<section><h2>코인별 퍼포먼스 (하락 TOP 10)</h2><ul><li class='down'>1. MKR <b>-2.50%</b></li><li class='up'>2. NEAR <b>+0.04%</b></li><li class='up'>3. AAVE <b>+0.12%</b></li><li class='up'>4. LINK <b>+0.26%</b></li><li class='up'>5. AVAX <b>+0.34%</b></li><li class='up'>6. SAND <b>+0.75%</b></li><li class='up'>7. XLM <b>+0.78%</b></li><li class='up'>8. HBAR <b>+0.91%</b></li><li class='up'>9. TON <b>+1.17%</b></li><li class='up'>10. BCH <b>+1.19%</b></li></ul></section>
 </div>
-</body> 
-  <script>
-const $ = s => document.querySelector(s);
-const fmtNum = v => (v==null||isNaN(v)) ? "—" :
-  new Intl.NumberFormat('en-US',{maximumFractionDigits:2}).format(+v);
-const fmtPct = v => (v==null||isNaN(v)) ? "—" :
-  ((v>=0?"+":"") + (Math.round(v*1000)/10).toFixed(1) + "%");
-
-// 여러 후보 경로 중 먼저 응답 오는 JSON
-async function fetchAny(urls){
-  for (const u of urls){
-    try { const r = await fetch(u, {cache:'no-store'});
-      if (r.ok) return await r.json();
-    } catch(e){}
-  }
-  throw new Error("no json found");
-}
-
-function setText(id, text){ const el = $("#"+id); if (el) el.textContent = text; }
-
-function fromCandidates(obj, keys){
-  for (const k of keys){ if (obj && Object.hasOwn(obj,k)) return obj[k]; }
-}
-
-function formatFunding(f){
-  if (f==null) return "—";
-  if (typeof f === "number") return fmtPct(f);
-  if (typeof f === "string") return f;
-  if (typeof f === "object"){
-    const btc = f.btc ?? f.BTC ?? f.Btc;
-    const eth = f.eth ?? f.ETH ?? f.Eth;
-    const pp  = x => (typeof x === "number") ? fmtPct(x) : (x ?? "—");
-    return `BTC ${pp(btc)} / ETH ${pp(eth)}`;
-  }
-  return "—";
-}
-
-async function loadLatest(){
-  // latest.json 우선순위 (API → 루트 → 예전)
-  const j = await fetchAny([
-    "bm20_latest.json",
-    "bm/api/latest.json",
-    "latest.json",
-    "bm/bm20_latest.json",
-    "bm/latest.json"
-  ]);
-
-  // 날짜/지수/전일/변동치
-  const level = j.bm20Level ?? j.level ?? j.index ?? j.value;
-  const prev  = j.prevLevel ?? j.prev ?? j.previous ?? null;
-  const chgpt = (level!=null && prev!=null) ? (+level - +prev) : (j.change ?? j.chgpt);
-  const returns = j.returns || {};
-  const r1d  = j.bm20ChangePct ?? returns["1D"] ?? j.r1d;
-  const r7d  = returns["7D"];
-  const r30d = returns["30D"];
-  const rmtd = returns["MTD"];
-  const rytd = returns["YTD"];
-
-  setText("level", fmtNum(level));
-  setText("prev",  fmtNum(prev));
-  setText("chgpt", (chgpt==null||isNaN(chgpt)) ? "—" :
-                   ((chgpt>=0?"+":"") + fmtNum(chgpt)));
-  setText("chgp",  fmtPct(r1d));
-  setText("r1d",   fmtPct(r1d));
-  setText("r7d",   fmtPct(r7d));
-  setText("r30d",  fmtPct(r30d));
-  setText("rmtd",  fmtPct(rmtd));
-  setText("rytd",  fmtPct(rytd));
-
-  // 김치/펀딩
-  const kimchi = fromCandidates(j, ["kimchi_premium","kimchi","krw_premium"]);
-  setText("kimchi", (typeof kimchi === "number") ? fmtPct(kimchi) : (kimchi ?? "—"));
-
-  const funding = fromCandidates(j, ["funding_rate","funding","funding_bps","fundingRate"]);
-  setText("funding", formatFunding(funding));
-}
-
-async function loadPerfTop3(){
-  // perf_up/down.json 우선순위 (API → 루트)
-  const up   = await fetchAny(["bm/bm/api/perf_up.json","bm/api/perf_up.json","perf_up.json"]).catch(()=>null);
-  const down = await fetchAny(["bm/bm/api/perf_down.json","bm/api/perf_down.json","perf_down.json"]).catch(()=>null);
-
-  // 표 첫 번째(상승), 세 번째(하락) 테이블을 순서대로 탐색
-  const tables = document.querySelectorAll(".card table");
-  if (tables.length < 3) return;
-
-  const tblUp = tables[1];   // "상승 TOP3"
-  const tblDn = tables[2];   // "하락 TOP3"
-
-  const fill = (tbl, rows, key) => {
-    // 헤더 제외하고 기존 행 제거
-    [...tbl.querySelectorAll("tr")].slice(1).forEach(tr=>tr.remove());
-    if (!rows || !rows.length){
-      const tr = document.createElement("tr");
-      const td = document.createElement("td");
-      td.colSpan = 2; td.textContent = "—";
-      tr.appendChild(td); tbl.appendChild(tr);
-      return;
-    }
-    rows.slice(0,3).forEach(r=>{
-      const tr = document.createElement("tr");
-      const td1 = document.createElement("td"); td1.textContent = r.symbol || r.ticker || r.name || "-";
-      const td2 = document.createElement("td"); td2.style.textAlign = "right";
-      const pv  = r.ret_24h_pct ?? r.ret ?? r.pct ?? null;
-      td2.textContent = (pv==null||isNaN(pv)) ? "—" : ((pv>=0?"+":"") + (+pv).toFixed(2) + "%");
-      tr.appendChild(td1); tr.appendChild(td2); tbl.appendChild(tr);
-    });
-  };
-
-  fill(tblUp, up?.top || up?.rows || [], "top");
-  // 하락은 perf_down의 "bottom"이 보통 오름차순 끝에서 나온 값(음수 많음). 그냥 앞에서 3개만.
-  fill(tblDn, down?.bottom || down?.rows || [], "bottom");
-}
-
-function tryImages(){
-  // 이미지가 있으면 퍼블리셔가 주석 해제한다는 가정 → 자동 로드 필요 없으면 생략 가능
-  // 필요 시 아래처럼 존재 확인 후 동적으로 삽입할 수 있음:
-  // (현재 템플릿은 <img>가 주석이라 JS 삽입 원하면 아래 로직 사용)
-  const addImg = (selector, src) => {
-    fetch(src,{method:'HEAD'}).then(r=>{
-      if (r.ok) {
-        const p = document.querySelector(selector);
-        if (p) { const img = document.createElement('img'); img.src = src; img.alt = src; p.appendChild(img); }
-      }
-    }).catch(()=>{});
-  };
-  addImg('.card:nth-of-type(2) p.center', 'bm20_bar_latest.png');      // 1D bar
-  addImg('.card:nth-of-type(3) p.center', 'bm20_trend_latest.png');    // 7일 추세
-}
-
-(async function init(){
-  try { await loadLatest(); } catch(e){ console.warn('latest load failed', e); }
-  try { await loadPerfTop3(); } catch(e){ console.warn('perf load failed', e); }
-  try { tryImages(); } catch(e){}
-})();
-</script>
-
-</html>
+<div class='twocol'>
+<section><h2>기여도 MTD (상위 10)</h2><ul><li>1. LINK <b>+1.32%</b></li><li>2. ARB <b>+1.18%</b></li><li>3. ETH <b>+0.91%</b></li><li>4. SOL <b>+0.88%</b></li><li>5. AAVE <b>+0.78%</b></li><li>6. ADA <b>+0.65%</b></li><li>7. AVAX <b>+0.47%</b></li><li>8. OP <b>+0.45%</b></li><li>9. BNB <b>+0.44%</b></li><li>10. DOGE <b>+0.42%</b></li></ul></section>
+<section><h2>기여도 QTD (상위 10)</h2><ul><li>1. ETH <b>+2.05%</b></li><li>2. LINK <b>+2.03%</b></li><li>3. XLM <b>+1.81%</b></li><li>4. HBAR <b>+1.76%</b></li><li>5. ARB <b>+1.69%</b></li><li>6. ADA <b>+1.54%</b></li><li>7. ALGO <b>+1.40%</b></li><li>8. DOGE <b>+1.24%</b></li><li>9. SOL <b>+1.24%</b></li><li>10. AVAX <b>+1.21%</b></li></ul></section>
+<section><h2>기여도 YTD (상위 10)</h2><ul><li>1. TIA <b>+11.98%</b></li><li>2. ETH <b>+1.64%</b></li><li>3. XRP <b>+1.52%</b></li><li>4. BCH <b>+1.21%</b></li><li>5. LINK <b>+1.19%</b></li><li>6. ADA <b>+1.12%</b></li><li>7. TRX <b>+1.11%</b></li><li>8. SOL <b>+1.11%</b></li><li>9. AAVE <b>+1.07%</b></li><li>10. MKR <b>+0.89%</b></li></ul></section>
+</div>
+<footer>자동 생성: scripts/generate_report.py</footer>
+</body></html>
