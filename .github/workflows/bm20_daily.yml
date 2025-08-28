@@ -54,10 +54,6 @@ jobs:
       - name: Run BM20 daily
         run: |
           set -euo pipefail
-          if [ ! -f bm20_daily.py ]; then
-            echo "::error::bm20_daily.py not found at repo root."
-            exit 1
-          fi
           python bm20_daily.py
 
       # ✅ BM20 vs BTC/ETH 비교 지수/차트 생성
@@ -78,7 +74,7 @@ jobs:
           set -euo pipefail
           python contrib_report.py \
             --map bm20_map_btc30.csv \
-            --out-json bm/bm/api/contrib_top.json
+            --out-dir bm/api
 
           echo "---- after contrib ----"
           ls -l bm/bm/api || true
