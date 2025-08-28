@@ -75,9 +75,10 @@ jobs:
       - name: Build contrib + perf (Yahoo)
         run: |
           set -euo pipefail
-          python contrib_report.py \
-            --map bm20_map_btc30.csv \
-            --out-json bm/api/contrib_top.json
+          python scripts/contrib_report.py \
+          --map bm20_map_btc30.csv \
+          --out-json bm/bm/api/contrib_top.json
+
       
       - name: Normalize JSON filenames (BM20 canonical + aliases)
         run: |
