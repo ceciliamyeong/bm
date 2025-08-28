@@ -162,7 +162,7 @@ jobs:
       - name: Ensure perf files exist
         run: |
           set -e
-          test -f bm/api/perf_up.json && test -f bm/api/perf_down.json || \
+          test -f api/perf_up.json && test -f api/perf_down.json || \
           (echo "::error::perf_up/down.json not created"; exit 1)
 
       # 🔎 최신 산출물 디렉터리 결정 (out/YYYY-MM-DD)
