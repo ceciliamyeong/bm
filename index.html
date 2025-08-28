@@ -185,17 +185,6 @@
       </div>
     </section>
 
-    <!-- DATA / JSON VIEW -->
-    <section id="data" class="rows section">
-      <div class="card">
-        <div class="flex"><div class="h">latest.json</div><button class="btn" id="btnToggleLatest">접기</button></div>
-        <pre id="latestDump" class="code">—</pre>
-      </div>
-      <div class="card">
-        <div class="flex"><div class="h">series.json (마지막 20행)</div><button class="btn" id="btnToggleSeries">접기</button></div>
-        <pre id="seriesDump" class="code">—</pre>
-      </div>
-    </section>
 
     <!-- ===== 여기부터: 뉴스 카드 블록 삽입 ===== -->
     <section class="section">
@@ -261,7 +250,12 @@ const findKey = (obj, candidates=[]) => { for (const k of candidates){ if (obj &
 
 async function fetchAny(urls){ for (const u of urls){ try{ const r=await fetch(u); if(r.ok) return {url:u,json:await r.json()}; }catch(e){} } throw new Error('no json found'); }
 function setDeltaBadge(pct){ const el=qs('#deltaBadge'); if(pct==null||isNaN(pct)){ el.textContent='데이터 없음'; return; } el.textContent=(pct>0?'▲ ':'▼ ')+fmtPct(pct); el.className='delta '+(pct>=0?'up':'down'); }
-function setImg(id, src){ const img=qs(id); img.src=src; img.onerror=()=>img.closest('div').classList.add('hide'); }
+function setImg(id, src){
+  const img = qs(id);
+  if (!img) return;                               // ← 널가드
+  img.src = src;
+  img.onerror = () => img.closest('div')?.classList.add('hide'); // ← 안전하게
+}
 function formatFunding(f){ if(f==null) return '—'; if(typeof f==='number') return fmtPct(f); if(typeof f==='string') return f;
   if(typeof f==='object'){ const btc=f.btc??f.BTC??f.Btc, eth=f.eth??f.ETH??f.Eth; const p=x=>(typeof x==='number')?fmtPct(x):(x??'—'); return `BTC ${p(btc)}, ETH ${p(eth)}`;} return '—';
 }
