@@ -65,6 +65,13 @@ jobs:
         run: |
           set -euo pipefail
           python -m scripts.bm20_vs_bench
+          
+      - name: Build contrib + perf (Yahoo)
+        run: |
+          set -euo pipefail
+          python contrib_report.py \
+          --map bm20_map_btc30.csv \
+          --out-dir bm/api
 
       # ✅ 김치/펀딩 추가
       - name: Enrich latest.json (kimchi & funding)
