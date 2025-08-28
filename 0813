@@ -1,0 +1,107 @@
+name: BM20 Daily
+
+on:
+  schedule:
+    - cron: "10 23 * * *"   # 매일 08:10 KST
+  workflow_dispatch: {}
+
+concurrency:
+  group: bm20-daily-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write  # index.html / archive / latest.html 커밋용
+
+    env:
+      TZ: Asia/Seoul
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install Korean fonts (Nanum + Noto CJK)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-nanum fonts-noto-cjk fontconfig
+          sudo fc-cache -f -v
+
+      # 1) 리포트 생성 (out/YYYY-MM-DD)
+      - name: Run BM20 generator
+        env:
+          OUT_DIR: out
+          TZ: Asia/Seoul
+        run: |
+          python bm20_daily.py
+
+      # 디버그용
+      - name: Debug — show out tree
+        run: |
+          echo "PWD=$(pwd)"
+          ls -la
+          echo "---- out ----"
+          ls -la out || true
+          echo "---- out recursive ----"
+          find out -maxdepth 2 -type d -print || true
+
+      # 2) out → archive 복사 + index 최신 블록 + latest.html 생성(스크립트 내부에서 처리)
+      - name: Generate site (latest + archive)
+        env:
+          TZ: Asia/Seoul
+        run: |
+          python scripts/generate_report.py
+          echo "" > .nojekyll
+
+      # 2.5) latest 보강 — 아카이브/파일 없으면 '경고 출력 후 스킵'
+      - name: Publish latest (fixed assets)
+        run: |
+          set -euo pipefail
+          DATE=$(TZ=Asia/Seoul date +%F)
+          SRC="archive/$DATE"
+
+          echo "[DEBUG] Checking $SRC"
+          if [ ! -d "$SRC" ]; then
+            echo "[WARN] $SRC not found. Skip publish."
+            exit 0
+          fi
+
+          for f in "bm20_daily_${DATE}.html" "bm20_bar_${DATE}.png" "bm20_trend_${DATE}.png"; do
+            if [ ! -f "$SRC/$f" ]; then
+              echo "[WARN] $SRC/$f not found. Skip publish."
+              exit 0
+            fi
+          done
+
+          sed "s/bm20_bar_${DATE}\.png/bm20_bar_latest.png/g; s/bm20_trend_${DATE}\.png/bm20_trend_latest.png/g" \
+            "$SRC/bm20_daily_${DATE}.html" > latest.html
+
+          cp "$SRC/bm20_bar_${DATE}.png"   bm20_bar_latest.png
+          cp "$SRC/bm20_trend_${DATE}.png" bm20_trend_latest.png
+
+      # 3) 커밋 & 푸시
+      - name: Commit & Push (with pull --rebase)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          BRANCH="${GITHUB_REF#refs/heads/}"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin ${BRANCH}
+          git pull --rebase origin ${BRANCH} || true
+          git add -A
+          git commit -m "[skip ci] chore: auto daily report for $(date -u +'%Y-%m-%d')" || echo "nothing to commit"
+          git push origin HEAD:${BRANCH}
