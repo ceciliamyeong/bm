@@ -5,7 +5,7 @@ import os, json, datetime
 from pathlib import Path
 
 ROOT = Path(".")
-API  = ROOT / "bm" / "api"
+API  = ROOT / "api"
 OUT_HTML = ROOT / "latest.html"
 
 # ---------- 유틸 ----------
