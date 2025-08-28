@@ -147,27 +147,43 @@
     </section>
 
     <!-- CHARTS -->
-    <section id="charts" class="rows">
+       <section id="charts" class="rows">
+        <!-- 1) 시계열 -->
+        <div class="card">
+          <div class="flex"><div class="h">BM20 시계열</div><button class="btn" id="btnZoom">범위: 1Y ▾</button></div>
+          <div class="svgwrap" id="svgHost"><svg></svg></div>
+          <div class="mini">※ series.json을 읽어 단순 라인 차트로 그립니다. 이미지가 있으면 아래에 표시합니다.</div>
+        </div>
+      
+        <!-- 2) 이미지 차트 (있을 때만) -->
+        <div class="card">
+          <div class="h">이미지 차트(있을 경우만)</div>
+          <div class="grid2 section">
+            <div>
+              <div class="mini">1D Performance Bar</div>
+              <img id="imgBar" alt="1D Bar" style="max-width:100%;border:1px solid #2b3d59;border-radius:10px"/>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- 3) 글로벌 퍼포먼스 -->
+    <section id="perf" class="card">
+      <div class="h">글로벌 퍼포먼스 (1D, %)</div>
+      <div id="perfBar" style="height:320px;margin-top:8px"></div>
+      <div class="mini">※ <code>latest_components.json</code> 기준. 1일 수익률 내림차순.</div>
+    </section>
+    
+    <!-- DATA / JSON VIEW (필요 시만 볼 수 있게 숨김) -->
+    <section id="data" class="rows section hide">
       <div class="card">
-        <div class="flex"><div class="h">BM20 시계열</div><button class="btn" id="btnZoom">범위: 1Y ▾</button></div>
-        <div class="svgwrap" id="svgHost"><svg></svg></div>
-        <div class="mini">※ series.json을 읽어 단순 라인 차트로 그립니다. 이미지가 있으면 아래에 표시합니다.</div>
+        <div class="flex"><div class="h">latest.json</div><button class="btn" id="btnToggleLatest">접기</button></div>
+        <pre id="latestDump" class="code">—</pre>
       </div>
       <div class="card">
-        <div class="h">이미지 차트(있을 경우만)</div>
-        <div class="grid2 section">
-          <div>
-            <div class="mini">1D Performance Bar</div>
-            <img id="imgBar" alt="1D Bar" style="max-width:100%;border:1px solid #2b3d59;border-radius:10px"/>
-          </div>
-         <section class="rows">
-          <div class="card">
-            <div class="h">글로벌 퍼포먼스 (1D, %)</div>
-            <div id="perfBar" style="height:320px;margin-top:8px"></div>
-            <div class="mini">※ <code>latest_components.json</code> 기준. 1일 수익률 내림차순.</div>
-          </div>
-        </section>
-
+        <div class="flex"><div class="h">series.json (마지막 20행)</div><button class="btn" id="btnToggleSeries">접기</button></div>
+        <pre id="seriesDump" class="code">—</pre>
+      </div>
+    </section>
 
     <!-- DATA / JSON VIEW -->
     <section id="data" class="rows section">
