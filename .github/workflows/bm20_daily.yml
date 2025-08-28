@@ -72,8 +72,15 @@ jobs:
           set -euo pipefail
           python augment_latest.py || echo "enrich failed; keep going"
 
-      # ✅ 산출물은 루트(.)로 복사 (index.html/ latest.html 이 루트에서 읽음)
-      - name: Prepare site artifacts to root/
+      - name: Build contrib + perf (Yahoo)
+        run: |
+          set -euo pipefail
+          python contrib_report.py \
+            --map bm20_map_btc30.csv \
+            --out-json bm/api/contrib_top.json
+      
+
+      - name: Prepare site artifacts to root/  # root는 프리뷰/보기용만
         run: |
           set -euo pipefail
 
@@ -88,36 +95,26 @@ jobs:
             fi
           }
 
-          # latest.json 후보 → root
-          copy_if_present bm20_latest.json latest.json
+          # ✅ API 표준 위치: bm/api 에서 먼저 가져오기
+          copy_if_present bm/api/latest.json  latest.json
+          copy_if_present bm/api/series.json  series.json
+          copy_if_present bm/api/stats.json   stats.json
+          copy_if_present bm/api/contrib_top.json contrib_top.json
+          copy_if_present bm/api/perf_up.json    perf_up.json
+          copy_if_present bm/api/perf_down.json  perf_down.json
+
+          # (폴백) 과거 경로들에서 있으면만 덮어쓰기
           copy_if_present site/latest.json latest.json
-          copy_if_present site/bm20_latest.json latest.json
-
-          # out/ 날짜 폴더에서 최신 파일도 폴백
-          LATEST_IN_OUT=$(find out -maxdepth 2 -type f -name "bm20_latest.json" -o -name "latest.json" | sort | tail -n1 || true)
-          if [ -n "${LATEST_IN_OUT:-}" ]; then copy_if_present "$LATEST_IN_OUT" latest.json; fi
-
-          # series.json 후보 → root
-          copy_if_present bm20_series.json series.json
-          copy_if_present bm/series.json series.json
-          copy_if_present bm/bm20_series.json series.json
           copy_if_present site/series.json series.json
-          copy_if_present site/bm20_series.json series.json
-          SERIES_IN_OUT=$(find out -maxdepth 2 -type f -name "bm20_series.json" -o -name "series.json" -o -name "bm20_index_history.json" | sort | tail -n1 || true)
-          if [ -n "${SERIES_IN_OUT:-}" ]; then copy_if_present "$SERIES_IN_OUT" series.json; fi
+          LATEST_IN_OUT=$(find out -maxdepth 2 -type f -name "latest.json" -o -name "bm20_latest.json" | sort | tail -n1 || true)
+          [ -n "${LATEST_IN_OUT:-}" ] && copy_if_present "$LATEST_IN_OUT" latest.json
 
-          # (선택) 기여도 Top/Bottom → root
-          CONTRIB_IN_OUT=$(find out -maxdepth 2 -type f -name "contrib_top.json" -o -name "bm20_contrib_top.json" | sort | tail -n1 || true)
-          if [ -n "${CONTRIB_IN_OUT:-}" ]; then copy_if_present "$CONTRIB_IN_OUT" contrib_top.json; fi
-
-          # ✅ 상대 성과 자산들 → root
-          copy_if_present out/latest/bm20_vs_bench.csv bm20_vs_bench.csv
-          copy_if_present out/latest/bm20_btc_eth_line.png bm20_btc_eth_line.png
-          copy_if_present out/latest/bm20_over_btc.png bm20_over_btc.png
-          copy_if_present out/latest/bm20_over_eth.png bm20_over_eth.png
+          SERIES_IN_OUT=$(find out -maxdepth 2 -type f -name "series.json" -o -name "bm20_index_history.json" -o -name "bm20_series.json" | sort | tail -n1 || true)
+          [ -n "${SERIES_IN_OUT:-}" ] && copy_if_present "$SERIES_IN_OUT" series.json
 
           echo "---- present at repo root ----"
-          ls -l latest.json series.json bm20_vs_bench.csv bm20_btc_eth_line.png bm20_over_btc.png bm20_over_eth.png || true
+          ls -l latest.json series.json stats.json contrib_top.json perf_up.json perf_down.json || true
+
 
       - name: Debug — tree (top 2 levels)
         run: |
@@ -156,9 +153,9 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # 🔒 산출물/리포트/아카이브만 선택적으로 add (index.html 등 고정 자산은 제외)
           git add \
-            latest.json series.json contrib_top.json \
+            bm/api/*.json \
+            latest.json series.json contrib_top.json perf_up.json perf_down.json \
             bm20_vs_bench.csv \
             bm20_btc_eth_line.png bm20_over_btc.png bm20_over_eth.png \
             latest.html \
@@ -166,8 +163,11 @@ jobs:
             bm/bm20_bar_latest.png bm/bm20_trend_latest.png \
             "out/${DATE}" || true
 
-          # 아카이브 추가 (있을 때만)
           git add archive/*.html || true
           if [ -d "archive/${DATE}" ]; then
             git add "archive/${DATE}"/* || true
           fi
+
+          git commit -m "BM20 daily: API+site artifacts" || echo "No changes"
+          git push
+
