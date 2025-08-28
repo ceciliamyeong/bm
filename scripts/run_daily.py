@@ -183,9 +183,40 @@ def main():
     bad = rs != 0
     weights.loc[bad] = weights.loc[bad].div(rs[bad], axis=0)
 
-    calc_idx = pd.date_range(start_date, today, freq="D")
+        # --- 날짜 준비 ---
+    today = pd.Timestamp.now(tz=TZ).normalize()
+    start_date = pd.to_datetime(start_date).tz_localize(None).normalize()
+    
+    # 인덱스 정규화(타임존/시간 제거 → 날짜 기준)
+    rets = rets.copy(); weights = weights.copy()
+    rets.index = pd.to_datetime(rets.index).tz_localize(None).normalize()
+    weights.index = pd.to_datetime(weights.index).tz_localize(None).normalize()
+    
+    # 우리가 계산하려는 목표 구간(달력상 날짜)
+    target_idx = pd.date_range(start_date, today, freq="D")
+    
+    # 실제로 두 데이터프레임에 공통으로 존재하는 날짜만 선택
+    available = rets.index.intersection(weights.index)
+    calc_idx = target_idx.intersection(available)
+    
+    # 만약 오늘이 아직 안 들어와서 공통 구간이 비었다면 → 가장 최신 공통일로 대체
+    if len(calc_idx) == 0:
+        last_common = min(rets.index.max(), weights.index.max())
+        calc_idx = pd.DatetimeIndex([last_common])
+        print(f"⚠️ No overlap on target days. Using latest available: {last_common.date()}")
+    
+    # --- 포트폴리오 수익률 및 지수 누적 ---
     port_ret = (rets.loc[calc_idx] * weights.loc[calc_idx]).sum(axis=1)
     index_series = (1.0 + port_ret).cumprod() * start_index
+    
+    now_iso = pd.Timestamp.now(tz=TZ).isoformat()
+    rows = [[d.strftime("%Y-%m-%d"), float(v), "live", now_iso] for d, v in index_series.items()]
+    if not rows:
+        print("[INFO] No new rows to append."); return
+    
+    ws_index.append_rows(rows, value_input_option="USER_ENTERED")
+    print(f"[OK] Appended {len(rows)} rows: {rows[0][0]} → {rows[-1][0]}")
+
 
     now_iso = pd.Timestamp.now(tz=TZ).isoformat()
     rows = [[d.strftime("%Y-%m-%d"), float(v), "live", now_iso] for d, v in index_series.items()]
