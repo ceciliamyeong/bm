@@ -6,61 +6,88 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>BM20 Index — Latest</title>
   <style>
-    :root{--bg:#0b1020;--card:#11172a;--muted:#8aa0b5;--text:#e8f0ff;--up:#2E7D32;--down:#C62828;--brand:#1A237E;--accent:#4c74f2;}
-    *{box-sizing:border-box}
-    html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Apple Color Emoji,Segoe UI Emoji}
-    a{color:#aecdff;text-decoration:none}
-    a:hover{text-decoration:underline}
-    header{position:sticky;top:0;background:linear-gradient(180deg,rgba(17,23,42,.95),rgba(17,23,42,.75));backdrop-filter:saturate(1.2) blur(8px);z-index:10;border-bottom:1px solid #233}
-    .wrap{max-width:1100px;margin:0 auto;padding:16px}
-    .brand{display:flex;gap:10px;align-items:center}
-    .brand .dot{width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:0 0 18px var(--accent)}
-    nav{display:flex;gap:18px;align-items:center}
-    .rows{display:grid;grid-template-columns:1fr;gap:16px;margin-top:16px}
-    @media(min-width:900px){.rows{grid-template-columns:1.1fr .9fr}}
-    .card{background:var(--card);border:1px solid #26354a;border-radius:14px;padding:16px;box-shadow:0 8px 28px rgba(0,0,0,.3)}
-    .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-    @media(min-width:700px){.cards{grid-template-columns:repeat(6,1fr)}}
-    .stat{padding:12px;border:1px solid #2b3d59;border-radius:12px;background:rgba(22,28,48,.6)}
-    .k{color:var(--muted);font-size:12px}
-    .v{font-size:22px;font-weight:700}
-    .delta.up{color:var(--up)}
-    .delta.down{color:var(--down)}
-    .flex{display:flex;gap:14px;align-items:center;justify-content:space-between}
-    .h{font-weight:700;letter-spacing:.2px}
-    .mini{font-size:12px;color:var(--muted)}
-    .pill{display:inline-flex;gap:8px;align-items:center;border:1px solid #2b3d59;border-radius:999px;padding:6px 10px;background:rgba(22,28,48,.6)}
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .section{margin-top:18px}
-    .tbl{width:100%;border-collapse:collapse}
-    .tbl th,.tbl td{border-bottom:1px solid #223449;padding:10px 8px;text-align:left}
-    .tbl th{color:#a8bdd6;font-weight:600}
-    .svgwrap{height:260px;width:100%;border-radius:12px;border:1px solid #2b3d59;background:rgba(22,28,48,.6);overflow:hidden}
-    .svgwrap svg{width:100%;height:100%;display:block}
-    footer{color:#92a7be;margin:40px 0 60px}
-    .hide{display:none}
-    .btn{border:1px solid #2b3d59;background:#121a2d;color:#cfe1ff;border-radius:10px;padding:8px 12px;cursor:pointer}
-    .btn:hover{filter:brightness(1.1)}
-    .list{display:grid;gap:8px}
-    .code{white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;background:#0c1326;border:1px solid #26354a;border-radius:10px;padding:12px;max-height:420px;overflow:auto}
+  :root{--bg:#0b1020;--card:#11172a;--muted:#8aa0b5;--text:#e8f0ff;--up:#2E7D32;--down:#C62828;--brand:#1A237E;--accent:#4c74f2;}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Apple Color Emoji,Segoe UI Emoji}
+  a{color:#aecdff;text-decoration:none}
+  a:hover{text-decoration:underline}
 
-    /* ===== BM20 뉴스 카드 전용 스타일 (충돌 없음) ===== */
-    .bm-wrap{max-width:1100px;margin:0 auto}
-    .bm-grid{display:grid;grid-template-columns:3fr 2fr;gap:16px}
-    .bm-card{background:linear-gradient(180deg,#11183a 0%,#0f152b 100%);border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:18px;box-shadow:0 12px 30px rgba(0,0,0,.35)}
-    .bm-title{font-size:20px;font-weight:800;margin-bottom:10px;color:#dfe5ff}
-    .bm-head{font-size:22px;font-weight:900;margin:6px 0 10px}
-    .bm-lead{font-size:16px;color:#d9e3ff;margin-bottom:10px}
-    .bm-pill{display:inline-block;border:1px solid rgba(255,255,255,.14);padding:6px 10px;border-radius:999px;font-size:12px;color:#a7b0c0;margin-right:8px}
-    .bm-kicker{color:#a7b0c0;font-size:12px;letter-spacing:.2px}
-    .bm-bars{margin-top:8px}
-    .bm-row{display:grid;grid-template-columns:50px 1fr 70px;align-items:center;gap:10px;margin:6px 0}
-    .bm-shell{background:rgba(255,255,255,.08);height:18px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.08)}
-    .bm-bar{height:100%;background:#2E7D32}
-    .bm-pct{text-align:right;font-variant-numeric:tabular-nums;color:#e6f5ea;font-weight:700}
-    .bm-ticker{font-weight:700;color:#e9edf7;text-align:center}
-    .bm-legend{display:flex;gap:10px;margin-top:6px;color:#dfe5ff;font-size:12px}
-  </style>
+  header{position:sticky;top:0;background:linear-gradient(180deg,rgba(17,23,42,.95),rgba(17,23,42,.75));backdrop-filter:saturate(1.2) blur(8px);z-index:10;border-bottom:1px solid #233}
+  .wrap{max-width:1100px;margin:0 auto;padding:16px}
+
+  .brand{display:flex;gap:10px;align-items:center}
+  .brand .dot{width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:0 0 18px var(--accent)}
+  nav{display:flex;gap:18px;align-items:center}
+
+  /* 레이아웃: 모바일 1열 → 데스크톱 2열(메인 2, 사이드 1) */
+  .rows{display:grid;grid-template-columns:1fr;gap:16px;margin-top:16px}
+  @media (min-width:900px){.rows{grid-template-columns:2fr 1fr}}
+
+  .card{background:var(--card);border:1px solid #26354a;border-radius:14px;padding:16px;box-shadow:0 8px 28px rgba(0,0,0,.3)}
+
+  /* KPI 카드 그리드: 모바일 2열 → 태블릿/데스크톱 6열 */
+  .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  @media (min-width:700px){.cards{grid-template-columns:repeat(6,1fr)}}
+
+  .stat{padding:12px;border:1px solid #2b3d59;border-radius:12px;background:rgba(22,28,48,.6)}
+  .k{color:var(--muted);font-size:12px}
+  .v{font-size:22px;font-weight:700}
+  .delta.up{color:var(--up)}
+  .delta.down{color:var(--down)}
+  .flex{display:flex;gap:14px;align-items:center;justify-content:space-between}
+  .h{font-weight:700;letter-spacing:.2px}
+  .mini{font-size:12px;color:var(--muted)}
+  .pill{display:inline-flex;gap:8px;align-items:center;border:1px solid #2b3d59;border-radius:999px;padding:6px 10px;background:rgba(22,28,48,.6)}
+
+  /* 2칸 그리드 섹션: 모바일에서 1칸으로 */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:700px){.grid2{grid-template-columns:1fr}}
+
+  .section{margin-top:18px}
+
+  /* 표는 넘치면 가로 스크롤 */
+  .tbl{width:100%;border-collapse:collapse}
+  .tbl th,.tbl td{border-bottom:1px solid #223449;padding:10px 8px;text-align:left}
+  .tbl th{color:#a8bdd6;font-weight:600}
+  .table-wrap{overflow:auto}
+
+  /* 차트/이미지: 가로 100%, 비율 유지 */
+  .chart img,.chart canvas{display:block;width:100%;height:auto;object-fit:contain}
+  .chart.aspect-16x9{aspect-ratio:16/9}
+  .chart.aspect-4x3{aspect-ratio:4/3}
+
+  /* 기존 SVG 박스도 가로 100% 유지 */
+  .svgwrap{height:260px;width:100%;border-radius:12px;border:1px solid #2b3d59;background:rgba(22,28,48,.6);overflow:hidden}
+  .svgwrap svg{width:100%;height:100%;display:block}
+
+  footer{color:#92a7be;margin:40px 0 60px}
+  .hide{display:none}
+  .btn{border:1px solid #2b3d59;background:#121a2d;color:#cfe1ff;border-radius:10px;padding:8px 12px;cursor:pointer}
+  .btn:hover{filter:brightness(1.1)}
+  .list{display:grid;gap:8px}
+  .code{white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;background:#0c1326;border:1px solid #26354a;border-radius:10px;padding:12px;max-height:420px;overflow:auto}
+
+  /* ===== 추가: 차트 카드 묶음이 좁아지면 자동으로 아래로 쌓이게 ===== */
+  .charts{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  
+  /* ===== BM20 뉴스 카드 전용 스타일 (충돌 없음) ===== */
+  .bm-wrap{max-width:1100px;margin:0 auto}
+  .bm-grid{display:grid;grid-template-columns:3fr 2fr;gap:16px}
+  .bm-card{background:linear-gradient(180deg,#11183a 0%,#0f152b 100%);border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:18px;box-shadow:0 12px 30px rgba(0,0,0,.35)}
+  .bm-title{font-size:20px;font-weight:800;margin-bottom:10px;color:#dfe5ff}
+  .bm-head{font-size:22px;font-weight:900;margin:6px 0 10px}
+  .bm-lead{font-size:16px;color:#d9e3ff;margin-bottom:10px}
+  .bm-pill{display:inline-block;border:1px solid rgba(255,255,255,.14);padding:6px 10px;border-radius:999px;font-size:12px;color:#a7b0c0;margin-right:8px}
+  .bm-kicker{color:#a7b0c0;font-size:12px;letter-spacing:.2px}
+  .bm-bars{margin-top:8px}
+  .bm-row{display:grid;grid-template-columns:50px 1fr 70px;align-items:center;gap:10px;margin:6px 0}
+  .bm-shell{background:rgba(255,255,255,.08);height:18px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.08)}
+  .bm-bar{height:100%;background:#2E7D32}
+  .bm-pct{text-align:right;font-variant-numeric:tabular-nums;color:#e6f5ea;font-weight:700}
+  .bm-ticker{font-weight:700;color:#e9edf7;text-align:center}
+  .bm-legend{display:flex;gap:10px;margin-top:6px;color:#dfe5ff;font-size:12px}
+</style>
+
 </head>
 <body>
   <header>
