@@ -200,21 +200,39 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
       
+          # 🟢 아카이브 산출물을 표준 이름으로 복사 (latest.json 등)
+          # JSON
+          [ -f "bm/api/latest.json" ] && cp -f "bm/api/latest.json" latest.json
+          [ -f "bm/api/series.json" ] && cp -f "bm/api/series.json" series.json
+          [ -f "bm/api/contrib_top.json" ] && cp -f "bm/api/contrib_top.json" contrib_top.json
+          [ -f "bm/api/perf_up.json" ] && cp -f "bm/api/perf_up.json" perf_up.json
+          [ -f "bm/api/perf_down.json" ] && cp -f "bm/api/perf_down.json" perf_down.json
+      
+          # PNG (차트 이미지)
+          [ -f "bm/bm20_bar_latest.png" ] && cp -f "bm/bm20_bar_latest.png" bm20_bar_latest.png
+          [ -f "bm/bm20_trend_latest.png" ] && cp -f "bm/bm20_trend_latest.png" bm20_trend_latest.png
+      
+          # HTML (리포트)
+          [ -f "out/${DATE}/bm20_daily_${DATE}.html" ] && cp -f "out/${DATE}/bm20_daily_${DATE}.html" latest.html && cp -f latest.html bm/latest.html
+      
+          # 이제 git add
           git add \
-            bm/bm/api/*.json \
-            bm20_latest.json bm20_series.json stats.json \
+            bm/bm20_*.json bm/*.json bm/api/*.json \
             latest.json series.json contrib_top.json perf_up.json perf_down.json \
             bm20_vs_bench.csv \
             bm20_btc_eth_line.png bm20_over_btc.png bm20_over_eth.png \
-            latest.html \
-            bm/latest.html \
-            bm/bm20_bar_latest.png bm/bm20_trend_latest.png \
+            latest.html bm/latest.html \
+            bm20_bar_latest.png bm20_trend_latest.png \
             "out/${DATE}" || true
       
           git add archive/*.html || true
           if [ -d "archive/${DATE}" ]; then
             git add "archive/${DATE}"/* || true
           fi
+      
+          git commit -m "BM20 daily: normalize filenames + aliases" || echo "No changes"
+          git push
+      
 
 
           git commit -m "BM20 daily: normalize filenames + aliases" || echo "No changes"
