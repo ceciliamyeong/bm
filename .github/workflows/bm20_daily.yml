@@ -113,30 +113,14 @@ jobs:
         run: |
           set -euo pipefail
           SITE_SRC="."
-          mkdir -p "$SITE_SRC"
-
-          copy_if_present () {
-            src="$1"; dest="$2"
-            if [ -f "$src" ]; then
-              cp -f "$src" "$SITE_SRC/$dest"
-              echo "copied: $src -> $SITE_SRC/$dest"
-            fi
-          }
-
-          # ✅ API 표준 위치: bm/api 에서 먼저 가져오기
-          copy_if_present bm/api/latest.json     latest.json
-          copy_if_present bm/api/series.json     series.json
-          copy_if_present bm/api/stats.json      stats.json
-          copy_if_present bm/api/contrib_top.json contrib_top.json
-          copy_if_present bm/api/perf_up.json     perf_up.json
-          copy_if_present bm/api/perf_down.json   perf_down.json
-
-          # (폴백) 과거 경로들에서 있으면만 덮어쓰기
-          copy_if_present site/latest.json latest.json
-          copy_if_present site/series.json series.json
-
+          mkdir -p api
+          # 표준 위치(이미 api에 있음이면 스킵 가능)
+          [ -f api/latest.json ]  && echo ready latest.json
+          [ -f api/contrib_top.json ] && echo ready contrib_top.json
+          [ -f api/perf_up.json ]  && echo ready perf_up.json
+          [ -f api/perf_down.json ] && echo ready perf_down.json
           echo "---- present at repo root ----"
-          ls -l latest.json series.json stats.json contrib_top.json perf_up.json perf_down.json || true
+          ls -l latest.html api/*.json || true
 
       - name: Publish latest.html (뉴스리포트)
         run: |
@@ -216,14 +200,10 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git add \
-            bm/bm20_*.json bm/*.json bm/api/*.json \
-            latest.json series.json stats.json contrib_top.json perf_up.json perf_down.json \
-            bm20_vs_bench.csv \
-            bm20_btc_eth_line_latest.png bm20_over_btc_latest.png bm20_over_eth_latest.png \
-            bm20_bar_latest.png bm20_trend_latest.png \
-            kimchi_premium_latest.png kimchi_premium_latest.pdf \
-            latest.html bm/latest.html \
-            archive/*.html || true
+            git add api/*.json latest.html archive/* || true
+            git add bm20_*.png *.png *.csv || true  # 필요한 산출물만
+            git commit -m "BM20 daily: publish api/ + latest.html" || echo "No changes"
+            git push
 
           # 날짜 아카이브(있으면)
           if [ -n "${LATEST_DIR:-}" ] && [ -d "${LATEST_DIR}" ]; then
