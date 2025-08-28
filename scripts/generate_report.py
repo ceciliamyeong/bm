@@ -1,171 +1,227 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# Publish latest BM20 to /bm/latest.html without touching main page
-# - Copies out/YYYY-MM-DD -> archive/YYYY-MM-DD
-# - Generates /bm/latest.html and /bm/bm20_bar_latest.png /bm/bm20_trend_latest.png
-# - If out/ has no dated folder, falls back to existing /bm/latest.html & *_latest.png
+# scripts/generate_report.py
+# BM20 데일리: bm/api/*.json을 읽어 latest.html 생성 (에러 없이 관용적으로 처리)
 
-import re, shutil, html
+import os, json, datetime
 from pathlib import Path
-import datetime as dt
 
-DARK_STYLE = """
-body{font-family:-apple-system,BlinkMacSystemFont,"NanumGothic","Noto Sans CJK","Malgun Gothic",Arial,sans-serif;
-background:#0b1020;color:#e6ebff;margin:0}
-.wrap{max-width:820px;margin:0 auto;padding:20px}
-.card{background:#121831;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:20px;margin-bottom:16px}
-h1{font-size:22px;margin:0 0 8px 0;text-align:center}
-h2{font-size:15px;margin:16px 0 8px 0;color:#cfd6ff}
-.muted{color:#99a1b3;text-align:center}.center{text-align:center}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th,td{border:1px solid rgba(255,255,255,.08);padding:8px}
-th{background:#1a2240;color:#e6ebff}
-.footer{font-size:12px;color:#99a1b3;text-align:center;margin-top:16px}
-img{max-width:100%;background:#0f1429;border-radius:8px;border:1px solid rgba(255,255,255,.08)}
-"""
+ROOT = Path(".")
+API  = ROOT / "bm" / "api"
+OUT_HTML = ROOT / "latest.html"
 
-ROOT = Path(__file__).resolve().parents[1]
-OUT  = ROOT / "out"
-ARCH = ROOT / "archive"
-BM   = ROOT / "bm"        # ← 메인 페이지가 있는 폴더(메인은 건드리지 않음)
-
-def is_ymd(name: str) -> bool:
+# ---------- 유틸 ----------
+def load_json(path, default=None):
     try:
-        dt.datetime.strptime(name, "%Y-%m-%d")
-        return True
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return default if default is not None else {}
+
+def pick_date(*candidates):
+    for d in candidates:
+        if isinstance(d, str) and d:
+            return d
+    # Asia/Seoul 기준 오늘 날짜 (문자열)
+    KST = datetime.timezone(datetime.timedelta(hours=9))
+    return datetime.datetime.now(tz=KST).date().isoformat()
+
+def normalize_perf(data, kind="up"):
+    """
+    perf_up.json / perf_down.json 포맷을 통합
+    허용:
+      - {"date":"YYYY-MM-DD","top":[{"symbol":"BTC","ret_24h_pct":1.23},...]}
+      - {"date":"YYYY-MM-DD","bottom":[...]}
+      - {"list":[{"sym":"BTC","v":0.0123},...]}  # 구형
+    반환: (date, [{"symbol":"BTC","ret_24h_pct":1.23}, ...])
+    """
+    if not isinstance(data, dict):
+        return None, []
+    # 날짜 추출
+    date = data.get("date")
+    # 아이템 추출
+    keys = ["top", "list"] if kind == "up" else ["bottom", "list"]
+    items = None
+    for k in keys:
+        if k in data and isinstance(data[k], list):
+            items = data[k]
+            break
+    if items is None:
+        return date, []
+
+    out = []
+    for it in items:
+        sym = (it.get("symbol") or it.get("sym") or "").upper()
+        if not sym:
+            continue
+        if "ret_24h_pct" in it:
+            pct = float(it["ret_24h_pct"])
+        elif "v" in it:
+            v = float(it["v"])
+            pct = v * 100 if abs(v) < 1.0 else v
+        else:
+            continue
+        out.append({"symbol": sym, "ret_24h_pct": round(pct, 4)})
+
+    # 내림차순 정렬(상승은 크게→작게, 하락은 작게→크게인데 이미 분리되어 있으니 안전하게 정렬만)
+    out.sort(key=lambda r: r["ret_24h_pct"], reverse=True if kind=="up" else False)
+    return date, out
+
+def normalize_contrib(data):
+    """
+    contrib_top.json을 섹션별 상위 리스트로 변환
+    허용:
+      - {"asof":"YYYY-MM-DD","MTD":{"BTC":0.01,...},"QTD":{...},"YTD":{...}}
+      - 값이 list/tuple일 경우도 대응
+    반환: {"asof":str, "MTD":[(sym,val),...], "QTD":[...], "YTD":[...]}
+    """
+    if not isinstance(data, dict):
+        return {"asof": None, "MTD": [], "QTD": [], "YTD": []}
+    def to_pairs(x):
+        if isinstance(x, dict):
+            return list(x.items())
+        if isinstance(x, list):
+            # ["BTC", 0.01] 또는 {"sym":...,"v":...} 대응
+            pairs = []
+            for it in x:
+                if isinstance(it, (list, tuple)) and len(it) == 2:
+                    pairs.append((str(it[0]).upper(), float(it[1])))
+                elif isinstance(it, dict):
+                    sym = (it.get("symbol") or it.get("sym") or "").upper()
+                    v = it.get("v"); v = float(v) if v is not None else None
+                    if sym and v is not None:
+                        pairs.append((sym, v))
+            return pairs
+        return []
+
+    def topn(x, n=10):
+        pairs = to_pairs(x)
+        pairs.sort(key=lambda p: -float(p[1]) if p and p[1] is not None else 0.0)
+        return pairs[:n]
+
+    return {
+        "asof": data.get("asof"),
+        "MTD": topn(data.get("MTD", {})),
+        "QTD": topn(data.get("QTD", {})),
+        "YTD": topn(data.get("YTD", {})),
+    }
+
+def fmt_pct(p):
+    try:
+        return f"{float(p)*100:+.2f}%" if abs(p) < 1.0 else f"{float(p):+.2f}%"
+    except Exception:
+        return "-"
+
+def esc(s):
+    return (s or "").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;")
+
+def exists(path: Path) -> bool:
+    try:
+        return path.is_file()
     except Exception:
         return False
 
-def find_latest_out_dir() -> Path | None:
-    if not OUT.exists():
-        return None
-    dated = [p for p in OUT.iterdir() if p.is_dir() and is_ymd(p.name)]
-    return sorted(dated, key=lambda p: p.name)[-1] if dated else None
-
-def ensure_daily_html(latest_dir: Path, require_news: bool = False) -> Path | None:
-    """out/YYYY-MM-DD/bm20_daily_YYYY-MM-DD.html 없으면 자동 생성(뉴스 없어도 생성)."""
-    ymd = latest_dir.name
-    html_path = latest_dir / f"bm20_daily_{ymd}.html"
-    if html_path.exists():
-        return html_path
-
-    bar = latest_dir / f"bm20_bar_{ymd}.png"
-    trd = latest_dir / f"bm20_trend_{ymd}.png"
-    news_file = latest_dir / f"bm20_news_{ymd}.txt"
-
-    news = ""
-    if news_file.exists():
-        news = html.escape(news_file.read_text(encoding="utf-8").strip()).replace("\n", "<br/>")
-    elif require_news:
-        print("[ensure_daily_html] skip: news required but not found", news_file)
-        return None
-
-    bar_tag = f'<p class="center"><img src="bm20_bar_{ymd}.png" alt="Performance"></p>' if bar.exists() else ""
-    trd_tag = f'<p class="center"><img src="bm20_trend_{ymd}.png" alt="Trend"></p>' if trd.exists() else ""
-
-    tpl = f"""<!doctype html><html lang="ko"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BM20 데일리 {ymd}</title>
-<style>{DARK_STYLE}</style></head><body>
-<div class="wrap">
-  <div class="card">
-    <h1>BM20 데일리 리포트</h1>
-    <div class="muted">{ymd}</div>
-  </div>
-  <div class="card">
-    <h2>코인별 퍼포먼스 (1D, USD)</h2>
-    {bar_tag}
-    <h2>BTC & ETH 7일 가격 추세</h2>
-    {trd_tag}
-  </div>
-  <div class="card"><h2>BM20 데일리 뉴스</h2><p>{news or "—"}</p></div>
-  <div class="footer">© Blockmedia · Data: CoinGecko, Upbit, Binance/Bybit</div>
-</div></body></html>"""
-    html_path.write_text(tpl, encoding="utf-8")
-    print("[auto] generated", html_path)
-    return html_path
-
-def copy_dir(src: Path) -> Path:
-    dst = ARCH / src.name
-    dst.parent.mkdir(parents=True, exist_ok=True)
-    if dst.exists():
-        shutil.rmtree(dst)
-    shutil.copytree(src, dst)
-    print("[copy]", src, "→", dst)
-    return dst
-
-def publish_latest_to_bm(dst_daily_dir: Path):
-    """
-    /bm/ 아래에 고정 산출물만 생성/교체:
-      - /bm/latest.html
-      - /bm/bm20_bar_latest.png
-      - /bm/bm20_trend_latest.png
-    (메인 index.html 은 절대 수정하지 않음)
-    """
-    ymd = dst_daily_dir.name
-    html_src = dst_daily_dir / f"bm20_daily_{ymd}.html"
-    bar_src  = dst_daily_dir / f"bm20_bar_{ymd}.png"
-    trd_src  = dst_daily_dir / f"bm20_trend_{ymd}.png"
-
-    if not html_src.exists():
-        print("[publish_latest] skip: html not found", html_src)
-        return
-
-    BM.mkdir(parents=True, exist_ok=True)
-
-    # latest.html: 이미지 경로를 고정 파일명으로 치환
-    html_txt = html_src.read_text(encoding="utf-8")
-    html_txt = html_txt.replace(f"bm20_bar_{ymd}.png",   "bm20_bar_latest.png")
-    html_txt = html_txt.replace(f"bm20_trend_{ymd}.png", "bm20_trend_latest.png")
-    (BM / "latest.html").write_text(html_txt, encoding="utf-8")
-
-    # 최신 이미지 고정 파일명으로 복사(없으면 건너뜀)
-    if bar_src.exists():
-        shutil.copyfile(bar_src, BM / "bm20_bar_latest.png")
-    if trd_src.exists():
-        shutil.copyfile(trd_src, BM / "bm20_trend_latest.png")
-
-    print(f"[publish_latest] wrote {(BM / 'latest.html').as_posix()}")
-
-def ensure_latest_dir() -> Path:
-    """
-    최신 out/YYYY-MM-DD 디렉터리를 보장하여 반환.
-    - 있으면 그대로 사용
-    - 없으면 /bm 의 고정 에셋(latest.html, *_latest.png)로 오늘 폴더를 생성해 채운 뒤 반환
-    - 이후 ensure_daily_html()로 일간 HTML 생성 시도
-    """
-    latest = find_latest_out_dir()
-    if latest is None:
-        today = dt.date.today().isoformat()
-        latest = OUT / today
-        latest.mkdir(parents=True, exist_ok=True)
-
-        bar_fixed  = BM / "bm20_bar_latest.png"
-        trd_fixed  = BM / "bm20_trend_latest.png"
-        html_fixed = BM / "latest.html"
-
-        # 고정 이미지 → 날짜 파일명으로 복사
-        if bar_fixed.exists():
-            shutil.copyfile(bar_fixed, latest / f"bm20_bar_{today}.png")
-        if trd_fixed.exists():
-            shutil.copyfile(trd_fixed, latest / f"bm20_trend_{today}.png")
-
-        # latest.html이 있으면 날짜 파일명으로 치환해 저장
-        if html_fixed.exists():
-            html_txt = html_fixed.read_text(encoding="utf-8")
-            html_txt = html_txt.replace("bm20_bar_latest.png",   f"bm20_bar_{today}.png")
-            html_txt = html_txt.replace("bm20_trend_latest.png", f"bm20_trend_{today}.png")
-            (latest / f"bm20_daily_{today}.html").write_text(html_txt, encoding="utf-8")
-
-    # 일간 HTML 보장(뉴스 없어도 생성)
-    ensure_daily_html(latest, require_news=False)
-    return latest
-
+# ---------- 데이터 로드/정규화 ----------
 def main():
-    latest = ensure_latest_dir()
-    dst = copy_dir(latest)          # archive/YYYY-MM-DD
-    publish_latest_to_bm(dst)       # /bm/latest.html & *_latest.png
-    print("[done] site updated (bm/latest only)")
+    perf_up_raw   = load_json(API / "perf_up.json", {})
+    perf_down_raw = load_json(API / "perf_down.json", {})
+    contrib_raw   = load_json(API / "contrib_top.json", {})
+
+    date_up, up_list     = normalize_perf(perf_up_raw, "up")
+    date_down, down_list = normalize_perf(perf_down_raw, "down")
+    contrib = normalize_contrib(contrib_raw)
+
+    asof = pick_date(date_up, date_down, contrib.get("asof"))
+
+    # ---------- HTML 구성 ----------
+    style = """
+    <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; margin: 24px; color:#111; }
+    header { margin-bottom: 16px; }
+    h1 { font-size: 24px; margin: 0 0 4px 0; }
+    .date { color:#555; font-size:14px; }
+    section { margin-top: 24px; }
+    h2 { font-size: 18px; margin: 0 0 12px 0; border-bottom: 1px solid #eee; padding-bottom: 6px; }
+    .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    ul { margin: 8px 0 0 18px; padding: 0; }
+    li { line-height: 1.6; }
+    .up  { color: #1565C0; }
+    .down{ color: #C62828; }
+    .imgrow { display:flex; gap:10px; flex-wrap: wrap; margin-top:10px; }
+    .imgrow img { max-width: 48%; border:1px solid #eee; border-radius: 8px; }
+    .muted { color:#777; }
+    footer { margin-top: 32px; font-size: 12px; color:#666; }
+    </style>
+    """
+
+    # 이미지 후보 자동 삽입
+    image_candidates = [
+        ROOT / "bm20_bar_latest.png",
+        ROOT / "bm20_trend_latest.png",
+        ROOT / "bm20_over_btc_latest.png",
+        ROOT / "bm20_over_eth_latest.png",
+        ROOT / "bm20_btc_eth_line_latest.png",
+        ROOT / "kimchi_premium_latest.png",
+    ]
+    imgs_html = ""
+    imgs = [p for p in image_candidates if exists(p)]
+    if imgs:
+        parts = [f'<img src="{p.name}" alt="{p.name}"/>' for p in imgs]
+        imgs_html = f'<div class="imgrow">{"".join(parts)}</div>'
+
+    # 퍼포먼스 섹션
+    def render_perf_block(title, rows, up=True, limit=10):
+        rows = rows[:limit]
+        if not rows:
+            return f"<section><h2>{esc(title)}</h2><p class='muted'>데이터 없음</p></section>"
+        lis = []
+        for i, r in enumerate(rows, 1):
+            sym = esc(r.get("symbol"))
+            pct = r.get("ret_24h_pct")
+            cls = "up" if (pct is not None and float(pct) >= 0) else "down"
+            lis.append(f"<li class='{cls}'>{i}. {sym} <b>{float(pct):+,.2f}%</b></li>")
+        return f"<section><h2>{esc(title)}</h2><ul>{''.join(lis)}</ul></section>"
+
+    # 기여도 섹션
+    def render_contrib_block(title, items, limit=10):
+        items = items[:limit]
+        if not items:
+            return f"<section><h2>{esc(title)}</h2><p class='muted'>데이터 없음</p></section>"
+        lis = []
+        for i, (sym, val) in enumerate(items, 1):
+            lis.append(f"<li>{i}. {esc(sym)} <b>{fmt_pct(val)}</b></li>")
+        return f"<section><h2>{esc(title)}</h2><ul>{''.join(lis)}</ul></section>"
+
+    html = []
+    html.append("<!doctype html><html lang='ko'><meta charset='utf-8'>")
+    html.append("<title>BM20 데일리 리포트</title>")
+    html.append(style)
+    html.append("<body>")
+    html.append("<header>")
+    html.append("<h1>BM20 데일리 리포트</h1>")
+    html.append(f"<div class='date'>기준일: {esc(asof)}</div>")
+    html.append("</header>")
+
+    # 이미지 묶음(있으면)
+    if imgs_html:
+        html.append(imgs_html)
+
+    # 퍼포먼스 (상/하락)
+    html.append("<div class='twocol'>")
+    html.append(render_perf_block("코인별 퍼포먼스 (상승 TOP 10)", up_list, up=True))
+    html.append(render_perf_block("코인별 퍼포먼스 (하락 TOP 10)", down_list, up=False))
+    html.append("</div>")
+
+    # 기여도 (MTD/QTD/YTD)
+    html.append("<div class='twocol'>")
+    html.append(render_contrib_block("기여도 MTD (상위 10)", contrib.get("MTD", [])))
+    html.append(render_contrib_block("기여도 QTD (상위 10)", contrib.get("QTD", [])))
+    html.append(render_contrib_block("기여도 YTD (상위 10)", contrib.get("YTD", [])))
+    html.append("</div>")
+
+    html.append("<footer>자동 생성: scripts/generate_report.py</footer>")
+    html.append("</body></html>")
+
+    OUT_HTML.write_text("\n".join(html), encoding="utf-8")
+    print(f"[OK] wrote {OUT_HTML}")
 
 if __name__ == "__main__":
     main()
