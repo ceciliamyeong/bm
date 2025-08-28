@@ -33,18 +33,20 @@
       <a href="https://ceciliamyeong.github.io/bm/latest.html">Latest</a>
       <a href="https://ceciliamyeong.github.io/bm/indices/performance/">Charts</a>
       <a href="https://ceciliamyeong.github.io/bm/indices/overview/">Data</a>
-      <a href="https://ceciliamyeong.github.io/bm/indices/methodology/">About</a>
+      <a href="https://ceciliamyeong.github.io/bm/what-is-bm20.html">About</a>
     </nav>
 
     <!-- KPI 테이블 (latest.json 등에서 자동 주입) -->
-    <table>
-      <tr><th>지수</th><td><!-- {level pretty} --></td></tr>
-      <tr><th>전일</th><td><!-- {prev pretty} --></td></tr>
-      <tr><th>포인트/변동률</th><td><!-- {chgpt pretty} --> / <!-- {chgp %+} --></td></tr>
+   <table>
+      <tr><th>지수</th><td><span id="level">—</span></td></tr>
+      <tr><th>전일</th><td><span id="prev">—</span></td></tr>
+      <tr><th>포인트/변동률</th>
+          <td><span id="chgpt">—</span> / <span id="chgp">—</span></td></tr>
       <tr><th>수익률(1D/7D/30D/MTD/YTD)</th>
-          <td><!-- {r1d %+} --> / <!-- {r7d %+} --> / <!-- {r30d %+} --> / <!-- {rmtd %+} --> / <!-- {rytd %+} --></td></tr>
-      <tr><th>김치 프리미엄</th><td><!-- {kimchi %+ or —} --></td></tr>
-      <tr><th>펀딩비(Binance)</th><td><!-- {funding 'BTC x / ETH y' or —} --></td></tr>
+          <td><span id="r1d">—</span> / <span id="r7d">—</span> / <span id="r30d">—</span> /
+              <span id="rmtd">—</span> / <span id="rytd">—</span></td></tr>
+      <tr><th>김치 프리미엄</th><td><span id="kimchi">—</span></td></tr>
+      <tr><th>펀딩비(Binance)</th><td><span id="funding">—</span></td></tr>
     </table>
   </div>
 
@@ -86,5 +88,141 @@
 
   <div class="footer">© Blockmedia · Data: latest.json / series.json (+ optional perf/kimchi/funding)</div>
 </div>
-</body>
+</body> 
+  <script>
+const $ = s => document.querySelector(s);
+const fmtNum = v => (v==null||isNaN(v)) ? "—" :
+  new Intl.NumberFormat('en-US',{maximumFractionDigits:2}).format(+v);
+const fmtPct = v => (v==null||isNaN(v)) ? "—" :
+  ((v>=0?"+":"") + (Math.round(v*1000)/10).toFixed(1) + "%");
+
+// 여러 후보 경로 중 먼저 응답 오는 JSON
+async function fetchAny(urls){
+  for (const u of urls){
+    try { const r = await fetch(u, {cache:'no-store'});
+      if (r.ok) return await r.json();
+    } catch(e){}
+  }
+  throw new Error("no json found");
+}
+
+function setText(id, text){ const el = $("#"+id); if (el) el.textContent = text; }
+
+function fromCandidates(obj, keys){
+  for (const k of keys){ if (obj && Object.hasOwn(obj,k)) return obj[k]; }
+}
+
+function formatFunding(f){
+  if (f==null) return "—";
+  if (typeof f === "number") return fmtPct(f);
+  if (typeof f === "string") return f;
+  if (typeof f === "object"){
+    const btc = f.btc ?? f.BTC ?? f.Btc;
+    const eth = f.eth ?? f.ETH ?? f.Eth;
+    const pp  = x => (typeof x === "number") ? fmtPct(x) : (x ?? "—");
+    return `BTC ${pp(btc)} / ETH ${pp(eth)}`;
+  }
+  return "—";
+}
+
+async function loadLatest(){
+  // latest.json 우선순위 (API → 루트 → 예전)
+  const j = await fetchAny([
+    "bm20_latest.json",
+    "bm/api/latest.json",
+    "latest.json",
+    "bm/bm20_latest.json",
+    "bm/latest.json"
+  ]);
+
+  // 날짜/지수/전일/변동치
+  const level = j.bm20Level ?? j.level ?? j.index ?? j.value;
+  const prev  = j.prevLevel ?? j.prev ?? j.previous ?? null;
+  const chgpt = (level!=null && prev!=null) ? (+level - +prev) : (j.change ?? j.chgpt);
+  const returns = j.returns || {};
+  const r1d  = j.bm20ChangePct ?? returns["1D"] ?? j.r1d;
+  const r7d  = returns["7D"];
+  const r30d = returns["30D"];
+  const rmtd = returns["MTD"];
+  const rytd = returns["YTD"];
+
+  setText("level", fmtNum(level));
+  setText("prev",  fmtNum(prev));
+  setText("chgpt", (chgpt==null||isNaN(chgpt)) ? "—" :
+                   ((chgpt>=0?"+":"") + fmtNum(chgpt)));
+  setText("chgp",  fmtPct(r1d));
+  setText("r1d",   fmtPct(r1d));
+  setText("r7d",   fmtPct(r7d));
+  setText("r30d",  fmtPct(r30d));
+  setText("rmtd",  fmtPct(rmtd));
+  setText("rytd",  fmtPct(rytd));
+
+  // 김치/펀딩
+  const kimchi = fromCandidates(j, ["kimchi_premium","kimchi","krw_premium"]);
+  setText("kimchi", (typeof kimchi === "number") ? fmtPct(kimchi) : (kimchi ?? "—"));
+
+  const funding = fromCandidates(j, ["funding_rate","funding","funding_bps","fundingRate"]);
+  setText("funding", formatFunding(funding));
+}
+
+async function loadPerfTop3(){
+  // perf_up/down.json 우선순위 (API → 루트)
+  const up   = await fetchAny(["bm/bm/api/perf_up.json","bm/api/perf_up.json","perf_up.json"]).catch(()=>null);
+  const down = await fetchAny(["bm/bm/api/perf_down.json","bm/api/perf_down.json","perf_down.json"]).catch(()=>null);
+
+  // 표 첫 번째(상승), 세 번째(하락) 테이블을 순서대로 탐색
+  const tables = document.querySelectorAll(".card table");
+  if (tables.length < 3) return;
+
+  const tblUp = tables[1];   // "상승 TOP3"
+  const tblDn = tables[2];   // "하락 TOP3"
+
+  const fill = (tbl, rows, key) => {
+    // 헤더 제외하고 기존 행 제거
+    [...tbl.querySelectorAll("tr")].slice(1).forEach(tr=>tr.remove());
+    if (!rows || !rows.length){
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 2; td.textContent = "—";
+      tr.appendChild(td); tbl.appendChild(tr);
+      return;
+    }
+    rows.slice(0,3).forEach(r=>{
+      const tr = document.createElement("tr");
+      const td1 = document.createElement("td"); td1.textContent = r.symbol || r.ticker || r.name || "-";
+      const td2 = document.createElement("td"); td2.style.textAlign = "right";
+      const pv  = r.ret_24h_pct ?? r.ret ?? r.pct ?? null;
+      td2.textContent = (pv==null||isNaN(pv)) ? "—" : ((pv>=0?"+":"") + (+pv).toFixed(2) + "%");
+      tr.appendChild(td1); tr.appendChild(td2); tbl.appendChild(tr);
+    });
+  };
+
+  fill(tblUp, up?.top || up?.rows || [], "top");
+  // 하락은 perf_down의 "bottom"이 보통 오름차순 끝에서 나온 값(음수 많음). 그냥 앞에서 3개만.
+  fill(tblDn, down?.bottom || down?.rows || [], "bottom");
+}
+
+function tryImages(){
+  // 이미지가 있으면 퍼블리셔가 주석 해제한다는 가정 → 자동 로드 필요 없으면 생략 가능
+  // 필요 시 아래처럼 존재 확인 후 동적으로 삽입할 수 있음:
+  // (현재 템플릿은 <img>가 주석이라 JS 삽입 원하면 아래 로직 사용)
+  const addImg = (selector, src) => {
+    fetch(src,{method:'HEAD'}).then(r=>{
+      if (r.ok) {
+        const p = document.querySelector(selector);
+        if (p) { const img = document.createElement('img'); img.src = src; img.alt = src; p.appendChild(img); }
+      }
+    }).catch(()=>{});
+  };
+  addImg('.card:nth-of-type(2) p.center', 'bm20_bar_latest.png');      // 1D bar
+  addImg('.card:nth-of-type(3) p.center', 'bm20_trend_latest.png');    // 7일 추세
+}
+
+(async function init(){
+  try { await loadLatest(); } catch(e){ console.warn('latest load failed', e); }
+  try { await loadPerfTop3(); } catch(e){ console.warn('perf load failed', e); }
+  try { tryImages(); } catch(e){}
+})();
+</script>
+
 </html>
