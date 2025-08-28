@@ -82,6 +82,7 @@ jobs:
           echo "---- after contrib ----"
           ls -l bm/bm/api || true
        
+
       - name: Normalize JSON filenames (BM20 canonical + aliases)
         run: |
           set -euo pipefail
@@ -93,12 +94,12 @@ jobs:
           SERIES_SRC=$(pick bm/api/series.json site/bm20_series.json site/series.json series.json bm20_series.json)
           STATS_SRC=$(pick  bm/api/stats.json  site/bm20_stats.json  site/stats.json  stats.json  bm20_stats.json)
 
-          # 정식 파일명 → bm/bm20_*.json (메인이 이걸 읽음)
+          # 정식 파일명 → bm/bm20_*.json (내부 소비자)
           [ -n "${LATEST_SRC:-}" ] && cp -f "$LATEST_SRC" bm/bm20_latest.json
           [ -n "${SERIES_SRC:-}" ] && cp -f "$SERIES_SRC" bm/bm20_series.json
           [ -n "${STATS_SRC:-}"  ] && cp -f "$STATS_SRC"  bm/bm20_stats.json
 
-          # 별칭(API) → bm/api/*.json (외부/다른 소비자용)
+          # 별칭(API) → bm/api/*.json (외부/프론트 소비자)
           [ -f bm/bm20_latest.json ] && cp -f bm/bm20_latest.json bm/api/latest.json
           [ -f bm/bm20_series.json ] && cp -f bm/bm20_series.json bm/api/series.json
           [ -f bm/bm20_stats.json  ] && cp -f bm/bm20_stats.json  bm/api/stats.json
@@ -111,12 +112,9 @@ jobs:
           echo "Aliased:"
           ls -l bm/bm20_*.json bm/*.json bm/api/*.json || true
 
-
-
       - name: Prepare site artifacts to root/  # root는 프리뷰/보기용만
         run: |
           set -euo pipefail
-
           SITE_SRC="."
           mkdir -p "$SITE_SRC"
 
@@ -129,30 +127,19 @@ jobs:
           }
 
           # ✅ API 표준 위치: bm/api 에서 먼저 가져오기
-          copy_if_present bm/api/latest.json  latest.json
-          copy_if_present bm/api/series.json  series.json
-          copy_if_present bm/api/stats.json   stats.json
+          copy_if_present bm/api/latest.json     latest.json
+          copy_if_present bm/api/series.json     series.json
+          copy_if_present bm/api/stats.json      stats.json
           copy_if_present bm/api/contrib_top.json contrib_top.json
-          copy_if_present bm/api/perf_up.json    perf_up.json
-          copy_if_present bm/api/perf_down.json  perf_down.json
+          copy_if_present bm/api/perf_up.json     perf_up.json
+          copy_if_present bm/api/perf_down.json   perf_down.json
 
           # (폴백) 과거 경로들에서 있으면만 덮어쓰기
           copy_if_present site/latest.json latest.json
           copy_if_present site/series.json series.json
-          LATEST_IN_OUT=$(find out -maxdepth 2 -type f -name "latest.json" -o -name "bm20_latest.json" | sort | tail -n1 || true)
-          [ -n "${LATEST_IN_OUT:-}" ] && copy_if_present "$LATEST_IN_OUT" latest.json
-
-          SERIES_IN_OUT=$(find out -maxdepth 2 -type f -name "series.json" -o -name "bm20_index_history.json" -o -name "bm20_series.json" | sort | tail -n1 || true)
-          [ -n "${SERIES_IN_OUT:-}" ] && copy_if_present "$SERIES_IN_OUT" series.json
 
           echo "---- present at repo root ----"
           ls -l latest.json series.json stats.json contrib_top.json perf_up.json perf_down.json || true
-
-
-      - name: Debug — tree (top 2 levels)
-        run: |
-          echo "PWD=$(pwd)"
-          find . -maxdepth 2 -type f | sort | sed -n '1,200p'
 
       - name: Publish latest.html (뉴스리포트)
         run: |
@@ -163,78 +150,93 @@ jobs:
         run: |
           set -euo pipefail
           DATE=$(TZ=Asia/Seoul date +%F)
+          mkdir -p archive "archive/${DATE}"
 
           # 1) latest.html 스냅샷 보관
-          mkdir -p archive
           if [ -f latest.html ]; then
             cp -f latest.html "archive/${DATE}.html"
           fi
 
           # 2) (선택) 차트/CSV도 날짜 폴더로 보관
-          mkdir -p "archive/${DATE}"
           for f in bm20_btc_eth_line.png bm20_over_btc.png bm20_over_eth.png bm20_vs_bench.csv; do
             [ -f "$f" ] && cp -f "$f" "archive/${DATE}/" || true
           done
 
-      
       - name: Ensure perf files exist
         run: |
           set -e
-          test -f bm/bm/api/perf_up.json && test -f bm/bm/api/perf_down.json || \
+          test -f bm/api/perf_up.json && test -f bm/api/perf_down.json || \
           (echo "::error::perf_up/down.json not created"; exit 1)
-      
+
+      # 🔎 최신 산출물 디렉터리 결정 (out/YYYY-MM-DD)
+      - name: Find latest output dir
+        run: |
+          set -euo pipefail
+          LATEST_DIR=$(ls -d out/20* 2>/dev/null | sort -r | head -n 1 || true)
+          echo "LATEST_DIR=${LATEST_DIR}" >> $GITHUB_ENV
+          echo "Latest dir: ${LATEST_DIR:-<none>}"
+
+      # ✅ Publish latest (fixed assets) — 필요한 고정 파일명으로 복사
+      - name: Publish latest (fixed assets)
+        run: |
+          set -euo pipefail
+          DATE=$(TZ=Asia/Seoul date +%F)
+
+          # HTML
+          if [ -n "${LATEST_DIR:-}" ]; then
+            HTML_SRC=$(ls "${LATEST_DIR}"/bm20_daily_*.html 2>/dev/null | head -n1 || true)
+            [ -n "${HTML_SRC}" ] && cp -f "${HTML_SRC}" latest.html && cp -f latest.html bm/latest.html || true
+          fi
+
+          # 이미지(있을 때만)
+          for p in bm20_over_btc bm20_over_eth bm20_btc_eth_line bm20_bar bm20_trend; do
+            SRC=$(ls "${LATEST_DIR}/${p}"_*.png 2>/dev/null | head -n1 || true)
+            [ -n "${SRC}" ] && cp -f "${SRC}" "${p}_latest.png" || true
+          done
+
+          # 비교 CSV/김치 프리미엄(있을 때만)
+          CSV_SRC=$(ls "${LATEST_DIR}/bm20_vs_bench_"*.csv 2>/dev/null | head -n1 || true)
+          [ -n "${CSV_SRC}" ] && cp -f "${CSV_SRC}" bm20_vs_bench.csv || true
+
+          KPNG_SRC=$(ls "${LATEST_DIR}/kimchi_premium_"*.png 2>/dev/null | head -n1 || true)
+          [ -n "${KPNG_SRC}" ] && cp -f "${KPNG_SRC}" kimchi_premium_latest.png || true
+
+          KPDF_SRC=$(ls "${LATEST_DIR}/kimchi_premium_"*.pdf 2>/dev/null | head -n1 || true)
+          [ -n "${KPDF_SRC}" ] && cp -f "${KPDF_SRC}" kimchi_premium_latest.pdf || true
+
       - name: Show git status (debug)
         run: |
           git status --porcelain
           echo "---- staged ----"
           git diff --cached --name-only || true
 
-
-
       - name: Commit & Push outputs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          DATE=$(TZ=Asia/Seoul date +%F)
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-      
-          # 🟢 아카이브 산출물을 표준 이름으로 복사 (latest.json 등)
-          # JSON
-          [ -f "bm/api/latest.json" ] && cp -f "bm/api/latest.json" latest.json
-          [ -f "bm/api/series.json" ] && cp -f "bm/api/series.json" series.json
-          [ -f "bm/api/contrib_top.json" ] && cp -f "bm/api/contrib_top.json" contrib_top.json
-          [ -f "bm/api/perf_up.json" ] && cp -f "bm/api/perf_up.json" perf_up.json
-          [ -f "bm/api/perf_down.json" ] && cp -f "bm/api/perf_down.json" perf_down.json
-      
-          # PNG (차트 이미지)
-          [ -f "bm/bm20_bar_latest.png" ] && cp -f "bm/bm20_bar_latest.png" bm20_bar_latest.png
-          [ -f "bm/bm20_trend_latest.png" ] && cp -f "bm/bm20_trend_latest.png" bm20_trend_latest.png
-      
-          # HTML (리포트)
-          [ -f "out/${DATE}/bm20_daily_${DATE}.html" ] && cp -f "out/${DATE}/bm20_daily_${DATE}.html" latest.html && cp -f latest.html bm/latest.html
-      
-          # 이제 git add
+
           git add \
             bm/bm20_*.json bm/*.json bm/api/*.json \
-            latest.json series.json contrib_top.json perf_up.json perf_down.json \
+            latest.json series.json stats.json contrib_top.json perf_up.json perf_down.json \
             bm20_vs_bench.csv \
-            bm20_btc_eth_line.png bm20_over_btc.png bm20_over_eth.png \
-            latest.html bm/latest.html \
+            bm20_btc_eth_line_latest.png bm20_over_btc_latest.png bm20_over_eth_latest.png \
             bm20_bar_latest.png bm20_trend_latest.png \
-            "out/${DATE}" || true
-      
-          git add archive/*.html || true
+            kimchi_premium_latest.png kimchi_premium_latest.pdf \
+            latest.html bm/latest.html \
+            archive/*.html || true
+
+          # 날짜 아카이브(있으면)
+          if [ -n "${LATEST_DIR:-}" ] && [ -d "${LATEST_DIR}" ]; then
+            git add "${LATEST_DIR}" || true
+          fi
+          DATE=$(TZ=Asia/Seoul date +%F)
           if [ -d "archive/${DATE}" ]; then
             git add "archive/${DATE}"/* || true
           fi
-      
-          git commit -m "BM20 daily: normalize filenames + aliases" || echo "No changes"
+
+          git commit -m "BM20 daily: publish latest fixed assets + API" || echo "No changes"
           git push
-      
-
-
-          git commit -m "BM20 daily: normalize filenames + aliases" || echo "No changes"
-          git push
-
+   
