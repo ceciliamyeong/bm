@@ -381,6 +381,24 @@ async function loadComponentsAndRenderBars(){
       </div>`;
   }).join('');
 }
+const el = document.getElementById('perfBar');
+  if (el && rows.length && window.echarts) {
+    const top = rows.slice(0, 20);
+    const chart = echarts.init(el);
+    chart.setOption({
+      grid: { left: 8, right: 12, top: 10, bottom: 20, containLabel: true },
+      xAxis: { type: 'value', axisLabel: { formatter: v => v.toFixed(0) + '%' } },
+      yAxis: { type: 'category', data: top.map(r => r.symbol).reverse() },
+      series: [{
+        type: 'bar',
+        data: top.map(r => +(r.ret_1d * 100).toFixed(2)).reverse()
+      }],
+      tooltip: { trigger: 'axis' }
+    });
+    // 반응형
+    window.addEventListener('resize', () => chart.resize());
+  }
+}
 loadComponentsAndRenderBars();
 </script>
 
