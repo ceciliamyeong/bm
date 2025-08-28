@@ -191,6 +191,167 @@ jobs:
           echo "---- staged ----"
           git diff --cached --name-only || true
 
+          # ---- Create live JSON (index_today.json) ----
+      - name: Generate live JSON
+        run: |
+          mkdir -p site/live || true
+          python - << 'PY'
+          import json, os, csv, datetime
+          from pathlib import Path
+          
+          # 우선순위: out/latest/bm20_latest.json -> out/latest/latest.json -> out/history/bm20_index_history.csv
+          def read_first_json(paths):
+              for p in paths:
+                  if Path(p).exists():
+                      try:
+                          return json.load(open(p, "r", encoding="utf-8"))
+                      except Exception:
+                          pass
+              return None
+          
+          latest = read_first_json([
+              "out/latest/bm20_latest.json",
+              "out/latest/latest.json",
+              "bm20_latest.json",
+              "latest.json"
+          ])
+          
+          # 기본 스켈레톤
+          payload = {
+            "date": None,
+            "index_level": None,
+            "d1_chg_pct": None,
+            "btc_usd": None,
+            "eth_usd": None,
+            "best3": [],
+            "worst3": [],
+          }
+          
+          if latest:
+              payload["date"] = latest.get("date") or latest.get("asof")
+              payload["index_level"] = latest.get("bm20_index") or latest.get("index_level")
+              payload["d1_chg_pct"] = latest.get("bm20_d1_pct") or latest.get("d1_chg_pct")
+              payload["btc_usd"] = latest.get("btc_usd") or latest.get("btc")
+              payload["eth_usd"] = latest.get("eth_usd") or latest.get("eth")
+              # best/worst 키 이름이 다를 수 있어 유연 처리
+              b3 = latest.get("best3") or latest.get("best") or latest.get("top")
+              w3 = latest.get("worst3") or latest.get("worst") or latest.get("bottom")
+              def norm(items):
+                  out=[]
+                  if isinstance(items, list):
+                      for it in items[:3]:
+                          if isinstance(it, dict):
+                              out.append({"symbol": it.get("symbol") or it.get("ticker") or it.get("code"),
+                                          "name": it.get("name") or it.get("symbol"),
+                                          "pct": it.get("pct") or it.get("change_pct")})
+                          elif isinstance(it, (list,tuple)) and len(it)>=2:
+                              out.append({"symbol": it[0], "name": it[0], "pct": it[1]})
+                  return out
+              payload["best3"] = norm(b3)
+              payload["worst3"] = norm(w3)
+          
+          # 폴백: history CSV에서 최신 행만
+          if not payload["index_level"]:
+              hist = Path("out/history/bm20_index_history.csv")
+              if hist.exists():
+                  rows = list(csv.DictReader(open(hist, newline="", encoding="utf-8")))
+                  if rows:
+                      last = rows[-1]
+                      payload["date"] = last.get("date")
+                      payload["index_level"] = float(last.get("bm20_index") or last.get("index") or 0) or None
+                      # 전일 대비는 CSV에 없으면 계산 생략(프론트에서 N/A 처리)
+          
+          # 최종 안전장치(날짜 없으면 오늘 날짜)
+          if not payload["date"]:
+              payload["date"] = datetime.date.today().isoformat()
+          
+          # 저장
+          Path("site/live").mkdir(parents=True, exist_ok=True)
+          with open("site/live/index_today.json", "w", encoding="utf-8") as f:
+              json.dump(payload, f, ensure_ascii=False, indent=2)
+          print("WROTE site/live/index_today.json")
+          PY
+          
+          # ---- Create live page (Jekyll) ----
+          - name: Create live page
+            run: |
+              mkdir -p site/live
+              cat > site/live/index.html << 'HTML'
+          ---
+          layout: default
+          title: BM20 Live
+          permalink: /bm/live/
+          ---
+          
+          <div id="bm20-live" style="max-width:900px;margin:24px auto;">
+            <h2 style="margin-bottom:8px;">BM20 Live</h2>
+            <div id="asof" style="opacity:.8;margin-bottom:16px;">Loading...</div>
+          
+            <div style="display:flex;gap:16px;flex-wrap:wrap;">
+              <div style="flex:1 1 220px;border:1px solid #eee;border-radius:8px;padding:16px;">
+                <div style="font-weight:600;margin-bottom:6px;">Index</div>
+                <div id="index_level" style="font-size:28px;">—</div>
+                <div id="d1" style="margin-top:4px;">—</div>
+              </div>
+              <div style="flex:1 1 220px;border:1px solid #eee;border-radius:8px;padding:16px;">
+                <div style="font-weight:600;margin-bottom:6px;">BTC / ETH</div>
+                <div id="btc" style="margin-bottom:4px;">BTC: —</div>
+                <div id="eth">ETH: —</div>
+              </div>
+            </div>
+          
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;">
+              <div style="flex:1 1 380px;border:1px solid #eee;border-radius:8px;padding:16px;">
+                <div style="font-weight:600;margin-bottom:8px;">Best 3</div>
+                <ol id="best3" style="margin:0;padding-left:18px;"></ol>
+              </div>
+              <div style="flex:1 1 380px;border:1px solid #eee;border-radius:8px;padding:16px;">
+                <div style="font-weight:600;margin-bottom:8px;">Worst 3</div>
+                <ol id="worst3" style="margin:0;padding-left:18px;"></ol>
+              </div>
+            </div>
+          </div>
+          
+          <script>
+          (async () => {
+            const base = "{{ site.baseurl }}";
+            const url = `${base}/live/index_today.json?v={{ site.time | date: "%s" }}`;
+            try {
+              const r = await fetch(url, {cache: "no-store"});
+              const j = await r.json();
+          
+              const fmt = (x) => (x==null||isNaN(x)) ? "—" : Number(x).toLocaleString(undefined, {maximumFractionDigits: 2});
+              const pct = (x) => (x==null||isNaN(x)) ? "—" : ((x>=0?"+":"") + (x*100).toFixed(2) + "%");
+          
+              document.getElementById("asof").textContent = `as of ${j.date}`;
+              document.getElementById("index_level").textContent = fmt(j.index_level);
+              const d1 = document.getElementById("d1");
+              d1.textContent = pct(j.d1_chg_pct);
+              d1.style.color = (j.d1_chg_pct||0) >= 0 ? "#2E7D32" : "#C62828";
+              document.getElementById("btc").textContent = `BTC: ${fmt(j.btc_usd)} USD`;
+              document.getElementById("eth").textContent = `ETH: ${fmt(j.eth_usd)} USD`;
+          
+              const fillList = (id, arr) => {
+                const el = document.getElementById(id);
+                el.innerHTML = "";
+                (arr||[]).forEach(it => {
+                  const li = document.createElement("li");
+                  const name = it.name || it.symbol || "—";
+                  const pctv = (it.pct!=null && !isNaN(it.pct)) ? ((it.pct*100).toFixed(2)+"%") : "—";
+                  li.textContent = `${name} (${pctv})`;
+                  el.appendChild(li);
+                });
+              };
+              fillList("best3", j.best3);
+              fillList("worst3", j.worst3);
+            } catch (e) {
+              document.getElementById("asof").textContent = "Failed to load live data.";
+            }
+          })();
+          </script>
+          HTML
+
+
       - name: Commit & Push outputs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
