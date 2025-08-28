@@ -109,5 +109,54 @@ with open(os.path.join(out_dir, "perf_up.json"), "w", encoding="utf-8") as f:
 with open(os.path.join(out_dir, "perf_down.json"), "w", encoding="utf-8") as f:
     json.dump({"date": out.get("asof"), "bottom": perf_down}, f, ensure_ascii=False, indent=2)
 print(f"[OK] perf_up/perf_down → {out_dir}")
-# --- 추가 끝 ---
+
+# contrib_report.py (핵심 추가/수정 예시)
+
+import json
+from pathlib import Path
+import argparse
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("--map", required=True, help="weights/맵 CSV 등 입력 경로")
+    p.add_argument("--out-dir", default="bm/api", help="출력 디렉터리 (기본 bm/api)")
+    args = p.parse_args()
+
+    out_dir = Path(args.out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    # --- 기존 로직: 입력을 읽고 'top' / 'bottom' 리스트 계산 ---
+    # 예시 형태: [{"sym":"BTC","v":0.012}, ...]
+    top = []     # <- 기존 계산 결과로 대체
+    bottom = []  # <- 기존 계산 결과로 대체
+
+    # TODO: 기존 코드에서 top / bottom 생성하는 부분을 그대로 사용하세요.
+    # top, bottom 을 최종 리스트로 확보했다고 가정합니다.
+
+    # 1) 통합 파일 (기존 호환)
+    contrib_payload = {"top": top, "bottom": bottom}
+    (out_dir / "contrib_top.json").write_text(
+        json.dumps(contrib_payload, ensure_ascii=False, indent=2),
+        encoding="utf-8"
+    )
+
+    # 2) 상승/하락 분리 파일 (신규)
+    perf_up_payload = {"list": [{"sym": x["sym"], "v": x["v"]} for x in top]}
+    perf_down_payload = {"list": [{"sym": x["sym"], "v": x["v"]} for x in bottom]}
+
+    (out_dir / "perf_up.json").write_text(
+        json.dumps(perf_up_payload, ensure_ascii=False, indent=2),
+        encoding="utf-8"
+    )
+    (out_dir / "perf_down.json").write_text(
+        json.dumps(perf_down_payload, ensure_ascii=False, indent=2),
+        encoding="utf-8"
+    )
+
+    print(f"[OK] contrib → {(out_dir/'contrib_top.json')}")
+    print(f"[OK] perf_up  → {(out_dir/'perf_up.json')}")
+    print(f"[OK] perf_down→ {(out_dir/'perf_down.json')}")
+
+if __name__ == "__main__":
+    main()
 
