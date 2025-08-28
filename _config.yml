@@ -16,3 +16,9 @@ plugins: []
 
 # (선택) permalink 기본 패턴 — 페이지(front matter의 permalink)가 우선
 permalink: pretty
+
+# ▼▼▼ 여기부터 추가 ▼▼▼
+include:
+  - latest.html       # 루트에 생성되는 최신 리포트
+  - bm/latest.html    # bm/ 폴더에도 고정 이름으로 복사되는 파일
+
