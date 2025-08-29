@@ -427,6 +427,67 @@ document.getElementById('btnToggleLatest').addEventListener('click',()=>qs('#lat
 document.getElementById('btnToggleSeries').addEventListener('click',()=>qs('#seriesDump').classList.toggle('hide'));
 loadLatest(); loadSeries(); loadContrib(); tryImages();
 </script>
+<script>
+/* ===== BM20 loader hotfix: robust PREFIX + path fallback + rerun ===== */
+(function () {
+  // 1) PREFIX 재계산 (Jekyll 미적용/서브폴더 모두 대응)
+  var meta = (document.querySelector('meta[name="bm-baseurl"]')||{}).content || '';
+  var prefix;
+  if (meta && meta.indexOf('{') === -1) {
+    prefix = meta.replace(/\/?$/, '/');
+  } else {
+    var parts = location.pathname.split('/').filter(Boolean);
+    prefix = (location.hostname.endsWith('github.io') && parts.length) ? ('/' + parts[0] + '/') : '/';
+  }
+  window.PREFIX = prefix;
+
+  // 2) 경로 합성 + 안전 fetch
+  window.withPrefix = function(path){
+    if (/^https?:\/\//.test(path) || path.startsWith('/')) return path;
+    return window.PREFIX + path;
+  };
+
+  window.tryFetch = async function(path){
+    // (a) prefix 붙인 경로
+    let url = window.withPrefix(path) + (path.includes('?') ? '' : ('?v=' + Date.now()));
+    try {
+      const r = await fetch(url, { cache: 'no-store' });
+      if (r.ok) return { url, json: await r.json() };
+    } catch (_) {}
+
+    // (b) 절대 루트(/) 경로도 시도
+    if (!path.startsWith('/')) {
+      url = '/' + path.replace(/^\/+/, '') + (path.includes('?') ? '' : ('?v=' + Date.now()));
+      try {
+        const r2 = await fetch(url, { cache: 'no-store' });
+        if (r2.ok) return { url, json: await r2.json() };
+      } catch (_) {}
+    }
+    console.warn('[MISS]', path);
+    return null;
+  };
+
+  window.fetchAny = async function(paths){
+    // 후보 확장: [원본, /절대] 중복 제거 후 순차 시도
+    const seen = new Set(), expanded = [];
+    for (const p of paths) {
+      const a = p, b = '/' + p.replace(/^\/+/, '');
+      if (!seen.has(a)) { seen.add(a); expanded.push(a); }
+      if (!seen.has(b)) { seen.add(b); expanded.push(b); }
+    }
+    for (const p of expanded) {
+      const res = await window.tryFetch(p);
+      if (res) { console.log('[OK]', res.url); return res; }
+    }
+    throw new Error('no json found');
+  };
+
+  // 3) 로더들 다시 실행 (이 핫픽스 적용 이후 동작하도록)
+  if (typeof loadLatest  === 'function') loadLatest().catch(()=>{});
+  if (typeof loadSeries  === 'function') loadSeries().catch(()=>{});
+  if (typeof loadContrib === 'function') loadContrib().catch(()=>{});
+})();
+</script>
 
 </body>
 </html>
