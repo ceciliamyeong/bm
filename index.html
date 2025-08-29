@@ -161,19 +161,6 @@
       </div>
     </section>
 
-      <div id="bm20-live-slot"></div>
-      <script>
-        (async () => {
-          const base = "{{ site.baseurl }}";
-          const r = await fetch(`${base}/live/?v={{ site.time | date: "%s" }}`);
-          const html = await r.text();
-          // 라이브 페이지 전체가 아닌, #bm20-live 블럭만 끌어오고 싶다면 아래처럼 파싱:
-          const tmp = document.createElement('div');
-          tmp.innerHTML = html;
-          const live = tmp.querySelector('#bm20-live');
-          document.getElementById('bm20-live-slot').replaceWith(live || tmp);
-        })();
-      </script>
 
     <!-- CHARTS -->
        <section id="charts" class="rows">
@@ -199,17 +186,17 @@
     <section id="perf" class="card">
       <div class="h">글로벌 퍼포먼스 (1D, %)</div>
       <div id="perfBar" style="height:320px;margin-top:8px"></div>
-      <div class="mini">※ <code>latest_components.json</code> 기준. 1일 수익률 내림차순.</div>
+      <div class="mini">※ <code>contrib_top.json</code> 기준. 1일 수익률 내림차순.</div>
     </section>
     
     <!-- DATA / JSON VIEW (필요 시만 볼 수 있게 숨김) -->
     <section id="data" class="rows section hide">
       <div class="card">
-        <div class="flex"><div class="h">latest.json</div><button class="btn" id="btnToggleLatest">접기</button></div>
+        <div class="flex"><div class="h">bm20_latest.json</div><button class="btn" id="btnToggleLatest">접기</button></div>
         <pre id="latestDump" class="code">—</pre>
       </div>
       <div class="card">
-        <div class="flex"><div class="h">series.json (마지막 20행)</div><button class="btn" id="btnToggleSeries">접기</button></div>
+        <div class="flex"><div class="h">bm20_series.json (마지막 20행)</div><button class="btn" id="btnToggleSeries">접기</button></div>
         <pre id="seriesDump" class="code">—</pre>
       </div>
     </section>
