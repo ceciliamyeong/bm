@@ -114,7 +114,7 @@ fetchCsv(CSV_WEIGHTS).then(parsePortfolioCsv).then(renderPie).catch(err=>{
 });
 
 // ====================== ② Snapshot & Series (루트 SOT/CSV) ======================
-const SNAP_URL = location.origin + "/bm20_lastest.json";   // 루트 SOT(JSON)
+const SNAP_URL = location.origin + "/bm20_series.json";   // 루트 SOT(JSON)
 const CSV_URL  = location.origin + "/bm20_vs_bench.csv";   // 루트 CSV(히스토리)
 
 async function getJSON(u){
