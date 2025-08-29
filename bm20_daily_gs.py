@@ -108,8 +108,8 @@ TOP_UP, TOP_DOWN = 3, 3
 # DOGE 포함 (국내 대표성 예외) + 상시 20종 유지 정책 반영
 BM20_IDS = [
     "bitcoin","ethereum","solana","ripple","binancecoin","toncoin","avalanche-2",
-    "chainlink","cardano","polygon","near","polkadot","cosmos","litecoin",
-    "arbitrum","optimism","internet-computer","aptos","filecoin","sui","dogecoin"  # 21번째로 후보 포함 → 상위 20만 사용
+    "chainlink","cardano","polygon-pos","near","polkadot","cosmos-hub","litecoin",
+    "arbitrum","optimism","internet-computer","aptos","filecoin","sui","dogecoin"
 ]
 
 # 국내 상장 보정(×1.3) — 필요 시 매핑
