@@ -102,10 +102,10 @@ fetchCsv(CSV_URL)
     document.getElementById("bm20-weights-meta").textContent = "파이차트 로드 실패: " + err.message;
   });
 </script>
-<script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
+
 <script>
-const SNAP_URL = location.origin + "/bm/bm20_lastest.json";   // 루트 SOT
-const CSV_URL  = location.origin + "/bm/bm20_vs_bench.csv";   // 루트 CSV (스샷 파일)
+const SNAP_URL = location.origin + "/bm20_lastest.json";   // 루트 SOT
+const CSV_URL  = location.origin + "/bm20_vs_bench.csv";   // 루트 CSV (스샷 파일)
 
 async function getJSON(u){
   const r = await fetch(u + "?v=" + Date.now(), {cache:"no-store"});
