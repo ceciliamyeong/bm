@@ -196,9 +196,52 @@
 
 <!-- ========= SCRIPTS ========= -->
 <script>
-const BASE = document.querySelector('meta[name="bm-baseurl"]')?.content || '';
-const PREFIX = BASE ? BASE.replace(/\/$/, '') + '/' : '';
+<script>
+// ---------- 공통 유틸 (교체본) ----------
 const qs = (s, el=document) => el.querySelector(s);
+const fmtPct = v => (v==null||isNaN(v)) ? "—" : ((v>0?"+":"") + (Math.round(v*1000)/10).toFixed(1) + "%");
+const fmtNum = v => (v==null||isNaN(v)) ? "—" : new Intl.NumberFormat('en-US',{maximumFractionDigits:2}).format(v);
+
+// 1) PREFIX 자동 감지: Jekyll 미적용, 서브폴더(/bm/) 모두 대응
+const PREFIX = (() => {
+  const meta = document.querySelector('meta[name="bm-baseurl"]')?.content || '';
+  if (meta && !meta.includes('{')) return meta.replace(/\/?$/, '/'); // Jekyll이 렌더된 경우
+  const parts = location.pathname.split('/').filter(Boolean);
+  if (location.hostname.endsWith('github.io') && parts.length) return '/' + parts[0] + '/'; // project pages → /repo/
+  return '/'; // 그 외: 도메인 루트
+})();
+
+// 2) 경로 합성 헬퍼: 이미 절대경로(/로 시작)면 PREFIX 중복 방지
+function withPrefix(path){
+  if (/^https?:\/\//.test(path) || path.startsWith('/')) return path;
+  return PREFIX + path;
+}
+
+// 3) 안전 fetch: 캐시 무력화 + 폴백 시도
+async function tryFetch(path){
+  const url = withPrefix(path) + (path.includes('?') ? '' : ('?v=' + Date.now()));
+  try {
+    const r = await fetch(url, { cache: 'no-store' });
+    if (r.ok) return { url, json: await r.json() };
+  } catch (e) {}
+  return null;
+}
+async function fetchAny(paths){
+  for (const p of paths){
+    const res = await tryFetch(p);
+    if (res) { console.log('[OK]', res.url); return res; }
+    console.warn('[MISS]', withPrefix(p));
+  }
+  throw new Error('no json found');
+}
+
+// 4) 나머지 유틸
+function setDeltaBadge(pct){ const el=qs('#deltaBadge'); if(pct==null||isNaN(pct)){ el.textContent='—'; el.className=''; return; } el.textContent=(pct>=0?'▲ ':'▼ ')+fmtPct(pct); el.className='delta '+(pct>=0?'up':'down'); }
+function setImg(id, src){ const img=qs(id); if(!img) return; img.src=withPrefix(src); img.onerror=()=>img.closest('div')?.classList.add('hide'); }
+function deepFind(obj, keys){ const st=[obj]; while(st.length){ const cur=st.pop(); if(cur && typeof cur==='object'){ for(const k of keys){ if(Object.prototype.hasOwnProperty.call(cur,k)){ let v=cur[k]; if(v&&typeof v==='object') v=v.premium??v.pct??v.value; return v; } } for(const v of Object.values(cur)) if(v&&typeof v==='object') st.push(v); } } return undefined; }
+function formatFunding(f){ if(f==null) return '—'; if(typeof f==='number') return fmtPct(f); if(typeof f==='string') return f; if(typeof f==='object'){ const p=x=>(typeof x==='number')?fmtPct(x):(x??'—'); const btc=f.btc??f.BTC, eth=f.eth??f.ETH; return `BTC ${p(btc)}, ETH ${p(eth)}`; } return '—'; }
+</script>
+
 const fmtPct = v => (v==null||isNaN(v)) ? "—" : ((v>0?"+":"") + (Math.round(v*1000)/10).toFixed(1) + "%");
 const fmtNum = v => (v==null||isNaN(v)) ? "—" : new Intl.NumberFormat('en-US',{maximumFractionDigits:2}).format(v);
 async function tryFetch(path){
