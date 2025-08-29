@@ -417,6 +417,67 @@ const el = document.getElementById('perfBar');
 }
 loadComponentsAndRenderBars();
 </script>
+<script>
+(async function(){
+  const BASE = document.querySelector('meta[name="bm-baseurl"]')?.content || '';
+  const PREFIX = BASE ? BASE.replace(/\/$/, '') + '/' : '';
+
+  // 우리가 실제로 써야 할 후보들
+  const candidates = [
+    'bm/bm/api/bm20_latest.json',
+    'bm/api/bm20_latest.json',
+    'api/bm20_latest.json',
+    'bm20_latest.json',
+    'bm/bm/api/latest.json',
+    'bm/api/latest.json',
+    'api/latest.json',
+    'latest.json',
+  ];
+
+  // 빠른 존재 확인(HEAD → 실패하면 GET)
+  async function check(u){
+    const url = PREFIX + u + '?v=' + Date.now();
+    try{
+      let r = await fetch(url, {method:'HEAD', cache:'no-store'});
+      if (!r.ok) r = await fetch(url, {cache:'no-store'});
+      const ok = r.ok;
+      let sample = '';
+      if (ok && r.headers.get('content-type')?.includes('application/json')) {
+        try { const j = await r.clone().json(); sample = 'keys: ' + Object.keys(j).slice(0,6).join(', '); } catch{}
+      }
+      return {u, ok, url, sample};
+    }catch(e){ return {u, ok:false, url, sample:''}; }
+  }
+
+  // 전부 점검
+  const results = await Promise.all(candidates.map(check));
+
+  // 어떤 URL을 실제 “로더”가 1순위로 쓸지 결정(성공한 첫 번째)
+  const picked = results.find(r => r.ok);
+
+  // 진단 패널 렌더
+  const box = document.getElementById('bm-debug');
+  if (box){
+    box.innerHTML = [
+      `<div style="margin-bottom:6px;"><b>BM20 데이터 경로 진단</b></div>`,
+      `<div>baseurl: <code>${BASE||'(none)'}</code></div>`,
+      `<div>prefix : <code>${PREFIX||'(none)'}</code></div>`,
+      `<div style="margin-top:6px;">체크 결과:</div>`,
+      `<ul style="margin:6px 0;padding-left:16px;">` +
+        results.map(r => `<li>${r.ok?'✅':'❌'} <code>${r.u}</code> ${r.ok?`→ <a href="${r.url}" target="_blank">open</a> ${r.sample?`<span style="color:#777">(${r.sample})</span>`:''}`:''}</li>`).join('') +
+      `</ul>`,
+      `<div>사용 후보: ${picked ? `<code>${picked.u}</code>` : '<span style="color:#C62828">없음</span>'}</div>`
+    ].join('');
+  }
+
+  // 로더가 실제 사용할 “최우선 경로”를 window에 노출(원하면 콘솔에서 확인)
+  window.__bm20diag = {BASE, PREFIX, results, picked};
+
+  // 👉 여기서부터는 실제 로더에 넘겨 쓰면 됨:
+  // const chosenUrl = picked ? picked.url : null;
+  // if (chosenUrl) { const j = await fetch(chosenUrl).then(r=>r.json()); ... }
+})();
+</script>
 
 </body>
 </html>
