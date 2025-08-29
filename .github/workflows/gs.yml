@@ -1,0 +1,53 @@
+name: BM20 GS (auto)
+
+on:
+  schedule:
+    - cron: "0 12 * * *"  # 매일 21:00 KST (UTC 12:00)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bm20-gs
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install system fonts (Nanum optional)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-nanum || true
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas requests matplotlib reportlab jinja2
+
+      - name: Run GS daily
+        run: |
+          python bm20_daily_gs.py
+          python generate_report_gs.py
+
+      - name: Commit & push artifacts
+        run: |
+          git config user.name  "bm20-gs-bot"
+          git config user.email "bm20-gs-bot@users.noreply.github.com"
+          git add -A
+          git commit -m "[GS] daily artifacts: $(date -u +'%Y-%m-%dT%H:%M:%SZ')" || echo "No changes"
+          git push
