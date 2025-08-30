@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Performance</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<style>
+  body{font:14px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;padding:24px;color:#111}
+  h1{margin:0 0 12px 0} h2{margin:24px 0 8px 0}
+  .muted{color:#666}
+</style>
+</head>
+<body>
+<h1>BM20 Performance</h1>
+
+<h2>Index Trend (Raw vs BM20)</h2>
+<div id="bm20-compare-line" style="height:420px; max-width:1000px; margin:16px auto;"></div>
+<div id="bm20-compare-meta" class="muted"></div>
+
+<hr style="margin:24px 0">
+
+<h2>Weight Comparison</h2>
+<p class="muted">
+  왼쪽은 시총 기반 원본 가중치, 오른쪽은 BM20 공식 메서돌로지 룰을 적용한 가중치입니다.<br>
+  화면이 좁아지면 차트가 세로로 정렬됩니다.
+</p>
+
+<div style="display:flex; flex-wrap:wrap; gap:24px; justify-content:center;">
+  <div style="flex:1; min-width:320px; max-width:600px;">
+    <h3 style="margin-bottom:8px;">Market Cap Weights</h3>
+    <div id="bm20-raw-pie" style="height:420px;"></div>
+    <div id="bm20-raw-meta" class="muted"></div>
+  </div>
+  <div style="flex:1; min-width:320px; max-width:600px;">
+    <h3 style="margin-bottom:8px;">BM20 Methodology</h3>
+    <div id="bm20-fixed-pie" style="height:420px;"></div>
+    <div id="bm20-fixed-meta" class="muted"></div>
+  </div>
+</div>
+
+<div id="bm20-trend" style="height:380px;max-width:1100px;margin:12px 0;"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
+<script>
+// ── GitHub Pages 프로젝트(baseurl=/리포명)도 자동 인식되는 BASE 계산 ──
+const BASE = (() => {
+  const parts = location.pathname.split('/').filter(Boolean);
+  // 예: /bm/performance.html → '/bm'
+  return parts.length ? `/${parts[0]}` : '';
+})();
+
+// 데이터 파일 경로
+const SERIES_URL = BASE + '/series.json';
+const RAW_URL    = BASE + '/series_raw.json';
+
+// 유틸
+function fmt(x){ return (x||0).toFixed(2); }
+function splitCsv(row){
+  const out=[];let cur="";let q=false;
+  for(let i=0;i<row.length;i++){
+    const ch=row[i];
+    if(ch=='"'){q=!q;continue;}
+    if(ch==","&&!q){out.push(cur);cur="";continue;}
+    cur+=ch;
+  } out.push(cur); return out.map(s=>s.trim());
+}
+async function fetchCsv(url){
+  const u=url+(url.includes("?")?"&":"?")+"v="+Date.now();
+  const r=await fetch(u,{cache:"no-store"}); if(!r.ok) throw new Error(r.status);
+  return r.text();
+}
+
+// ---- Index trend (series.json + 선택적 series_raw.json) ----
+(function(){
+  const el = document.getElementById('bm20-trend');
+  const chart = echarts.init(el);
+  fetch(SERIES_URL).then(r=>r.json()).then(bmArr=>{
+    const dates = bmArr.map(o=>o.date);
+    const bm20  = bmArr.map(o=>+((o.level ?? o.index)));
+    return Promise.all([dates, bm20, fetch(RAW_URL).then(r=>r.ok?r.json():null)]);
+  }).then(([dates, bm20, rawArr])=>{
+    const hasRaw = Array.isArray(rawArr) && rawArr.length;
+    const raw = hasRaw ? rawArr.map(o=>+((o.level ?? o.index))) : null;
+    const series = [{ name:'BM20', type:'line', showSymbol:false, data:bm20 }];
+    if(hasRaw) series.unshift({ name:'Raw', type:'line', showSymbol:false, lineStyle:{type:'dashed'}, data:raw });
+    chart.setOption({
+      backgroundColor:'transparent',
+      tooltip:{ trigger:'axis', valueFormatter:v=>fmt(v) },
+      legend:{ top:0 },
+      grid:{ left:40, right:20, top:30, bottom:40 },
+      xAxis:{ type:'category', data:dates },
+      yAxis:{ type:'value', scale:true },
+      series
+    });
+    addEventListener('resize', ()=>chart.resize());
+  }).catch(console.error);
+})();
+
+// ---- Index Comparison (CSV) ----
+const CSV_INDEX_COMPARE = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTndyrPd3WWwFtfzv2CZxJeDcH-l8ibQIdO5ouYS4HsaGpbeXQQbs6WEr9qPqqZbRoT6cObdFxJpief/pub?gid=1685318213&single=true&output=csv";
+function parseCompareCsv(text){
+  const lines=text.trim().split(/\r?\n/);
+  const header=splitCsv(lines.shift()).map(h=>h.toLowerCase());
+  const iDate=header.indexOf("date"), iRaw=header.indexOf("raw_index"), iBM20=header.indexOf("bm20_index");
+  const rawData=[], bm20Data=[];
+  for(const l of lines){
+    if(!l.trim()) continue;
+    const c=splitCsv(l); const d=c[iDate]; const raw=parseFloat(c[iRaw]); const bm20=parseFloat(c[iBM20]);
+    if(Number.isFinite(raw)) rawData.push([d,raw]);
+    if(Number.isFinite(bm20)) bm20Data.push([d,bm20]);
+  } return {rawData,bm20Data};
+}
+function renderCompare({rawData,bm20Data}){
+  const el=document.getElementById("bm20-compare-line");
+  const chart=echarts.init(el);
+  chart.setOption({
+    tooltip:{trigger:"axis"},
+    legend:{data:["Raw (MktCap)","BM20 Methodology"],top:0},
+    grid:{left:48,right:24,top:48,bottom:56},
+    xAxis:{type:"time"}, yAxis:{type:"value",scale:true,name:"Index"},
+    dataZoom:[{type:"inside"},{type:"slider",bottom:18}],
+    series:[
+      {name:"Raw (MktCap)",type:"line",showSymbol:false,data:rawData},
+      {name:"BM20 Methodology",type:"line",showSymbol:false,data:bm20Data}
+    ]
+  });
+  const meta=document.getElementById("bm20-compare-meta");
+  const latestDate=rawData.at(-1)?.[0]; const latestRaw=rawData.at(-1)?.[1]; const latestBM20=bm20Data.at(-1)?.[1];
+  meta.textContent=`Latest ${latestDate||"-"} · Raw ${latestRaw?.toFixed(2)??"-"} vs BM20 ${latestBM20?.toFixed(2)??"-"}`;
+  addEventListener("resize",()=>chart.resize());
+}
+fetchCsv(CSV_INDEX_COMPARE).then(parseCompareCsv).then(renderCompare).catch(console.error);
+
+// ---- Weights (CSV) ----
+const CSV_WEIGHTS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTndyrPd3WWwFtfzv2CZxJeDcH-l8ibQIdO5ouYS4HsaGpbeXQQbs6WEr9qPqqZbRoT6cObdFxJpief/pub?gid=1533548287&single=true&output=csv";
+function parseWeightCsv(text){
+  const lines=text.trim().split(/\r?\n/);
+  const header=splitCsv(lines.shift()).map(h=>h.toLowerCase());
+  const iSym=header.indexOf("symbol"), iCap=header.indexOf("market_cap"), iName=header.indexOf("name");
+  const rows=[];
+  for(const l of lines){
+    if(!l.trim()) continue;
+    const c=splitCsv(l);
+    const sym=(c[iSym]||"").toUpperCase(); const name=c[iName]||sym;
+    let cap=parseFloat((c[iCap]||"0").replace(/,/g,""));
+    if(Number.isFinite(cap)) rows.push({symbol:sym,name,market_cap:cap});
+  } return rows;
+}
+function normalizeMcap(rows){
+  const sum=rows.reduce((a,b)=>a+b.market_cap,0)||1;
+  return rows.map(r=>({symbol:r.symbol,name:r.name,weight:r.market_cap/sum}));
+}
+function applyBM20(rows){
+  const fixed={BTC:0.30,ETH:0.20,XRP:0.05,USDT:0.05,BNB:0.05};
+  const others=rows.filter(r=>!(r.symbol in fixed));
+  const each=others.length?0.35/others.length:0;
+  return rows.map(r=>({name:r.name,symbol:r.symbol,weight:fixed[r.symbol]??each}));
+}
+function renderPie(elId,metaId,rows,label){
+  const el=document.getElementById(elId);
+  const chart=echarts.init(el);
+  const data=rows.map(r=>({name:r.symbol||r.name,value:+(r.weight*100).toFixed(2)}));
+  chart.setOption({
+    tooltip:{trigger:"item",formatter:p=>`${p.name}: ${p.value.toFixed(2)}%`},
+    legend:{type:"scroll",orient:"vertical",right:0,top:"middle"},
+    series:[{type:"pie",radius:["40%","70%"],center:["38%","50%"],label:{formatter:"{b}\n{d}%"},data}]
+  });
+  document.getElementById(metaId).textContent=label+" · 총 "+data.length+"개 종목";
+  addEventListener("resize",()=>chart.resize());
+}
+fetchCsv(CSV_WEIGHTS).then(parseWeightCsv).then(normalizeMcap).then(rows=>{
+  renderPie("bm20-raw-pie","bm20-raw-meta",rows,"Market Cap weights (normalized)");
+  const fixed=applyBM20(rows);
+  renderPie("bm20-fixed-pie","bm20-fixed-meta",fixed,"BM20 methodology (BTC30, ETH20, XRP/BNB/USDT 5 each, rest equally share 35%)");
+}).catch(console.error);
+</script>
+</body>
+</html>
