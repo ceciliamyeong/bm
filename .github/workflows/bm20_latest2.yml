@@ -96,7 +96,6 @@ jobs:
           PY
 
       - name: Render latest2.html from template
-        env: { DATE: ${{ env.DATE }} }
         run: |
           set -e
           TPL="latest2.template.html"
