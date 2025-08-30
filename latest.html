@@ -1,5 +1,8 @@
-<!doctype html><html lang='ko'><meta charset='utf-8'>
-<title>BM20 데일리 리포트</title>
+<!doctype html><html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">  <!-- ✅ 추가 -->
+  <title>BM20 데일리 리포트</title>
 
     <style>
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; margin: 24px; color:#111; }
@@ -21,6 +24,29 @@
     th, td { padding: 6px 10px; border-bottom:1px solid #eee; text-align: right; }
     th:first-child, td:first-child { text-align: left; }
     </style>
+
+    /* === 모바일 대응 (넓이 768px 이하) === */
+@media (max-width: 768px) {
+  body { margin: 16px; }
+  .twocol {
+    grid-template-columns: 1fr;   /* ✅ 2열 → 1열 */
+    gap: 12px;
+  }
+  .imgrow img {
+    max-width: 100%;              /* ✅ 이미지 한 줄 하나 */
+  }
+  h1 { font-size: 20px; }
+  h2 { font-size: 16px; }
+  .date { font-size: 13px; }
+  li { line-height: 1.5; }
+
+  /* 테이블이 있는 경우 가로 스크롤 허용 (컨테이너로 감싸면 더 좋아요) */
+  .tablewrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  table { min-width: 520px; }     /* ✅ 칼럼 많은 표가 줄바꿈 대신 가로스크롤 */
+}
     
 <body>
 <header>
