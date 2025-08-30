@@ -26,6 +26,9 @@ jobs:
       group: bm20-latest2
       cancel-in-progress: false
 
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -69,13 +72,10 @@ jobs:
         run: |
           set -e
           mkdir -p latest2/assets/"$DATE"
-          # 필수 파일 경로
           HTML="$SRC/bm20_daily_${DATE}.html"
           PDF="$SRC/bm20_daily_${DATE}.pdf"
           CSV="$SRC/bm20_daily_data_${DATE}.csv"
-          TXT="$SRC/bm20_news_${DATE}.txt"
-          BAR="$SRC/bm20_bar_${DATE}.png"
-          TRD="$SRC/bm20_trend_${DATE}.png"
+
 
           # latest2용 파일 복사
           cp "$BAR" bm20_bar_latest2.png
