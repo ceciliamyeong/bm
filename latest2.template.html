@@ -1,0 +1,46 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BM20 Latest2 — {{DATE}}</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,"NanumGothic","Noto Sans CJK","Malgun Gothic",Arial,sans-serif;background:#fafbfc;color:#111;margin:0}
+.wrap{max-width:880px;margin:0 auto;padding:20px}
+.card{background:#fff;border:1px solid #e5e9f0;border-radius:12px;padding:20px;margin-bottom:16px}
+h1{font-size:22px;margin:0 0 8px;text-align:center} h2{font-size:15px;margin:16px 0 8px;color:#1A237E}
+.muted{color:#555;text-align:center} .center{text-align:center}
+a{color:#1A237E;text-decoration:none} img{max-width:100%}
+.btns a{display:inline-block;margin-right:10px;padding:8px 10px;border-radius:8px;border:1px solid #cfd8dc}
+</style></head><body>
+<div class="wrap">
+  <div class="card">
+    <h1>BM20 데일리 — Preview (latest2)</h1>
+    <div class="muted">{{DATE}}</div>
+    <div class="btns">
+      <a href="assets/{{DATE}}/bm20_daily_${{DATE}}.html">원본 HTML</a>
+      <a href="assets/{{DATE}}/bm20_daily_${{DATE}}.pdf">PDF</a>
+      <a href="assets/{{DATE}}/bm20_daily_data_${{DATE}}.csv">CSV</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>코인별 퍼포먼스 (1D, USD)</h2>
+    <p class="center"><img src="bm20_bar_latest2.png" alt="Performance (1D)"></p>
+    <h2>BTC & ETH 7일 가격 추세</h2>
+    <p class="center"><img src="bm20_trend_latest2.png" alt="BTC & ETH 7D"></p>
+  </div>
+
+  <div class="card">
+    <h2>BM20 데일리 뉴스</h2>
+    <p>{{NEWS_HTML}}</p>
+  </div>
+
+  <div class="card">
+    <h2>원본 파일 모음</h2>
+    <ul>
+      <li><a href="assets/{{DATE}}/bm20_daily_${{DATE}}.html">bm20_daily_{{DATE}}.html</a></li>
+      <li><a href="assets/{{DATE}}/bm20_daily_${{DATE}}.pdf">bm20_daily_{{DATE}}.pdf</a></li>
+      <li><a href="assets/{{DATE}}/bm20_daily_data_${{DATE}}.csv">bm20_daily_data_{{DATE}}.csv</a></li>
+    </ul>
+  </div>
+
+  <div class="muted" style="font-size:12px">© Blockmedia</div>
+</div></body></html>
