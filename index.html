@@ -332,7 +332,7 @@ async function loadSeries(){
   }catch(e){ qs('#seriesDump').textContent='series.json을 불러오지 못했습니다.'; }
 }
 
-function tryImages(){ setImg('#imgBar','kimchi_premium_latest.png'); setImg('#imgTrend','bm20_vs_btc.png'); }
+function tryImages(){ setImg('#imgBar','bm20_vs_btc.png'); setImg('#imgTrend','bm20_vs_btc.png'); }
 
 qs('#btnToggleLatest').addEventListener('click',()=>qs('#latestDump').classList.toggle('hide'));
 qs('#btnToggleSeries').addEventListener('click',()=>qs('#seriesDump').classList.toggle('hide'));
