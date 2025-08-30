@@ -1,0 +1,159 @@
+name: BM20 Latest2 Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      script:
+        description: "Which script to run"
+        type: choice
+        required: true
+        options:
+          - bm20_daily.py
+          - bm20_daily_v2.py
+        default: bm20_daily_v2.py
+      date:
+        description: "YYYY-MM-DD (empty = today in KST)"
+        type: string
+        required: false
+
+  schedule:
+    - cron: "10 23 * * *"   # 23:10 UTC = 08:10 KST (원하면 조정)
+
+jobs:
+  build-and-publish-latest2:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: bm20-latest2
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            pip install pandas numpy requests matplotlib reportlab jinja2 yfinance
+          fi
+
+      - name: Run BM20 script
+        env:
+          TZ: Asia/Seoul
+          OUT_DIR: out
+          BM20_DATE: ${{ inputs.date }}
+        run: |
+          set -e
+          python "${{ inputs.script }}"
+
+      - name: Resolve DATE & SRC folder
+        id: resolve
+        shell: bash
+        run: |
+          set -e
+          if [ -n "${{ inputs.date }}" ]; then
+            DATE="${{ inputs.date }}"
+          else
+            # out/YYYY-MM-DD 중 가장 최신 폴더를 날짜로
+            DATE=$(ls -1d out/*/ 2>/dev/null | awk -F'/' '{print $(NF-1)}' | sort | tail -n1)
+          fi
+          if [ -z "$DATE" ]; then
+            echo "No output directory found under out/"; exit 1
+          fi
+          echo "DATE=$DATE" >> $GITHUB_ENV
+          echo "SRC=out/$DATE" >> $GITHUB_ENV
+          ls -l "out/$DATE"
+
+      - name: Build latest2.html (preview page)
+        env:
+          DATE: ${{ env.DATE }}
+          SRC:  ${{ env.SRC }}
+        run: |
+          set -e
+          # 필수/옵션 산출물 경로
+          HTML="$SRC/bm20_daily_${DATE}.html"
+          PDF="$SRC/bm20_daily_${DATE}.pdf"
+          CSV="$SRC/bm20_daily_data_${DATE}.csv"
+          TXT="$SRC/bm20_news_${DATE}.txt"
+          BAR="$SRC/bm20_bar_${DATE}.png"
+          TRD="$SRC/bm20_trend_${DATE}.png"
+
+          # latest2용 고정 파일명으로 복사(페이지에서 참조)
+          cp "$BAR" ./bm20_bar_latest2.png
+          cp "$TRD" ./bm20_trend_latest2.png
+
+          # 뉴스 텍스트 → HTML
+          NEWS_HTML=""
+          if [ -f "$TXT" ]; then
+            NEWS_HTML=$(python - <<'PY'
+import html, os, sys
+p=os.environ["TXT"]
+s=open(p,encoding="utf-8").read()
+print(html.escape(s).replace("\n","<br/>"))
+PY
+)
+          fi
+
+          cat > latest2.html <<HTML
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BM20 Latest2 — ${DATE}</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,"NanumGothic","Noto Sans CJK","Malgun Gothic",Arial,sans-serif;background:#fafbfc;color:#111;margin:0}
+.wrap{max-width:880px;margin:0 auto;padding:20px}
+.card{background:#fff;border:1px solid #e5e9f0;border-radius:12px;padding:20px;margin-bottom:16px}
+h1{font-size:22px;margin:0 0 8px;text-align:center} h2{font-size:15px;margin:16px 0 8px;color:#1A237E}
+.muted{color:#555;text-align:center} .center{text-align:center}
+a{color:#1A237E;text-decoration:none} img{max-width:100%}
+.btns a{display:inline-block;margin-right:10px;padding:8px 10px;border-radius:8px;border:1px solid #cfd8dc}
+</style></head><body>
+<div class="wrap">
+  <div class="card">
+    <h1>BM20 데일리 — Preview (latest2)</h1>
+    <div class="muted">${DATE}</div>
+    <div class="btns">
+      <a href="${HTML}">원본 HTML</a>
+      <a href="${PDF}">PDF</a>
+      <a href="${CSV}">CSV</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>코인별 퍼포먼스 (1D, USD)</h2>
+    <p class="center"><img src="bm20_bar_latest2.png" alt="Performance (1D)"></p>
+    <h2>BTC & ETH 7일 가격 추세</h2>
+    <p class="center"><img src="bm20_trend_latest2.png" alt="BTC & ETH 7D"></p>
+  </div>
+
+  <div class="card">
+    <h2>BM20 데일리 뉴스</h2>
+    <p>${NEWS_HTML}</p>
+  </div>
+
+  <div class="card">
+    <h2>원본 파일 모음</h2>
+    <ul>
+      <li><a href="${HTML}">bm20_daily_${DATE}.html</a></li>
+      <li><a href="${PDF}">bm20_daily_${DATE}.pdf</a></li>
+      <li><a href="${CSV}">bm20_daily_data_${DATE}.csv</a></li>
+      <li><a href="${SRC}">폴더: out/${DATE}/</a></li>
+    </ul>
+  </div>
+
+  <div class="muted" style="font-size:12px">© Blockmedia</div>
+</div></body></html>
+HTML
+
+      - name: Commit & Push latest2
+        run: |
+          git config user.name  "bm20-bot"
+          git config user.email "bm20-bot@users.noreply.github.com"
+          git add latest2.html bm20_bar_latest2.png bm20_trend_latest2.png
+          git commit -m "Publish latest2 for ${DATE}" || echo "no changes"
+          git push
