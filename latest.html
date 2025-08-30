@@ -1,213 +1,43 @@
-<!doctype html>
-<html lang="ko">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>BM20 데일리 리포트</title>
+<!doctype html><html lang='ko'><meta charset='utf-8'>
+<title>BM20 데일리 리포트</title>
 
-  <style>
-    body {
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial,
-        "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
-      margin: 24px;
-      color: #111;
-    }
-
+    <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; margin: 24px; color:#111; }
     header { margin-bottom: 16px; }
-
-    h1 {
-      font-size: 24px;
-      margin: 0 0 4px 0;
-      font-weight: normal;      /* ✅ 두껍게 안 보이게 */
-    }
-
-    h2 {
-      font-size: 18px;
-      margin: 0 0 12px 0;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 6px;
-      font-weight: normal;      /* ✅ 두껍게 안 보이게 */
-    }
-
-    .date { color: #555; font-size:14px; }
-
+    h1 { font-size: 24px; margin: 0 0 4px 0; }
+    .date { color:#555; font-size:14px; }
     section { margin-top: 24px; }
-
-    .twocol {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
+    h2 { font-size: 18px; margin: 0 0 12px 0; border-bottom: 1px solid #eee; padding-bottom: 6px; }
+    .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     ul { margin: 8px 0 0 18px; padding: 0; }
     li { line-height: 1.6; }
-
-    .up   { color: #1565c0; font-weight: normal; }
-    .down { color: #c62828; font-weight: normal; }
-
-    .imgrow {
-      display: flex;
-      flex-direction: column;   /* ✅ 세로로 차트 하나씩 */
-      gap: 14px;
-      margin-top: 10px;
-    }
-
-    .imgrow img {
-      width: 100%;              /* ✅ 가로 꽉 채우기 */
-      max-width: 100%;
-      height: auto;
-      display: block;
-      border: 1px solid #eee;
-      border-radius: 8px;
-    }
-
-    .muted { color: #777; }
-
-    footer {
-      margin-top: 32px;
-      font-size: 12px;
-      color: #666;
-    }
-
-    table {
-      border-collapse: collapse;
-      border: 1px solid #eee;
-      font-weight: normal;      /* ✅ 테이블 글씨도 얇게 */
-    }
-
-    th, td {
-      padding: 6px 10px;
-      border-bottom: 1px solid #eee;
-      text-align: right;
-      font-weight: normal;      /* ✅ 두껍게 안 보이게 */
-    }
-
+    .up  { color: #1565C0; }
+    .down{ color: #C62828; }
+    .imgrow { display:flex; gap:10px; flex-wrap: wrap; margin-top:10px; }
+    .imgrow img { max-width: 48%; border:1px solid #eee; border-radius: 8px; }
+    .muted { color:#777; }
+    footer { margin-top: 32px; font-size: 12px; color:#666; }
+    table { border-collapse: collapse; border:1px solid #eee; }
+    th, td { padding: 6px 10px; border-bottom:1px solid #eee; text-align: right; }
     th:first-child, td:first-child { text-align: left; }
-
-    /* 굵은 글씨 전역 제거 */
-    b, strong { font-weight: normal; }
-
-    /* === 모바일 대응 (넓이 768px 이하) === */
-    @media (max-width: 768px) {
-      body { margin: 16px; }
-      .twocol { grid-template-columns: 1fr; gap: 12px; }
-      h1 { font-size: 20px; }
-      h2 { font-size: 16px; }
-      .date { font-size: 13px; }
-      li { line-height: 1.5; }
-
-      .tablewrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-      table { min-width: 520px; }
-    }
-  </style>
-</head>
+    </style>
+    
 <body>
 <header>
-  <h1>BM20 데일리 리포트</h1>
-  <div class="date">기준일: 2025-08-28</div>
+<h1>BM20 데일리 리포트</h1>
+<div class='date'>기준일: 2025-08-28</div>
 </header>
-
-<div class="imgrow">
-  <img src="bm20_bar_latest.png" alt="bm20_bar_latest.png"/>
-  <img src="bm20_trend_latest.png" alt="bm20_trend_latest.png"/>
-  <img src="bm20_over_btc_latest.png" alt="bm20_over_btc_latest.png"/>
-  <img src="bm20_over_eth_latest.png" alt="bm20_over_eth_latest.png"/>
-  <img src="bm20_btc_eth_line_latest.png" alt="bm20_btc_eth_line_latest.png"/>
-  <img src="kimchi_premium_latest.png" alt="kimchi_premium_latest.png"/>
+<div class="imgrow"><img src="bm20_bar_latest.png" alt="bm20_bar_latest.png"/><img src="bm20_trend_latest.png" alt="bm20_trend_latest.png"/><img src="bm20_over_btc_latest.png" alt="bm20_over_btc_latest.png"/><img src="bm20_over_eth_latest.png" alt="bm20_over_eth_latest.png"/><img src="bm20_btc_eth_line_latest.png" alt="bm20_btc_eth_line_latest.png"/><img src="kimchi_premium_latest.png" alt="kimchi_premium_latest.png"/></div>
+<section><h2>김치 프리미엄</h2><p class='muted'>데이터 없음</p></section>
+<section><h2>펀딩비(8h)</h2><p class='muted'>데이터 없음</p></section>
+<div class='twocol'>
+<section><h2>코인별 퍼포먼스 (상승 TOP 10)</h2><ul><li class='up'>1. SOL <b>+5.13%</b></li><li class='up'>2. SHIB <b>+5.08%</b></li><li class='up'>3. KAS <b>+3.38%</b></li><li class='up'>4. ARB <b>+3.22%</b></li><li class='up'>5. DOT <b>+3.14%</b></li><li class='up'>6. OP <b>+3.14%</b></li><li class='up'>7. INJ <b>+2.52%</b></li><li class='up'>8. ETH <b>+2.26%</b></li><li class='up'>9. ALGO <b>+2.23%</b></li><li class='up'>10. DOGE <b>+2.22%</b></li></ul></section>
+<section><h2>코인별 퍼포먼스 (하락 TOP 10)</h2><ul><li class='down'>1. MKR <b>-2.50%</b></li><li class='up'>2. NEAR <b>+0.04%</b></li><li class='up'>3. AAVE <b>+0.12%</b></li><li class='up'>4. LINK <b>+0.26%</b></li><li class='up'>5. AVAX <b>+0.34%</b></li><li class='up'>6. SAND <b>+0.75%</b></li><li class='up'>7. XLM <b>+0.78%</b></li><li class='up'>8. HBAR <b>+0.91%</b></li><li class='up'>9. TON <b>+1.17%</b></li><li class='up'>10. BCH <b>+1.19%</b></li></ul></section>
 </div>
-
-<section>
-  <h2>김치 프리미엄</h2>
-  <p class="muted">데이터 없음</p>
-</section>
-
-<section>
-  <h2>펀딩비(8h)</h2>
-  <p class="muted">데이터 없음</p>
-</section>
-
-<div class="twocol">
-  <section>
-    <h2>코인별 퍼포먼스 (상승 TOP 10)</h2>
-    <ul>
-      <li class="up">1. SOL <b>+5.13%</b></li>
-      <li class="up">2. SHIB <b>+5.08%</b></li>
-      <li class="up">3. KAS <b>+3.38%</b></li>
-      <li class="up">4. ARB <b>+3.22%</b></li>
-      <li class="up">5. DOT <b>+3.14%</b></li>
-      <li class="up">6. OP <b>+3.14%</b></li>
-      <li class="up">7. INJ <b>+2.52%</b></li>
-      <li class="up">8. ETH <b>+2.26%</b></li>
-      <li class="up">9. ALGO <b>+2.23%</b></li>
-      <li class="up">10. DOGE <b>+2.22%</b></li>
-    </ul>
-  </section>
-  <section>
-    <h2>코인별 퍼포먼스 (하락 TOP 10)</h2>
-    <ul>
-      <li class="down">1. MKR <b>-2.50%</b></li>
-      <li class="up">2. NEAR <b>+0.04%</b></li>
-      <li class="up">3. AAVE <b>+0.12%</b></li>
-      <li class="up">4. LINK <b>+0.26%</b></li>
-      <li class="up">5. AVAX <b>+0.34%</b></li>
-      <li class="up">6. SAND <b>+0.75%</b></li>
-      <li class="up">7. XLM <b>+0.78%</b></li>
-      <li class="up">8. HBAR <b>+0.91%</b></li>
-      <li class="up">9. TON <b>+1.17%</b></li>
-      <li class="up">10. BCH <b>+1.19%</b></li>
-    </ul>
-  </section>
+<div class='twocol'>
+<section><h2>기여도 MTD (상위 10)</h2><ul><li>1. LINK <b>+1.32%</b></li><li>2. ARB <b>+1.18%</b></li><li>3. ETH <b>+0.91%</b></li><li>4. SOL <b>+0.88%</b></li><li>5. AAVE <b>+0.78%</b></li><li>6. ADA <b>+0.65%</b></li><li>7. AVAX <b>+0.47%</b></li><li>8. OP <b>+0.45%</b></li><li>9. BNB <b>+0.44%</b></li><li>10. DOGE <b>+0.42%</b></li></ul></section>
+<section><h2>기여도 QTD (상위 10)</h2><ul><li>1. ETH <b>+2.05%</b></li><li>2. LINK <b>+2.03%</b></li><li>3. XLM <b>+1.81%</b></li><li>4. HBAR <b>+1.76%</b></li><li>5. ARB <b>+1.69%</b></li><li>6. ADA <b>+1.54%</b></li><li>7. ALGO <b>+1.40%</b></li><li>8. DOGE <b>+1.24%</b></li><li>9. SOL <b>+1.24%</b></li><li>10. AVAX <b>+1.21%</b></li></ul></section>
+<section><h2>기여도 YTD (상위 10)</h2><ul><li>1. TIA <b>+11.98%</b></li><li>2. ETH <b>+1.64%</b></li><li>3. XRP <b>+1.52%</b></li><li>4. BCH <b>+1.21%</b></li><li>5. LINK <b>+1.19%</b></li><li>6. ADA <b>+1.12%</b></li><li>7. TRX <b>+1.11%</b></li><li>8. SOL <b>+1.11%</b></li><li>9. AAVE <b>+1.07%</b></li><li>10. MKR <b>+0.89%</b></li></ul></section>
 </div>
-
-<div class="twocol">
-  <section>
-    <h2>기여도 MTD (상위 10)</h2>
-    <ul>
-      <li>1. LINK <b>+1.32%</b></li>
-      <li>2. ARB <b>+1.18%</b></li>
-      <li>3. ETH <b>+0.91%</b></li>
-      <li>4. SOL <b>+0.88%</b></li>
-      <li>5. AAVE <b>+0.78%</b></li>
-      <li>6. ADA <b>+0.65%</b></li>
-      <li>7. AVAX <b>+0.47%</b></li>
-      <li>8. OP <b>+0.45%</b></li>
-      <li>9. BNB <b>+0.44%</b></li>
-      <li>10. DOGE <b>+0.42%</b></li>
-    </ul>
-  </section>
-  <section>
-    <h2>기여도 QTD (상위 10)</h2>
-    <ul>
-      <li>1. ETH <b>+2.05%</b></li>
-      <li>2. LINK <b>+2.03%</b></li>
-      <li>3. XLM <b>+1.81%</b></li>
-      <li>4. HBAR <b>+1.76%</b></li>
-      <li>5. ARB <b>+1.69%</b></li>
-      <li>6. ADA <b>+1.54%</b></li>
-      <li>7. ALGO <b>+1.40%</b></li>
-      <li>8. DOGE <b>+1.24%</b></li>
-      <li>9. SOL <b>+1.24%</b></li>
-      <li>10. AVAX <b>+1.21%</b></li>
-    </ul>
-  </section>
-  <section>
-    <h2>기여도 YTD (상위 10)</h2>
-    <ul>
-      <li>1. TIA <b>+11.98%</b></li>
-      <li>2. ETH <b>+1.64%</b></li>
-      <li>3. XRP <b>+1.52%</b></li>
-      <li>4. BCH <b>+1.21%</b></li>
-      <li>5. LINK <b>+1.19%</b></li>
-      <li>6. ADA <b>+1.12%</b></li>
-      <li>7. TRX <b>+1.11%</b></li>
-      <li>8. SOL <b>+1.11%</b></li>
-      <li>9. AAVE <b>+1.07%</b></li>
-      <li>10. MKR <b>+0.89%</b></li>
-    </ul>
-  </section>
-</div>
-
 <footer>자동 생성: scripts/generate_report.py</footer>
-</body>
-</html>
-
+</body></html>
