@@ -1,90 +1,43 @@
-<!doctype html>
-<html lang="ko">
-<head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>BM20 Daily — <!-- {date_str} --></title>
-  <style>
-    body{font-family:-apple-system,BlinkMacSystemFont,"NanumGothic","Noto Sans CJK","Malgun Gothic",Arial,sans-serif;background:#fafbfc;color:#111;margin:0}
-    .wrap{max-width:760px;margin:0 auto;padding:20px}
-    .card{background:#fff;border:1px solid #e5e9f0;border-radius:12px;padding:20px;margin-bottom:16px}
-    h1{font-size:22px;margin:0 0 8px 0;text-align:center}
-    h2{font-size:15px;margin:16px 0 8px 0;color:#1A237E}
-    .muted{color:#555;text-align:center}
-    nav{display:flex;gap:14px;justify-content:center;margin:8px 0 16px}
-    nav a{color:#1A237E;text-decoration:none}
-    nav a:hover{text-decoration:underline}
-    table{width:100%;border-collapse:collapse;font-size:14px}
-    th,td{border:1px solid #e5e9f0;padding:8px}
-    th{background:#eef4ff}
-    img{max-width:100%;background:#0f1429;border:1px solid #e5e9f0;border-radius:8px}
-    .center{text-align:center}
-    .footer{font-size:12px;color:#666;text-align:center;margin-top:16px}
-  </style>
-</head>
+<!doctype html><html lang='ko'><meta charset='utf-8'>
+<title>BM20 데일리 리포트</title>
+
+    <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; margin: 24px; color:#111; }
+    header { margin-bottom: 16px; }
+    h1 { font-size: 24px; margin: 0 0 4px 0; }
+    .date { color:#555; font-size:14px; }
+    section { margin-top: 24px; }
+    h2 { font-size: 18px; margin: 0 0 12px 0; border-bottom: 1px solid #eee; padding-bottom: 6px; }
+    .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    ul { margin: 8px 0 0 18px; padding: 0; }
+    li { line-height: 1.6; }
+    .up  { color: #1565C0; }
+    .down{ color: #C62828; }
+    .imgrow { display:flex; gap:10px; flex-wrap: wrap; margin-top:10px; }
+    .imgrow img { max-width: 48%; border:1px solid #eee; border-radius: 8px; }
+    .muted { color:#777; }
+    footer { margin-top: 32px; font-size: 12px; color:#666; }
+    table { border-collapse: collapse; border:1px solid #eee; }
+    th, td { padding: 6px 10px; border-bottom:1px solid #eee; text-align: right; }
+    th:first-child, td:first-child { text-align: left; }
+    </style>
+    
 <body>
-<div class="wrap">
-
-  <!-- 헤더 & 네비 (절대주소) -->
-  <div class="card">
-    <h1><a href="https://ceciliamyeong.github.io/bm/" style="text-decoration:none;color:inherit">BM20 데일리 리포트</a></h1>
-    <div class="muted"><!-- {date_str} --></div>
-    <nav>
-      <a href="https://ceciliamyeong.github.io/bm/">Home</a>
-      <a href="https://ceciliamyeong.github.io/bm/latest.html">Latest</a>
-      <a href="https://ceciliamyeong.github.io/bm/indices/performance/">Charts</a>
-      <a href="https://ceciliamyeong.github.io/bm/indices/overview/">Data</a>
-      <a href="https://ceciliamyeong.github.io/bm/indices/methodology/">About</a>
-    </nav>
-
-    <!-- KPI 테이블 (latest.json 등에서 자동 주입) -->
-    <table>
-      <tr><th>지수</th><td><!-- {level pretty} --></td></tr>
-      <tr><th>전일</th><td><!-- {prev pretty} --></td></tr>
-      <tr><th>포인트/변동률</th><td><!-- {chgpt pretty} --> / <!-- {chgp %+} --></td></tr>
-      <tr><th>수익률(1D/7D/30D/MTD/YTD)</th>
-          <td><!-- {r1d %+} --> / <!-- {r7d %+} --> / <!-- {r30d %+} --> / <!-- {rmtd %+} --> / <!-- {rytd %+} --></td></tr>
-      <tr><th>김치 프리미엄</th><td><!-- {kimchi %+ or —} --></td></tr>
-      <tr><th>펀딩비(Binance)</th><td><!-- {funding 'BTC x / ETH y' or —} --></td></tr>
-    </table>
-  </div>
-
-  <!-- 1D Performance + Top/Worst (있으면 이미지/표 표시) -->
-  <div class="card">
-    <h2>코인별 퍼포먼스 (1D, USD)</h2>
-    <!-- 퍼블리셔가 있으면 아래 img를 넣음: src="bm20_bar_latest.png" -->
-    <p class="center"><!-- <img src="bm20_bar_latest.png" alt="Performance"> --></p>
-
-    <h2>상승/하락 TOP3</h2>
-    <!-- 상승 TOP3 -->
-    <table>
-      <tr><th>상승</th><th style="text-align:right">등락률</th></tr>
-      <!-- 퍼블리셔가 perf 상위 3개를 행으로 채움. 없으면 colspan=2로 — 표시 -->
-      <!-- <tr><td>LINK</td><td style="text-align:right">+5.42%</td></tr> ... -->
-    </table>
-    <br>
-    <!-- 하락 TOP3 -->
-    <table>
-      <tr><th>하락</th><th style="text-align:right">등락률</th></tr>
-      <!-- <tr><td>BTC</td><td style="text-align:right">-1.18%</td></tr> ... -->
-    </table>
-  </div>
-
-  <!-- BTC & ETH 7일 추세 (있으면 표시) -->
-  <div class="card">
-    <h2>BTC & ETH 7일 가격 추세</h2>
-    <!-- 퍼블리셔가 있으면 아래 img를 넣음: src="bm20_trend_latest.png" -->
-    <p class="center"><!-- <img src="bm20_trend_latest.png" alt="Trend"> --></p>
-  </div>
-
-  <!-- (선택) BM20 vs BTC 비교 차트 섹션: 시리즈 존재 시 자동 삽입 -->
-  <!--
-  <div class="card">
-    <h2>BM20 vs BTC (2018-01-01 = 100, Log)</h2>
-    <p class="center"><img src="bm20_vs_btc.png" alt="BM20 vs BTC"></p>
-  </div>
-  -->
-
-  <div class="footer">© Blockmedia · Data: latest.json / series.json (+ optional perf/kimchi/funding)</div>
+<header>
+<h1>BM20 데일리 리포트</h1>
+<div class='date'>기준일: 2025-08-28</div>
+</header>
+<div class="imgrow"><img src="bm20_bar_latest.png" alt="bm20_bar_latest.png"/><img src="bm20_trend_latest.png" alt="bm20_trend_latest.png"/><img src="bm20_over_btc_latest.png" alt="bm20_over_btc_latest.png"/><img src="bm20_over_eth_latest.png" alt="bm20_over_eth_latest.png"/><img src="bm20_btc_eth_line_latest.png" alt="bm20_btc_eth_line_latest.png"/><img src="kimchi_premium_latest.png" alt="kimchi_premium_latest.png"/></div>
+<section><h2>김치 프리미엄</h2><p class='muted'>데이터 없음</p></section>
+<section><h2>펀딩비(8h)</h2><p class='muted'>데이터 없음</p></section>
+<div class='twocol'>
+<section><h2>코인별 퍼포먼스 (상승 TOP 10)</h2><ul><li class='up'>1. SOL <b>+5.13%</b></li><li class='up'>2. SHIB <b>+5.08%</b></li><li class='up'>3. KAS <b>+3.38%</b></li><li class='up'>4. ARB <b>+3.22%</b></li><li class='up'>5. DOT <b>+3.14%</b></li><li class='up'>6. OP <b>+3.14%</b></li><li class='up'>7. INJ <b>+2.52%</b></li><li class='up'>8. ETH <b>+2.26%</b></li><li class='up'>9. ALGO <b>+2.23%</b></li><li class='up'>10. DOGE <b>+2.22%</b></li></ul></section>
+<section><h2>코인별 퍼포먼스 (하락 TOP 10)</h2><ul><li class='down'>1. MKR <b>-2.50%</b></li><li class='up'>2. NEAR <b>+0.04%</b></li><li class='up'>3. AAVE <b>+0.12%</b></li><li class='up'>4. LINK <b>+0.26%</b></li><li class='up'>5. AVAX <b>+0.34%</b></li><li class='up'>6. SAND <b>+0.75%</b></li><li class='up'>7. XLM <b>+0.78%</b></li><li class='up'>8. HBAR <b>+0.91%</b></li><li class='up'>9. TON <b>+1.17%</b></li><li class='up'>10. BCH <b>+1.19%</b></li></ul></section>
 </div>
-</body>
-</html>
+<div class='twocol'>
+<section><h2>기여도 MTD (상위 10)</h2><ul><li>1. LINK <b>+1.32%</b></li><li>2. ARB <b>+1.18%</b></li><li>3. ETH <b>+0.91%</b></li><li>4. SOL <b>+0.88%</b></li><li>5. AAVE <b>+0.78%</b></li><li>6. ADA <b>+0.65%</b></li><li>7. AVAX <b>+0.47%</b></li><li>8. OP <b>+0.45%</b></li><li>9. BNB <b>+0.44%</b></li><li>10. DOGE <b>+0.42%</b></li></ul></section>
+<section><h2>기여도 QTD (상위 10)</h2><ul><li>1. ETH <b>+2.05%</b></li><li>2. LINK <b>+2.03%</b></li><li>3. XLM <b>+1.81%</b></li><li>4. HBAR <b>+1.76%</b></li><li>5. ARB <b>+1.69%</b></li><li>6. ADA <b>+1.54%</b></li><li>7. ALGO <b>+1.40%</b></li><li>8. DOGE <b>+1.24%</b></li><li>9. SOL <b>+1.24%</b></li><li>10. AVAX <b>+1.21%</b></li></ul></section>
+<section><h2>기여도 YTD (상위 10)</h2><ul><li>1. TIA <b>+11.98%</b></li><li>2. ETH <b>+1.64%</b></li><li>3. XRP <b>+1.52%</b></li><li>4. BCH <b>+1.21%</b></li><li>5. LINK <b>+1.19%</b></li><li>6. ADA <b>+1.12%</b></li><li>7. TRX <b>+1.11%</b></li><li>8. SOL <b>+1.11%</b></li><li>9. AAVE <b>+1.07%</b></li><li>10. MKR <b>+0.89%</b></li></ul></section>
+</div>
+<footer>자동 생성: scripts/generate_report.py</footer>
+</body></html>
