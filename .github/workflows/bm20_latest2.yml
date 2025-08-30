@@ -60,23 +60,16 @@ jobs:
           if [ -n "${{ inputs.date }}" ]; then
             DATE="${{ inputs.date }}"
           else
-            # out/YYYY-MM-DD 중 가장 최신 폴더를 날짜로
             DATE=$(ls -1d out/*/ 2>/dev/null | awk -F'/' '{print $(NF-1)}' | sort | tail -n1)
-          fi
-          if [ -z "$DATE" ]; then
-            echo "No output directory found under out/"; exit 1
           fi
           echo "DATE=$DATE" >> $GITHUB_ENV
           echo "SRC=out/$DATE" >> $GITHUB_ENV
-          ls -l "out/$DATE"
 
-      - name: Build latest2.html (preview page)
-        env:
-          DATE: ${{ env.DATE }}
-          SRC:  ${{ env.SRC }}
+      - name: Prepare latest2 assets
         run: |
           set -e
-          # 필수/옵션 산출물 경로
+          mkdir -p latest2/assets/"$DATE"
+          # 필수 파일 경로
           HTML="$SRC/bm20_daily_${DATE}.html"
           PDF="$SRC/bm20_daily_${DATE}.pdf"
           CSV="$SRC/bm20_daily_data_${DATE}.csv"
@@ -84,76 +77,38 @@ jobs:
           BAR="$SRC/bm20_bar_${DATE}.png"
           TRD="$SRC/bm20_trend_${DATE}.png"
 
-          # latest2용 고정 파일명으로 복사(페이지에서 참조)
-          cp "$BAR" ./bm20_bar_latest2.png
-          cp "$TRD" ./bm20_trend_latest2.png
+          # latest2용 파일 복사
+          cp "$BAR" bm20_bar_latest2.png
+          cp "$TRD" bm20_trend_latest2.png
+          cp "$HTML" "latest2/assets/${DATE}/" || true
+          cp "$PDF"  "latest2/assets/${DATE}/" || true
+          cp "$CSV"  "latest2/assets/${DATE}/" || true
 
-          # 뉴스 텍스트 → HTML
-          NEWS_HTML=""
-          if [ -f "$TXT" ]; then
-            NEWS_HTML=$(python - <<'PY'
-import html, os, sys
-p=os.environ["TXT"]
-s=open(p,encoding="utf-8").read()
-print(html.escape(s).replace("\n","<br/>"))
-PY
-)
-          fi
+          # 뉴스 텍스트를 HTML로 이스케이프
+          python - <<'PY' > news.html
+          import os, html, sys
+          p=os.environ.get("TXT")
+          if p and os.path.exists(p):
+              s=open(p,encoding="utf-8").read()
+              sys.stdout.write(html.escape(s).replace("\n","<br/>"))
+          else:
+              sys.stdout.write("데이터 없음")
+          PY
 
-          cat > latest2.html <<HTML
-<!doctype html><html lang="ko"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BM20 Latest2 — ${DATE}</title>
-<style>
-body{font-family:-apple-system,BlinkMacSystemFont,"NanumGothic","Noto Sans CJK","Malgun Gothic",Arial,sans-serif;background:#fafbfc;color:#111;margin:0}
-.wrap{max-width:880px;margin:0 auto;padding:20px}
-.card{background:#fff;border:1px solid #e5e9f0;border-radius:12px;padding:20px;margin-bottom:16px}
-h1{font-size:22px;margin:0 0 8px;text-align:center} h2{font-size:15px;margin:16px 0 8px;color:#1A237E}
-.muted{color:#555;text-align:center} .center{text-align:center}
-a{color:#1A237E;text-decoration:none} img{max-width:100%}
-.btns a{display:inline-block;margin-right:10px;padding:8px 10px;border-radius:8px;border:1px solid #cfd8dc}
-</style></head><body>
-<div class="wrap">
-  <div class="card">
-    <h1>BM20 데일리 — Preview (latest2)</h1>
-    <div class="muted">${DATE}</div>
-    <div class="btns">
-      <a href="${HTML}">원본 HTML</a>
-      <a href="${PDF}">PDF</a>
-      <a href="${CSV}">CSV</a>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>코인별 퍼포먼스 (1D, USD)</h2>
-    <p class="center"><img src="bm20_bar_latest2.png" alt="Performance (1D)"></p>
-    <h2>BTC & ETH 7일 가격 추세</h2>
-    <p class="center"><img src="bm20_trend_latest2.png" alt="BTC & ETH 7D"></p>
-  </div>
-
-  <div class="card">
-    <h2>BM20 데일리 뉴스</h2>
-    <p>${NEWS_HTML}</p>
-  </div>
-
-  <div class="card">
-    <h2>원본 파일 모음</h2>
-    <ul>
-      <li><a href="${HTML}">bm20_daily_${DATE}.html</a></li>
-      <li><a href="${PDF}">bm20_daily_${DATE}.pdf</a></li>
-      <li><a href="${CSV}">bm20_daily_data_${DATE}.csv</a></li>
-      <li><a href="${SRC}">폴더: out/${DATE}/</a></li>
-    </ul>
-  </div>
-
-  <div class="muted" style="font-size:12px">© Blockmedia</div>
-</div></body></html>
-HTML
+      - name: Render latest2.html from template
+        env: { DATE: ${{ env.DATE }} }
+        run: |
+          set -e
+          TPL="latest2.template.html"
+          [ -f "$TPL" ] || { echo "template not found: $TPL"; exit 1; }
+          NEWS_HTML=$(cat news.html)
+          # 간단 치환(뉴스는 특수문자·줄바꿈 이미 HTML 처리됨)
+          sed -e "s/{{DATE}}/${DATE}/g" -e "s#{{NEWS_HTML}}#${NEWS_HTML}#g" "$TPL" > latest2.html
 
       - name: Commit & Push latest2
         run: |
           git config user.name  "bm20-bot"
           git config user.email "bm20-bot@users.noreply.github.com"
-          git add latest2.html bm20_bar_latest2.png bm20_trend_latest2.png
+          git add latest2.html bm20_bar_latest2.png bm20_trend_latest2.png latest2/assets/
           git commit -m "Publish latest2 for ${DATE}" || echo "no changes"
           git push
