@@ -280,7 +280,7 @@ async function loadLatest(){
     const funding = findKey(j, ['funding_rates','funding','funding_bps','fundingRate']);
     let kimchi = await getKimchiFromOut(asof);
     if (kimchi == null) {
-      const kLatest = findKey(j, ['kimchi_premium','kimchi_premium_pct','kimchi_premium_latest']);
+      const kLatest = findKey(j, ['kimchi_2025','kimchi_premium_pct','kimchi_premium_latest']);
       kimchi = extractKimchi(kLatest);
     }
     qs('#kimchi').textContent  = kimchi!=null ? fmtPct(kimchi) : '—';
@@ -291,7 +291,7 @@ async function loadLatest(){
     if (news && typeof news === 'string') {
       const a = qs('#newsLink'); a.href = news; a.classList.remove('hide');
     } else {
-      fetch('bm20_news_latest.txt').then(x=>{
+      fetch('bm20_news_2025.txt').then(x=>{
         if (x.ok) { const a = qs('#newsLink'); a.href='bm20_news_latest.txt'; a.classList.remove('hide'); }
       });
     }
@@ -341,10 +341,11 @@ async function loadComponentsAndRenderBars(){
   const keyIdx = Object.fromEntries(head.split(',').map((h,i)=>[h.trim(), i]));
   const rows = lines.map(line=>{
     const c = line.split(',').map(s=>s.trim());
-    const pct = parseFloat(c[keyIdx.price_change_pct]);
+    const pctRaw = parseFloat(c[keyIdx.price_change_pct]);  // CSV는 이미 % 값 (예: 3.17)
+    const ret = isFinite(pctRaw) ? pctRaw / 100 : null;     // ✅ 비율로 변환 (0.0317)
     return {
       symbol: (c[keyIdx.symbol]||'').toUpperCase(),
-      ret_1d: isFinite(pct) ? pct : null,
+      ret_1d: ret,                                           // 비율 저장
       contrib: parseFloat(c[keyIdx.contribution]||'')
     };
   }).filter(r=>r.symbol && r.ret_1d!=null);
