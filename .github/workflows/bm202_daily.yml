@@ -104,17 +104,27 @@ jobs:
           cp "$SRC/bm20_trend_${DATE}.png" bm20_trend_latest.png
 
       # 3) 커밋 & 푸시
-      - name: Commit & Push (with pull --rebase)
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Commit & Push (rebased & autostash)
         run: |
           set -e
-          BRANCH="${GITHUB_REF#refs/heads/}"
+      
           git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin ${BRANCH}
-          git pull --rebase origin ${BRANCH} || true
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      
+          # 0) 원격 갱신 가져오기
+          git fetch origin main
+      
+          # 1) 생성물 모두 스테이징/커밋 (없으면 넘어감)
           git add -A
-          git commit -m "[skip ci] chore: auto daily report for $(date -u +'%Y-%m-%d')" || echo "nothing to commit"
-          git push origin HEAD:${BRANCH}
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: auto daily report for $(date -u +%Y-%m-%d)"
+          fi
+      
+          # 2) 로컬 변경(혹시 남아있으면) 자동 스태시하면서 리베이스 풀
+          git pull --rebase --autostash origin main
+      
+          # 3) 푸시 (경합 시 1회 리트라이)
+          git push origin HEAD:main || { 
+            git pull --rebase --autostash origin main
+            git push origin HEAD:main
+          }
