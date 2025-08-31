@@ -227,7 +227,7 @@ async function fetchJsonTry(u, tag=''){ try{ const r = await fetch(u+`?v=${Date.
 async function fetchTextTry(u, tag=''){ try{ const r = await fetch(u+`?v=${Date.now()}`, {cache:'no-store'}); if (r.ok){ console.info('[ok]', tag||u); return await r.text(); } console.warn('[http]', r.status, tag||u);}catch(e){ console.warn('[err]', tag||u, e); } }
 function ymdFrom(asof, offsetDays=0){ const t = asof ? new Date(asof) : new Date(); if (offsetDays) t.setDate(t.getDate()+offsetDays); const y=t.getFullYear(), m=String(t.getMonth()+1).padStart(2,'0'), d=String(t.getDate()).padStart(2,'0'); return `${y}-${m}-${d}`; }
 function extractKimchi(obj){ if (obj==null) return null; if (typeof obj==='number') return obj; if (typeof obj==='string'){ const v=parseFloat(obj); return isFinite(v)?v:null; }
-  let v = findKey(obj, ['kimchi_premium','kimchi_premium_pct','premium','pct','value']); if (typeof v==='string') v=parseFloat(v);
+  let v = findKey(obj, ['kimchi','kimchi_premium_pct','premium','pct','value']); if (typeof v==='string') v=parseFloat(v);
   if (typeof v==='number'&&isFinite(v)) return v;
   if (v && typeof v==='object'){ let vv = findKey(v, ['pct','value','premium']); if (typeof vv==='string') vv=parseFloat(vv); if (typeof vv==='number'&&isFinite(vv)) return vv; }
   return null;
