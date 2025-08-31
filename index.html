@@ -54,7 +54,6 @@
   /* 차트/이미지: 가로 100%, 비율 유지 */
   .chart img,.chart canvas{display:block;width:100%;height:auto;object-fit:contain}
   .chart.aspect-16x9{aspect-ratio:16/9}
-  .chart.aspect-4x3{aspect-ratio:4/3}
 
   /* 기존 SVG 박스도 가로 100% 유지 */
   .svgwrap{height:260px;width:100%;border-radius:12px;border:1px solid #2b3d59;background:rgba(22,28,48,.6);overflow:hidden}
@@ -139,9 +138,9 @@
 
       <div class="section list mini">
         <div>빠른 링크: 
-          <a href="series.json" target="_blank">series.json</a> ·
-          <a href="latest.json" target="_blank">latest.json</a> ·
-          <a id="newsLink" class="hide" href="#" target="_blank">news.txt</a>
+          <a href="bm20_series.json" target="_blank">bm20_series.json</a> ·
+          <a href="bm20_latest.json" target="_blank">bm20_latest.json</a> ·
+          <a id="newsLink" class="hide" href="#" target="_blank">bm20_news.txt</a>
         </div>
       </div>
     </section>
@@ -261,37 +260,74 @@ function formatFunding(f){ if(f==null) return '—'; if(typeof f==='number') ret
   if(typeof f==='object'){ const btc=f.btc??f.BTC??f.Btc, eth=f.eth??f.ETH??f.Eth; const p=x=>(typeof x==='number')?fmtPct(x):(x??'—'); return `BTC ${p(btc)}, ETH ${p(eth)}`;} return '—';
 }
 
-// ===== 김치 프리미엄 폴백 유틸 =====
-async function fetchJsonNoStore(u){
+// ===== 김치/CSV 로더 유틸 =====
+async function fetchJsonTry(u, tag=''){
   try{
-    const r = await fetch(u, {cache:'no-store'});
-    if (r.ok) return await r.json();
-  }catch(e){}
+    const r = await fetch(u+`?v=${Date.now()}`, {cache:'no-store'});
+    if (r.ok){ console.info('[ok]', tag||u); return await r.json(); }
+    console.warn('[http]', r.status, tag||u);
+  }catch(e){ console.warn('[err]', tag||u, e); }
 }
 
-function fmtDateYYYYMMDD(asof){
-  const t = new Date(asof || Date.now());
-  const y = t.getFullYear();
-  const m = String(t.getMonth()+1).padStart(2,'0');
-  const d = String(t.getDate()).padStart(2,'0');
+async function fetchTextTry(u, tag=''){
+  try{
+    const r = await fetch(u+`?v=${Date.now()}`, {cache:'no-store'});
+    if (r.ok){ console.info('[ok]', tag||u); return await r.text(); }
+    console.warn('[http]', r.status, tag||u);
+  }catch(e){ console.warn('[err]', tag||u, e); }
+}
+
+function ymdFrom(asof, offsetDays=0){
+  const t = asof ? new Date(asof) : new Date();
+  if (offsetDays) t.setDate(t.getDate()+offsetDays);
+  const y=t.getFullYear(), m=String(t.getMonth()+1).padStart(2,'0'), d=String(t.getDate()).padStart(2,'0');
   return `${y}-${m}-${d}`;
 }
 
-async function getKimchiFromOut(asof){
-  const d = fmtDateYYYYMMDD(asof);
-  const candidates = [
-    `out/${d}/kimchi_${d}.json`,
-    `bm/out/${d}/kimchi_${d}.json`,
-  ];
-  for (const u of candidates){
-    const j = await fetchJsonNoStore(u);
-    if (!j) continue;
-    const v1 = (typeof j === 'number') ? j : findKey(j, ['kimchi_premium','kimchi_premium_pct','pct','value','premium']);
-    const v  = (typeof v1 === 'string') ? parseFloat(v1) : v1;
-    if (v!=null && isFinite(v)) return v;
+function extractKimchi(obj){
+  if (obj==null) return null;
+  if (typeof obj==='number') return obj;
+  if (typeof obj==='string'){ const v=parseFloat(obj); return isFinite(v)?v:null; }
+  let v = findKey(obj, ['kimchi_premium','kimchi_premium_pct','premium','pct','value']);
+  if (typeof v==='string') v=parseFloat(v);
+  if (typeof v==='number'&&isFinite(v)) return v;
+  if (v && typeof v==='object'){
+    let vv = findKey(v, ['pct','value','premium']);
+    if (typeof vv==='string') vv=parseFloat(vv);
+    if (typeof vv==='number'&&isFinite(vv)) return vv;
   }
   return null;
 }
+
+// /out/YYYY-MM-DD/kimchi_YYYY-MM-DD.json 우선 탐색 (asOf/오늘/전일)
+async function getKimchiFromOut(asof){
+  const dates = [ ymdFrom(asof,0), ymdFrom(null,0), ymdFrom(asof,-1) ];
+  for (const d of dates){
+    const url = `out/${d}/kimchi_${d}.json`;          // 정식 경로
+    const j = await fetchJsonTry(url, `kimchi ${d}`);
+    const v = extractKimchi(j);
+    if (v!=null){ document.getElementById('kimchi')?.setAttribute('title', `src:/${url}`); return v; }
+  }
+  // optional fallback (희귀 케이스)
+  for (const d of dates){
+    const url = `bm/out/${d}/kimchi_${d}.json`;
+    const j = await fetchJsonTry(url, `kimchi fb ${d}`);
+    const v = extractKimchi(j);
+    if (v!=null){ document.getElementById('kimchi')?.setAttribute('title', `src:/${url}`); return v; }
+  }
+  return null;
+}
+
+// /out/YYYY-MM-DD/bm20_daily_data_YYYY-MM-DD.csv 로드
+async function loadPerfFromCSV(asof){
+  const d = ymdFrom(asof);
+  const main = `out/${d}/bm20_daily_data_${d}.csv`;
+  const csv = await fetchTextTry(main, 'perf csv');
+  if (csv) return csv;
+  // optional fallback
+  return await fetchTextTry(`bm/out/${d}/bm20_daily_data_${d}.csv`, 'perf csv fb');
+}
+
 
   
 async function loadLatest(){
@@ -319,13 +355,22 @@ async function loadLatest(){
     setDeltaBadge(r1);
 
     // ✅ 김치: out/오늘날짜/kimchi_오늘날짜.json 우선
-    let kimchi = await getKimchiFromOut(asof);
     
-    // ❗ out에 없으면 latest.json 안의 필드 사용
-    if (kimchi == null) {
-      const kFromLatest = findKey(j, ['kimchi_premium','kimchi_premium_pct','kimchi_premium_latest']);
-      kimchi = (typeof kFromLatest === 'string') ? parseFloat(kFromLatest) : kFromLatest;
-    }
+    const funding = findKey(j, ['funding_rates','funding','funding_bps','fundingRate']);
+
+// ✅ 김치: /out/날짜/kimchi_날짜.json 우선 탐색
+let kimchi = await getKimchiFromOut(asof);
+
+// 보조: latest.json 내부 필드
+if (kimchi == null) {
+  const kLatest = findKey(j, ['kimchi_premium','kimchi_premium_pct','kimchi_premium_latest']);
+  kimchi = extractKimchi(kLatest);
+}
+
+qs('#kimchi').textContent  = kimchi!=null ? fmtPct(kimchi) : '—';
+qs('#funding').textContent = formatFunding(funding);
+
+    
     
     const funding = findKey(j, ['funding_rates','funding','funding_bps','fundingRate']);
     
