@@ -19,43 +19,35 @@
   .brand .dot{width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:0 0 18px var(--accent)}
   nav{display:flex;gap:18px;align-items:center}
 
-  /* 레이아웃: 모바일 1열 → 데스크톱 2열(메인 2, 사이드 1) */
   .rows{display:grid;grid-template-columns:1fr;gap:16px;margin-top:16px}
   @media (min-width:900px){.rows{grid-template-columns:2fr 1fr}}
 
   .card{background:var(--card);border:1px solid #26354a;border-radius:14px;padding:16px;box-shadow:0 8px 28px rgba(0,0,0,.3)}
 
-  /* KPI 카드 그리드: 모바일 2열 → 태블릿/데스크톱 6열 */
   .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
   @media (min-width:700px){.cards{grid-template-columns:repeat(6,1fr)}}
 
   .stat{padding:12px;border:1px solid #2b3d59;border-radius:12px;background:rgba(22,28,48,.6)}
   .k{color:var(--muted);font-size:12px}
   .v{font-size:22px;font-weight:700}
-  .delta.up{color:var(--up)}
-  .delta.down{color:var(--down)}
+  .delta.up{color:var(--up)} .delta.down{color:var(--down)}
   .flex{display:flex;gap:14px;align-items:center;justify-content:space-between}
   .h{font-weight:700;letter-spacing:.2px}
   .mini{font-size:12px;color:var(--muted)}
   .pill{display:inline-flex;gap:8px;align-items:center;border:1px solid #2b3d59;border-radius:999px;padding:6px 10px;background:rgba(22,28,48,.6)}
 
-  /* 2칸 그리드 섹션: 모바일에서 1칸으로 */
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   @media (max-width:700px){.grid2{grid-template-columns:1fr}}
-
   .section{margin-top:18px}
 
-  /* 표는 넘치면 가로 스크롤 */
   .tbl{width:100%;border-collapse:collapse}
   .tbl th,.tbl td{border-bottom:1px solid #223449;padding:10px 8px;text-align:left}
   .tbl th{color:#a8bdd6;font-weight:600}
   .table-wrap{overflow:auto}
 
-  /* 차트/이미지: 가로 100%, 비율 유지 */
   .chart img,.chart canvas{display:block;width:100%;height:auto;object-fit:contain}
   .chart.aspect-16x9{aspect-ratio:16/9}
 
-  /* 기존 SVG 박스도 가로 100% 유지 */
   .svgwrap{height:260px;width:100%;border-radius:12px;border:1px solid #2b3d59;background:rgba(22,28,48,.6);overflow:hidden}
   .svgwrap svg{width:100%;height:100%;display:block}
 
@@ -66,10 +58,8 @@
   .list{display:grid;gap:8px}
   .code{white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;background:#0c1326;border:1px solid #26354a;border-radius:10px;padding:12px;max-height:420px;overflow:auto}
 
-  /* ===== 추가: 차트 카드 묶음이 좁아지면 자동으로 아래로 쌓이게 ===== */
   .charts{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
   
-  /* ===== BM20 뉴스 카드 전용 스타일 (충돌 없음) ===== */
   .bm-wrap{max-width:1100px;margin:0 auto}
   .bm-grid{display:grid;grid-template-columns:3fr 2fr;gap:16px}
   .bm-card{background:linear-gradient(180deg,#11183a 0%,#0f152b 100%);border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:18px;box-shadow:0 12px 30px rgba(0,0,0,.35)}
@@ -85,15 +75,14 @@
   .bm-pct{text-align:right;font-variant-numeric:tabular-nums;color:#e6f5ea;font-weight:700}
   .bm-ticker{font-weight:700;color:#e9edf7;text-align:center}
   .bm-legend{display:flex;gap:10px;margin-top:6px;color:#dfe5ff;font-size:12px}
-</style>
-
+  </style>
 </head>
 <body>
   <header>
     <div class="wrap flex">
       <div class="brand"><span class="dot"></span><div>
         <div style="font-weight:800">BM20 Index</div>
-        <div class="mini">Blockmedia Large‑Cap Crypto 20</div>
+        <div class="mini">Blockmedia Large-Cap Crypto 20</div>
       </div></div>
       <nav>
         <a href="https://ceciliamyeong.github.io/bm/">Home</a>
@@ -146,34 +135,34 @@
     </section>
 
     <!-- CHARTS -->
-       <section id="charts" class="rows">
-        <!-- 1) 시계열 -->
-        <div class="card">
-          <div class="flex"><div class="h">BM20 시계열</div><button class="btn" id="btnZoom">범위: 1Y ▾</button></div>
-          <div class="svgwrap" id="svgHost"><svg></svg></div>
-          <div class="mini">※ series.json을 읽어 단순 라인 차트로 그립니다. 이미지가 있으면 아래에 표시합니다.</div>
-        </div>
-      
-        <!-- 2) 이미지 차트 (있을 때만) -->
-        <div class="card">
-          <div class="h">이미지 차트(있을 경우만)</div>
-          <div class="grid2 section">
-            <div>
-              <div class="mini">1D Performance Bar</div>
-              <div class="chart aspect-16x9">
-               <img id="imgBar" alt="1D Bar"/>
+    <section id="charts" class="rows">
+      <div class="card">
+        <div class="flex"><div class="h">BM20 시계열</div><button class="btn" id="btnZoom">범위: 1Y ▾</button></div>
+        <div class="svgwrap" id="svgHost"><svg></svg></div>
+        <div class="mini">※ series.json을 읽어 단순 라인 차트로 그립니다. 이미지가 있으면 아래에 표시합니다.</div>
+      </div>
+
+      <div class="card">
+        <div class="h">이미지 차트(있을 경우만)</div>
+        <div class="grid2 section">
+          <div>
+            <div class="mini">1D Performance Bar</div>
+            <div class="chart aspect-16x9">
+              <img id="imgBar" alt="1D Bar"/>
             </div>
           </div>
         </div>
-      </section>
-      <!-- 3) 글로벌 퍼포먼스 -->
+      </div>
+    </section>
+
+    <!-- 글로벌 퍼포먼스 -->
     <section id="perf" class="card">
       <div class="h">글로벌 퍼포먼스 (1D, %)</div>
       <div id="perfBar" style="height:320px;margin-top:8px"></div>
-      <div class="mini">※ <code>latest_components.json</code> 기준. 1일 수익률 내림차순.</div>
+      <div class="mini">※ <code>out/YYYY-MM-DD/bm20_daily_data_YYYY-MM-DD.csv</code> 기준.</div>
     </section>
     
-    <!-- DATA / JSON VIEW (필요 시만 볼 수 있게 숨김) -->
+    <!-- DATA / JSON VIEW -->
     <section id="data" class="rows section hide">
       <div class="card">
         <div class="flex"><div class="h">latest.json</div><button class="btn" id="btnToggleLatest">접기</button></div>
@@ -185,131 +174,73 @@
       </div>
     </section>
 
-
-    <!-- ===== 여기부터: 뉴스 카드 블록 삽입 ===== -->
+    <!-- 뉴스 카드 프리뷰 -->
     <section class="section">
       <div class="bm-wrap">
         <div class="bm-kicker">BM20 데일리 허브 · 프리뷰</div>
         <h2 class="h">뉴스 & 퍼포먼스</h2>
 
         <div class="bm-grid">
-          <!-- Left: 코인별 퍼포먼스 (샘플 값, 데이터 연동 전) -->
+          <!-- Left: 코인별 퍼포먼스 (동적 채움) -->
           <section class="bm-card">
             <div class="bm-title">코인별 퍼포먼스 (1D, USD)</div>
-            <div class="bm-bars" aria-label="1일 수익률 막대">
-              <div class="bm-row"><div class="bm-ticker">ARB</div><div class="bm-shell"><div class="bm-bar" style="width:20%"></div></div><div class="bm-pct">+19.99%</div></div>
-              <div class="bm-row"><div class="bm-ticker">OP</div><div class="bm-shell"><div class="bm-bar" style="width:9.6%"></div></div><div class="bm-pct">+9.50%</div></div>
-              <div class="bm-row"><div class="bm-ticker">ADA</div><div class="bm-shell"><div class="bm-bar" style="width:8.4%"></div></div><div class="bm-pct">+8.35%</div></div>
-              <div class="bm-row"><div class="bm-ticker">NEAR</div><div class="bm-shell"><div class="bm-bar" style="width:7.1%"></div></div><div class="bm-pct">+7.09%</div></div>
-              <div class="bm-row"><div class="bm-ticker">BTC</div><div class="bm-shell"><div class="bm-bar" style="width:2.6%"></div></div><div class="bm-pct">+2.63%</div></div>
-              <div class="bm-row"><div class="bm-ticker">ETH</div><div class="bm-shell"><div class="bm-bar" style="width:3.4%"></div></div><div class="bm-pct">+3.43%</div></div>
-            </div>
+            <div class="bm-bars" aria-label="1일 수익률 막대"><!-- JS로 채움 --></div>
           </section>
 
-          <!-- Right: 뉴스 카드 -->
+          <!-- Right: 뉴스 카드 (샘플 텍스트) -->
           <section class="bm-card">
             <div class="bm-title">BM20 데일리 뉴스</div>
-            <div class="bm-head">BM20 지수 0.9% 하락…BTC·ETH 약세</div>
-            <div class="bm-lead">23일 BM20 지수는 전일 대비 0.9% 내린 6,993pt로 마감했습니다. 비트코인과 이더리움이 동반 약세를 보이며 지수 하락을 주도했습니다.</div>
+            <div class="bm-head">BM20 지수 요약</div>
+            <div class="bm-lead">지수 움직임과 구성종목 흐름을 한눈에 확인하세요.</div>
             <p class="mini" style="line-height:1.75;margin:6px 0 0;">
-              20개 종목 중 <b>상승 7</b> · <b>하락 13</b>. 주간 수익률은 <b>+2.9%</b>, 월간 수익률은 <b>+13.7%</b>로 중기 상승 흐름은 유지되고 있습니다.
+              20개 종목 중 <b id="best3">Best 3</b> · <b id="worst3">Worst 3</b>.
             </p>
-            <div style="margin-top:10px;">
-              <span class="bm-pill">Best 3: ARB · OP · ADA</span>
-              <span class="bm-pill">Worst 3: LTC · XRP · BNB</span>
-            </div>
           </section>
         </div>
       </div>
     </section>
-    <!-- ===== 삽입 끝 ===== -->
 
-    <!-- ABOUT -->
     <section id="about" class="card section">
       <div class="h">What is BM20?</div>
-      <p class="mini">글로벌 암호화폐 시장을 대표하는 대형 코인 20개로 구성한 블록미디어 고유 지수입니다. 한국 3대 거래소(업비트·빗썸·코인원) 상장 코인은 1.3× 보정 가중치를 적용하며, 분기 1회 정기 리밸런싱(1·4·7·10월)합니다. 지수 기준일은 2018‑01‑01(100)이며, 포트폴리오 가치를 기준 가치로 나눠 산출합니다.</p>
-      <ul class="mini">
-        <li>코인 선정: 시가총액 상위 20종 (APT 제외, SUI 포함 가능)</li>
-        <li>가중치 예시: BTC 30%, ETH 20%, XRP 5%, USDT 5%, BNB 5%, 나머지 15종에 균등 배분(총 35%)</li>
-        <li>데이터 소스: 기본 코인게코, 이슈 시 야후 파이낸스 폴백</li>
-        <li>활용: 일일 시황 코멘터리, 자동화 파이프라인, 향후 ETF/파생 벤치마크</li>
-      </ul>
+      <p class="mini">글로벌 암호화폐 시장을 대표하는 대형 코인 20개로 구성한 블록미디어 고유 지수입니다. 한국 3대 거래소 상장 코인은 1.3× 보정 가중치, 분기 1회 정기 리밸런싱(1·4·7·10월). 지수 기준일 2018-01-01(100).</p>
     </section>
 
     <footer class="mini">
-      <div>© Blockmedia · Generated client‑side from <code>latest.json</code> & <code>series.json</code>. 이미지/뉴스 파일이 없으면 자동으로 숨겨집니다.</div>
+      <div>© Blockmedia · Generated client-side from <code>bm20_latest.json</code> & <code>bm20_series.json</code>. 이미지/뉴스 파일이 없으면 자동으로 숨겨집니다.</div>
     </footer>
   </main>
 
 <script>
-/* 기존 스크립트는 그대로 유지 */
+// ===== 공통 유틸 =====
 const qs = (s, el=document) => el.querySelector(s);
 const fmtPct = v => (v===null||v===undefined||isNaN(v))?"—":(v>0?"+":"") + (Math.round(v*1000)/10).toFixed(1) + "%";
 const fmtNum = v => (v===null||v===undefined||isNaN(v))?"—": new Intl.NumberFormat('en-US',{maximumFractionDigits:2}).format(v);
 const findKey = (obj, candidates=[]) => { for (const k of candidates){ if (obj && Object.hasOwn(obj,k)) return obj[k]; } };
-
 async function fetchAny(urls){ for (const u of urls){ try{ const r=await fetch(u); if(r.ok) return {url:u,json:await r.json()}; }catch(e){} } throw new Error('no json found'); }
 function setDeltaBadge(pct){ const el=qs('#deltaBadge'); if(pct==null||isNaN(pct)){ el.textContent='데이터 없음'; return; } el.textContent=(pct>0?'▲ ':'▼ ')+fmtPct(pct); el.className='delta '+(pct>=0?'up':'down'); }
-function setImg(id, src){
-  const img = qs(id);
-  if (!img) return;                               // ← 널가드
-  img.src = src;
-  img.onerror = () => img.closest('div')?.classList.add('hide'); // ← 안전하게
-}
+function setImg(id, src){ const img = qs(id); if (!img) return; img.src = src; img.onerror = () => img.closest('div')?.classList.add('hide'); }
 function formatFunding(f){ if(f==null) return '—'; if(typeof f==='number') return fmtPct(f); if(typeof f==='string') return f;
-  if(typeof f==='object'){ const btc=f.btc??f.BTC??f.Btc, eth=f.eth??f.ETH??f.Eth; const p=x=>(typeof x==='number')?fmtPct(x):(x??'—'); return `BTC ${p(btc)}, ETH ${p(eth)}`;} return '—';
-}
+  if(typeof f==='object'){ const btc=f.btc??f.BTC??f.Btc, eth=f.eth??f.ETH??f.Eth; const p=x=>(typeof x==='number')?fmtPct(x):(x??'—'); return `BTC ${p(btc)}, ETH ${p(eth)}`;} return '—'; }
 
 // ===== 김치/CSV 로더 유틸 =====
-async function fetchJsonTry(u, tag=''){
-  try{
-    const r = await fetch(u+`?v=${Date.now()}`, {cache:'no-store'});
-    if (r.ok){ console.info('[ok]', tag||u); return await r.json(); }
-    console.warn('[http]', r.status, tag||u);
-  }catch(e){ console.warn('[err]', tag||u, e); }
-}
-
-async function fetchTextTry(u, tag=''){
-  try{
-    const r = await fetch(u+`?v=${Date.now()}`, {cache:'no-store'});
-    if (r.ok){ console.info('[ok]', tag||u); return await r.text(); }
-    console.warn('[http]', r.status, tag||u);
-  }catch(e){ console.warn('[err]', tag||u, e); }
-}
-
-function ymdFrom(asof, offsetDays=0){
-  const t = asof ? new Date(asof) : new Date();
-  if (offsetDays) t.setDate(t.getDate()+offsetDays);
-  const y=t.getFullYear(), m=String(t.getMonth()+1).padStart(2,'0'), d=String(t.getDate()).padStart(2,'0');
-  return `${y}-${m}-${d}`;
-}
-
-function extractKimchi(obj){
-  if (obj==null) return null;
-  if (typeof obj==='number') return obj;
-  if (typeof obj==='string'){ const v=parseFloat(obj); return isFinite(v)?v:null; }
-  let v = findKey(obj, ['kimchi_premium','kimchi_premium_pct','premium','pct','value']);
-  if (typeof v==='string') v=parseFloat(v);
+async function fetchJsonTry(u, tag=''){ try{ const r = await fetch(u+`?v=${Date.now()}`, {cache:'no-store'}); if (r.ok){ console.info('[ok]', tag||u); return await r.json(); } console.warn('[http]', r.status, tag||u);}catch(e){ console.warn('[err]', tag||u, e); } }
+async function fetchTextTry(u, tag=''){ try{ const r = await fetch(u+`?v=${Date.now()}`, {cache:'no-store'}); if (r.ok){ console.info('[ok]', tag||u); return await r.text(); } console.warn('[http]', r.status, tag||u);}catch(e){ console.warn('[err]', tag||u, e); } }
+function ymdFrom(asof, offsetDays=0){ const t = asof ? new Date(asof) : new Date(); if (offsetDays) t.setDate(t.getDate()+offsetDays); const y=t.getFullYear(), m=String(t.getMonth()+1).padStart(2,'0'), d=String(t.getDate()).padStart(2,'0'); return `${y}-${m}-${d}`; }
+function extractKimchi(obj){ if (obj==null) return null; if (typeof obj==='number') return obj; if (typeof obj==='string'){ const v=parseFloat(obj); return isFinite(v)?v:null; }
+  let v = findKey(obj, ['kimchi_premium','kimchi_premium_pct','premium','pct','value']); if (typeof v==='string') v=parseFloat(v);
   if (typeof v==='number'&&isFinite(v)) return v;
-  if (v && typeof v==='object'){
-    let vv = findKey(v, ['pct','value','premium']);
-    if (typeof vv==='string') vv=parseFloat(vv);
-    if (typeof vv==='number'&&isFinite(vv)) return vv;
-  }
+  if (v && typeof v==='object'){ let vv = findKey(v, ['pct','value','premium']); if (typeof vv==='string') vv=parseFloat(vv); if (typeof vv==='number'&&isFinite(vv)) return vv; }
   return null;
 }
-
-// /out/YYYY-MM-DD/kimchi_YYYY-MM-DD.json 우선 탐색 (asOf/오늘/전일)
 async function getKimchiFromOut(asof){
   const dates = [ ymdFrom(asof,0), ymdFrom(null,0), ymdFrom(asof,-1) ];
   for (const d of dates){
-    const url = `out/${d}/kimchi_${d}.json`;          // 정식 경로
+    const url = `out/${d}/kimchi_${d}.json`;
     const j = await fetchJsonTry(url, `kimchi ${d}`);
     const v = extractKimchi(j);
     if (v!=null){ document.getElementById('kimchi')?.setAttribute('title', `src:/${url}`); return v; }
   }
-  // optional fallback (희귀 케이스)
-  for (const d of dates){
+  for (const d of dates){ // optional fallback
     const url = `bm/out/${d}/kimchi_${d}.json`;
     const j = await fetchJsonTry(url, `kimchi fb ${d}`);
     const v = extractKimchi(j);
@@ -317,24 +248,18 @@ async function getKimchiFromOut(asof){
   }
   return null;
 }
-
-// /out/YYYY-MM-DD/bm20_daily_data_YYYY-MM-DD.csv 로드
 async function loadPerfFromCSV(asof){
   const d = ymdFrom(asof);
   const main = `out/${d}/bm20_daily_data_${d}.csv`;
   const csv = await fetchTextTry(main, 'perf csv');
   if (csv) return csv;
-  // optional fallback
   return await fetchTextTry(`bm/out/${d}/bm20_daily_data_${d}.csv`, 'perf csv fb');
 }
 
-
-  
+// ===== 페이지 로드 =====
 async function loadLatest(){
   try{
-    const { url, json: j } = await fetchAny([
-      'bm20_latest.json','latest.json','bm/bm20_latest.json','bm/latest.json'
-    ]);
+    const { json: j } = await fetchAny(['bm20_latest.json','latest.json','bm/bm20_latest.json','bm/latest.json']);
 
     const asof = j.asOf || j.as_of || j.date || j.day || '';
     if (asof) qs('#asof').textContent = `기준: ${asof}`;
@@ -345,39 +270,23 @@ async function loadLatest(){
     const R = j.returns || {};
     const r1 = j.bm20ChangePct ?? R['1D'];
     qs('#r1d').textContent = fmtPct(r1);
-
     if (qs('#r7d'))  qs('#r7d').textContent  = fmtPct(R['7D']);
     if (qs('#r30d')) qs('#r30d').textContent = fmtPct(R['30D']);
-    // 🟨 MTD 제거: rmtd 요소/데이터 접근 없음
     if (qs('#rytd')) qs('#rytd').textContent = fmtPct(R['YTD']);
     if (qs('#r1y'))  qs('#r1y').textContent  = fmtPct(R['1Y']);
-
     setDeltaBadge(r1);
 
-    // ✅ 김치: out/오늘날짜/kimchi_오늘날짜.json 우선
-    
+    // 김치/펀딩
     const funding = findKey(j, ['funding_rates','funding','funding_bps','fundingRate']);
-
-// ✅ 김치: /out/날짜/kimchi_날짜.json 우선 탐색
-let kimchi = await getKimchiFromOut(asof);
-
-// 보조: latest.json 내부 필드
-if (kimchi == null) {
-  const kLatest = findKey(j, ['kimchi_premium','kimchi_premium_pct','kimchi_premium_latest']);
-  kimchi = extractKimchi(kLatest);
-}
-
-qs('#kimchi').textContent  = kimchi!=null ? fmtPct(kimchi) : '—';
-qs('#funding').textContent = formatFunding(funding);
-
-    
-    
-    const funding = findKey(j, ['funding_rates','funding','funding_bps','fundingRate']);
-    
-    qs('#kimchi').textContent  = kimchi!=null ? (typeof kimchi==='number' ? fmtPct(kimchi) : kimchi) : '—';
+    let kimchi = await getKimchiFromOut(asof);
+    if (kimchi == null) {
+      const kLatest = findKey(j, ['kimchi_premium','kimchi_premium_pct','kimchi_premium_latest']);
+      kimchi = extractKimchi(kLatest);
+    }
+    qs('#kimchi').textContent  = kimchi!=null ? fmtPct(kimchi) : '—';
     qs('#funding').textContent = formatFunding(funding);
 
-
+    // 뉴스 링크
     const news = j.news_file || j.news_path || j.news;
     if (news && typeof news === 'string') {
       const a = qs('#newsLink'); a.href = news; a.classList.remove('hide');
@@ -388,12 +297,10 @@ qs('#funding').textContent = formatFunding(funding);
     }
 
     qs('#latestDump').textContent = JSON.stringify(j, null, 2);
-
   } catch(e) {
     qs('#latestDump').textContent = 'latest.json을 불러오지 못했습니다.';
   }
 }
-
 
 async function loadSeries(){
   const host=qs('#svgHost'); const svg=qs('svg', host);
@@ -401,13 +308,11 @@ async function loadSeries(){
     const { url, json: arr } = await fetchAny(['bm20_series.json','series.json','bm/bm20_series.json','bm/series.json']);
     const points = arr.map(d=>({ t:new Date((d.date||d.day||d.asof||d.asOf||d[0]||Date.now())), v:+((d.level||d.index||d.value||d.close||d.bm20Level||d[1])) }))
                       .filter(x=>isFinite(x.v)).sort((a,b)=>a.t-b.t);
-    qs('#seriesDump').textContent = `${url}
-`+JSON.stringify(points.slice(-20),null,2);
+    qs('#seriesDump').textContent = `${url}\n`+JSON.stringify(points.slice(-20),null,2);
 
     let mode=0; const compute=()=>{ if(mode===1){ const y0=new Date(new Date().getFullYear(),0,1); return points.filter(p=>p.t>=y0); }
                                    if(mode===0){ const d=new Date(); d.setFullYear(d.getFullYear()-1); return points.filter(p=>p.t>=d); }
                                    return points; };
-
     function draw(data){
       svg.innerHTML=''; const pad=24, W=svg.clientWidth||host.clientWidth, H=svg.clientHeight||host.clientHeight;
       const minX=+data[0].t,maxX=+data[data.length-1].t,minV=Math.min(...data.map(p=>p.v)),maxV=Math.max(...data.map(p=>p.v));
@@ -421,57 +326,77 @@ async function loadSeries(){
   }catch(e){ qs('#seriesDump').textContent='series.json을 불러오지 못했습니다.'; }
 }
 
-function tryImages(){ setImg('#imgBar','bm20_vs_btc.png'); setImg('#imgTrend','bm20_vs_btc.png'); }
+function tryImages(){ setImg('#imgBar','bm20_bar_2025-08-31.png'); /* 필요 시 파일명 최신으로 교체 */ }
 
+// ===== 글로벌 퍼포먼스 (CSV 기반) =====
+async function loadComponentsAndRenderBars(){
+  // asOf 확보(실패해도 로컬 오늘로 진행)
+  let asof = null;
+  try{ const j = await (await fetch('bm20_latest.json', {cache:'no-store'})).json(); asof = j.asOf || j.as_of || j.date || j.day || null; }catch(e){}
+
+  const csv = await loadPerfFromCSV(asof);
+  if (!csv) return;
+
+  const [head, ...lines] = csv.trim().split(/\r?\n/);
+  const keyIdx = Object.fromEntries(head.split(',').map((h,i)=>[h.trim(), i]));
+  const rows = lines.map(line=>{
+    const c = line.split(',').map(s=>s.trim());
+    const pct = parseFloat(c[keyIdx.price_change_pct]);
+    return {
+      symbol: (c[keyIdx.symbol]||'').toUpperCase(),
+      ret_1d: isFinite(pct) ? pct : null,
+      contrib: parseFloat(c[keyIdx.contribution]||'')
+    };
+  }).filter(r=>r.symbol && r.ret_1d!=null);
+
+  rows.sort((a,b)=>b.ret_1d - a.ret_1d);
+
+  // 뉴스 카드: Best/Worst 3
+  const bestEl = document.getElementById('best3');
+  const worstEl = document.getElementById('worst3');
+  if (bestEl) bestEl.textContent = rows.slice(0,3).map(r=>r.symbol).join(' · ') || '—';
+  if (worstEl) worstEl.textContent = rows.slice(-3).reverse().map(r=>r.symbol).join(' · ') || '—';
+
+  // 뉴스 카드 좌측 막대 (상위 12개)
+  const host = document.querySelector('.bm-bars');
+  if (host){
+    const top12 = rows.slice(0,12);
+    const maxAbs = Math.max(...top12.map(r=>Math.abs(r.ret_1d||0))) || 1;
+    host.innerHTML = top12.map(r=>{
+      const pct = r.ret_1d*100;
+      const w = Math.max(2, Math.round(Math.abs(pct)/maxAbs*100));
+      return `<div class="bm-row">
+        <div class="bm-ticker">${r.symbol}</div>
+        <div class="bm-shell"><div class="bm-bar" style="width:${w}%; ${pct>=0?'':'background:#C62828'}"></div></div>
+        <div class="bm-pct" style="${pct>=0?'color:#9ef3b4':'color:#ffd1d1'}">${pct>=0?'+':''}${pct.toFixed(2)}%</div>
+      </div>`;
+    }).join('');
+  }
+
+  // 메인 가로바 차트 (상위 20개)
+  const topN = rows.slice(0,20);
+  const dom = document.getElementById('perfBar');
+  if (!dom) return;
+  const chart = echarts.init(dom, null, {renderer:'canvas'});
+  chart.setOption({
+    grid: {left: 8, right: 16, top: 20, bottom: 8, containLabel: true},
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, valueFormatter: v => (v>0?'+':'')+(v*100).toFixed(2)+'%' },
+    xAxis: { type: 'value', axisLabel: { formatter: v => (v>0?'+':'')+(v*100).toFixed(0)+'%' }, splitLine:{show:true} },
+    yAxis: { type: 'category', data: topN.map(r=>r.symbol), axisTick:{show:false} },
+    series: [{ type: 'bar', data: topN.map(r=>r.ret_1d), label:{show:true,position:'right',formatter:p=>(p.value>=0?'+':'')+(p.value*100).toFixed(2)+'%'} }],
+    animation: true
+  });
+  window.addEventListener('resize', ()=> chart.resize());
+}
+
+// ===== 이벤트 바인딩 & 실행 =====
 qs('#btnToggleLatest').addEventListener('click',()=>qs('#latestDump').classList.toggle('hide'));
 qs('#btnToggleSeries').addEventListener('click',()=>qs('#seriesDump').classList.toggle('hide'));
 
-loadLatest(); loadSeries(); tryImages();
-</script>
-  <script>
-async function loadComponentsAndRenderBars(){
-  const tryFetch = async (u)=>{ try{ const r=await fetch(u,{cache:'no-store'}); if(r.ok) return r.json(); }catch(e){} };
-  const data = await (tryFetch('contrib_top.json') ||
-                      tryFetch('bm/latest_components.json') ||
-                      tryFetch('bm20_components.json'));
-  if(!data || !Array.isArray(data.components)) return;
-
-  const rows = data.components.filter(r=>r.ret_1d!=null);
-  // 1D 수익률 내림차순 정렬
-  rows.sort((a,b)=>(b.ret_1d??-Infinity)-(a.ret_1d??-Infinity));
-
-  // Best/Worst 3 텍스트 교체
-  const top3 = rows.slice(0,3).map(r=>r.symbol).join(' · ');
-  const bot3 = rows.slice(-3).reverse().map(r=>r.symbol).join(' · ');
-  const bestEl = document.getElementById('best3');
-  const worstEl = document.getElementById('worst3');
-  if(bestEl) bestEl.textContent = top3 || '—';
-  if(worstEl) worstEl.textContent = bot3 || '—';
-
-  // 뉴스 카드 내 막대 영역(.bm-bars) 채우기 (상위 12개만 표시)
-  const host = document.querySelector('.bm-bars');
-  if(!host) return;
-  const topN = rows.slice(0,12);
-
-  // 가시화용: 1D 수익률 절댓값 최대치 기준 너비 계산
-  const maxAbs = Math.max(...topN.map(r=>Math.abs(r.ret_1d || 0))) || 1;
-
-  host.innerHTML = topN.map(r=>{
-    const pct = (r.ret_1d*100);
-    const w   = Math.max(2, Math.round(Math.abs(pct)/maxAbs*100)); // 최소 2%
-    const signClass = pct>=0 ? '' : 'filter: hue-rotate(160deg) saturate(1.2); background:#C62828';
-    return `
-      <div class="bm-row">
-        <div class="bm-ticker">${r.symbol}</div>
-        <div class="bm-shell">
-          <div class="bm-bar" style="width:${w}%; ${pct>=0?'':'background:#C62828'}"></div>
-        </div>
-        <div class="bm-pct" style="${pct>=0?'color:#9ef3b4':'color:#ffd1d1'}">${pct>=0?'+':''}${pct.toFixed(2)}%</div>
-      </div>`;
-  }).join('');
-}
+loadLatest();
+loadSeries();
+tryImages();
 loadComponentsAndRenderBars();
 </script>
-
 </body>
 </html>
