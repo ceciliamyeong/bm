@@ -260,6 +260,39 @@ function formatFunding(f){ if(f==null) return '—'; if(typeof f==='number') ret
   if(typeof f==='object'){ const btc=f.btc??f.BTC??f.Btc, eth=f.eth??f.ETH??f.Eth; const p=x=>(typeof x==='number')?fmtPct(x):(x??'—'); return `BTC ${p(btc)}, ETH ${p(eth)}`;} return '—';
 }
 
+// ===== 김치 프리미엄 폴백 유틸 =====
+async function fetchJsonNoStore(u){
+  try{
+    const r = await fetch(u, {cache:'no-store'});
+    if (r.ok) return await r.json();
+  }catch(e){}
+}
+
+function fmtDateYYYYMMDD(asof){
+  const t = new Date(asof || Date.now());
+  const y = t.getFullYear();
+  const m = String(t.getMonth()+1).padStart(2,'0');
+  const d = String(t.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+
+async function getKimchiFromOut(asof){
+  const d = fmtDateYYYYMMDD(asof);
+  const candidates = [
+    `out/${d}/kimchi_${d}.json`,
+    `bm/out/${d}/kimchi_${d}.json`,
+  ];
+  for (const u of candidates){
+    const j = await fetchJsonNoStore(u);
+    if (!j) continue;
+    const v1 = (typeof j === 'number') ? j : findKey(j, ['kimchi_premium','kimchi_premium_pct','pct','value','premium']);
+    const v  = (typeof v1 === 'string') ? parseFloat(v1) : v1;
+    if (v!=null && isFinite(v)) return v;
+  }
+  return null;
+}
+
+  
 async function loadLatest(){
   try{
     const { url, json: j } = await fetchAny([
@@ -284,10 +317,20 @@ async function loadLatest(){
 
     setDeltaBadge(r1);
 
-    const kimchi  = findKey(j, ['kimchi_premium','kimchi_premium_pct','kimchi_premium_latest']);
+    // ✅ 김치: out/오늘날짜/kimchi_오늘날짜.json 우선
+    let kimchi = await getKimchiFromOut(asof);
+    
+    // ❗ out에 없으면 latest.json 안의 필드 사용
+    if (kimchi == null) {
+      const kFromLatest = findKey(j, ['kimchi_premium','kimchi_premium_pct','kimchi_premium_latest']);
+      kimchi = (typeof kFromLatest === 'string') ? parseFloat(kFromLatest) : kFromLatest;
+    }
+    
     const funding = findKey(j, ['funding_rates','funding','funding_bps','fundingRate']);
+    
     qs('#kimchi').textContent  = kimchi!=null ? (typeof kimchi==='number' ? fmtPct(kimchi) : kimchi) : '—';
     qs('#funding').textContent = formatFunding(funding);
+
 
     const news = j.news_file || j.news_path || j.news;
     if (news && typeof news === 'string') {
