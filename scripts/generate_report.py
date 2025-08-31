@@ -7,8 +7,8 @@ import os, json, datetime, glob
 from pathlib import Path
 
 ROOT = Path(".")
-API  = ROOT / "api"          # 기본 데이터 경로
-OUT_HTML = ROOT / "latest.html"
+API  = ROOT / "out"         # 기본 데이터 경로
+OUT_HTML = ROOT / "bm20_latest.html"
 
 # ----------------- 유틸 -----------------
 def load_json(path, default=None):
@@ -204,8 +204,7 @@ def main():
 
     # 이미지 자동 삽입(있을 때만)
     image_candidates = [
-        ROOT / "bm20_bar_latest.png",
-        ROOT / "bm20_trend_latest.png",
+        ROOT / "bm20_bar_latest.png",   
         ROOT / "bm20_over_btc_latest.png",
         ROOT / "bm20_over_eth_latest.png",
         ROOT / "bm20_btc_eth_line_latest.png",
