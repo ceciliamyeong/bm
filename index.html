@@ -360,17 +360,32 @@ async function loadComponentsAndRenderBars(){
 
   // 뉴스 카드 좌측 막대 (상위 12개)
   const host = document.querySelector('.bm-bars');
-  if (host){
-    const top12 = rows.slice(0,12);
-    const maxAbs = Math.max(...top12.map(r=>Math.abs(r.ret_1d||0))) || 1;
-    host.innerHTML = top12.map(r=>{
-      const pct = r.ret_1d*100;
-      const w = Math.max(2, Math.round(Math.abs(pct)/maxAbs*100));
-      return `<div class="bm-row">
-        <div class="bm-ticker">${r.symbol}</div>
-        <div class="bm-shell"><div class="bm-bar" style="width:${w}%; ${pct>=0?'':'background:#C62828'}"></div></div>
-        <div class="bm-pct" style="${pct>=0?'color:#9ef3b4':'color:#ffd1d1'}">${pct>=0?'+':''}${pct.toFixed(2)}%</div>
-      </div>`;
+  if (host) {
+    const topN = rows.slice(0, 12); // rows는 ret_1d가 "비율"(0.0234) 형태
+    const maxAbs = Math.max(...topN.map(r => Math.abs(r.ret_1d || 0))) || 1;
+  
+    host.innerHTML = topN.map(r => {
+      const ratio = Math.abs(r.ret_1d) / maxAbs;       // 0~1
+      const pct   = r.ret_1d * 100;                    // 표기용 %
+      const width = Math.max(2, Math.round(ratio * 100)); // 최소 2%
+  
+      // 등락폭에 따라 진하기 변화 (양수=초록 계열, 음수=빨강 계열)
+      // HSL: hue 120(녹색) ↔ 0(빨강), lightness를 등락폭이 클수록 어둡게
+      const isUp = r.ret_1d >= 0;
+      const hue = isUp ? 120 : 0;
+      const light = 65 - Math.round(ratio * 30);       // 65% → 35%
+      const barColor = `hsl(${hue} 60% ${light}%)`;
+      const textColor = isUp ? '#9ef3b4' : '#ffd1d1';
+  
+      return `
+        <div class="bm-row">
+          <div class="bm-ticker">${r.symbol}</div>
+          <div class="bm-shell">
+            <div class="bm-bar" style="width:${width}%; background:${barColor};"></div>
+          </div>
+          <div class="bm-pct" style="color:${textColor}">${pct>=0?'+':''}${pct.toFixed(2)}%</div>
+        </div>
+      `;
     }).join('');
   }
 
