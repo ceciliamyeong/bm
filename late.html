@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>BM20 데일리 PDF</title>
   <style>
-    :root { --bar: 56px; }
+    :root { --bar: 52px; }
     *{box-sizing:border-box}
     body{margin:0;background:#f5f6fa;color:#111;font:14px/1.6 system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans KR",sans-serif}
     header{position:sticky;top:0;height:var(--bar);display:flex;align-items:center;gap:8px;padding:0 12px;background:#fff;border-bottom:1px solid #e5e9f0;z-index:10}
@@ -13,7 +13,7 @@
     header .sp{flex:1}
     header a{padding:8px 12px;border:1px solid #d6d9e0;border-radius:10px;background:#fff;text-decoration:none;color:#111}
     #wrap{height:calc(100vh - var(--bar));}
-    iframe, object{width:100%;height:100%;border:0;display:block}
+    object, iframe{width:100%;height:100%;border:0;display:block}
     #fallback{display:none;height:100%;padding:20px}
     .card{max-width:760px;margin:0 auto;background:#fff;border:1px solid #e5e9f0;border-radius:12px;padding:18px}
     .muted{color:#666}
@@ -29,13 +29,15 @@
 </header>
 
 <div id="wrap">
+  <!-- 1순위 임베드 -->
   <object id="pdfObj" type="application/pdf"></object>
+  <!-- 2순위 임베드 -->
   <iframe id="pdfFrame" style="display:none"></iframe>
-
+  <!-- 폴백 -->
   <div id="fallback">
     <div class="card">
-      <h2 style="margin:0 0 8px">PDF 미리보기를 사용할 수 없습니다</h2>
-      <p class="muted" id="why">파일을 찾을 수 없거나 브라우저가 내장 PDF 뷰어를 지원하지 않습니다.</p>
+      <h2 style="margin:0 0 8px">PDF 미리보기 불가</h2>
+      <p class="muted" id="why">파일을 찾지 못했거나 브라우저가 내장 PDF 뷰어를 지원하지 않습니다.</p>
       <p>
         <a id="fbOpen" target="_blank" rel="noopener">🗔 새 탭으로 열기</a>
         &nbsp;•&nbsp;
@@ -43,7 +45,8 @@
       </p>
       <hr style="border:none;border-top:1px solid #e5e9f0;margin:16px 0" />
       <p class="muted" style="font-size:12px">
-        특정 날짜를 보려면 <code>?date=YYYY-MM-DD</code>, 임의 파일은 <code>?pdf=/경로/파일.pdf</code> 를 사용하세요.
+        특정 파일: <code>?pdf=/경로/파일.pdf</code><br/>
+        특정 날짜: <code>?date=YYYY-MM-DD</code>
       </p>
     </div>
   </div>
@@ -51,55 +54,31 @@
 
 <script>
 (async () => {
-  const qs = (s)=>document.querySelector(s);
+  const qs = s => document.querySelector(s);
   const usp = new URLSearchParams(location.search);
   const paramPdf  = usp.get('pdf');
   const paramDate = usp.get('date');
 
-  // Asia/Seoul(KST, UTC+9) 기준 YYYY-MM-DD 문자열
-  function todayKST(){
-    const kst = new Date(Date.now() + 9*60*60*1000);
-    return kst.toISOString().slice(0,10);
-  }
-  function ymd(d){ return d.toISOString().slice(0,10); }
-  function dateFromYMD(s){
-    const [y,m,dd] = s.split('-').map(Number);
-    // UTC 자정으로 만들고 KST 보정은 경로 문자열에만 쓰므로 그대로 둡니다
-    return new Date(Date.UTC(y, m-1, dd));
-  }
+  // ✅ GitHub Pages(/bm 같은 baseurl)에서도 안전한 상대경로 사용
+  const join = (...parts) => parts.filter(Boolean).map(p=>String(p).replace(/^\/+|\/+$/g,'')).join('/');
 
-  async function exists(url){
-    try{
-      const r = await fetch(url, { method:'HEAD', cache:'no-store' });
-      return r.ok;
-    }catch(_){ return false; }
-  }
+  // 오늘/어제 (KST)
+  const now = new Date();
+  const kstNow = new Date(now.getTime() + 9*60*60*1000);
+  const toYMD = d => d.toISOString().slice(0,10);
+  const baseDate = paramDate || toYMD(kstNow);
+  const d0 = new Date(Date.UTC(...baseDate.split('-').map((n,i)=>i===1?Number(n)-1:Number(n)))); // UTC 자정
+  const d1 = new Date(d0.getTime() - 24*60*60*1000);
 
-  // 1) 우선순위: ?pdf → 해당 경로
-  let chosen = null;
-  if (paramPdf){
-    chosen = paramPdf;
-  } else {
-    // 2) ?date → 해당 날짜 경로, 없으면 어제 폴백
-    // 3) 기본(오늘자) → 없으면 어제자 폴백
-    const baseDate = paramDate || todayKST();
-    const d0 = dateFromYMD(baseDate);
-    const d1 = new Date(d0.getTime() - 24*60*60*1000);
-
-    const candidates = [
-      // primary (base date)
-      `bm/out/${ymd(d0)}/bm20_daily_${ymd(d0)}.pdf`,
-      // fallback (yesterday)
-      `bm/out/${ymd(d1)}/bm20_daily_${ymd(d1)}.pdf`,
-      // optional generic latest names (있다면 사용)
-      'bm20_latest.pdf',
-      'out/latest/bm20_daily.pdf'
-    ];
-
-    for (const u of candidates){
-      if (u.toLowerCase().endsWith('.pdf') && await exists(u)){ chosen = u; break; }
-    }
-  }
+  // 후보 경로 (상대경로만; HEAD 미리 안 때리고 바로 시도 → onload/onerror로 판별)
+  const byDate = ymd => join('bm','out', ymd, `bm20_daily_${ymd}.pdf`);
+  const candidates = [
+    ...(paramPdf ? [paramPdf] : []),
+    byDate(toYMD(d0)),
+    byDate(toYMD(d1)),
+    'bm20_latest.pdf',
+    join('out','latest','bm20_daily.pdf')
+  ];
 
   const obj = qs('#pdfObj'), frame = qs('#pdfFrame'), fallback = qs('#fallback');
   const openNew = qs('#openNew'), download = qs('#download');
@@ -108,7 +87,8 @@
   function wire(url){
     openNew.href = url; download.href = url;
     fbOpen.href = url; fbDown.href = url;
-    document.title = `BM20 데일리 PDF — ${url.split('/').slice(-1)[0]}`;
+    const fname = url.split('/').pop();
+    document.title = `BM20 데일리 PDF — ${fname}`;
     qs('#title').textContent = document.title;
   }
   function showFallback(msg){
@@ -117,32 +97,43 @@
     if (msg) qs('#why').textContent = msg;
   }
 
-  if (!chosen){
-    showFallback('해당 규칙의 PDF를 찾지 못했습니다.');
-    return;
-  }
-  wire(chosen);
+  // 후보를 순차 시도: object → (실패시) iframe
+  async function tryEmbed(urls){
+    for (const url of urls){
+      let solved = false;
 
-  // 1차: object
-  obj.data = chosen;
+      // 1) object
+      obj.style.display = 'block';
+      frame.style.display = 'none';
+      obj.data = url; wire(url);
 
-  let loaded = false;
-  const t1 = setTimeout(()=> {
-    if (!loaded){
-      // 2차: iframe
-      obj.style.display='none';
-      frame.src = chosen;
-      frame.style.display='block';
+      solved = await new Promise(resolve => {
+        let done = false;
+        const ok = () => { if (!done){ done=true; resolve(true);} };
+        const fail = () => { if (!done){ done=true; resolve(false);} };
+        // 일부 브라우저는 object onload 미지원 → 타임아웃 보조
+        const t = setTimeout(()=>{ if (!done){ done=true; resolve(false);} }, 900);
+        obj.addEventListener?.('load', () => { clearTimeout(t); ok(); }, { once:true });
+        obj.addEventListener?.('error', () => { clearTimeout(t); fail(); }, { once:true });
+      });
+      if (solved) return true;
 
-      const t2 = setTimeout(()=> {
-        if (!frame.contentWindow) showFallback(); // 일부 iOS/Safari 케이스
-      }, 1500);
-      frame.addEventListener('load', ()=>{ clearTimeout(t2); loaded = true; }, { once:true });
+      // 2) iframe
+      obj.style.display = 'none';
+      frame.src = url; frame.style.display = 'block';
+
+      solved = await new Promise(resolve => {
+        let done = false;
+        const t = setTimeout(()=>{ if (!done){ done=true; resolve(false);} }, 1200);
+        frame.addEventListener('load', ()=>{ if (!done){ clearTimeout(t); done=true; resolve(true);} }, { once:true });
+      });
+      if (solved){ wire(url); return true; }
     }
-  }, 1000);
+    return false;
+  }
 
-  obj.addEventListener?.('load', ()=>{ clearTimeout(t1); loaded = true; }, { once:true });
-  obj.addEventListener?.('error', ()=> showFallback('브라우저가 object PDF 임베드를 지원하지 않습니다.'));
+  const ok = await tryEmbed(candidates);
+  if (!ok) showFallback('후보 경로에서 PDF를 열 수 없습니다.');
 })();
 </script>
 </body>
