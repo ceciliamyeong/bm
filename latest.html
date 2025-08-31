@@ -5,86 +5,92 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>BM20 데일리 리포트</title>
   <style>
-    :root{
-      --fg:#111; --muted:#777; --border:#eee; --bg:#fff; --page:#fafafa; --accent-up:#1565C0; --accent-down:#C62828;
-    }
-    @media (prefers-color-scheme: dark){
-      :root{ --fg:#e8eaf0; --muted:#9aa3b2; --border:#2b2f3a; --bg:#161922; --page:#0f1218; }
-    }
-    /* 기본 레이아웃 */
-    html,body{margin:0;padding:0;background:var(--page); color:var(--fg); font:14px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;}
-    .container{max-width:1100px;margin:0 auto;padding:20px;}
-    header{margin:0 0 16px 0;}
-    h1{font-size:22px; margin:0 0 6px 0;}
-    .date{color:var(--muted); font-size:13px;}
+  :root{
+    --fg:#111; --muted:#777; --border:#eee; --bg:#fff; --page:#fafafa;
+    --accent-up:#1565C0; --accent-down:#C62828;
+    --maxw: 1400px;        /* ✅ 컨테이너 폭 크게 */
+    --card-min: 420px;     /* ✅ 이미지 카드 최소폭 크게 */
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --fg:#e8eaf0; --muted:#9aa3b2; --border:#2b2f3a; --bg:#161922; --page:#0f1218; }
+  }
 
-    /* 섹션 공통 */
-    section{margin-top:20px;}
-    h2{font-size:16px; margin:0 0 10px 0; padding-bottom:6px; border-bottom:1px solid var(--border);}
+  html,body{margin:0;padding:0;background:var(--page); color:var(--fg);
+    font:14px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;}
 
-    /* 2열 → 반응형 1열 */
-    .twocol{
-      display:grid; gap:16px; grid-template-columns: 1fr 1fr;
-    }
+  .container{max-width:var(--maxw); margin:0 auto; padding:24px;}    /* ⬅️ 1100 → 1400 */
+  header{margin:0 0 16px 0;}
+  h1{font-size:28px; margin:0 0 8px 0;}                              /* ⬆ 타이틀 키움 */
+  .date{color:var(--muted); font-size:14px;}
 
-    /* 이미지 갤러리: 자동 열 수 */
-    .imgrow{
-      display:grid; gap:10px;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      margin-top:10px;
-    }
-    .imgrow img{
-      width:100%; height:auto; display:block; border:1px solid var(--border); border-radius:8px;
-    }
+  section{margin-top:24px;}
+  h2{font-size:18px; margin:0 0 12px 0; padding-bottom:6px; border-bottom:1px solid var(--border);}
 
-    ul{margin:8px 0 0 18px; padding:0;}
-    li{line-height:1.6;}
-    .up{color:var(--accent-up);}
-    .down{color:var(--accent-down);}
-    .muted{color:var(--muted);}
+  /* 2열 → 반응형 1열 */
+  .twocol{display:grid; gap:18px; grid-template-columns: 1fr 1fr;}
+  @media (max-width: 900px){ .twocol{grid-template-columns:1fr;} }
 
-    /* 테이블 반응형(가로 스크롤) */
-    .table-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch;}
-    table{border-collapse:collapse; border:1px solid var(--border); width:100%; min-width:460px;}
-    th,td{padding:6px 10px; border-bottom:1px solid var(--border); text-align:right; white-space:nowrap;}
-    th:first-child, td:first-child{text-align:left;}
+  /* ✅ 이미지 갤러리: 최소 카드폭을 키워 큰 썸네일 유지 */
+  .imgrow{
+    display:grid; gap:14px;
+    grid-template-columns: repeat(auto-fit, minmax(var(--card-min), 1fr));
+    align-items:start;
+    margin-top:10px;
+  }
+  /* 큰 화면에선 더 크게 (3열→2열) */
+  @media (min-width: 1600px){
+    :root{ --card-min: 520px; }   /* 초대형 화면에서 더 큼 */
+  }
 
-    /* 카드형 이미지/섹션 감쌀 때 사용 가능 (옵션) */
-    .card{background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:14px;}
+  /* 이미지 자체는 100% 채우되 흐릿함 방지 옵션 */
+  .imgrow img{
+    width:100%; height:auto; display:block;
+    border:1px solid var(--border); border-radius:12px;
+    image-rendering:auto; -ms-interpolation-mode: bicubic;
+  }
 
-    footer{margin:26px 0 8px; font-size:12px; color:var(--muted);}
+  /* 리스트/텍스트 */
+  ul{margin:8px 0 0 18px; padding:0;}
+  li{line-height:1.6;}
+  .up{color:var(--accent-up);} .down{color:var(--accent-down);}
+  .muted{color:var(--muted);}
+  footer{margin:28px 0 8px; font-size:12px; color:var(--muted);}
 
-    /* 화면 폭별 타이포/여백 조정 */
-    @media (max-width: 960px){
-      .container{padding:16px;}
-      h1{font-size:21px;}
-      h2{font-size:15px;}
-    }
-    @media (max-width: 760px){
-      .twocol{grid-template-columns: 1fr;} /* 1열로 전환 */
-      .container{padding:14px;}
-      h1{font-size:20px;}
-      .date{font-size:12px;}
-    }
-    @media (max-width: 420px){
-      html,body{font-size:13.5px;}
-      .container{padding:12px;}
-      h1{font-size:19px;}
-      ul{margin-left:16px;}
-    }
-  </style>
+  /* 테이블이 생길 경우를 위한 가로 스크롤 박스 */
+  .table-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+  table{border-collapse:collapse; border:1px solid var(--border); width:100%; min-width:520px;}
+  th,td{padding:8px 12px; border-bottom:1px solid var(--border); text-align:right; white-space:nowrap;}
+  th:first-child, td:first-child{text-align:left;}
+
+  /* 모바일 타이포/패딩 */
+  @media (max-width: 760px){
+    .container{padding:16px;}
+    h1{font-size:24px;}
+    h2{font-size:16px;}
+    :root{ --card-min: 320px; }   /* 모바일에서도 너무 작아지지 않도록 */
+  }
+  @media (max-width: 420px){
+    html,body{font-size:13.5px;}
+    .container{padding:12px;}
+  }
+</style>
+
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>BM20 데일리 리포트</h1>
-      <div class="date">기준일: 2025-08-28</div>
+      <div class="nav">
+        <a href="/" class="home">🏠 Home</a>
+        <div class="title">
+          <h1>BM20 데일리 리포트</h1>
+          <div class="date">기준일: 2025-08-28</div>
+        </div>
+      </div>
     </header>
 
     <!-- 이미지 갤러리 (반응형 grid) -->
     <div class="imgrow">
       <img src="bm20_bar_latest.png" alt="bm20_bar_latest.png" loading="lazy" decoding="async">
-      <img src="bm20_trend_latest.png" alt="bm20_trend_latest.png" loading="lazy" decoding="async">
       <img src="bm20_over_btc_latest.png" alt="bm20_over_btc_latest.png" loading="lazy" decoding="async">
       <img src="bm20_over_eth_latest.png" alt="bm20_over_eth_latest.png" loading="lazy" decoding="async">
       <img src="bm20_btc_eth_line_latest.png" alt="bm20_btc_eth_line_latest.png" loading="lazy" decoding="async">
