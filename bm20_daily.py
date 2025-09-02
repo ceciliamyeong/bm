@@ -154,10 +154,14 @@ def fetch_yf_prices(ids):
     end = datetime.utcnow().date()
     start = end - timedelta(days=4)
 
-    raw = yf.download(
-        tickers=tickers, start=str(start), end=str(end + timedelta(days=1)),
-        interval="1d", auto_adjust=True, progress=False, group_by="ticker"
-    )
+    try:
+        raw = yf.download(
+            tickers=tickers, start=str(start), end=str(end + timedelta(days=1)),
+            interval="1d", auto_adjust=True, progress=False, group_by="ticker"
+        )
+    except Exception as e:
+        print(f"[WARN] yfinance multi download failed: {e}")
+        raw = pd.DataFrame()
 
     # Close 우선, 없으면 Adj Close
     def pick_close(df):
