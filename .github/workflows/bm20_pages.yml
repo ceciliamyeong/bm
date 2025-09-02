@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  BM20_BASE_DATE: "2024-01-01"   # 공개지수 기준일
+  BM20_BASE_DATE: "2018-01-01"
 
 jobs:
   build:
@@ -26,14 +26,12 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
-      # ---- Deps ----
       - name: Install deps
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install gspread google-auth google-auth-oauthlib google-auth-httplib2
 
-      # ---- Sheet → map CSV ----
       - name: Sync bm20_map from Google Sheets
         env:
           GSPREAD_SA_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
@@ -46,11 +44,10 @@ jobs:
             head -n 10 bm20_map_btc30.csv || true
           fi
 
-
       # ---- Build (daily CSV → index) ----
       - name: Build index from CSVs
         run: |
-          mkdir -p out bm/api
+          mkdir -p out
           python bm20_from_daily_csv.py --archive ./archive --out ./out \
             --rebalance quarterly --weights-source rules \
             --listed-bonus 1.3 --cap BTC:0.30 --cap ETH:0.20 \
@@ -74,8 +71,8 @@ jobs:
             cp out/bm20_index_from_csv.csv out/bm20_index_merged.csv
           fi
 
-      # ---- Rebase to base = 2024-01-01 (=100) ----
-      - name: Rebase merged index to base=2024-01-01
+      # ---- Rebase to base = 2018-01-01 (=100) ----
+      - name: Rebase merged index to base=2018-01-01
         run: |
           python - <<'PY'
           from scripts.rebase import rebase_csv
@@ -90,43 +87,37 @@ jobs:
           PY
           head -n 3 out/bm20_index_rebased.csv
 
-      # ---- Export JSON for web (→ bm/api/) ----
-      - name: Export JSON/CSV for web (bm/api)
+      # ---- Export JSON/CSV for web (→ out/) ----
+      - name: Export JSON/CSV for web (out/)
         run: |
-          mkdir -p bm/api
-          python export_json.py out/bm20_index_rebased.csv bm/api
-          cp -f out/bm20_index_rebased.csv bm/api/bm20_index_rebased.csv
+          mkdir -p out
+          python export_json.py out/bm20_index_rebased.csv out
+          # 필요하면 다른 산출물도 함께 복사
+          # cp -f out/bm20_index_rebased.csv out/bm20_index_rebased.csv
 
-      # ---- Diagnostics / Contribution (→ bm/api/) ----
+      # ---- Diagnostics / Contribution (→ out/) ----
       - name: BTC diagnostics (robust)
         run: |
           python diagnostics_btc_compare.py \
             --merged out/bm20_index_rebased.csv \
-            --out-json bm/api/diag_btc.json \
+            --out-json out/diag_btc.json \
             --start 2018-01-01 || true
-          [ -s bm/api/diag_btc.json ] || echo '{"status":"partial","reason":"no output"}' > bm/api/diag_btc.json
+          [ -s out/diag_btc.json ] || echo '{"status":"partial","reason":"no output"}' > out/diag_btc.json
 
       - name: Contribution report (top)
         run: |
-          python contrib_report.py --map bm20_map_btc30.csv --out-json bm/api/contrib_top.json
+          python contrib_report.py --map bm20_map_btc30.csv --out-json out/contrib_top.json
 
-      # ---- Sanity (list) ----
-      - name: List bm/api payload
-        run: |
-          echo "---- bm/api ----"
-          find bm/api -maxdepth 1 -type f -print | sort || true
-
-     
       # ---- Sanity check files (JSON only) ----
       - name: Sanity check files (JSON only)
         run: |
-          echo "---- bm/api listing ----"
-          ls -la bm/api || true
-          test -f bm/api/series.json      || (echo "ERR: series.json missing"; exit 1)
-          test -f bm/api/latest.json      || (echo "ERR: latest.json missing"; exit 1)
-          test -f bm/api/stats.json       || (echo "ERR: stats.json missing"; exit 1)
-          test -f bm/api/diag_btc.json    || (echo "ERR: diag_btc.json missing"; exit 1)
-          test -f bm/api/contrib_top.json || (echo "ERR: contrib_top.json missing"; exit 1)
+          echo "---- out listing ----"
+          ls -la out || true
+          test -f out/series.json      || (echo "ERR: series.json missing"; exit 1)
+          test -f out/latest.json      || (echo "ERR: latest.json missing"; exit 1)
+          test -f out/stats.json       || (echo "ERR: stats.json missing"; exit 1)
+          test -f out/diag_btc.json    || (echo "ERR: diag_btc.json missing"; exit 1)
+          test -f out/contrib_top.json || (echo "ERR: contrib_top.json missing"; exit 1)
 
       # ---- Commit & push (safe with autostash) ----
       - name: Commit & push
@@ -134,18 +125,14 @@ jobs:
           set -e
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          # 원격 최신 반영 (작업트리 변경은 자동 스태시)
           git fetch origin
           git pull --rebase --autostash
 
-          # bm/api만 스테이지 → 변경 있으면 커밋/푸시
-          git add -A bm/api
+          git add -A out
           if ! git diff --cached --quiet; then
-            git commit -m "[skip ci] data: update BM20 API $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            git commit -m "[skip ci] data: update BM20 out $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
             git push
           else
             echo "no changes"
           fi
 
-      
