@@ -332,9 +332,13 @@ def get_latest_funding_pair():
         out[label] = (v, src)
     return out
 
-def fmt_pct(v):
-    # +0.012%, -0.025% 같은 고정 포맷
-    return f"{v:+.3f}%"
+def fmt_pct(v, digits=2):
+    try:
+        if v is None or (isinstance(v, float) and np.isnan(v)):
+            return "-"
+        return f"{float(v):.{digits}f}%"
+    except Exception:
+        return "-"
 
 def format_funding_line():
     """
