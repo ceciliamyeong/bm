@@ -105,6 +105,9 @@ def read_json(path: Path):
     except Exception:
         return None
 
+# 새 위치로 이동 (fp)
+def fp(v, dash_text="집계 공란"):
+    return dash_text if (v is None or (isinstance(v,float) and np.isnan(v))) else f"{float(v):+.3f}%"
 # ================== Universe & Mapping ==================
 BEST_COUNT, WORST_COUNT = 3, 3
 
