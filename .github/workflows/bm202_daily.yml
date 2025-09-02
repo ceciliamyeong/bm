@@ -87,7 +87,7 @@ jobs:
             exit 0
           fi
 
-          for f in "bm20_daily_${DATE}.html" "bm20_bar_${DATE}.png" "bm20_trend_${DATE}.png"; do
+          for f in "bm20_daily_${DATE}.html" "bm20_bar_${DATE}.png" "bm20_btc_eth_line_latest.png_${DATE}.png"; do
             if [ ! -f "$SRC/$f" ]; then
               echo "[WARN] $SRC/$f not found. Skip publish."
               exit 0
@@ -96,12 +96,12 @@ jobs:
 
           # 캐시버스터 대응: ?v=타임스탬프까지 매칭하여 latest.*로 교체
           sed -E \
-            -e "s#bm20_bar_${DATE}\.png(\?v=[0-9]+)?#bm20_bar_latest.png#g" \
-            -e "s#bm20_trend_${DATE}\.png(\?v=[0-9]+)?#bm20_trend_latest.png#g" \
+            -e "s#bm20_bar_${DATE}\.png(\?v=[0-9]+)?#bm20_btc_eth_line_latest.png#g" \
+            -e "s#bm20_trend_${DATE}\.png(\?v=[0-9]+)?#bm20_btc_eth_line_latest.png#g" \
             "$SRC/bm20_daily_${DATE}.html" > latest.html
 
           cp "$SRC/bm20_bar_${DATE}.png"   bm20_bar_latest.png
-          cp "$SRC/bm20_trend_${DATE}.png" bm20_trend_latest.png
+          cp "$SRC/m20_btc_eth_line_${DATE}.png" bm20_btc_eth_line_latest.png
 
       # 3) 커밋 & 푸시
       - name: Commit & Push (rebased & autostash)
