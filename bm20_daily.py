@@ -105,9 +105,6 @@ def read_json(path: Path):
     except Exception:
         return None
 
-# 새 위치로 이동 (fp)
-def fp(v, dash_text="집계 공란"):
-    return dash_text if (v is None or (isinstance(v,float) and np.isnan(v))) else f"{float(v):+.3f}%"
 # ================== Universe & Mapping ==================
 BEST_COUNT, WORST_COUNT = 3, 3
 
@@ -132,6 +129,15 @@ def _yf_ton_symbol():
             pass
     return "TON-USD"
 
+def _yf_polygon_symbol():
+    # 야후가 가끔 숫자붙은 MATIC 심볼로 옮깁니다 (예: MATIC2016-USD 등)
+    return _yf_resolve("MATIC-USD",
+                       ["MATIC2016-USD","MATIC2194-USD","MATIC11419-USD"])
+
+def _yf_sui_symbol():
+    # 마찬가지로 SUI도 숫자붙은 변형이 생길 수 있음
+    return _yf_resolve("SUI-USD",
+                       ["SUI26162-USD","SUI28251-USD","SUI11419-USD"])
 YF_MAP = {
     "bitcoin":"BTC-USD","ethereum":"ETH-USD","ripple":"XRP-USD","tether":"USDT-USD","binancecoin":"BNB-USD",
     "solana":"SOL-USD","toncoin":_yf_ton_symbol(),"avalanche-2":"AVAX-USD",
@@ -157,14 +163,10 @@ def fetch_yf_prices(ids):
     end = datetime.utcnow().date()
     start = end - timedelta(days=4)
 
-    try:
-        raw = yf.download(
-            tickers=tickers, start=str(start), end=str(end + timedelta(days=1)),
-            interval="1d", auto_adjust=True, progress=False, group_by="ticker"
-        )
-    except Exception as e:
-        print(f"[WARN] yfinance multi download failed: {e}")
-        raw = pd.DataFrame()
+    raw = yf.download(
+        tickers=tickers, start=str(start), end=str(end + timedelta(days=1)),
+        interval="1d", auto_adjust=True, progress=False, group_by="ticker"
+    )
 
     # Close 우선, 없으면 Adj Close
     def pick_close(df):
@@ -278,92 +280,49 @@ def get_kimchi(df):
     return kp, meta
 
 # ================== Funding ==================
-SESSION = requests.Session()
-SESSION.headers.update({"User-Agent": "BM20/1.0"})
-
-def _get(url, params=None, timeout=8):
-    try:
-        r = SESSION.get(url, params=params, timeout=timeout)
-        r.raise_for_status()
-        return r.json()
-    except Exception:
-        return None
+def _get_try(url, params=None, timeout=12, retry=5, headers=None):
+    if headers is None:
+        headers = {"User-Agent":"BM20/1.0","Accept":"application/json"}
+    for i in range(retry):
+        try:
+            r = requests.get(url, params=params, timeout=timeout, headers=headers)
+            if r.status_code == 429:
+                time.sleep(1.0*(i+1)); continue
+            r.raise_for_status()
+            return r.json()
+        except Exception:
+            time.sleep(0.5*(i+1))
+    return None
 
 def get_binance_funding(symbol="BTCUSDT"):
-    """
-    Binance Perp funding (most recent). Returns float (percent) or None.
-    API: /fapi/v1/fundingRate?symbol=BTCUSDT&limit=1
-    """
-    j = _get("https://fapi.binance.com/fapi/v1/fundingRate",
-             {"symbol": symbol, "limit": 1})
-    try:
-        if j and isinstance(j, list) and j[0].get("fundingRate") is not None:
-            return float(j[0]["fundingRate"]) * 100.0
-    except Exception:
-        pass
+    domains = ["https://fapi.binance.com", "https://fapi1.binance.com", "https://fapi2.binance.com"]
+    for d in domains:
+        j = _get_try(f"{d}/fapi/v1/premiumIndex", {"symbol":symbol})
+        if isinstance(j, dict) and j.get("lastFundingRate") is not None:
+            try: return float(j["lastFundingRate"])*100.0
+            except: pass
+        if isinstance(j, list) and j and j[0].get("lastFundingRate") is not None:
+            try: return float(j[0]["lastFundingRate"])*100.0
+            except: pass
+    for d in domains:
+        j = _get_try(f"{d}/fapi/v1/fundingRate", {"symbol":symbol, "limit":1})
+        if isinstance(j, list) and j:
+            try: return float(j[0]["fundingRate"])*100.0
+            except: pass
     return None
 
 def get_bybit_funding(symbol="BTCUSDT"):
-    """
-    Bybit fallback. Returns float (percent) or None.
-    API: /v5/market/funding/history?category=linear&symbol=BTCUSDT&limit=1
-    """
-    j = _get("https://api.bybit.com/v5/market/funding/history",
-             {"category": "linear", "symbol": symbol, "limit": 1})
+    j = _get_try("https://api.bybit.com/v5/market/tickers", {"category":"linear","symbol":symbol})
     try:
-        if j and j.get("result", {}).get("list"):
-            fr = j["result"]["list"][0].get("fundingRate")
-            if fr is not None:
-                return float(fr) * 100.0
-    except Exception:
-        pass
+        lst = j.get("result",{}).get("list",[])
+        if lst and lst[0].get("fundingRate") is not None:
+            return float(lst[0]["fundingRate"])*100.0
+    except: pass
     return None
 
-def get_latest_funding_pair():
-    """
-    Returns dict like {"BTC": (value, "Binance" or "Bybit" or None), "ETH": (...)}
-    value is float % or None. Handles fallback and None gracefully.
-    """
-    out = {}
-    for sym, label in [("BTCUSDT", "BTC"), ("ETHUSDT", "ETH")]:
-        v = get_binance_funding(sym)
-        src = "Binance" if v is not None else None
-        if v is None:
-            v = get_bybit_funding(sym)
-            if v is not None:
-                src = "Bybit"
-        out[label] = (v, src)
-    return out
+def fp(v, dash_text="중"):
+    return dash_text if (v is None or (isinstance(v,float) and np.isnan(v))) else f"{float(v):.4f}%"
 
-def fmt_pct(v, digits=2):
-    try:
-        if v is None or (isinstance(v, float) and np.isnan(v)):
-            return "-"
-        return f"{float(v):.{digits}f}%"
-    except Exception:
-        return "-"
-
-def format_funding_line():
-    """
-    예: '펀딩비(Binance): BTC +0.012% / ETH -0.025%'
-        '펀딩비: BTC 중립권 / ETH 중립권'
-    """
-    pair = get_latest_funding_pair()
-    btc_v, btc_src = pair["BTC"]
-    eth_v, eth_src = pair["ETH"]
-
-    # 소스 라벨: 두 값이 같은 거래소면 그 이름, 아니면 공통 라벨
-    if btc_src and eth_src and btc_src == eth_src:
-        label = f"펀딩비({btc_src})"
-    elif btc_src or eth_src:
-        label = "펀딩비"
-    else:
-        label = "펀딩비"
-
-    btc_txt = fmt_pct(btc_v) if btc_v is not None else "중립권"
-    eth_txt = fmt_pct(eth_v) if eth_v is not None else "중립권"
-
-    return f"{label}: BTC {btc_txt} / ETH {eth_txt}"
 # ================== Main Data Build ==================
 # 1) Prices
 df = fetch_yf_prices(BM20_IDS)
