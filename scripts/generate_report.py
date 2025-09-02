@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Find latest out/YYYY-MM-DD, copy to archive/YYYY-MM-DD, and update index.html
-# + Publish latest: creates latest.html and bm20_bar_latest.png / bm20_trend_latest.png at repo root
+# + Publish latest: creates latest.html and bm20_bar_latest.png / bm20_btc_eth_line.png at repo root
 # - Injects news preview (reads bm20_news_YYYY-MM-DD.txt)
 # - Creates .nojekyll to avoid Jekyll processing
 # - Robust when out/ has no dated folder (falls back to root files)
@@ -132,7 +132,7 @@ def publish_latest(latest_dir: Path):
     ymd = latest_dir.name
     html_src = latest_dir / f"bm20_daily_{ymd}.html"
     bar_src  = latest_dir / f"bm20_bar_{ymd}.png"
-    trd_src  = latest_dir / f"bm20_trend_{ymd}.png"
+    trd_src  = latest_dir / f"bm20_btc_eth_line_{ymd}.png"
 
     if not html_src.exists():
         print("[publish_latest] skip: html not found", html_src)
@@ -144,12 +144,12 @@ def publish_latest(latest_dir: Path):
     # latest.html: 이미지 경로를 고정 파일명으로 치환
     html_txt = html_src.read_text(encoding="utf-8")
     html_txt = html_txt.replace(f"bm20_bar_{ymd}.png",   "bm20_bar_latest.png")
-    html_txt = html_txt.replace(f"bm20_trend_{ymd}.png", "bm20_trend_latest.png")
+    html_txt = html_txt.replace(f"bm20_btc_eth_line_{ymd}.png", "bm20_btc_eth_line.png")
     (ROOT / "latest.html").write_text(html_txt, encoding="utf-8")
 
     # 최신 이미지 고정 파일명으로 루트에 복사
     shutil.copyfile(bar_src, ROOT / "bm20_bar_latest.png")
-    shutil.copyfile(trd_src, ROOT / "bm20_trend_latest.png")
+    shutil.copyfile(trd_src, ROOT / "bm20_btc_eth_line.png")
 
     print(f"[publish_latest] wrote {(ROOT / 'latest.html').as_posix()} with images at repo root")
 # ---------------------------------------------------------------------
