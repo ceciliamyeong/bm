@@ -36,10 +36,24 @@ jobs:
             --out out/backfill_current_basket.csv
           # 위 스크립트 끝부분에서 자동으로 bm20_series.json, bm20_latest.json 생성됨
 
-      - name: Commit & Push
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add bm20_series.json bm20_latest.json
-          git commit -m "update BM20 JSON ($(date -u +'%Y-%m-%dT%H:%M:%SZ'))" || echo "No changes"
-          git push
+            - name: Commit & Push
+              run: |
+                set -e
+                git config user.name "github-actions[bot]"
+                git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      
+                # 원격 최신 가져오기
+                git fetch origin main
+                git pull --rebase --autostash origin main
+      
+                # 변경 스테이징 & 커밋
+                git add -A
+                if ! git diff --cached --quiet; then
+                  git commit -m "[skip ci] update BM20 JSON ($(date -u +'%Y-%m-%dT%H:%M:%SZ'))"
+                fi
+      
+                # 푸시 (혹시 경합 있으면 한 번 더 pull --rebase 후 재시도)
+                git push origin HEAD:main || {
+                  git pull --rebase --autostash origin main
+                  git push origin HEAD:main
+                }
