@@ -29,7 +29,7 @@ jobs:
 
       - name: Prepare dirs
         run: |
-          mkdir -p out bm/api
+          mkdir -p out
 
       # 1) CSV 아카이브 → 인덱스 재계산 (out/)
       - name: Build index from CSVs
@@ -43,21 +43,20 @@ jobs:
             --cap BTC:0.30 --cap ETH:0.20 \
             --map bm20_map_btc30.csv
 
-      # 2) 웹에서 바로 쓰는 JSON(+CSV 사본) 생성 → bm/api/
-      - name: Export JSON/CSV for web (bm/api)
+      # 2) 웹에서 바로 쓰는 JSON/CSV 생성 → out/
+      - name: Export JSON/CSV for web (out/)
         run: |
-          python export_json.py out/bm20_index_from_csv.csv bm/api
-          cp -f out/bm20_index_from_csv.csv bm/api/bm20_index_from_csv.csv
-          echo "---- bm/api ----"
-          find bm/api -maxdepth 1 -type f -print | sort || true
+          python export_json.py out/bm20_index_from_csv.csv out
+          echo "---- out ----"
+          find out -maxdepth 1 -type f -print | sort || true
 
-      # 3) 레포에 커밋 & 푸시 (Pages=브랜치 배포 유지, 사이트 덮어쓰기 없음)
+      # 3) 레포에 커밋 & 푸시
       - name: Commit & push
         run: |
           set -e
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add bm/api/*
+          git add out/*
           git commit -m "[skip ci] data: update BM20 API $(date -u +'%Y-%m-%dT%H:%M:%SZ')" || echo "no changes"
           git pull --rebase
           git push
