@@ -24,7 +24,7 @@ jobs:
         env:
           OUT_DIR: out
           TZ: Asia/Seoul
-        run: python /bm20_daily.py
+        run: python bm20_daily.py
 
       - name: Upload latest row to Google Sheet
         env:
