@@ -27,7 +27,7 @@ jobs:
 
       - name: Prepare dirs
         run: |
-          mkdir -p out bm/api
+          mkdir -p out
 
       # 1) CSV 아카이브 → 인덱스 재계산 (out/)
       - name: Build index from CSVs
@@ -42,20 +42,40 @@ jobs:
             --map bm20_map_btc30.csv
           ls -l out || true
 
-      # 2) 웹에서 바로 쓰는 JSON(+CSV 사본) 생성 → bm/api/
-      - name: Export JSON/CSV for web (bm/api)
+      # 2) 웹용 JSON/CSV 생성 → out/ (필요시 루트에도 미러)
+      - name: Export JSON/CSV for web (out/ + root mirror)
         run: |
-          python export_json.py out/bm20_index_from_csv.csv bm/api
-          cp -f out/bm20_index_from_csv.csv bm/api/bm20_index_from_csv.csv
-          echo "---- bm/api ----"
-          find bm/api -maxdepth 1 -type f -print | sort || true
+          # out/에 표준 산출물 생성
+          python export_json.py out/bm20_index_from_csv.csv out
+          # 루트에서 읽는 소비자가 있다면 미러링
+          cp -f out/series.json               series.json
+          cp -f out/latest.json               latest.json
+          cp -f out/stats.json                stats.json
+          cp -f out/bm20_index_from_csv.csv   bm20_index_from_csv.csv
 
-      # 3) 레포에 커밋 & 푸시 (브랜치 배포 방식 유지, 페이지 덮어쓰기 없음)
+          echo "---- out ----"
+          find out -maxdepth 1 -type f -print | sort || true
+          echo "---- root (mirrored) ----"
+          ls -l series.json latest.json stats.json bm20_index_from_csv.csv || true
+
+      # 3) 레포에 커밋 & 푸시
       - name: Commit & push
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "[skip ci] data: update BM20 API $(date -u +'%Y-%m-%dT%H:%M:%SZ')" || echo "No changes to commit"
-          git push origin main
+          set -e
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+          # 변경사항 스테이징: out/* + 루트 미러 파일
+          git add out/* series.json latest.json stats.json bm20_index_from_csv.csv 2>/dev/null || true
+
+          # 변경 없으면 스킵
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "[skip ci] data: update BM20 outputs $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
+          # 충돌 최소화를 위한 리베이스 풀 후 푸시
+          git pull --rebase --autostash origin main || true
+          git push origin HEAD:main
