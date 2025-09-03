@@ -25,7 +25,7 @@ jobs:
           OUT_DIR: out
           TZ: Asia/Seoul
         run: python bm20_daily.py
-
+        
       - name: Upload latest row to Google Sheet
         env:
           SHEET_ID: ${{ secrets.SHEET_ID }}
