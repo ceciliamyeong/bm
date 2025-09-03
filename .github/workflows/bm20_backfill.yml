@@ -27,33 +27,38 @@ jobs:
           pip install yfinance pandas numpy
 
       - name: Run backfill + export JSON
+        shell: bash
         run: |
+          set -euo pipefail
           mkdir -p out
+      
+          # Backfill
           python backfill_current_basket.py \
             --archive ./archive \
             --map bm20_map_btc30.csv \
             --start 2018-01-01 \
-            --out out/backfill_current_basket.csv
-          # 위 스크립트 끝부분에서 자동으로 bm20_series.json, bm20_latest.json 생성됨
-
-            - name: Commit & Push
-              run: |
-                set -e
-                git config user.name "github-actions[bot]"
-                git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            --out out/backfill_current_basket.csv \
+            --btc-cap 0.30 --eth-cap 0.20 --listed-bonus 1.3
       
-                # 원격 최신 가져오기
-                git fetch origin main
-                git pull --rebase --autostash origin main
+          # (선택) 리베이스/머지 등 후속 단계가 있다면 여기서 호출
+          # python merge_backfill.py out/backfill_current_basket.csv out/bm20_index_from_csv.csv --out out/bm20_index_merged.csv
+          # python export_json.py out/bm20_index_merged.csv out
       
-                # 변경 스테이징 & 커밋
-                git add -A
-                if ! git diff --cached --quiet; then
-                  git commit -m "[skip ci] update BM20 JSON ($(date -u +'%Y-%m-%dT%H:%M:%SZ'))"
-                fi
+          # Commit & Push
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git pull --rebase --autostash origin main
       
-                # 푸시 (혹시 경합 있으면 한 번 더 pull --rebase 후 재시도)
-                git push origin HEAD:main || {
-                  git pull --rebase --autostash origin main
-                  git push origin HEAD:main
-                }
+          git add -A out
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+      
+          git commit -m "[skip ci] update BM20 JSON ($(date -u +'%Y-%m-%dT%H:%M:%SZ'))"
+          git push origin HEAD:main || {
+            echo "[WARN] push rejected – retry after rebase"
+            git pull --rebase --autostash origin main
+            git push origin HEAD:main
+          }
