@@ -8,6 +8,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: bm20_daily-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   run:
     runs-on: ubuntu-latest
@@ -15,10 +19,14 @@ jobs:
       TZ: Asia/Seoul
 
     steps:
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
 
-      - uses: actions/setup-python@v5
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
@@ -31,8 +39,8 @@ jobs:
       - name: Set DATE / OUT_DIR
         run: |
           DATE=$(TZ=Asia/Seoul date +%F)
-          echo "DATE=${DATE}" >> $GITHUB_ENV
-          echo "OUT_DIR=out/${DATE}" >> $GITHUB_ENV
+          echo "DATE=${DATE}" >> "$GITHUB_ENV"
+          echo "OUT_DIR=out/${DATE}" >> "$GITHUB_ENV"
           mkdir -p "out/${DATE}"
 
       # === 1) 데이터 생성 ===
@@ -55,15 +63,17 @@ jobs:
           [ -f bm20_latest.json ] && mv -f bm20_latest.json "${D}/bm20_latest_${DATE}.json"
           [ -f bm20_series.json ] && mv -f bm20_series.json "${D}/bm20_series_${DATE}.json"
 
-          # CSV/김치
+          # CSV/김치/벤치
           [ -f "bm20_daily_data_${DATE}.csv" ] && mv -f "bm20_daily_data_${DATE}.csv" "$D/"
           [ -f "kimchi_${DATE}.json" ] && mv -f "kimchi_${DATE}.json" "$D/"
           [ -f "bm20_vs_bench.csv" ] && mv -f "bm20_vs_bench.csv" "${D}/bm20_vs_bench_${DATE}.csv"
 
-          # 이미지/리포트 (있으면만 이동)
-          for f in bm20_daily_${DATE}.html bm20_daily_${DATE}.pdf; do
+          # 리포트(있으면만 이동)
+          for f in "bm20_daily_${DATE}.html" "bm20_daily_${DATE}.pdf"; do
             [ -f "$f" ] && mv -f "$f" "$D/"
           done
+
+          # 이미지(접두어 매칭)
           for p in bm20_bar bm20_trend bm20_over_btc bm20_over_eth bm20_btc_eth_line; do
             IMG=$(ls "${p}"*.png 2>/dev/null | head -n1)
             [ -n "$IMG" ] && mv -f "$IMG" "$D/"
@@ -75,14 +85,25 @@ jobs:
           rm -rf out/latest
           cp -r "${OUT_DIR}" out/latest
 
-      # === 4) Commit & Push ===
-      - name: Commit & Push
+      # === 4) Commit & Push (safe overwrite) ===
+      - name: Commit & Push (force-with-lease)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -e
+          git config --global safe.directory "$GITHUB_WORKSPACE"
           git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+          # 스테이징 및 조건부 커밋
           git add out/ || true
-          git commit -m "BM20 daily: archive ${DATE} + update latest alias" || echo "No changes"
-          git push
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "BM20 daily: archive ${DATE} + update latest alias"
+
+          # 최신 원격 ref 동기화 후 lease 기반 강제 푸시
+          BRANCH="${GITHUB_REF_NAME:-main}"
+          git fetch origin "$BRANCH"
+          git push origin "HEAD:${BRANCH}" --force-with-lease
