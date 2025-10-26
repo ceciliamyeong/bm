@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>Spot Top5 — Upbit Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
+  <style>
+    :root{--bg:#0b1020;--card:#11172a;--muted:#8aa0b5;--text:#e8f0ff;--up:#2E7D32;--down:#C62828;--brand:#1A237E;--accent:#4c74f2;}
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans}
+    a{color:#aecdff;text-decoration:none} a:hover{text-decoration:underline}
+    .wrap{max-width:1100px;margin:0 auto;padding:18px}
+    .h{font-weight:800;letter-spacing:.2px}
+    .mini{font-size:12px;color:var(--muted)}
+    .card{background:var(--card);border:1px solid #26354a;border-radius:14px;padding:16px;box-shadow:0 8px 28px rgba(0,0,0,.3)}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    @media (max-width:900px){.grid2{grid-template-columns:1fr}}
+    .tbl{width:100%;border-collapse:collapse;margin-top:10px}
+    .tbl th,.tbl td{border-bottom:1px solid #223449;padding:10px 8px;text-align:left}
+    .tbl th{color:#a8bdd6;font-weight:600}
+    header{position:sticky;top:0;background:linear-gradient(180deg,rgba(17,23,42,.95),rgba(17,23,42,.75));backdrop-filter:saturate(1.2) blur(8px);z-index:10;border-bottom:1px solid #233}
+    nav{display:flex;gap:18px;align-items:center}
+    .brand{display:flex;gap:10px;align-items:center}
+    .brand .dot{width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:0 0 18px var(--accent)}
+    .pill{display:inline-flex;gap:8px;align-items:center;border:1px solid #2b3d59;border-radius:999px;padding:6px 10px;background:rgba(22,28,48,.6)}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap" style="display:flex;justify-content:space-between;align-items:center;">
+      <div class="brand"><span class="dot"></span><div>
+        <div class="h">Spot Top5 Dashboard</div>
+        <div class="mini">Upbit 거래대금 기반 · JSON→클라이언트 렌더</div>
+      </div></div>
+      <nav>
+        <a href="../index.html">← BM 메인</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px">
+        <div class="h">Top5 거래대금 스냅샷</div>
+        <div class="pill"><span id="asof">—</span></div>
+      </div>
+
+      <div class="grid2" style="margin-top:12px">
+        <div id="pie" style="height:360px"></div>
+        <div>
+          <table class="tbl" id="tbl">
+            <thead><tr><th>Symbol</th><th>Price (KRW)</th><th>Turnover 24h (KRW)</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="mini">데이터: assets/top5/top5_snapshot.json</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:16px">
+      <div class="h">Top5 Concentration — 30D</div>
+      <div id="line" style="height:360px;margin-top:12px"></div>
+      <div class="mini">데이터: assets/top5/top5_concentration.json</div>
+    </section>
+  </main>
+
+  <script>
+  // Base path auto-detect: if site is under /bm/, use that; else root.
+  const base = (location.pathname.startsWith('/bm/')) ? '/bm' : '';
+  const SNAP = base + '/assets/top5/top5_snapshot.json';
+  const TS   = base + '/assets/top5/top5_concentration.json';
+
+  const styles = getComputedStyle(document.documentElement);
+  const textColor = styles.getPropertyValue('--text')?.trim() || '#e8f0ff';
+  const gridLine  = '#2b3d59';
+
+  async function loadJSON(u){ const r = await fetch(u, {cache:'no-store'}); if(!r.ok) throw new Error(u); return r.json(); }
+
+  (async () => {
+    // Snapshot + table + pie
+    try {
+      const snap = await loadJSON(SNAP);
+      document.getElementById('asof').textContent = `기준: ${snap.as_of_kst}`;
+
+      const tbody = document.querySelector('#tbl tbody');
+      tbody.innerHTML = snap.top5.map(o => `
+        <tr>
+          <td><b>${o.symbol}</b></td>
+          <td>${Number(o.price).toLocaleString()}</td>
+          <td>${Number(o.turnover_24h).toLocaleString()}</td>
+        </tr>
+      `).join('');
+
+      const pie = echarts.init(document.getElementById('pie'));
+      pie.setOption({
+        tooltip: { trigger:'item', valueFormatter: v => Number(v).toLocaleString() + ' KRW' },
+        legend: { bottom: 0, textStyle:{color:textColor} },
+        series: [{
+          type: 'pie',
+          radius: ['36%','70%'],
+          label: { color: textColor },
+          data: snap.top5.map(d => ({name:d.symbol, value:d.turnover_24h}))
+        }]
+      });
+      window.addEventListener('resize', ()=> pie.resize());
+    } catch(e) {
+      console.warn('snapshot err', e);
+      document.getElementById('pie').innerHTML = '<div class="mini">스냅샷을 불러오지 못했습니다.</div>';
+    }
+
+    // Line (30D)
+    try {
+      const ts = await loadJSON(TS);
+      const dates  = ts.series.map(x => x.date);
+      const values = ts.series.map(x => x.top5_share_pct);
+      const line = echarts.init(document.getElementById('line'));
+      line.setOption({
+        tooltip: { trigger:'axis', valueFormatter: v => v.toFixed(2)+'%' },
+        grid: { left: 40, right: 16, top: 20, bottom: 30 },
+        xAxis: { type:'category', data:dates, axisLabel:{color:textColor}, axisLine:{lineStyle:{color:gridLine}} },
+        yAxis: { type:'value', min:0, max:100,
+                 axisLabel:{formatter: v=>v+'%', color:textColor},
+                 splitLine:{lineStyle:{color:gridLine}} },
+        series: [{ type:'line', data: values, smooth:true }]
+      });
+      window.addEventListener('resize', ()=> line.resize());
+    } catch(e) {
+      console.warn('line err', e);
+      document.getElementById('line').innerHTML = '<div class="mini">시계열을 불러오지 못했습니다.</div>';
+    }
+  })();
+  </script>
+</body>
+</html>
