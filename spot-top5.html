@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>Upbit Top5 Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Arial, sans-serif; margin: 24px; }
+    h2 { margin: 24px 0 12px; }
+    .card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+    .row { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    @media (min-width: 900px) { .row { grid-template-columns: 1fr 1fr; } }
+    canvas { width: 100%; height: 360px; }
+  </style>
+</head>
+<body>
+  <h1>Upbit Top5 Tracker</h1>
+  <div class="row">
+    <div class="card">
+      <h2>Top5 Turnover (24h)</h2>
+      <canvas id="top5Pie"></canvas>
+    </div>
+    <div class="card">
+      <h2>Top5 Concentration — 30D</h2>
+      <canvas id="top5Line"></canvas>
+    </div>
+  </div>
+  <script>
+  async function loadJSON(url) {
+    const r = await fetch(url, {cache: 'no-cache'});
+    if (!r.ok) throw new Error('fetch failed: ' + url);
+    return await r.json();
+  }
+  (async () => {
+    const SNAP_URL = "../assets/top5/top5_snapshot.json";
+    const TS_URL   = "../assets/top5/top5_concentration.json";
+    const snap = await loadJSON(SNAP_URL);
+    const labels = snap.top5.map(x => x.symbol);
+    const values = snap.top5.map(x => x.turnover_24h);
+    new Chart(document.getElementById('top5Pie').getContext('2d'), {
+      type: 'pie',
+      data: { labels, datasets: [{ data: values }] },
+      options: {
+        plugins: {
+          title: { display: true, text: `As of ${snap.as_of_kst} (KST)` },
+          tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${Number(ctx.raw).toLocaleString()} KRW` } }
+        }
+      }
+    });
+    const ts = await loadJSON(TS_URL);
+    const dates = ts.series.map(x => x.date);
+    const shares = ts.series.map(x => x.top5_share_pct);
+    new Chart(document.getElementById('top5Line').getContext('2d'), {
+      type: 'line',
+      data: { labels: dates, datasets: [{ label: 'Top5 Share (%)', data: shares, tension: 0.2 }] },
+      options: {
+        scales: { x: { ticks: { maxTicksLimit: 8 } }, y: { suggestedMin: 0, suggestedMax: 100 } },
+        plugins: { title: { display: true, text: `Lookback ${ts.lookback_days}d (As of ${ts.as_of_kst})` } }
+      }
+    });
+  })();
+  </script>
+</body>
+</html>
