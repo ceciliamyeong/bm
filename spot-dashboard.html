@@ -40,6 +40,7 @@
   </header>
 
   <main class="wrap">
+    <!-- 스냅샷(파이 + 테이블) -->
     <section class="card">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px">
         <div class="h">Top5 거래대금 스냅샷</div>
@@ -58,10 +59,11 @@
       </div>
     </section>
 
+    <!-- 교체: 일봉 30일 스택 -->
     <section class="card" style="margin-top:16px">
-      <div class="h">Top5 Concentration — 30D</div>
-      <div id="line" style="height:360px;margin-top:12px"></div>
-      <div class="mini">데이터: assets/top5/top5_concentration.json</div>
+      <div class="h">Top5 Daily Composition — 30D (Stacked)</div>
+      <div id="stack30d" style="height:360px;margin-top:12px"></div>
+      <div class="mini">데이터: assets/top5/top5_stack_daily.json</div>
     </section>
   </main>
 
@@ -69,16 +71,16 @@
   // Base path auto-detect: if site is under /bm/, use that; else root.
   const base = (location.pathname.startsWith('/bm/')) ? '/bm' : '';
   const SNAP = base + '/assets/top5/top5_snapshot.json';
-  const TS   = base + '/assets/top5/top5_concentration.json';
+  const STACK= base + '/assets/top5/top5_stack_daily.json';
 
   const styles = getComputedStyle(document.documentElement);
   const textColor = styles.getPropertyValue('--text')?.trim() || '#e8f0ff';
   const gridLine  = '#2b3d59';
 
-  async function loadJSON(u){ const r = await fetch(u, {cache:'no-store'}); if(!r.ok) throw new Error(u); return r.json(); }
+  async function loadJSON(u){ const r = await fetch(u, {cache:'no-store'}); if(!r.ok) throw new Error(u+' '+r.status); return r.json(); }
 
   (async () => {
-    // Snapshot + table + pie
+    /* ===== 스냅샷 + 파이 + 테이블 ===== */
     try {
       const snap = await loadJSON(SNAP);
       document.getElementById('asof').textContent = `기준: ${snap.as_of_kst}`;
@@ -103,31 +105,51 @@
           data: snap.top5.map(d => ({name:d.symbol, value:d.turnover_24h}))
         }]
       });
-      window.addEventListener('resize', ()=> pie.resize());
+      addEventListener('resize', ()=> pie.resize());
     } catch(e) {
       console.warn('snapshot err', e);
       document.getElementById('pie').innerHTML = '<div class="mini">스냅샷을 불러오지 못했습니다.</div>';
     }
 
-    // Line (30D)
+    /* ===== 30D 스택(일봉 Top5+Others, %) ===== */
     try {
-      const ts = await loadJSON(TS);
-      const dates  = ts.series.map(x => x.date);
-      const values = ts.series.map(x => x.top5_share_pct);
-      const line = echarts.init(document.getElementById('line'));
-      line.setOption({
-        tooltip: { trigger:'axis', valueFormatter: v => v.toFixed(2)+'%' },
-        grid: { left: 40, right: 16, top: 20, bottom: 30 },
-        xAxis: { type:'category', data:dates, axisLabel:{color:textColor}, axisLine:{lineStyle:{color:gridLine}} },
-        yAxis: { type:'value', min:0, max:100,
-                 axisLabel:{formatter: v=>v+'%', color:textColor},
+      const j = await loadJSON(STACK);
+
+      // 날짜 & 심볼(등장 빈도 순). Others는 마지막에 고정.
+      const dates = j.days.map(d => d.date);
+      const counts = {};
+      j.days.forEach(d => d.series.forEach(s => counts[s.symbol]=(counts[s.symbol]||0)+1));
+      const symbols = Object.keys(counts).sort((a,b)=>counts[b]-counts[a]);
+      const oi = symbols.indexOf('Others'); if (oi>=0){ symbols.splice(oi,1); symbols.push('Others'); }
+
+      const palette = ['#4c74f2','#00bfa5','#ffd54f','#ef5350','#ab47bc','#26c6da','#ff7043','#66bb6a','#8d6e63','#7e57c2'];
+      const series = symbols.map((sym,i)=>({
+        name: sym,
+        type: 'bar',
+        stack: 'total',
+        itemStyle: { color: palette[i % palette.length] },
+        emphasis: { focus: 'series' },
+        data: j.days.map(d => {
+          const f = d.series.find(s => s.symbol===sym);
+          return f ? f.pct : 0;
+        })
+      }));
+
+      const chart = echarts.init(document.getElementById('stack30d'));
+      chart.setOption({
+        tooltip: { trigger:'axis', axisPointer:{type:'shadow'}, valueFormatter:v => (v!=null? Number(v).toFixed(2):'0')+'%' },
+        legend: { textStyle:{color:textColor} },
+        grid: { left: 50, right: 20, top: 40, bottom: 40 },
+        xAxis: { type:'category', data: dates, axisLabel:{color:textColor, interval: 2} },
+        yAxis: { type:'value', max:100, axisLabel:{formatter:v=>v+'%', color:textColor},
                  splitLine:{lineStyle:{color:gridLine}} },
-        series: [{ type:'line', data: values, smooth:true }]
+        series,
+        animation: true
       });
-      window.addEventListener('resize', ()=> line.resize());
+      addEventListener('resize', ()=> chart.resize());
     } catch(e) {
-      console.warn('line err', e);
-      document.getElementById('line').innerHTML = '<div class="mini">시계열을 불러오지 못했습니다.</div>';
+      console.warn('stack err', e);
+      document.getElementById('stack30d').innerHTML = '<div class="mini">데이터를 불러오지 못했습니다: '+STACK+'</div>';
     }
   })();
   </script>
