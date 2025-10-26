@@ -1,0 +1,59 @@
+name: Upbit Top5 Daily JSON
+
+on:
+  workflow_dispatch: {}         # 수동 실행
+  schedule:
+    - cron: "15 3 * * *"       # 매일 03:15 UTC (KST 12:15)
+
+permissions:
+  contents: write               # 커밋/푸시 권한
+
+concurrency:
+  group: upbit-top5-daily
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # rebase 대비
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests pandas
+
+      - name: Prepare dirs
+        run: |
+          mkdir -p assets/top5
+
+      - name: Generate 30D daily stacked JSON
+        run: |
+          python scripts/upbit_publish_json_daily_stack.py
+        # 스크립트는 assets/top5/top5_stack_daily.json을 생성해야 함
+
+      - name: Commit & push
+        env:
+          TZ: Asia/Seoul
+        run: |
+          set -e
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A assets/top5/top5_stack_daily.json
+          git status
+
+          git commit -m "[skip ci] Update Top5 Daily Stack JSON $(date +'%Y-%m-%d %H:%M:%S %Z')" || echo "no changes"
+
+          # rebase로 최신 반영 (이전에 겪었던 merge 충돌 완화)
+          git pull --rebase origin "${GITHUB_REF_NAME:-main}" || true
+          git push || git push --force-with-lease
