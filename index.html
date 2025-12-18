@@ -86,10 +86,10 @@
       </div></div>
       <nav>
         <a href="https://ceciliamyeong.github.io/bm/">Home</a>
-        <a href="https://ceciliamyeong.github.io/bm/what-is-bm20.html">BM20?</a>
+        <a href="https://ceciliamyeong.github.io/bm/latest.html">Latest</a>
         <a href="https://ceciliamyeong.github.io/bm/performance.html">Charts</a>
         <a href="https://ceciliamyeong.github.io/bm/methodology.html">Data</a>
-        <a href="https://ceciliamyeong.github.io/bm/latest.html">Latest</a>
+        <a href="https://ceciliamyeong.github.io/bm/what-is-bm20.html">About</a>
       </nav>
     </div>
   </header>
@@ -152,28 +152,6 @@
             </div>
           </div>
         </div>
-      </div>
-    </section>
-
-
-        <!-- ▶▶ ADD: Spot Top5 (Upbit) -->
-    <section id="spot-top5" class="card section">
-      <div class="flex">
-        <div class="h">Spot Top5 거래대금 (Upbit)</div>
-        <div class="mini" id="top5_asof">—</div>
-      </div>
-      <div class="grid2 section">
-        <div>
-          <div class="mini">Top5 Turnover (24h)</div>
-          <div id="top5Pie" style="height:320px;margin-top:6px"></div>
-        </div>
-        <div>
-          <div class="mini">Top5 Concentration — 30D</div>
-          <div id="top5Line" style="height:320px;margin-top:6px"></div>
-        </div>
-      </div>
-      <div class="mini" style="margin-top:8px">
-        ※ 데이터 경로: <code>/bm/assets/top5/top5_snapshot.json</code>, <code>/bm/assets/top5/top5_concentration.json</code>
       </div>
     </section>
 
@@ -427,71 +405,6 @@ async function loadComponentsAndRenderBars(){
   window.addEventListener('resize', ()=> chart.resize());
 }
 
-<script>
-// ===== Spot Top5 (ECharts) =====
-async function renderTop5(){
-  // JSON 경로 (Pages baseurl이 /bm 인 경우)
-  const SNAP = "/bm/assets/top5/top5_snapshot.json";
-  const TS   = "/bm/assets/top5/top5_concentration.json";
-
-  // 공통 팔레트
-  const styles = getComputedStyle(document.documentElement);
-  const textColor = styles.getPropertyValue('--text')?.trim() || '#e8f0ff';
-  const gridLine  = '#2b3d59';
-
-  // 1) 파이: Top5 snapshot
-  try{
-    const snapRes = await fetch(SNAP, {cache:'no-store'});
-    if (!snapRes.ok) throw new Error('snapshot fetch fail');
-    const snap = await snapRes.json();
-    document.getElementById('top5_asof').textContent = `기준: ${snap.as_of_kst}`;
-
-    const pie = echarts.init(document.getElementById('top5Pie'));
-    pie.setOption({
-      tooltip: { trigger:'item', valueFormatter: v => Number(v).toLocaleString() + ' KRW' },
-      legend: { bottom: 0, textStyle:{color:textColor} },
-      series: [{
-        type: 'pie',
-        radius: ['40%', '70%'],
-        label: { color: textColor },
-        data: snap.top5.map(d => ({name:d.symbol, value:d.turnover_24h}))
-      }]
-    });
-    window.addEventListener('resize', ()=> pie.resize());
-  }catch(e){
-    console.warn('Top5 snapshot error', e);
-    const box = document.getElementById('top5Pie');
-    if (box) box.innerHTML = '<div class="mini">데이터를 불러오지 못했습니다.</div>';
-  }
-
-  // 2) 라인: 30D concentration
-  try{
-    const tsRes = await fetch(TS, {cache:'no-store'});
-    if (!tsRes.ok) throw new Error('concentration fetch fail');
-    const ts = await tsRes.json();
-    const dates  = ts.series.map(x => x.date);
-    const values = ts.series.map(x => x.top5_share_pct);
-
-    const line = echarts.init(document.getElementById('top5Line'));
-    line.setOption({
-      tooltip: { trigger:'axis', valueFormatter: v => v.toFixed(2) + '%' },
-      grid: { left: 40, right: 16, top: 20, bottom: 30 },
-      xAxis: { type:'category', data:dates, axisLabel:{color:textColor}, axisLine:{lineStyle:{color:gridLine}} },
-      yAxis: { type:'value', min:0, max:100,
-               axisLabel:{formatter: v=>v+'%', color:textColor},
-               splitLine:{lineStyle:{color:gridLine}} },
-      series: [{ type:'line', data: values, smooth:true }]
-    });
-    window.addEventListener('resize', ()=> line.resize());
-  }catch(e){
-    console.warn('Top5 concentration error', e);
-    const box = document.getElementById('top5Line');
-    if (box) box.innerHTML = '<div class="mini">데이터를 불러오지 못했습니다.</div>';
-  }
-}
-</script>
-
-  
 // ===== 이벤트 바인딩 & 실행 =====
 qs('#btnToggleLatest').addEventListener('click',()=>qs('#latestDump').classList.toggle('hide'));
 qs('#btnToggleSeries').addEventListener('click',()=>qs('#seriesDump').classList.toggle('hide'));
@@ -500,7 +413,6 @@ loadLatest();
 loadSeries();
 tryImages();
 loadComponentsAndRenderBars();
-renderTop5();  
 </script>
 </body>
 </html>
