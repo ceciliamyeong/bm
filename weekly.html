@@ -97,16 +97,20 @@
 
     const baseChartArea = { left: 56, right: 56, top: 18, bottom: 42 };
     const baseHAxis = {
-      textStyle: { color: 'rgba(255,255,255,0.70)', fontSize: 11 },
-      gridlines: { color: 'rgba(255,255,255,0.08)' },
-      baselineColor: 'rgba(255,255,255,0.10)'
+      textStyle: { color: '#374151', fontSize: 11 },
+      gridlines: { color: '#e5e7eb' },
+      baselineColor: '#d1d5db'
     };
+    
     const baseVAxis = {
-      textStyle: { color: 'rgba(255,255,255,0.70)', fontSize: 11 },
-      gridlines: { color: 'rgba(255,255,255,0.08)' },
-      baselineColor: 'rgba(255,255,255,0.10)'
+      textStyle: { color: '#374151', fontSize: 11 },
+      gridlines: { color: '#e5e7eb' },
+      baselineColor: '#d1d5db'
     };
-    const baseLegend = { textStyle: { color: 'rgba(255,255,255,0.75)', fontSize: 12 } };
+    
+    const baseLegend = {
+      textStyle: { color: '#374151', fontSize: 12 }
+    };
 
     function drawAll() {
       if (!R) return;
