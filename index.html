@@ -5,78 +5,178 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>BM20 Index — Latest</title>
+
   <style>
-  :root{--bg:#0b1020;--card:#11172a;--muted:#8aa0b5;--text:#e8f0ff;--up:#2E7D32;--down:#C62828;--brand:#1A237E;--accent:#4c74f2;}
+  :root{
+    --bg:#ffffff;
+    --card:#ffffff;
+
+    --text:#111827;
+    --muted:#6b7280;
+
+    --border:#e5e7eb;
+    --divider:#f1f5f9;
+
+    --brand:#1A237E;   /* BM20 네이비(포인트만) */
+    --accent:#2563eb;  /* 링크/강조 */
+
+    --up:#2E7D32;
+    --down:#C62828;
+
+    --shadow:0 4px 14px rgba(0,0,0,.04);
+  }
+
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Apple Color Emoji,Segoe UI Emoji}
-  a{color:#aecdff;text-decoration:none}
+  html,body{
+    margin:0;
+    height:100%;
+    background:var(--bg);
+    color:var(--text);
+    font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Apple Color Emoji,Segoe UI Emoji;
+  }
+
+  a{color:var(--accent);text-decoration:none}
   a:hover{text-decoration:underline}
 
-  header{position:sticky;top:0;background:linear-gradient(180deg,rgba(17,23,42,.95),rgba(17,23,42,.75));backdrop-filter:saturate(1.2) blur(8px);z-index:10;border-bottom:1px solid #233}
-  .wrap{max-width:1100px;margin:0 auto;padding:16px}
+  header{
+    position:sticky;
+    top:0;
+    background:#fff;
+    z-index:10;
+    border-bottom:1px solid var(--border);
+  }
 
-  .brand{display:flex;gap:10px;align-items:center}
-  .brand .dot{width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:0 0 18px var(--accent)}
+  .wrap{max-width:1100px;margin:0 auto;padding:16px}
   nav{display:flex;gap:18px;align-items:center}
 
+  .brand{display:flex;gap:10px;align-items:center}
+  .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--brand)}
+
+  /* Layout helpers (기존 구조 유지) */
   .rows{display:grid;grid-template-columns:1fr;gap:16px;margin-top:16px}
   @media (min-width:900px){.rows{grid-template-columns:2fr 1fr}}
-
-  .card{background:var(--card);border:1px solid #26354a;border-radius:14px;padding:16px;box-shadow:0 8px 28px rgba(0,0,0,.3)}
 
   .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
   @media (min-width:700px){.cards{grid-template-columns:repeat(6,1fr)}}
 
-  .stat{padding:12px;border:1px solid #2b3d59;border-radius:12px;background:rgba(22,28,48,.6)}
-  .k{color:var(--muted);font-size:12px}
-  .v{font-size:22px;font-weight:700}
-  .delta.up{color:var(--up)} .delta.down{color:var(--down)}
   .flex{display:flex;gap:14px;align-items:center;justify-content:space-between}
-  .h{font-weight:700;letter-spacing:.2px}
-  .mini{font-size:12px;color:var(--muted)}
-  .pill{display:inline-flex;gap:8px;align-items:center;border:1px solid #2b3d59;border-radius:999px;padding:6px 10px;background:rgba(22,28,48,.6)}
-
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   @media (max-width:700px){.grid2{grid-template-columns:1fr}}
-  .section{margin-top:18px}
 
+  .section{margin-top:18px}
+  .h{font-weight:700;letter-spacing:.2px}
+  .mini{font-size:12px;color:var(--muted)}
+  .list{display:grid;gap:8px}
+  .hide{display:none}
+
+  /* Cards */
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:16px;
+    box-shadow:var(--shadow);
+  }
+
+  .stat{
+    padding:12px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:#fafafa;
+  }
+  .k{color:var(--muted);font-size:12px}
+  .v{font-size:22px;font-weight:800}
+
+  .delta.up{color:var(--up);font-weight:800}
+  .delta.down{color:var(--down);font-weight:800}
+
+  .pill{
+    display:inline-flex;gap:8px;align-items:center;
+    border:1px solid var(--border);
+    border-radius:999px;
+    padding:6px 10px;
+    background:#f3f4f6;
+  }
+
+  /* Tables */
   .tbl{width:100%;border-collapse:collapse}
-  .tbl th,.tbl td{border-bottom:1px solid #223449;padding:10px 8px;text-align:left}
-  .tbl th{color:#a8bdd6;font-weight:600}
+  .tbl th,.tbl td{border-bottom:1px solid var(--divider);padding:10px 8px;text-align:left}
+  .tbl th{background:#fafafa;font-weight:600;color:#374151}
   .table-wrap{overflow:auto}
 
+  /* Charts */
   .chart img,.chart canvas{display:block;width:100%;height:auto;object-fit:contain}
   .chart.aspect-16x9{aspect-ratio:16/9}
 
-  .svgwrap{height:260px;width:100%;border-radius:12px;border:1px solid #2b3d59;background:rgba(22,28,48,.6);overflow:hidden}
+  .svgwrap{
+    height:260px;width:100%;
+    border-radius:12px;
+    border:1px solid var(--border);
+    background:#ffffff;
+    overflow:hidden;
+  }
   .svgwrap svg{width:100%;height:100%;display:block}
 
-  footer{color:#92a7be;margin:40px 0 60px}
-  .hide{display:none}
-  .btn{border:1px solid #2b3d59;background:#121a2d;color:#cfe1ff;border-radius:10px;padding:8px 12px;cursor:pointer}
-  .btn:hover{filter:brightness(1.1)}
-  .list{display:grid;gap:8px}
-  .code{white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;background:#0c1326;border:1px solid #26354a;border-radius:10px;padding:12px;max-height:420px;overflow:auto}
+  /* Buttons / code blocks */
+  .btn{
+    border:1px solid var(--border);
+    background:#ffffff;
+    color:var(--text);
+    border-radius:10px;
+    padding:8px 12px;
+    cursor:pointer;
+  }
+  .btn:hover{background:#f9fafb}
 
-  .charts{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
-  
+  .code{
+    white-space:pre-wrap;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+    background:#f8fafc;
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:12px;
+    max-height:420px;
+    overflow:auto;
+  }
+
+  /* BM preview cards */
   .bm-wrap{max-width:1100px;margin:0 auto}
   .bm-grid{display:grid;grid-template-columns:3fr 2fr;gap:16px}
-  .bm-card{background:linear-gradient(180deg,#11183a 0%,#0f152b 100%);border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:18px;box-shadow:0 12px 30px rgba(0,0,0,.35)}
-  .bm-title{font-size:20px;font-weight:800;margin-bottom:10px;color:#dfe5ff}
-  .bm-head{font-size:22px;font-weight:900;margin:6px 0 10px}
-  .bm-lead{font-size:16px;color:#d9e3ff;margin-bottom:10px}
-  .bm-pill{display:inline-block;border:1px solid rgba(255,255,255,.14);padding:6px 10px;border-radius:999px;font-size:12px;color:#a7b0c0;margin-right:8px}
-  .bm-kicker{color:#a7b0c0;font-size:12px;letter-spacing:.2px}
+  @media (max-width:900px){.bm-grid{grid-template-columns:1fr}}
+
+  .bm-card{
+    background:#ffffff;
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:18px;
+    box-shadow:var(--shadow);
+  }
+  .bm-title{font-size:18px;font-weight:900;margin-bottom:10px;color:var(--text)}
+  .bm-head{font-size:20px;font-weight:900;margin:6px 0 10px;color:var(--text)}
+  .bm-lead{font-size:14px;color:var(--muted);margin-bottom:10px}
+  .bm-kicker{color:var(--muted);font-size:12px;letter-spacing:.2px}
   .bm-bars{margin-top:8px}
-  .bm-row{display:grid;grid-template-columns:50px 1fr 70px;align-items:center;gap:10px;margin:6px 0}
-  .bm-shell{background:rgba(255,255,255,.08);height:18px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.08)}
-  .bm-bar{height:100%;background:#2E7D32}
-  .bm-pct{text-align:right;font-variant-numeric:tabular-nums;color:#e6f5ea;font-weight:700}
-  .bm-ticker{font-weight:700;color:#e9edf7;text-align:center}
-  .bm-legend{display:flex;gap:10px;margin-top:6px;color:#dfe5ff;font-size:12px}
+
+  .bm-row{display:grid;grid-template-columns:56px 1fr 78px;align-items:center;gap:10px;margin:8px 0}
+  .bm-shell{
+    background:#f1f5f9;
+    height:18px;border-radius:10px;overflow:hidden;
+    border:1px solid var(--divider);
+  }
+  .bm-bar{height:100%;background:var(--up)}
+  .bm-pct{text-align:right;font-variant-numeric:tabular-nums;color:var(--text);font-weight:800}
+  .bm-ticker{font-weight:900;color:var(--text);text-align:center}
+  .bm-legend{display:flex;gap:10px;margin-top:6px;color:var(--muted);font-size:12px}
+
+  footer{
+    color:var(--muted);
+    margin:40px 0 60px;
+    border-top:1px solid var(--divider);
+    padding-top:12px;
+  }
   </style>
 </head>
+
 <body>
   <header>
     <div class="wrap flex">
@@ -126,7 +226,7 @@
       </div>
 
       <div class="section list mini">
-        <div>빠른 링크: 
+        <div>빠른 링크:
           <a href="bm20_series.json" target="_blank">bm20_series.json</a> ·
           <a href="bm20_latest.json" target="_blank">bm20_latest.json</a> ·
           <a id="newsLink" class="hide" href="#" target="_blank">bm20_news.txt</a>
@@ -161,7 +261,7 @@
       <div id="perfBar" style="height:320px;margin-top:8px"></div>
       <div class="mini">※ <code>out/YYYY-MM-DD/bm20_daily_data_YYYY-MM-DD.csv</code> 기준.</div>
     </section>
-    
+
     <!-- DATA / JSON VIEW -->
     <section id="data" class="rows section hide">
       <div class="card">
@@ -240,7 +340,7 @@ async function getKimchiFromOut(asof){
     const v = extractKimchi(j);
     if (v!=null){ document.getElementById('kimchi')?.setAttribute('title', `src:/${url}`); return v; }
   }
-  for (const d of dates){ // optional fallback
+  for (const d of dates){
     const url = `bm/out/${d}/kimchi_${d}.json`;
     const j = await fetchJsonTry(url, `kimchi fb ${d}`);
     const v = extractKimchi(j);
@@ -317,9 +417,9 @@ async function loadSeries(){
       svg.innerHTML=''; const pad=24, W=svg.clientWidth||host.clientWidth, H=svg.clientHeight||host.clientHeight;
       const minX=+data[0].t,maxX=+data[data.length-1].t,minV=Math.min(...data.map(p=>p.v)),maxV=Math.max(...data.map(p=>p.v));
       const x=t=> pad+((t-minX)/(maxX-minX))*(W-2*pad), y=v=> H-pad-((v-minV)/(maxV-minV||1))*(H-2*pad);
-      const axes=document.createElementNS('http://www.w3.org/2000/svg','path'); axes.setAttribute('d',`M${pad} ${pad}V${H-pad}H${W-pad}`); axes.setAttribute('stroke','#2b3d59'); axes.setAttribute('fill','none'); svg.appendChild(axes);
+      const axes=document.createElementNS('http://www.w3.org/2000/svg','path'); axes.setAttribute('d',`M${pad} ${pad}V${H-pad}H${W-pad}`); axes.setAttribute('stroke',getComputedStyle(document.documentElement).getPropertyValue('--border')); axes.setAttribute('fill','none'); svg.appendChild(axes);
       const path=document.createElementNS('http://www.w3.org/2000/svg','path'); let d=''; data.forEach((p,i)=>{d+=(i?'L':'M')+x(+p.t)+' '+y(p.v)+' ';}); path.setAttribute('d',d.trim()); path.setAttribute('fill','none'); path.setAttribute('stroke',getComputedStyle(document.documentElement).getPropertyValue('--accent')); path.setAttribute('stroke-width','2'); svg.appendChild(path);
-      const last=data[data.length-1]; const dot=document.createElementNS('http://www.w3.org/2000/svg','circle'); dot.setAttribute('cx',x(+last.t)); dot.setAttribute('cy',y(last.v)); dot.setAttribute('r','3.5'); dot.setAttribute('fill','white'); dot.setAttribute('stroke',getComputedStyle(document.documentElement).getPropertyValue('--accent')); svg.appendChild(dot);
+      const last=data[data.length-1]; const dot=document.createElementNS('http://www.w3.org/2000/svg','circle'); dot.setAttribute('cx',x(+last.t)); dot.setAttribute('cy',y(last.v)); dot.setAttribute('r','3.5'); dot.setAttribute('fill','#ffffff'); dot.setAttribute('stroke',getComputedStyle(document.documentElement).getPropertyValue('--accent')); svg.appendChild(dot);
     }
     const doDraw=()=>{ const d=compute(); if(d.length>1) draw(d); }; doDraw();
     qs('#btnZoom').addEventListener('click',()=>{ mode=(mode+1)%3; qs('#btnZoom').textContent=['범위: 1Y ▾','범위: YTD ▾','범위: ALL ▾'][mode]; doDraw(); });
@@ -342,10 +442,10 @@ async function loadComponentsAndRenderBars(){
   const rows = lines.map(line=>{
     const c = line.split(',').map(s=>s.trim());
     const pctRaw = parseFloat(c[keyIdx.price_change_pct]);  // CSV는 이미 % 값 (예: 3.17)
-    const ret = isFinite(pctRaw) ? pctRaw / 100 : null;     // ✅ 비율로 변환 (0.0317)
+    const ret = isFinite(pctRaw) ? pctRaw / 100 : null;     // 비율로 변환 (0.0317)
     return {
       symbol: (c[keyIdx.symbol]||'').toUpperCase(),
-      ret_1d: ret,                                           // 비율 저장
+      ret_1d: ret,
       contrib: parseFloat(c[keyIdx.contribution]||'')
     };
   }).filter(r=>r.symbol && r.ret_1d!=null);
@@ -361,22 +461,22 @@ async function loadComponentsAndRenderBars(){
   // 뉴스 카드 좌측 막대 (상위 12개)
   const host = document.querySelector('.bm-bars');
   if (host) {
-    const topN = rows.slice(0, 12); // rows는 ret_1d가 "비율"(0.0234) 형태
+    const topN = rows.slice(0, 12);
     const maxAbs = Math.max(...topN.map(r => Math.abs(r.ret_1d || 0))) || 1;
-  
+
     host.innerHTML = topN.map(r => {
-      const ratio = Math.abs(r.ret_1d) / maxAbs;       // 0~1
-      const pct   = r.ret_1d * 100;                    // 표기용 %
-      const width = Math.max(2, Math.round(ratio * 100)); // 최소 2%
-  
-      // 등락폭에 따라 진하기 변화 (양수=초록 계열, 음수=빨강 계열)
-      // HSL: hue 120(녹색) ↔ 0(빨강), lightness를 등락폭이 클수록 어둡게
+      const ratio = Math.abs(r.ret_1d) / maxAbs;
+      const pct   = r.ret_1d * 100;
+      const width = Math.max(2, Math.round(ratio * 100));
+
       const isUp = r.ret_1d >= 0;
       const hue = isUp ? 120 : 0;
-      const light = 65 - Math.round(ratio * 30);       // 65% → 35%
+      const light = 65 - Math.round(ratio * 30);
       const barColor = `hsl(${hue} 60% ${light}%)`;
-      const textColor = isUp ? '#9ef3b4' : '#ffd1d1';
-  
+
+      // ✅ 라이트 테마용 텍스트 컬러
+      const textColor = isUp ? '#166534' : '#991b1b';
+
       return `
         <div class="bm-row">
           <div class="bm-ticker">${r.symbol}</div>
@@ -397,7 +497,11 @@ async function loadComponentsAndRenderBars(){
   chart.setOption({
     grid: {left: 8, right: 16, top: 20, bottom: 8, containLabel: true},
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, valueFormatter: v => (v>0?'+':'')+(v*100).toFixed(2)+'%' },
-    xAxis: { type: 'value', axisLabel: { formatter: v => (v>0?'+':'')+(v*100).toFixed(0)+'%' }, splitLine:{show:true} },
+    xAxis: {
+      type: 'value',
+      axisLabel: { formatter: v => (v>0?'+':'')+(v*100).toFixed(0)+'%' },
+      splitLine: { show:true, lineStyle:{ color:'#e5e7eb' } }
+    },
     yAxis: { type: 'category', data: topN.map(r=>r.symbol), axisTick:{show:false} },
     series: [{ type: 'bar', data: topN.map(r=>r.ret_1d), label:{show:true,position:'right',formatter:p=>(p.value>=0?'+':'')+(p.value*100).toFixed(2)+'%'} }],
     animation: true
@@ -416,3 +520,4 @@ loadComponentsAndRenderBars();
 </script>
 </body>
 </html>
+
