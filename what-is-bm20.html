@@ -97,9 +97,31 @@
           <div id="ruleDonut" style="height:360px"></div>
         </div>
         <div>
-          <div class="mini" style="margin-bottom:6px">Portfolio View (Top Weights)</div>
-          <div id="topBars" style="height:360px"></div>
-        </div>
+  <div class="mini" style="margin-bottom:6px">Methodology Weights (Grouped)</div>
+
+  <div style="display:grid;gap:10px">
+    <!-- (1) BTC/ETH 요약 -->
+    <div class="card" style="padding:12px">
+      <div class="mini" style="margin-bottom:6px">Core</div>
+      <div id="barsCore" style="height:120px"></div>
+    </div>
+
+    <!-- (2) 5% 그룹 -->
+    <div class="card" style="padding:12px">
+      <div class="mini" style="margin-bottom:6px">5% Group</div>
+      <div id="barsFive" style="height:120px"></div>
+    </div>
+
+    <!-- (3) Others 15종 (2열) -->
+    <div class="card" style="padding:12px">
+      <div class="mini" style="margin-bottom:6px">Others (15) — equal weight</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div id="barsOtherA" style="height:180px"></div>
+        <div id="barsOtherB" style="height:180px"></div>
+      </div>
+    </div>
+  </div>
+</div>
       </div>
     </section>
 
@@ -320,7 +342,7 @@
           }]
         });
 
-        window.addEventListener('resize', ()=>{ rule.resize(); bars.resize(); });
+        window.addEventListener('resize', ()=>{ rule.resize(); });
 
       }catch(e){
         console.warn(e);
