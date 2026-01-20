@@ -26,7 +26,7 @@
     .subtitle{color:var(--muted);font-size:13px;margin-top:6px;line-height:1.4;}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
     .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px 14px 8px;}
-    .card h3{margin:0 0 10px;font-size:15px;font-weight:750;color:rgba(255,255,255,0.86);}
+    .card h3{margin:0 0 10px;font-size:15px;font-weight:750;color:var(--text);}
     .note{color:var(--muted);font-size:12px;margin-top:8px;}
     @media (max-width:980px){.grid{grid-template-columns:1fr;}}
   </style>
@@ -44,14 +44,14 @@
 
     <div class="grid">
       <div class="card">
-        <h3>① BM20 vs KOSPI (Dual Axis)</h3>
-        <div id="chart_bm20_kospi" style="height:320px;"></div>
-        <div class="note">왼쪽 축: BM20 · 오른쪽 축: KOSPI</div>
+        <h3>① KOSPI (좌) vs BTC (우) · 상대변화(%)</h3>
+        <div id="chart_left_kospi_right_btc" style="height:320px;"></div>
+        <div class="note">각 시계열의 시작일 종가 대비 변동률(%) · 좌축 KOSPI / 우축 BTC</div>
       </div>
       <div class="card">
-        <h3>② BM20 vs NASDAQ (Dual Axis)</h3>
-        <div id="chart_bm20_nasdaq" style="height:320px;"></div>
-        <div class="note">왼쪽 축: BM20 · 오른쪽 축: NASDAQ</div>
+        <h3>② NASDAQ (좌) vs BM20 (우) · 상대변화(%)</h3>
+        <div id="chart_left_nasdaq_right_bm20" style="height:320px;"></div>
+        <div class="note">각 시계열의 시작일 종가 대비 변동률(%) · 좌축 NASDAQ / 우축 BM20</div>
       </div>
     </div>
 
@@ -82,13 +82,13 @@
     let R = null;
 
     async function init() {
-      // 경로만 네 프로젝트 구조에 맞춰 조정
-      const res = await fetch('assets/weekly/weekly_report_mock.json', { cache: 'no-store' });
+      // ✅ 실데이터 고정 (GitHub Pages baseurl=/bm 기준)
+      const res = await fetch('/bm/assets/weekly/weekly_report.json', { cache: 'no-store' });
       R = await res.json();
 
       document.getElementById('hdrTitle').textContent = R.meta?.title ?? 'BM20 Weekly Dashboard';
       document.getElementById('hdrPeriod').textContent =
-        `${R.meta.week_start} – ${R.meta.week_end} (KST)`;
+        `${R.meta?.week_start ?? '-'} – ${R.meta?.week_end ?? '-'} (KST)`;
       document.getElementById('hdrNote').textContent = R.meta?.timezone_note ?? '';
 
       drawAll();
@@ -96,38 +96,64 @@
     }
 
     const baseChartArea = { left: 56, right: 56, top: 18, bottom: 42 };
+
     const baseHAxis = {
       textStyle: { color: '#374151', fontSize: 11 },
       gridlines: { color: '#e5e7eb' },
       baselineColor: '#d1d5db'
     };
-    
+
     const baseVAxis = {
       textStyle: { color: '#374151', fontSize: 11 },
       gridlines: { color: '#e5e7eb' },
       baselineColor: '#d1d5db'
     };
-    
+
     const baseLegend = {
       textStyle: { color: '#374151', fontSize: 12 }
     };
 
+    // ✅ 레벨(종가) → 시작일 대비 상대변화율(%) 변환
+    function toPctChange(arr) {
+      const base = arr?.[0];
+      if (base == null || base === 0) return (arr || []).map(_ => null);
+      return (arr || []).map(v => (v == null ? null : ((v / base) - 1) * 100));
+    }
+
     function drawAll() {
       if (!R) return;
-      drawDualAxis('chart_bm20_kospi', 'KOSPI', R.kospi);
-      drawDualAxis('chart_bm20_nasdaq', 'NASDAQ', R.nasdaq);
+
+      // ✅ 필수: weekly_report.json에 btc 배열이 있어야 함
+      // ① 좌 KOSPI, 우 BTC (상대변화 %)
+      drawDualAxisRelativePercent(
+        'chart_left_kospi_right_btc',
+        'KOSPI', R.kospi,
+        'BTC', R.btc
+      );
+
+      // ② 좌 NASDAQ, 우 BM20 (상대변화 %)
+      drawDualAxisRelativePercent(
+        'chart_left_nasdaq_right_bm20',
+        'NASDAQ', R.nasdaq,
+        'BM20', R.bm20
+      );
+
       drawHBar('chart_contrib_best', R.contrib_best3);
       drawHBar('chart_contrib_worst', R.contrib_worst3);
       drawSector('chart_sector', R.sectors);
     }
 
-    function drawDualAxis(el, labelRight, seriesRight) {
+    // ✅ 듀얼축 상대변화(%) 라인차트
+    function drawDualAxisRelativePercent(el, leftLabel, leftSeries, rightLabel, rightSeries) {
+      const leftPct = toPctChange(leftSeries);
+      const rightPct = toPctChange(rightSeries);
+
       const data = new google.visualization.DataTable();
       data.addColumn('string', 'Date');
-      data.addColumn('number', 'BM20');
-      data.addColumn('number', labelRight);
+      data.addColumn('number', `${leftLabel} (Δ%)`);
+      data.addColumn('number', `${rightLabel} (Δ%)`);
 
-      R.dates.forEach((d, i) => data.addRow([d, R.bm20[i], seriesRight[i]]));
+      (R.dates || []).forEach((d, i) => data.addRow([d, leftPct[i], rightPct[i]]));
 
       const options = {
         backgroundColor: 'transparent',
@@ -139,8 +165,8 @@
         },
         hAxis: baseHAxis,
         vAxes: {
-          0: { ...baseVAxis, title: 'BM20', titleTextStyle: { color: 'rgba(255,255,255,0.65)' } },
-          1: { ...baseVAxis, title: labelRight, titleTextStyle: { color: 'rgba(255,255,255,0.65)' } }
+          0: { ...baseVAxis, title: `${leftLabel} (Δ% from start)`, titleTextStyle: { color: '#6b7280' } },
+          1: { ...baseVAxis, title: `${rightLabel} (Δ% from start)`, titleTextStyle: { color: '#6b7280' } }
         }
       };
 
@@ -151,32 +177,35 @@
       const data = new google.visualization.DataTable();
       data.addColumn('string', 'Asset');
       data.addColumn('number', 'Contribution (%p)');
-      rows.forEach(r => data.addRow(r));
+      (rows || []).forEach(r => data.addRow(r));
 
       const options = {
         backgroundColor: 'transparent',
         chartArea: { left: 90, right: 30, top: 12, bottom: 36 },
         legend: { position: 'none' },
-        hAxis: { ...baseHAxis, title: '%p', titleTextStyle: { color: 'rgba(255,255,255,0.65)' } },
+        hAxis: { ...baseHAxis, title: '%p', titleTextStyle: { color: '#6b7280' } },
         vAxis: { ...baseVAxis },
         bars: 'horizontal'
       };
 
-      new google.charts.Bar(document.getElementById(el)).draw(data, google.charts.Bar.convertOptions(options));
+      new google.charts.Bar(document.getElementById(el)).draw(
+        data,
+        google.charts.Bar.convertOptions(options)
+      );
     }
 
     function drawSector(el, rows) {
       const data = new google.visualization.DataTable();
       data.addColumn('string', 'Sector');
       data.addColumn('number', '1W Return (%)');
-      rows.forEach(r => data.addRow(r));
+      (rows || []).forEach(r => data.addRow(r));
 
       const options = {
         backgroundColor: 'transparent',
         chartArea: { left: 60, right: 20, top: 12, bottom: 70 },
         legend: { position: 'none' },
         hAxis: { ...baseHAxis, slantedText: true, slantedTextAngle: 35 },
-        vAxis: { ...baseVAxis, title: '%', titleTextStyle: { color: 'rgba(255,255,255,0.65)' } }
+        vAxis: { ...baseVAxis, title: '%', titleTextStyle: { color: '#6b7280' } }
       };
 
       new google.visualization.ColumnChart(document.getElementById(el)).draw(data, options);
