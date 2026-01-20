@@ -1,423 +1,201 @@
-<!doctype html>
-<html lang="ko">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>What is BM20?</title>
+<script>
+  // weights CSV (performance.html과 동일)
+  const CSV_WEIGHTS =
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTndyrPd3WWwFtfzv2CZxJeDcH-l8ibQIdO5ouYS4HsaGpbeXQQbs6WEr9qPqqZbRoT6cObdFxJpief/pub?gid=1533548287&single=true&output=csv";
 
-  <!-- ECharts -->
-  <script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
+  const LATEST_JSON = "/bm/latest.json?v=" + Date.now();
 
-  <!-- BM20 White Theme -->
-  <link rel="stylesheet" href="/bm/assets/bm20.css?v=2">
-
-  <style>
-    .viz-grid{ display:grid; grid-template-columns:1.1fr .9fr; gap:14px; margin-top:12px; }
-    @media (max-width: 860px){ .viz-grid{ grid-template-columns:1fr; } }
-    .chipline{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
-    .chip{
-      display:inline-flex; align-items:center; gap:6px;
-      padding:6px 10px; border:1px solid var(--border);
-      border-radius:999px; background:#fafafa;
-      font-size:12px; color:var(--text);
+  // ── performance에서 검증된 CSV split ──
+  function splitCsv(row){
+    const out=[]; let cur=""; let q=false;
+    for(let i=0;i<row.length;i++){
+      const ch=row[i];
+      if(ch=='"'){ q=!q; continue; }
+      if(ch=="," && !q){ out.push(cur); cur=""; continue; }
+      cur+=ch;
     }
-    .chip .dot{ width:8px; height:8px; border-radius:50%; background:var(--brand); }
-    .subnote{ margin-top:6px; }
-    .right-stack{ display:grid; gap:10px; }
-    .subcard{ border:1px solid var(--divider); border-radius:14px; padding:12px; background:#fff; }
-    .subcard .mini{ margin-bottom:6px; }
-    .others-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-    @media (max-width: 860px){ .others-grid{ grid-template-columns:1fr; } }
-    hr{ border:0; border-top:1px solid var(--divider); margin:16px 0; }
-    code{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:13px; }
-  </style>
-</head>
+    out.push(cur);
+    return out.map(s=>s.trim());
+  }
 
-<body>
-  <header>
-    <div class="wrap" style="display:flex;gap:14px;align-items:center;justify-content:space-between">
-      <div class="brand">
-        <span class="dot"></span>
-        <div>
-          <div style="font-weight:800">BM20 Index</div>
-          <div class="mini">Blockmedia Large-Cap Crypto 20</div>
-        </div>
-      </div>
-      <nav>
-        <a href="https://ceciliamyeong.github.io/bm/">Home</a>
-        <a href="https://ceciliamyeong.github.io/bm/what-is-bm20.html">BM20?</a>
-        <a href="https://ceciliamyeong.github.io/bm/performance.html">Charts</a>
-        <a href="https://ceciliamyeong.github.io/bm/methodology.html">Data</a>
-        <a href="https://ceciliamyeong.github.io/bm/latest.html">Latest</a>
-      </nav>
-    </div>
-  </header>
+  async function fetchCsv(url){
+    const u = url + (url.includes("?")?"&":"?") + "v=" + Date.now();
+    const r = await fetch(u,{cache:"no-store"});
+    if(!r.ok) throw new Error("fetch fail: " + r.status);
+    return r.text();
+  }
 
-  <main class="wrap">
-    <section class="hero">
-      <h1>What is BM20?</h1>
-      <p>
-        BM20 Index는 글로벌 시가총액 상위 디지털 자산 20종을 한 바스켓으로 묶어, 한국 투자자 관점에서 시장의 “방향”과 “강도”를
-        한눈에 보여주는 대표 지수입니다. 글로벌 표준형 지수의 장점을 따르되, 국내 3대 거래소(KRW 마켓) 상장 종목에 가중치 보정(예: ×1.3)을
-        적용해 ‘한국 투자자 체감 유동성’을 반영하는 것이 특징입니다. 지수는 ETF/ETP 등 투자상품화까지 염두에 두고 설계되어,
-        산출·유지·배포 전 과정의 투명성과 재현성을 중시합니다.
-      </p>
-      <p class="mini" style="margin-top:6px">
-        가중치 상한: BTC 30%, ETH 20%, XRP/USDT/BNB 각 5%, 나머지 15종 균등(총 35%). 데이터 소스: Coingecko(기본), Yahoo Finance(폴백).
-      </p>
-    </section>
+  async function fetchJSON(u){
+    const r = await fetch(u,{cache:"no-store"});
+    if(!r.ok) throw new Error("fetch fail");
+    return r.json();
+  }
 
-    <section class="card section">
-      <div class="h">BM20 구성 및 비중</div>
-      <div class="mini" id="asof">—</div>
+  // weights CSV 파싱: 헤더 index 기반이라 안정적
+  function parseWeightCsv(text){
+    const lines = text.trim().split(/\r?\n/);
+    const header = splitCsv(lines.shift()).map(h=>h.toLowerCase());
 
-      <div class="chipline">
-        <span class="chip"><span class="dot"></span>BTC 30%</span>
-        <span class="chip"><span class="dot"></span>ETH 20%</span>
-        <span class="chip"><span class="dot"></span>XRP/USDT/BNB 각 5%</span>
-        <span class="chip"><span class="dot"></span>나머지 15종 합계 35%(균등)</span>
-      </div>
-      <div class="mini subnote">아래 차트는 Performance와 동일한 weights 시트를 기반으로 표시됩니다.</div>
+    const iSym  = header.indexOf("symbol");
+    const iName = header.indexOf("name");        // optional
+    // weight 컬럼 후보를 폭넓게 잡음 (시트 컬럼명이 조금 달라도 대응)
+    const iW = header.findIndex(h => /bm20.*weight|methodology.*weight|final.*weight|weight|비중/.test(h));
 
-      <div class="viz-grid">
-        <div>
-          <div class="mini" style="margin-bottom:6px">Rule View (4 Buckets)</div>
-          <div id="ruleDonut" style="height:360px"></div>
-        </div>
+    if(iSym < 0) throw new Error("CSV missing symbol column");
+    if(iW   < 0) throw new Error("CSV missing weight column");
 
-        <div>
-          <div class="mini" style="margin-bottom:6px">Methodology Weights (Grouped)</div>
-
-          <div class="right-stack">
-            <div class="subcard">
-              <div class="mini">Core</div>
-              <div id="barsCore" style="height:120px"></div>
-            </div>
-
-            <div class="subcard">
-              <div class="mini">5% Group</div>
-              <div id="barsFive" style="height:120px"></div>
-            </div>
-
-            <div class="subcard">
-              <div class="mini">Others (15) — equal weight</div>
-              <div class="others-grid">
-                <div id="barsOtherA" style="height:180px"></div>
-                <div id="barsOtherB" style="height:180px"></div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <section class="card section plain">
-      <div class="h">설계 원칙</div>
-      <ul>
-        <li><b style="font-weight:520">대표성</b>: 대형·고유동성 자산 중심으로 구성</li>
-        <li><b style="font-weight:520">단순성</b>: 해석 가능한 시가총액 가중을 기본으로, 최소한의 보정만 적용</li>
-        <li><b style="font-weight:520">현지 적합성</b>: KRW 마켓 상장 여부를 보정 계수로 반영(×1.3 예시)</li>
-        <li><b style="font-weight:520">투명성</b>: 산출 스크립트·버전·변경 로그 공개 및 재현성 확보</li>
-      </ul>
-
-      <h3>구성(유니버스)과 편입·제외 기준</h3>
-      <p><b style="font-weight:520">기본 유니버스</b>: 전 세계 상장 디지털자산 중 시가총액 상위 30~40개를 1차 후보군으로 설정 후, 유동성(30일 평균 거래대금·상장 거래소 수·체결 신뢰도)과 데이터 품질을 필터링합니다. 최종적으로 상위 20개를 선정합니다(동률 시 거래대금·상장 범위 우선).</p>
-      <p><b style="font-weight:520">제외 원칙(기본 지수)</b>: 스테이블코인, 래핑/스테이킹/페깅 토큰, 가스·유틸리티 전용 토큰, 프라이버시 코인, 밈 코인은 기본 지수에서 제외합니다(필요 시 별도 부지수로 추적).</p>
-
-      <h3>가중치(Weights)와 상한(Cap)</h3>
-      <ol style="margin:6px 0 6px 18px;color:var(--muted)">
-        <li>기본 시총가중(유통량 기준 자유유통 시가총액)</li>
-        <li>국내 상장 보정계수: 업비트·빗썸·코인원 상장 시 ×1.3 가중</li>
-        <li>상한 적용: 비트코인 최대 30%, ETH 20%, 기타 단일 종목 최대 15%</li>
-        <li>정규화: 합계 100%가 되도록 재조정</li>
-      </ol>
-      <p class="mini">참고 예시: BTC가 보정 후 비중 45.5%가 되어도 상한 30%로 컷, 초과분은 잔여 종목으로 재분배(ETH 등 타 종목에도 동일 적용).</p>
-
-      <hr>
-
-      <h3>산출 방식(Index Calculation)</h3>
-      <ul style="margin:0 0 6px 18px;color:var(--muted)">
-        <li>지수 통화: USD</li>
-        <li>기준일(Base): <b style="font-weight:560">2018-01-01 = 100.00pt</b></li>
-        <li>산출 논리: 기준일 대비 각 종목의 가격수익률에 <i>가중치 Wᵢ</i>를 곱해 합산하는 라스파이레스형</li>
-        <li>간단식: <code>BM20ₜ = 100 × Σ[ Wᵢ × ( Pᵢ,ₜ / Pᵢ,base ) ]</code></li>
-        <li>공식 지수 공표: 일일 마감 값 기준(뉴스/리포트에 사용)</li>
-      </ul>
-
-      <h3>리밸런싱·메인터넌스</h3>
-      <ul>
-        <li><b style="font-weight:520">정기 리밸런싱</b>: 원칙적으로 분기 1회(1·4·7·10월). 베타 운영 중 월간 리밸런싱을 실시한 바 있으며, 이벤트(상장폐지·거래중단·하드포크 등) 발생 시 예외 교체 가능. 모든 변경은 로그로 공개.</li>
-        <li><b style="font-weight:520">이상치/데이터 이슈 대응</b>: 다중 소스 교차검증 → 자동·수동 검증 플로우 → 대체가격/재가중 로직.</li>
-      </ul>
-
-      <h3>거버넌스 & 통제</h3>
-      <ul>
-        <li><b style="font-weight:520">BM Index Committee</b>(내부 지수팀 + 외부 전문가) 운영: 월간/분기 심의, 예외 편입·편출, 방법론 개정 승인</li>
-        <li><b style="font-weight:520">준거 원칙</b>: IOSCO 금융벤치마크 원칙 준수(프로세스·감사 추적성·버전 고정)</li>
-        <li><b style="font-weight:520">투명성</b>: 회의록 요약·편입/편출 사유·가중치 변경폭을 정기 공시</li>
-      </ul>
-    </section>
-
-    <section class="card section">
-      <div class="h">FAQ</div>
-      <div class="faq">
-        <details open><summary>BM20은 무엇인가?</summary><p class="mini">대형 20개 코인의 성과를 추적하는 블록미디어 고유 지수입니다. 일일 시황·차트·뉴스에 기준으로 사용합니다.</p></details>
-        <details><summary>언제 출시됐나?</summary><p class="mini">지수 기준일은 2018-01-01이며, 2025년 정식 공개를 목표로 개편/자동화를 진행 중입니다.</p></details>
-        <details><summary>왜 만들었나?</summary><p class="mini">복잡한 종목 개별 노이즈를 지수 하나로 요약해 일간/주간/월간 흐름을 명확히 보여주고, 장기적으로 ETF·파생 벤치마크로 확장하기 위함입니다.</p></details>
-        <details><summary>어떤 점이 다른가?</summary><p class="mini">국내 상장 코인 1.3× 보정, 상한 규칙(BTC 30·ETH 20·XRP/USDT/BNB 5), 분기 리밸런싱을 명시적으로 공개합니다.</p></details>
-      </div>
-    </section>
-
-    <section class="news-card section" id="newsBox" style="display:none">
-      <h3 class="h" id="newsTitle">BM20 데일리 뉴스</h3>
-      <p id="newsBody" class="mini">—</p>
-    </section>
-
-    <section class="card section">
-      <div class="h">로드맵</div>
-      <ul class="mini" style="margin:8px 0 0 18px">
-        <li><b style="font-weight:520">2025 Q3</b> — 웹 페이지 정리(Overview/Components/Methodology/Performance), Google Sheet 연동, 일일 산출 자동화(워크플로우) 안정화</li>
-        <li><b style="font-weight:520">2025 Q4</b> — BM20 v1.x 정식 공개: 방법론 문서·팩트시트·변경 로그 공개, Latest/차트 위젯 고도화</li>
-        <li><b style="font-weight:520">2026 H1</b> — BM20 Historical Chart 공개, 종목별 기여도(Contribution) 분석, Notion/Slack/뉴스레터 자동 발행</li>
-        <li><b style="font-weight:520">2026+</b> — API/임베드 위젯, ETF/ETP·파생상품 벤치마크 협의</li>
-      </ul>
-    </section>
-
-    <footer class="mini">
-      © Blockmedia · 본 페이지는 Google Sheets CSV 및(선택) latest.json을 사용해 렌더링됩니다.
-    </footer>
-  </main>
-
-  <script>
-    const v = Date.now();
-    const WEIGHTS_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTndyrPd3WWwFtfzv2CZxJeDcH-l8ibQIdO5ouYS4HsaGpbeXQQbs6WEr9qPqqZbRoT6cObdFxJpief/pub?gid=1533548287&single=true&output=csv&v="+v;
-    const LATEST_JSON = "/bm/latest.json?v="+v;
-
-    async function fetchText(u){ const r=await fetch(u,{cache:'no-store'}); if(!r.ok) throw new Error("fetch fail"); return r.text(); }
-    async function fetchJSON(u){ const r=await fetch(u,{cache:'no-store'}); if(!r.ok) throw new Error("fetch fail"); return r.json(); }
-
-    // Robust CSV parser (quotes, commas inside quotes supported)
-    function parseCSV(text){
-      const rows = [];
-      let row = [];
-      let cur = "";
-      let inQuotes = false;
-
-      const s = (text || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-
-      for (let i = 0; i < s.length; i++){
-        const ch = s[i];
-        const next = s[i+1];
-
-        if (ch === '"'){
-          if (inQuotes && next === '"'){ cur += '"'; i++; }
-          else { inQuotes = !inQuotes; }
-          continue;
-        }
-        if (!inQuotes && ch === ","){
-          row.push(cur);
-          cur = "";
-          continue;
-        }
-        if (!inQuotes && ch === "\n"){
-          row.push(cur);
-          rows.push(row);
-          row = [];
-          cur = "";
-          continue;
-        }
-        cur += ch;
-      }
-      if (cur.length || row.length){
-        row.push(cur);
-        rows.push(row);
-      }
-
-      const cleaned = rows.filter(r => r.some(x => String(x).trim() !== ""));
-      if (!cleaned.length) return [];
-
-      const header = cleaned[0].map(h => String(h || "").trim());
-      return cleaned.slice(1).map(r => {
-        const obj = {};
-        for (let j = 0; j < header.length; j++){
-          obj[header[j]] = String(r[j] ?? "").trim();
-        }
-        return obj;
-      });
+    const rows=[];
+    for(const l of lines){
+      if(!l.trim()) continue;
+      const c = splitCsv(l);
+      const sym = (c[iSym]||"").toUpperCase().trim();
+      const name = (iName>=0 ? (c[iName]||"").trim() : sym);
+      let w = parseFloat(String(c[iW]||"").replace(/[% ,]/g,""));
+      if(!Number.isFinite(w)) continue;
+      // 0~1 비율이면 %로 변환
+      w = (w>0 && w<=1) ? w*100 : w;
+      rows.push({ sym, name, w });
     }
+    return rows;
+  }
 
-    function toNum(x){
-      const s=String(x??"").trim();
-      if(!s) return NaN;
-      const n=Number(s.replace(/[% ,]/g,""));
-      return Number.isFinite(n)?n:NaN;
-    }
-    function asPct(x){
-      const n=toNum(x);
-      if(!Number.isFinite(n)) return NaN;
-      return (n > 0 && n <= 1) ? (n * 100) : n;
-    }
+  function makeBar(elId, labels, values, xMax){
+    const c = echarts.init(document.getElementById(elId));
+    c.setOption({
+      backgroundColor:'transparent',
+      grid:{ left:56, right:16, top:6, bottom:18 },
+      tooltip:{
+        trigger:'axis',
+        axisPointer:{ type:'shadow' },
+        formatter:(ps)=>{
+          const p=ps[0];
+          return `${p.name}<br/>${Number(p.value).toFixed(2)}%`;
+        }
+      },
+      xAxis:{
+        type:'value', min:0, max:xMax,
+        axisLabel:{ color:'#6b7280', formatter:v=>v+'%' },
+        splitLine:{ lineStyle:{ color:'#f1f5f9' } },
+        axisLine:{ lineStyle:{ color:'#e5e7eb' } }
+      },
+      yAxis:{
+        type:'category', data:labels,
+        axisLabel:{ color:'#111827' },
+        axisLine:{ lineStyle:{ color:'#e5e7eb' } }
+      },
+      series:[{
+        type:'bar',
+        data:values.map(v=>Number(v.toFixed(4))),
+        label:{ show:true, position:'right', formatter:p=>Number(p.value).toFixed(2)+'%' }
+      }]
+    });
+    return c;
+  }
 
-    function makeBar(elId, labels, values, xMax){
-      const el = document.getElementById(elId);
-      const c = echarts.init(el);
-      c.setOption({
-        backgroundColor: 'transparent',
-        grid: { left: 56, right: 16, top: 6, bottom: 18 },
-        tooltip: {
-          trigger: 'axis',
-          axisPointer: { type: 'shadow' },
-          formatter: (ps)=>{
-            const p = ps[0];
-            return `${p.name}<br/>${Number(p.value).toFixed(2)}%`;
+  (async ()=>{
+    const charts = [];
+
+    try{
+      // 1) weights 가져오기
+      const text = await fetchCsv(CSV_WEIGHTS);
+      const items = parseWeightCsv(text);
+      if(!items.length) throw new Error("weights empty");
+
+      // 2) asof
+      const asofEl = document.getElementById("asof");
+      if(asofEl) asofEl.textContent = "기준: " + new Date().toLocaleString("ko-KR");
+
+      // 3) rule donut (4 buckets) — CSV를 기반으로 계산, 없으면 룰값 fallback
+      const sum = arr => arr.reduce((a,b)=>a+b,0);
+      const wBTC = sum(items.filter(x=>x.sym==="BTC").map(x=>x.w)) || 30;
+      const wETH = sum(items.filter(x=>x.sym==="ETH").map(x=>x.w)) || 20;
+      const w5   = sum(items.filter(x=>["XRP","USDT","BNB"].includes(x.sym)).map(x=>x.w)) || 15;
+      const total = sum(items.map(x=>x.w)) || 100;
+      const wOther = Math.max(0, total - (wBTC+wETH+w5)) || 35;
+
+      const rule = echarts.init(document.getElementById("ruleDonut"));
+      rule.setOption({
+        backgroundColor:'transparent',
+        tooltip:{ trigger:'item', formatter:p=>`${p.name}<br/>${p.value.toFixed(2)}%` },
+        series:[{
+          type:'pie',
+          radius:['58%','80%'],
+          center:['50%','50%'],
+          label:{ show:true, formatter:'{b}\n{d}%' },
+          labelLine:{ length:10, length2:8 },
+          data:[
+            { name:"BTC", value:wBTC },
+            { name:"ETH", value:wETH },
+            { name:"5% 그룹", value:w5 },
+            { name:"Others", value:wOther }
+          ]
+        }],
+        graphic:[{
+          type:'text',
+          left:'center', top:'center',
+          style:{
+            text:'BM20\nRule View',
+            textAlign:'center',
+            fill:'#111827',
+            fontSize:14,
+            fontWeight:700,
+            lineHeight:18
           }
-        },
-        xAxis: {
-          type: 'value',
-          min: 0,
-          max: xMax,
-          axisLabel: { color: '#6b7280', formatter: (v)=> v + '%' },
-          splitLine: { lineStyle: { color: '#f1f5f9' } },
-          axisLine: { lineStyle: { color: '#e5e7eb' } }
-        },
-        yAxis: {
-          type: 'category',
-          data: labels,
-          axisLabel: { color: '#111827' },
-          axisLine: { lineStyle: { color: '#e5e7eb' } }
-        },
-        series: [{
-          type: 'bar',
-          data: values.map(v=>Number(v.toFixed(4))),
-          label: { show:true, position:'right', formatter:(p)=>`${Number(p.value).toFixed(2)}%` }
         }]
       });
-      return c;
+      charts.push(rule);
+
+      // 4) 우측 그룹 바 — 룰 고정(예쁜 균등)
+      const universe = items.map(x=>x.sym);
+      const FIXED = { BTC:30, ETH:20, XRP:5, USDT:5, BNB:5 };
+
+      const rest = universe.filter(s=>!(s in FIXED)).sort((a,b)=>a.localeCompare(b));
+      const restW = rest.length ? (35/rest.length) : 0;
+
+      const core = ["BTC","ETH"].filter(s=>universe.includes(s));
+      const five = ["XRP","USDT","BNB"].filter(s=>universe.includes(s));
+
+      const half = Math.ceil(rest.length/2);
+      const otherA = rest.slice(0,half);
+      const otherB = rest.slice(half);
+
+      const cCore = makeBar("barsCore", core.slice().reverse(), core.map(s=>FIXED[s]).reverse(), 30);
+      const cFive = makeBar("barsFive", five.slice().reverse(), five.map(s=>FIXED[s]).reverse(), 10);
+      const cOA   = makeBar("barsOtherA", otherA.slice().reverse(), otherA.map(_=>restW).reverse(), 5);
+      const cOB   = makeBar("barsOtherB", otherB.slice().reverse(), otherB.map(_=>restW).reverse(), 5);
+
+      charts.push(cCore,cFive,cOA,cOB);
+
+    }catch(e){
+      console.warn(e);
+      const msg = String(e?.message || e);
+      const asofEl = document.getElementById("asof");
+      if(asofEl) asofEl.textContent = "기준: —";
+      const ruleEl = document.getElementById("ruleDonut");
+      if(ruleEl) ruleEl.innerHTML = `<div class="mini">데이터를 불러오지 못했습니다. (${msg})</div>`;
+      ["barsCore","barsFive","barsOtherA","barsOtherB"].forEach(id=>{
+        const el = document.getElementById(id);
+        if(el) el.innerHTML = `<div class="mini">—</div>`;
+      });
     }
 
-    (async ()=>{
-      let charts = [];
-
-      try{
-        const rows = parseCSV(await fetchText(WEIGHTS_CSV));
-        if(!rows.length) throw new Error("weights csv empty");
-
-        const keys = Object.keys(rows[0]||{});
-        const symK  = keys.find(k=>/symbol|ticker|심볼/i.test(k)) || keys[0];
-        const nameK = keys.find(k=>/^name$|코인|종목|자산/i.test(k)); // optional
-        const wK    = keys.find(k=>/bm20.*weight|methodology.*weight|final.*weight/i.test(k))
-                   || keys.find(k=>/weight|비중/i.test(k));
-        if(!wK) throw new Error("weight column not found");
-
-        const items = rows.map(o=>{
-          const sym = String(o[symK]||"").trim().toUpperCase();
-          const name = nameK ? String(o[nameK]||"").trim() : sym;
-          const w = asPct(o[wK]);
-          return { sym, name, w };
-        }).filter(x=>x.sym && Number.isFinite(x.w));
-
-        document.getElementById("asof").textContent = "기준: " + new Date().toLocaleString("ko-KR");
-
-        // ----- Rule Donut (4 buckets, prefer methodology constants if some missing)
-        const sum = (arr)=>arr.reduce((a,b)=>a+b,0);
-        const wBTC = sum(items.filter(x=>x.sym==="BTC").map(x=>x.w));
-        const wETH = sum(items.filter(x=>x.sym==="ETH").map(x=>x.w));
-        const w5   = sum(items.filter(x=>["XRP","USDT","BNB"].includes(x.sym)).map(x=>x.w));
-        const total = sum(items.map(x=>x.w));
-        const wOther = Math.max(0, total - (wBTC+wETH+w5));
-
-        const ruleData = [
-          { name: "BTC", value: (Number.isFinite(wBTC) && wBTC>0)?wBTC:30 },
-          { name: "ETH", value: (Number.isFinite(wETH) && wETH>0)?wETH:20 },
-          { name: "5% 그룹", value: (Number.isFinite(w5) && w5>0)?w5:15 },
-          { name: "Others", value: (Number.isFinite(wOther) && wOther>0)?wOther:35 }
-        ];
-
-        const rule = echarts.init(document.getElementById("ruleDonut"));
-        rule.setOption({
-          backgroundColor:'transparent',
-          tooltip:{ trigger:'item', formatter:(p)=>`${p.name}<br/>${p.value.toFixed(2)}%` },
-          series:[{
-            type:'pie',
-            radius:['58%','80%'],
-            center:['50%','50%'],
-            label:{ show:true, formatter:'{b}\n{d}%' },
-            labelLine:{ length:10, length2:8 },
-            data: ruleData
-          }],
-          graphic:[{
-            type:'text',
-            left:'center',
-            top:'center',
-            style:{
-              text:'BM20\nRule View',
-              textAlign:'center',
-              fill:'#111827',
-              fontSize:14,
-              fontWeight:700,
-              lineHeight:18
-            }
-          }]
-        });
-        charts.push(rule);
-
-        // ----- Methodology grouped bars (fixed)
-        const universe = items.map(x=>x.sym);
-        const FIXED = { BTC:30, ETH:20, XRP:5, USDT:5, BNB:5 };
-
-        const restSymbols = universe.filter(s => !(s in FIXED)).sort((a,b)=>a.localeCompare(b));
-        const restW = restSymbols.length ? (35 / restSymbols.length) : 0;
-
-        const coreLabels = ["BTC","ETH"].filter(s=>universe.includes(s));
-        const coreValues = coreLabels.map(s=>FIXED[s]);
-
-        const fiveLabels = ["XRP","USDT","BNB"].filter(s=>universe.includes(s));
-        const fiveValues = fiveLabels.map(s=>FIXED[s]);
-
-        const half = Math.ceil(restSymbols.length/2);
-        const otherA = restSymbols.slice(0, half);
-        const otherB = restSymbols.slice(half);
-
-        const cCore   = makeBar("barsCore",   coreLabels.reverse(), coreValues.reverse(), 30);
-        const cFive   = makeBar("barsFive",   fiveLabels.reverse(), fiveValues.reverse(), 10);
-        const cOtherA = makeBar("barsOtherA", otherA.reverse(),     otherA.map(_=>restW).reverse(), 5);
-        const cOtherB = makeBar("barsOtherB", otherB.reverse(),     otherB.map(_=>restW).reverse(), 5);
-
-        charts.push(cCore, cFive, cOtherA, cOtherB);
-
-      }catch(e){
-        console.warn(e);
-        const msg = String(e?.message || e);
-        document.getElementById("asof").textContent = "기준: —";
-        const ruleEl = document.getElementById("ruleDonut");
-        if(ruleEl) ruleEl.innerHTML = `<div class="mini">데이터를 불러오지 못했습니다. (${msg})</div>`;
-        ["barsCore","barsFive","barsOtherA","barsOtherB"].forEach(id=>{
-          const el = document.getElementById(id);
-          if(el) el.innerHTML = `<div class="mini">—</div>`;
-        });
-      }
-
-      // 뉴스 섹션
-      try{
-        const d = await fetchJSON(LATEST_JSON);
-        if (d?.news?.title || d?.news?.body) {
-          document.getElementById("newsTitle").textContent = d.news.title || "BM20 데일리 뉴스";
-          document.getElementById("newsBody").textContent  = d.news.body  || "";
+    // (선택) 뉴스 섹션
+    try{
+      const d = await fetchJSON(LATEST_JSON);
+      if (d?.news?.title || d?.news?.body) {
+        document.getElementById("newsTitle").textContent = d.news.title || "BM20 데일리 뉴스";
+        document.getElementById("newsBody").textContent  = d.news.body  || "";
+        document.getElementById("newsBox").style.display = "";
+      } else {
+        const r = await fetch('/bm/bm20_news_latest.txt',{cache:'no-store'});
+        if (r.ok) {
+          document.getElementById("newsTitle").textContent = "BM20 데일리 뉴스";
+          document.getElementById("newsBody").textContent  = await r.text();
           document.getElementById("newsBox").style.display = "";
-        } else {
-          const r = await fetch('/bm/bm20_news_latest.txt',{cache:'no-store'});
-          if (r.ok) {
-            document.getElementById("newsTitle").textContent = "BM20 데일리 뉴스";
-            document.getElementById("newsBody").textContent  = await r.text();
-            document.getElementById("newsBox").style.display = "";
-          }
         }
-      }catch(e){}
+      }
+    }catch(e){}
 
-      // resize
-      window.addEventListener('resize', ()=>{ charts.forEach(c=>c.resize()); });
-    })();
-  </script>
-</body>
-</html>
+    addEventListener('resize', ()=> charts.forEach(c=>c.resize()));
+  })();
+</script>
