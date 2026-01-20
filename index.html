@@ -285,85 +285,158 @@
 <script>
 // ===== 공통 유틸 =====
 const qs = (s, el=document) => el.querySelector(s);
-const fmtPct = v => (v===null||v===undefined||isNaN(v))?"—":(v>0?"+":"") + (Math.round(v*1000)/10).toFixed(1) + "%";
-const fmtNum = v => (v===null||v===undefined||isNaN(v))?"—": new Intl.NumberFormat('en-US',{maximumFractionDigits:2}).format(v);
-const findKey = (obj, candidates=[]) => { for (const k of candidates){ if (obj && Object.hasOwn(obj,k)) return obj[k]; } };
+
+const fmtPct = v =>
+  (v===null||v===undefined||isNaN(v)) ? "—"
+  : (v>0?"+":"") + (Math.round(v*1000)/10).toFixed(1) + "%";
+
+const fmtNum = v =>
+  (v===null||v===undefined||isNaN(v)) ? "—"
+  : new Intl.NumberFormat('en-US',{maximumFractionDigits:2}).format(v);
+
+const findKey = (obj, candidates=[]) => {
+  for (const k of candidates){
+    if (obj && Object.hasOwn(obj,k)) return obj[k];
+  }
+};
+
 async function fetchAny(urls){
   for (const u of urls){
     try{
-      const r=await fetch(u, {cache:'no-store'});
-      if(r.ok) return {url:u,json:await r.json()};
+      const r = await fetch(u, {cache:'no-store'});
+      if(r.ok) return {url:u, json:await r.json()};
     }catch(e){}
   }
   throw new Error('no json found');
 }
+
 function setDeltaBadge(pct){
-  const el=qs('#deltaBadge');
-  if(pct==null||isNaN(pct)){ el.textContent='데이터 없음'; return; }
+  const el = qs('#deltaBadge');
+  if(pct==null||isNaN(pct)){
+    el.textContent='데이터 없음';
+    return;
+  }
   el.textContent=(pct>0?'▲ ':'▼ ')+fmtPct(pct);
   el.className='delta '+(pct>=0?'up':'down');
 }
+
 function formatFunding(f){
   if(f==null) return '—';
   if(typeof f==='number') return fmtPct(f);
   if(typeof f==='string') return f;
   if(typeof f==='object'){
-    const btc=f.btc??f.BTC??f.Btc, eth=f.eth??f.ETH??f.Eth;
+    const btc=f.btc??f.BTC??f.Btc;
+    const eth=f.eth??f.ETH??f.Eth;
     const p=x=>(typeof x==='number')?fmtPct(x):(x??'—');
     return `BTC ${p(btc)}, ETH ${p(eth)}`;
   }
   return '—';
 }
 
-// ===== 김치/CSV 로더 유틸 =====
+// ===== fetch helpers =====
 async function fetchJsonTry(u, tag=''){
   try{
-    const r = await fetch(u+`?v=${Date.now()}`, {cache:'no-store'});
+    const r = await fetch(u + `?v=${Date.now()}`, {cache:'no-store'});
     if (r.ok) return await r.json();
   }catch(e){}
 }
 async function fetchTextTry(u, tag=''){
   try{
-    const r = await fetch(u+`?v=${Date.now()}`, {cache:'no-store'});
+    const r = await fetch(u + `?v=${Date.now()}`, {cache:'no-store'});
     if (r.ok) return await r.text();
   }catch(e){}
 }
+
 function ymdFrom(asof, offsetDays=0){
   const t = asof ? new Date(asof) : new Date();
   if (offsetDays) t.setDate(t.getDate()+offsetDays);
   const y=t.getFullYear(), m=String(t.getMonth()+1).padStart(2,'0'), d=String(t.getDate()).padStart(2,'0');
   return `${y}-${m}-${d}`;
 }
+
+// ===== 김치 추출: 어떤 포맷이 와도 "비율(0.0084)"로 정규화 =====
 function extractKimchi(obj){
-  if (obj==null) return null;
-  if (typeof obj==='number') return obj;
-  if (typeof obj==='string'){ const v=parseFloat(obj); return isFinite(v)?v:null; }
-  let v = findKey(obj, ['kimchi','kimchi_premium_pct','premium','pct','value']);
-  if (typeof v==='string') v=parseFloat(v);
-  if (typeof v==='number'&&isFinite(v)) return v;
-  if (v && typeof v==='object'){
-    let vv = findKey(v, ['pct','value','premium']);
-    if (typeof vv==='string') vv=parseFloat(vv);
-    if (typeof vv==='number'&&isFinite(vv)) return vv;
+  if (obj == null) return null;
+
+  // number: 0.0084(비율) / 0.84(%수치) 모두 처리
+  if (typeof obj === 'number' && isFinite(obj)){
+    if (obj >= 1) return obj / 100;
+    return obj;
   }
+
+  // string: "0.84%" / "0.84" / "0.0084"
+  if (typeof obj === 'string'){
+    const s = obj.trim();
+    const hasPct = s.includes('%');
+    const v = parseFloat(s.replace('%',''));
+    if (!isFinite(v)) return null;
+    if (hasPct) return v/100;
+    return v >= 1 ? v/100 : v;
+  }
+
+  // object: 다양한 키 커버 + 중첩 구조 흡수
+  if (typeof obj === 'object'){
+    const v = findKey(obj, [
+      'kimchi','kimchi_pct','kimchi_percent',
+      'kimchi_premium','kimchi_premium_pct','kimchiPremium',
+      'premium','premium_pct',
+      'pct','percent','rate','value'
+    ]);
+    if (v != null) return extractKimchi(v);
+
+    // 혹시 더 깊이 들어간 형태까지 1회 탐색
+    for (const k of Object.keys(obj)){
+      const out = extractKimchi(obj[k]);
+      if (out != null) return out;
+    }
+  }
+
   return null;
 }
+
+// ===== 김치 로더: /bm/ 위치에 따라 경로 꼬임 방지 + archive/out 모두 탐색 =====
 async function getKimchiFromOut(asof){
   const dates = [ ymdFrom(asof,0), ymdFrom(null,0), ymdFrom(asof,-1) ];
+
+  const inBm = location.pathname.includes('/bm/');
+
+  // 후보 URL 생성: 상대/절대 모두 포함 (경로 꼬임 방지)
+  const candidates = (d) => ([
+    ...(inBm ? [
+      `out/${d}/kimchi_${d}.json`,
+      `archive/${d}/kimchi_${d}.json`,
+    ] : []),
+
+    // 루트에서 접근할 때 대비
+    `bm/out/${d}/kimchi_${d}.json`,
+    `bm/archive/${d}/kimchi_${d}.json`,
+
+    // 절대경로로도 한 번 더 (캐시/상대경로 이슈 방지)
+    ...(inBm ? [
+      `/bm/out/${d}/kimchi_${d}.json`,
+      `/bm/archive/${d}/kimchi_${d}.json`,
+    ] : [
+      `/bm/out/${d}/kimchi_${d}.json`,
+      `/bm/archive/${d}/kimchi_${d}.json`,
+    ]),
+  ]);
+
   for (const d of dates){
-    const url = `out/${d}/kimchi_${d}.json`;
-    const j = await fetchJsonTry(url);
-    const v = extractKimchi(j);
-    if (v!=null) return v;
-  }
-  for (const d of dates){
-    const url = `bm/out/${d}/kimchi_${d}.json`;
-    const j = await fetchJsonTry(url);
-    const v = extractKimchi(j);
-    if (v!=null) return v;
+    for (const url of candidates(d)){
+      const j = await fetchJsonTry(url, `kimchi ${url}`);
+      const v = extractKimchi(j);
+      if (v != null){
+        // 디버그: 어디서 가져왔는지 hover로 확인 가능
+        const el = document.getElementById('kimchi');
+        if (el) el.setAttribute('title', `src:${url} · ratio:${v}`);
+        return v; // ✅ 항상 비율
+      }
+    }
   }
   return null;
 }
+
+// ===== CSV 로더 =====
 async function loadPerfFromCSV(asof){
   const d = ymdFrom(asof);
   const main = `out/${d}/bm20_daily_data_${d}.csv`;
@@ -392,42 +465,53 @@ async function loadLatest(){
     if (qs('#r1y'))  qs('#r1y').textContent  = fmtPct(R['1Y']);
     setDeltaBadge(r1);
 
+    // 펀딩 & 김치
     const funding = findKey(j, ['funding_rates','funding','funding_bps','fundingRate']);
     let kimchi = await getKimchiFromOut(asof);
+
+    // 파일 로드 실패 시 latest.json 내 키로 폴백
     if (kimchi == null) {
-      const kLatest = findKey(j, ['kimchi_2025','kimchi_premium_pct','kimchi_premium_latest']);
+      const kLatest = findKey(j, ['kimchi_2025','kimchi_premium_pct','kimchi_premium_latest','kimchi']);
       kimchi = extractKimchi(kLatest);
+      const el = document.getElementById('kimchi');
+      if (el && kimchi != null) el.setAttribute('title', `src:latest.json · ratio:${kimchi}`);
     }
+
     qs('#kimchi').textContent  = kimchi!=null ? fmtPct(kimchi) : '—';
     qs('#funding').textContent = formatFunding(funding);
 
+    // 뉴스 링크
     const news = j.news_file || j.news_path || j.news;
     if (news && typeof news === 'string') {
       const a = qs('#newsLink'); a.href = news; a.classList.remove('hide');
     }
 
-    qs('#latestDump').textContent = JSON.stringify(j, null, 2);
+    // (디버그 섹션을 지웠으면 아래는 없어도 됨. 있어도 오류는 안 나게 처리)
+    const dump = qs('#latestDump');
+    if (dump) dump.textContent = JSON.stringify(j, null, 2);
+
   } catch(e) {
-    qs('#latestDump').textContent = 'latest.json을 불러오지 못했습니다.';
+    const dump = qs('#latestDump');
+    if (dump) dump.textContent = 'latest.json을 불러오지 못했습니다.';
   }
 }
 
 async function loadSeries(){
-  const host=qs('#svgHost');
-  const svg=qs('svg', host);
+  const host = qs('#svgHost');
+  const svg  = qs('svg', host);
   const statusEl = qs('#seriesStatus');
 
   try{
     const { url, json: arr } = await fetchAny(['bm20_series.json','series.json','bm/bm20_series.json','bm/series.json']);
 
     const points = arr.map(d=>({
-        t:new Date((d.date||d.day||d.asof||d.asOf||d[0]||Date.now())),
-        v:+((d.level||d.index||d.value||d.close||d.bm20Level||d[1]))
-      }))
-      .filter(x=>isFinite(x.v))
-      .sort((a,b)=>a.t-b.t);
+      t:new Date((d.date||d.day||d.asof||d.asOf||d[0]||Date.now())),
+      v:+((d.level||d.index||d.value||d.close||d.bm20Level||d[1]))
+    }))
+    .filter(x=>isFinite(x.v))
+    .sort((a,b)=>a.t-b.t);
 
-    statusEl.textContent = `series: ${url} · points: ${points.length}`;
+    if (statusEl) statusEl.textContent = `series: ${url} · points: ${points.length}`;
 
     if (!points.length){
       svg.innerHTML = '';
@@ -449,7 +533,7 @@ async function loadSeries(){
 
     function draw(data){
       svg.innerHTML='';
-      const pad=16; // ✅ 좌우 여백 줄임
+      const pad=16;
       const W=svg.clientWidth||host.clientWidth;
       const H=svg.clientHeight||host.clientHeight;
 
@@ -462,17 +546,17 @@ async function loadSeries(){
 
       const axes=document.createElementNS('http://www.w3.org/2000/svg','path');
       axes.setAttribute('d',`M${pad} ${pad}V${H-pad}H${W-pad}`);
-      axes.setAttribute('stroke',getComputedStyle(document.documentElement).getPropertyValue('--border'));
+      axes.setAttribute('stroke',getComputedStyle(document.documentElement).getPropertyValue('--border') || '#e5e7eb');
       axes.setAttribute('stroke-width','1');
       axes.setAttribute('fill','none');
       svg.appendChild(axes);
 
       const path=document.createElementNS('http://www.w3.org/2000/svg','path');
-      let d='';
-      data.forEach((p,i)=>{ d+=(i?'L':'M')+x(+p.t)+' '+y(p.v)+' '; });
-      path.setAttribute('d',d.trim());
+      let dd='';
+      data.forEach((p,i)=>{ dd+=(i?'L':'M')+x(+p.t)+' '+y(p.v)+' '; });
+      path.setAttribute('d',dd.trim());
       path.setAttribute('fill','none');
-      path.setAttribute('stroke',getComputedStyle(document.documentElement).getPropertyValue('--accent'));
+      path.setAttribute('stroke',getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#2563eb');
       path.setAttribute('stroke-width','2');
       svg.appendChild(path);
 
@@ -482,22 +566,24 @@ async function loadSeries(){
       dot.setAttribute('cy',y(last.v));
       dot.setAttribute('r','4');
       dot.setAttribute('fill','#ffffff');
-      dot.setAttribute('stroke',getComputedStyle(document.documentElement).getPropertyValue('--accent'));
+      dot.setAttribute('stroke',getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#2563eb');
       svg.appendChild(dot);
     }
 
     const doDraw=()=>{ const d=compute(); if(d.length>1) draw(d); };
     doDraw();
 
-    qs('#btnZoom').addEventListener('click',()=>{
-      mode=(mode+1)%3;
-      qs('#btnZoom').textContent=['범위: 1Y ▾','범위: YTD ▾','범위: ALL ▾'][mode];
-      doDraw();
-    });
+    const btn = qs('#btnZoom');
+    if (btn){
+      btn.addEventListener('click',()=>{
+        mode=(mode+1)%3;
+        btn.textContent=['범위: 1Y ▾','범위: YTD ▾','범위: ALL ▾'][mode];
+        doDraw();
+      });
+    }
 
   } catch(e){
-    statusEl.textContent = 'series.json을 불러오지 못했습니다. (파일 경로/배포 경로 확인 필요)';
-    qs('#seriesDump').textContent = String(e);
+    if (statusEl) statusEl.textContent = 'series.json을 불러오지 못했습니다. (파일 경로/배포 경로 확인 필요)';
   }
 }
 
@@ -575,25 +661,23 @@ async function loadComponentsAndRenderBars(){
       splitLine:{show:true, lineStyle:{color:'#e5e7eb'}}
     },
     yAxis: { type: 'category', data: topN.map(r=>r.symbol), axisTick:{show:false} },
-    series: [{ type: 'bar', data: topN.map(r=>r.ret_1d), label:{show:true,position:'right',formatter:p=>(p.value>=0?'+':'')+(p.value*100).toFixed(2)+'%'} }],
+    series: [{
+      type: 'bar',
+      data: topN.map(r=>r.ret_1d),
+      label:{show:true,position:'right',formatter:p=>(p.value>=0?'+':'')+(p.value*100).toFixed(2)+'%'}
+    }],
     animation: true
   });
 
   window.addEventListener('resize', ()=> chart.resize());
 }
 
-// ===== 이벤트 바인딩 & 실행 =====
-(function safeBindToggles(){
-  const a = qs('#btnToggleLatest');
-  const b = qs('#btnToggleSeries');
-  if (a && qs('#latestDump')) a.addEventListener('click',()=>qs('#latestDump').classList.toggle('hide'));
-  if (b && qs('#seriesDump')) b.addEventListener('click',()=>qs('#seriesDump').classList.toggle('hide'));
-})();
-
+// ===== 실행 =====
 loadLatest();
 loadSeries();
 loadComponentsAndRenderBars();
 </script>
+
 </body>
 </html>
 
