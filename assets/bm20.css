@@ -1,0 +1,93 @@
+:root{
+  --bg:#ffffff;
+  --card:#ffffff;
+
+  --text:#111827;
+  --muted:#6b7280;
+
+  --border:#e5e7eb;
+  --divider:#f1f5f9;
+
+  --brand:#1A237E;   /* BM20 네이비(포인트만) */
+  --accent:#2563eb;  /* 링크/강조 */
+
+  --up:#2E7D32;
+  --down:#C62828;
+
+  --shadow:0 4px 14px rgba(0,0,0,.04);
+}
+
+*{box-sizing:border-box}
+html,body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans;
+}
+
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+header{
+  position:sticky;
+  top:0;
+  background:#fff;
+  z-index:10;
+  border-bottom:1px solid var(--border);
+}
+
+.wrap{max-width:1100px;margin:0 auto;padding:16px}
+.brand{display:flex;gap:10px;align-items:center}
+.brand .dot{width:10px;height:10px;border-radius:50%;background:var(--brand)}
+nav{display:flex;gap:18px;align-items:center}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:16px;
+  box-shadow:var(--shadow);
+}
+.section{margin-top:20px}
+.h{font-weight:700}
+.mini{font-size:12px;color:var(--muted)}
+
+.hero{
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:20px;
+}
+.hero h1{margin:0 0 8px 0;font-size:24px}
+.hero p{margin:0}
+
+.tbl{width:100%;border-collapse:collapse}
+.tbl th,.tbl td{border-bottom:1px solid var(--divider);padding:10px 8px}
+.tbl th{background:#fafafa;font-weight:600;color:#374151}
+.tbl td.num{text-align:right}
+
+.chg.up{color:var(--up);font-weight:600}
+.chg.down{color:var(--down);font-weight:600}
+
+.faq details{
+  margin:6px 0;
+  padding:10px 12px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:#fafafa;
+}
+.faq summary{font-weight:600}
+
+.news-card{
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:18px;
+  background:#fff;
+  box-shadow:var(--shadow);
+}
+
+footer{
+  color:var(--muted);
+  margin:40px 0 60px;
+  border-top:1px solid var(--divider);
+  padding-top:12px;
+}
