@@ -17,8 +17,8 @@
     --border:#e5e7eb;
     --divider:#f1f5f9;
 
-    --brand:#1A237E;   /* BM20 네이비(포인트만) */
-    --accent:#2563eb;  /* 링크/강조 */
+    --brand:#1A237E;
+    --accent:#2563eb;
 
     --up:#2E7D32;
     --down:#C62828;
@@ -28,8 +28,7 @@
 
   *{box-sizing:border-box}
   html,body{
-    margin:0;
-    height:100%;
+    margin:0;height:100%;
     background:var(--bg);
     color:var(--text);
     font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Apple Color Emoji,Segoe UI Emoji;
@@ -39,43 +38,17 @@
   a:hover{text-decoration:underline}
 
   header{
-    position:sticky;
-    top:0;
-    background:#fff;
-    z-index:10;
+    position:sticky;top:0;background:#fff;z-index:10;
     border-bottom:1px solid var(--border);
   }
 
   .wrap{max-width:1100px;margin:0 auto;padding:16px}
-  nav{display:flex;gap:18px;align-items:center}
+  .flex{display:flex;gap:14px;align-items:center;justify-content:space-between}
 
   .brand{display:flex;gap:10px;align-items:center}
   .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--brand)}
+  nav{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
 
-  /* Layout helpers (기존 구조 유지) */
-  .rows{display:grid;grid-template-columns:1fr;gap:16px;margin-top:16px}
-  @media (min-width:900px){.rows{grid-template-columns:2fr 1fr}}
-
-  /* ✅ CHARTS 섹션은 항상 1컬럼(한 줄 꽉 채우기) */
-  #charts.rows{grid-template-columns:1fr !important;}
-  @media (min-width:900px){
-    #charts.rows{grid-template-columns:1fr !important;} 
-  }
-    
-  .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-  @media (min-width:700px){.cards{grid-template-columns:repeat(6,1fr)}}
-
-  .flex{display:flex;gap:14px;align-items:center;justify-content:space-between}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  @media (max-width:700px){.grid2{grid-template-columns:1fr}}
-
-  .section{margin-top:18px}
-  .h{font-weight:700;letter-spacing:.2px}
-  .mini{font-size:12px;color:var(--muted)}
-  .list{display:grid;gap:8px}
-  .hide{display:none}
-
-  /* Cards */
   .card{
     background:var(--card);
     border:1px solid var(--border);
@@ -84,6 +57,16 @@
     box-shadow:var(--shadow);
   }
 
+  .section{margin-top:18px}
+  .h{font-weight:800;letter-spacing:.2px}
+  .mini{font-size:12px;color:var(--muted)}
+  .hide{display:none}
+  .list{display:grid;gap:8px}
+
+  /* stats */
+  .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  @media (min-width:700px){.cards{grid-template-columns:repeat(6,1fr)}}
+
   .stat{
     padding:12px;
     border:1px solid var(--border);
@@ -91,10 +74,10 @@
     background:#fafafa;
   }
   .k{color:var(--muted);font-size:12px}
-  .v{font-size:22px;font-weight:800}
+  .v{font-size:22px;font-weight:900}
 
-  .delta.up{color:var(--up);font-weight:800}
-  .delta.down{color:var(--down);font-weight:800}
+  .delta.up{color:var(--up);font-weight:900}
+  .delta.down{color:var(--down);font-weight:900}
 
   .pill{
     display:inline-flex;gap:8px;align-items:center;
@@ -104,26 +87,10 @@
     background:#f3f4f6;
   }
 
-  /* Tables */
-  .tbl{width:100%;border-collapse:collapse}
-  .tbl th,.tbl td{border-bottom:1px solid var(--divider);padding:10px 8px;text-align:left}
-  .tbl th{background:#fafafa;font-weight:600;color:#374151}
-  .table-wrap{overflow:auto}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:700px){.grid2{grid-template-columns:1fr}}
 
-  /* Charts */
-  .chart img,.chart canvas{display:block;width:100%;height:auto;object-fit:contain}
-  .chart.aspect-16x9{aspect-ratio:16/9}
-
-  .svgwrap{
-    height:260px;width:100%;
-    border-radius:12px;
-    border:1px solid var(--border);
-    background:#ffffff;
-    overflow:hidden;
-  }
-  .svgwrap svg{width:100%;height:100%;display:block}
-
-  /* Buttons / code blocks */
+  /* buttons / code */
   .btn{
     border:1px solid var(--border);
     background:#ffffff;
@@ -144,6 +111,23 @@
     max-height:420px;
     overflow:auto;
   }
+
+  /* charts area: 항상 1컬럼 + 메인 차트 크게 */
+  .rows{display:grid;grid-template-columns:1fr;gap:16px;margin-top:16px}
+  #charts.rows{grid-template-columns:1fr !important;}
+
+  .svgwrap{
+    width:100%;
+    height:360px;              /* ✅ 데스크톱 메인 차트 크게 */
+    border-radius:12px;
+    border:1px solid var(--border);
+    background:#ffffff;
+    overflow:hidden;
+  }
+  @media (max-width:700px){
+    .svgwrap{height:260px;}
+  }
+  .svgwrap svg{width:100%;height:100%;display:block}
 
   /* BM preview cards */
   .bm-wrap{max-width:1100px;margin:0 auto}
@@ -170,9 +154,8 @@
     border:1px solid var(--divider);
   }
   .bm-bar{height:100%;background:var(--up)}
-  .bm-pct{text-align:right;font-variant-numeric:tabular-nums;color:var(--text);font-weight:800}
+  .bm-pct{text-align:right;font-variant-numeric:tabular-nums;color:var(--text);font-weight:900}
   .bm-ticker{font-weight:900;color:var(--text);text-align:center}
-  .bm-legend{display:flex;gap:10px;margin-top:6px;color:var(--muted);font-size:12px}
 
   footer{
     color:var(--muted);
@@ -186,10 +169,13 @@
 <body>
   <header>
     <div class="wrap flex">
-      <div class="brand"><span class="dot"></span><div>
-        <div style="font-weight:800">BM20 Index</div>
-        <div class="mini">Blockmedia Large-Cap Crypto 20</div>
-      </div></div>
+      <div class="brand">
+        <span class="dot"></span>
+        <div>
+          <div style="font-weight:900">BM20 Index</div>
+          <div class="mini">Blockmedia Large-Cap Crypto 20</div>
+        </div>
+      </div>
       <nav>
         <a href="https://ceciliamyeong.github.io/bm/">Home</a>
         <a href="https://ceciliamyeong.github.io/bm/latest.html">Latest</a>
@@ -240,26 +226,27 @@
       </div>
     </section>
 
-   <!-- CHARTS -->
-  <section id="charts" class="rows">
-    <div class="card">
-      <div class="flex">
-        <div class="h">BM20 시계열</div>
-        <button class="btn" id="btnZoom">범위: 1Y ▾</button>
+    <!-- CHARTS (✅ 한 줄 꽉 / 이미지카드 제거) -->
+    <section id="charts" class="rows section">
+      <div class="card" style="padding:14px 14px 16px">
+        <div class="flex">
+          <div class="h">BM20 시계열</div>
+          <button class="btn" id="btnZoom">범위: 1Y ▾</button>
+        </div>
+        <div class="svgwrap" id="svgHost"><svg></svg></div>
+        <div class="mini">※ series.json을 읽어 단순 라인 차트로 그립니다.</div>
+        <div class="mini" id="seriesStatus" style="margin-top:6px">—</div>
       </div>
-      <div class="svgwrap" id="svgHost"><svg></svg></div>
-      <div class="mini">※ series.json을 읽어 단순 라인 차트로 그립니다.</div>
-    </div>
-  </section>
-    
-        <!-- 글로벌 퍼포먼스 -->
-        <section id="perf" class="card">
+    </section>
+
+    <!-- 글로벌 퍼포먼스 -->
+    <section id="perf" class="card section">
       <div class="h">글로벌 퍼포먼스 (1D, %)</div>
       <div id="perfBar" style="height:320px;margin-top:8px"></div>
       <div class="mini">※ <code>out/YYYY-MM-DD/bm20_daily_data_YYYY-MM-DD.csv</code> 기준.</div>
     </section>
 
-    <!-- DATA / JSON VIEW -->
+    <!-- DATA / JSON VIEW (숨김 유지) -->
     <section id="data" class="rows section hide">
       <div class="card">
         <div class="flex"><div class="h">latest.json</div><button class="btn" id="btnToggleLatest">접기</button></div>
@@ -278,13 +265,11 @@
         <h2 class="h">뉴스 & 퍼포먼스</h2>
 
         <div class="bm-grid">
-          <!-- Left: 코인별 퍼포먼스 (동적 채움) -->
           <section class="bm-card">
             <div class="bm-title">코인별 퍼포먼스 (1D, USD)</div>
             <div class="bm-bars" aria-label="1일 수익률 막대"><!-- JS로 채움 --></div>
           </section>
 
-          <!-- Right: 뉴스 카드 (샘플 텍스트) -->
           <section class="bm-card">
             <div class="bm-title">BM20 데일리 뉴스</div>
             <div class="bm-head">BM20 지수 요약</div>
@@ -303,7 +288,7 @@
     </section>
 
     <footer class="mini">
-      <div>© Blockmedia · Generated client-side from <code>bm20_latest.json</code> & <code>bm20_series.json</code>. 이미지/뉴스 파일이 없으면 자동으로 숨겨집니다.</div>
+      <div>© Blockmedia · Generated client-side from <code>bm20_latest.json</code> & <code>bm20_series.json</code>.</div>
     </footer>
   </main>
 
@@ -313,44 +298,88 @@ const qs = (s, el=document) => el.querySelector(s);
 const fmtPct = v => (v===null||v===undefined||isNaN(v))?"—":(v>0?"+":"") + (Math.round(v*1000)/10).toFixed(1) + "%";
 const fmtNum = v => (v===null||v===undefined||isNaN(v))?"—": new Intl.NumberFormat('en-US',{maximumFractionDigits:2}).format(v);
 const findKey = (obj, candidates=[]) => { for (const k of candidates){ if (obj && Object.hasOwn(obj,k)) return obj[k]; } };
-async function fetchAny(urls){ for (const u of urls){ try{ const r=await fetch(u); if(r.ok) return {url:u,json:await r.json()}; }catch(e){} } throw new Error('no json found'); }
-function setDeltaBadge(pct){ const el=qs('#deltaBadge'); if(pct==null||isNaN(pct)){ el.textContent='데이터 없음'; return; } el.textContent=(pct>0?'▲ ':'▼ ')+fmtPct(pct); el.className='delta '+(pct>=0?'up':'down'); }
-function setImg(id, src){ const img = qs(id); if (!img) return; img.src = src; img.onerror = () => img.closest('div')?.classList.add('hide'); }
-function formatFunding(f){ if(f==null) return '—'; if(typeof f==='number') return fmtPct(f); if(typeof f==='string') return f;
-  if(typeof f==='object'){ const btc=f.btc??f.BTC??f.Btc, eth=f.eth??f.ETH??f.Eth; const p=x=>(typeof x==='number')?fmtPct(x):(x??'—'); return `BTC ${p(btc)}, ETH ${p(eth)}`;} return '—'; }
+async function fetchAny(urls){
+  for (const u of urls){
+    try{
+      const r=await fetch(u, {cache:'no-store'});
+      if(r.ok) return {url:u,json:await r.json()};
+    }catch(e){}
+  }
+  throw new Error('no json found');
+}
+function setDeltaBadge(pct){
+  const el=qs('#deltaBadge');
+  if(pct==null||isNaN(pct)){ el.textContent='데이터 없음'; return; }
+  el.textContent=(pct>0?'▲ ':'▼ ')+fmtPct(pct);
+  el.className='delta '+(pct>=0?'up':'down');
+}
+function formatFunding(f){
+  if(f==null) return '—';
+  if(typeof f==='number') return fmtPct(f);
+  if(typeof f==='string') return f;
+  if(typeof f==='object'){
+    const btc=f.btc??f.BTC??f.Btc, eth=f.eth??f.ETH??f.Eth;
+    const p=x=>(typeof x==='number')?fmtPct(x):(x??'—');
+    return `BTC ${p(btc)}, ETH ${p(eth)}`;
+  }
+  return '—';
+}
 
 // ===== 김치/CSV 로더 유틸 =====
-async function fetchJsonTry(u, tag=''){ try{ const r = await fetch(u+`?v=${Date.now()}`, {cache:'no-store'}); if (r.ok){ console.info('[ok]', tag||u); return await r.json(); } console.warn('[http]', r.status, tag||u);}catch(e){ console.warn('[err]', tag||u, e); } }
-async function fetchTextTry(u, tag=''){ try{ const r = await fetch(u+`?v=${Date.now()}`, {cache:'no-store'}); if (r.ok){ console.info('[ok]', tag||u); return await r.text(); } console.warn('[http]', r.status, tag||u);}catch(e){ console.warn('[err]', tag||u, e); } }
-function ymdFrom(asof, offsetDays=0){ const t = asof ? new Date(asof) : new Date(); if (offsetDays) t.setDate(t.getDate()+offsetDays); const y=t.getFullYear(), m=String(t.getMonth()+1).padStart(2,'0'), d=String(t.getDate()).padStart(2,'0'); return `${y}-${m}-${d}`; }
-function extractKimchi(obj){ if (obj==null) return null; if (typeof obj==='number') return obj; if (typeof obj==='string'){ const v=parseFloat(obj); return isFinite(v)?v:null; }
-  let v = findKey(obj, ['kimchi','kimchi_premium_pct','premium','pct','value']); if (typeof v==='string') v=parseFloat(v);
+async function fetchJsonTry(u, tag=''){
+  try{
+    const r = await fetch(u+`?v=${Date.now()}`, {cache:'no-store'});
+    if (r.ok) return await r.json();
+  }catch(e){}
+}
+async function fetchTextTry(u, tag=''){
+  try{
+    const r = await fetch(u+`?v=${Date.now()}`, {cache:'no-store'});
+    if (r.ok) return await r.text();
+  }catch(e){}
+}
+function ymdFrom(asof, offsetDays=0){
+  const t = asof ? new Date(asof) : new Date();
+  if (offsetDays) t.setDate(t.getDate()+offsetDays);
+  const y=t.getFullYear(), m=String(t.getMonth()+1).padStart(2,'0'), d=String(t.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+function extractKimchi(obj){
+  if (obj==null) return null;
+  if (typeof obj==='number') return obj;
+  if (typeof obj==='string'){ const v=parseFloat(obj); return isFinite(v)?v:null; }
+  let v = findKey(obj, ['kimchi','kimchi_premium_pct','premium','pct','value']);
+  if (typeof v==='string') v=parseFloat(v);
   if (typeof v==='number'&&isFinite(v)) return v;
-  if (v && typeof v==='object'){ let vv = findKey(v, ['pct','value','premium']); if (typeof vv==='string') vv=parseFloat(vv); if (typeof vv==='number'&&isFinite(vv)) return vv; }
+  if (v && typeof v==='object'){
+    let vv = findKey(v, ['pct','value','premium']);
+    if (typeof vv==='string') vv=parseFloat(vv);
+    if (typeof vv==='number'&&isFinite(vv)) return vv;
+  }
   return null;
 }
 async function getKimchiFromOut(asof){
   const dates = [ ymdFrom(asof,0), ymdFrom(null,0), ymdFrom(asof,-1) ];
   for (const d of dates){
     const url = `out/${d}/kimchi_${d}.json`;
-    const j = await fetchJsonTry(url, `kimchi ${d}`);
+    const j = await fetchJsonTry(url);
     const v = extractKimchi(j);
-    if (v!=null){ document.getElementById('kimchi')?.setAttribute('title', `src:/${url}`); return v; }
+    if (v!=null) return v;
   }
   for (const d of dates){
     const url = `bm/out/${d}/kimchi_${d}.json`;
-    const j = await fetchJsonTry(url, `kimchi fb ${d}`);
+    const j = await fetchJsonTry(url);
     const v = extractKimchi(j);
-    if (v!=null){ document.getElementById('kimchi')?.setAttribute('title', `src:/${url}`); return v; }
+    if (v!=null) return v;
   }
   return null;
 }
 async function loadPerfFromCSV(asof){
   const d = ymdFrom(asof);
   const main = `out/${d}/bm20_daily_data_${d}.csv`;
-  const csv = await fetchTextTry(main, 'perf csv');
+  const csv = await fetchTextTry(main);
   if (csv) return csv;
-  return await fetchTextTry(`bm/out/${d}/bm20_daily_data_${d}.csv`, 'perf csv fb');
+  return await fetchTextTry(`bm/out/${d}/bm20_daily_data_${d}.csv`);
 }
 
 // ===== 페이지 로드 =====
@@ -373,7 +402,6 @@ async function loadLatest(){
     if (qs('#r1y'))  qs('#r1y').textContent  = fmtPct(R['1Y']);
     setDeltaBadge(r1);
 
-    // 김치/펀딩
     const funding = findKey(j, ['funding_rates','funding','funding_bps','fundingRate']);
     let kimchi = await getKimchiFromOut(asof);
     if (kimchi == null) {
@@ -383,14 +411,9 @@ async function loadLatest(){
     qs('#kimchi').textContent  = kimchi!=null ? fmtPct(kimchi) : '—';
     qs('#funding').textContent = formatFunding(funding);
 
-    // 뉴스 링크
     const news = j.news_file || j.news_path || j.news;
     if (news && typeof news === 'string') {
       const a = qs('#newsLink'); a.href = news; a.classList.remove('hide');
-    } else {
-      fetch('bm20_news_2025.txt').then(x=>{
-        if (x.ok) { const a = qs('#newsLink'); a.href='bm20_news_latest.txt'; a.classList.remove('hide'); }
-      });
     }
 
     qs('#latestDump').textContent = JSON.stringify(j, null, 2);
@@ -400,46 +423,112 @@ async function loadLatest(){
 }
 
 async function loadSeries(){
-  const host=qs('#svgHost'); const svg=qs('svg', host);
+  const host=qs('#svgHost');
+  const svg=qs('svg', host);
+  const statusEl = qs('#seriesStatus');
+
   try{
     const { url, json: arr } = await fetchAny(['bm20_series.json','series.json','bm/bm20_series.json','bm/series.json']);
-    const points = arr.map(d=>({ t:new Date((d.date||d.day||d.asof||d.asOf||d[0]||Date.now())), v:+((d.level||d.index||d.value||d.close||d.bm20Level||d[1])) }))
-                      .filter(x=>isFinite(x.v)).sort((a,b)=>a.t-b.t);
-    qs('#seriesDump').textContent = `${url}\n`+JSON.stringify(points.slice(-20),null,2);
 
-    let mode=0; const compute=()=>{ if(mode===1){ const y0=new Date(new Date().getFullYear(),0,1); return points.filter(p=>p.t>=y0); }
-                                   if(mode===0){ const d=new Date(); d.setFullYear(d.getFullYear()-1); return points.filter(p=>p.t>=d); }
-                                   return points; };
-    function draw(data){
-      svg.innerHTML=''; const pad=24, W=svg.clientWidth||host.clientWidth, H=svg.clientHeight||host.clientHeight;
-      const minX=+data[0].t,maxX=+data[data.length-1].t,minV=Math.min(...data.map(p=>p.v)),maxV=Math.max(...data.map(p=>p.v));
-      const x=t=> pad+((t-minX)/(maxX-minX))*(W-2*pad), y=v=> H-pad-((v-minV)/(maxV-minV||1))*(H-2*pad);
-      const axes=document.createElementNS('http://www.w3.org/2000/svg','path'); axes.setAttribute('d',`M${pad} ${pad}V${H-pad}H${W-pad}`); axes.setAttribute('stroke',getComputedStyle(document.documentElement).getPropertyValue('--border')); axes.setAttribute('fill','none'); svg.appendChild(axes);
-      const path=document.createElementNS('http://www.w3.org/2000/svg','path'); let d=''; data.forEach((p,i)=>{d+=(i?'L':'M')+x(+p.t)+' '+y(p.v)+' ';}); path.setAttribute('d',d.trim()); path.setAttribute('fill','none'); path.setAttribute('stroke',getComputedStyle(document.documentElement).getPropertyValue('--accent')); path.setAttribute('stroke-width','2'); svg.appendChild(path);
-      const last=data[data.length-1]; const dot=document.createElementNS('http://www.w3.org/2000/svg','circle'); dot.setAttribute('cx',x(+last.t)); dot.setAttribute('cy',y(last.v)); dot.setAttribute('r','3.5'); dot.setAttribute('fill','#ffffff'); dot.setAttribute('stroke',getComputedStyle(document.documentElement).getPropertyValue('--accent')); svg.appendChild(dot);
+    const points = arr.map(d=>({
+        t:new Date((d.date||d.day||d.asof||d.asOf||d[0]||Date.now())),
+        v:+((d.level||d.index||d.value||d.close||d.bm20Level||d[1]))
+      }))
+      .filter(x=>isFinite(x.v))
+      .sort((a,b)=>a.t-b.t);
+
+    statusEl.textContent = `series: ${url} · points: ${points.length}`;
+
+    if (!points.length){
+      svg.innerHTML = '';
+      return;
     }
-    const doDraw=()=>{ const d=compute(); if(d.length>1) draw(d); }; doDraw();
-    qs('#btnZoom').addEventListener('click',()=>{ mode=(mode+1)%3; qs('#btnZoom').textContent=['범위: 1Y ▾','범위: YTD ▾','범위: ALL ▾'][mode]; doDraw(); });
-  }catch(e){ qs('#seriesDump').textContent='series.json을 불러오지 못했습니다.'; }
-}
 
-function 
+    let mode=0;
+    const compute=()=>{
+      if(mode===1){
+        const y0=new Date(new Date().getFullYear(),0,1);
+        return points.filter(p=>p.t>=y0);
+      }
+      if(mode===0){
+        const d=new Date(); d.setFullYear(d.getFullYear()-1);
+        return points.filter(p=>p.t>=d);
+      }
+      return points;
+    };
+
+    function draw(data){
+      svg.innerHTML='';
+      const pad=16; // ✅ 좌우 여백 줄임
+      const W=svg.clientWidth||host.clientWidth;
+      const H=svg.clientHeight||host.clientHeight;
+
+      const minX=+data[0].t, maxX=+data[data.length-1].t;
+      const minV=Math.min(...data.map(p=>p.v));
+      const maxV=Math.max(...data.map(p=>p.v));
+
+      const x=t=> pad+((t-minX)/(maxX-minX||1))*(W-2*pad);
+      const y=v=> H-pad-((v-minV)/(maxV-minV||1))*(H-2*pad);
+
+      const axes=document.createElementNS('http://www.w3.org/2000/svg','path');
+      axes.setAttribute('d',`M${pad} ${pad}V${H-pad}H${W-pad}`);
+      axes.setAttribute('stroke',getComputedStyle(document.documentElement).getPropertyValue('--border'));
+      axes.setAttribute('stroke-width','1');
+      axes.setAttribute('fill','none');
+      svg.appendChild(axes);
+
+      const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+      let d='';
+      data.forEach((p,i)=>{ d+=(i?'L':'M')+x(+p.t)+' '+y(p.v)+' '; });
+      path.setAttribute('d',d.trim());
+      path.setAttribute('fill','none');
+      path.setAttribute('stroke',getComputedStyle(document.documentElement).getPropertyValue('--accent'));
+      path.setAttribute('stroke-width','2');
+      svg.appendChild(path);
+
+      const last=data[data.length-1];
+      const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      dot.setAttribute('cx',x(+last.t));
+      dot.setAttribute('cy',y(last.v));
+      dot.setAttribute('r','4');
+      dot.setAttribute('fill','#ffffff');
+      dot.setAttribute('stroke',getComputedStyle(document.documentElement).getPropertyValue('--accent'));
+      svg.appendChild(dot);
+    }
+
+    const doDraw=()=>{ const d=compute(); if(d.length>1) draw(d); };
+    doDraw();
+
+    qs('#btnZoom').addEventListener('click',()=>{
+      mode=(mode+1)%3;
+      qs('#btnZoom').textContent=['범위: 1Y ▾','범위: YTD ▾','범위: ALL ▾'][mode];
+      doDraw();
+    });
+
+  } catch(e){
+    statusEl.textContent = 'series.json을 불러오지 못했습니다. (파일 경로/배포 경로 확인 필요)';
+    qs('#seriesDump').textContent = String(e);
+  }
+}
 
 // ===== 글로벌 퍼포먼스 (CSV 기반) =====
 async function loadComponentsAndRenderBars(){
-  // asOf 확보(실패해도 로컬 오늘로 진행)
   let asof = null;
-  try{ const j = await (await fetch('bm20_latest.json', {cache:'no-store'})).json(); asof = j.asOf || j.as_of || j.date || j.day || null; }catch(e){}
+  try{
+    const j = await (await fetch('bm20_latest.json', {cache:'no-store'})).json();
+    asof = j.asOf || j.as_of || j.date || j.day || null;
+  }catch(e){}
 
   const csv = await loadPerfFromCSV(asof);
   if (!csv) return;
 
   const [head, ...lines] = csv.trim().split(/\r?\n/);
   const keyIdx = Object.fromEntries(head.split(',').map((h,i)=>[h.trim(), i]));
+
   const rows = lines.map(line=>{
     const c = line.split(',').map(s=>s.trim());
-    const pctRaw = parseFloat(c[keyIdx.price_change_pct]);  // CSV는 이미 % 값 (예: 3.17)
-    const ret = isFinite(pctRaw) ? pctRaw / 100 : null;     // 비율로 변환 (0.0317)
+    const pctRaw = parseFloat(c[keyIdx.price_change_pct]);
+    const ret = isFinite(pctRaw) ? pctRaw / 100 : null;
     return {
       symbol: (c[keyIdx.symbol]||'').toUpperCase(),
       ret_1d: ret,
@@ -449,13 +538,11 @@ async function loadComponentsAndRenderBars(){
 
   rows.sort((a,b)=>b.ret_1d - a.ret_1d);
 
-  // 뉴스 카드: Best/Worst 3
   const bestEl = document.getElementById('best3');
   const worstEl = document.getElementById('worst3');
   if (bestEl) bestEl.textContent = rows.slice(0,3).map(r=>r.symbol).join(' · ') || '—';
   if (worstEl) worstEl.textContent = rows.slice(-3).reverse().map(r=>r.symbol).join(' · ') || '—';
 
-  // 뉴스 카드 좌측 막대 (상위 12개)
   const host = document.querySelector('.bm-bars');
   if (host) {
     const topN = rows.slice(0, 12);
@@ -470,8 +557,6 @@ async function loadComponentsAndRenderBars(){
       const hue = isUp ? 120 : 0;
       const light = 65 - Math.round(ratio * 30);
       const barColor = `hsl(${hue} 60% ${light}%)`;
-
-      // ✅ 라이트 테마용 텍스트 컬러
       const textColor = isUp ? '#166534' : '#991b1b';
 
       return `
@@ -486,10 +571,10 @@ async function loadComponentsAndRenderBars(){
     }).join('');
   }
 
-  // 메인 가로바 차트 (상위 20개)
   const topN = rows.slice(0,20);
   const dom = document.getElementById('perfBar');
   if (!dom) return;
+
   const chart = echarts.init(dom, null, {renderer:'canvas'});
   chart.setOption({
     grid: {left: 8, right: 16, top: 20, bottom: 8, containLabel: true},
@@ -497,22 +582,26 @@ async function loadComponentsAndRenderBars(){
     xAxis: {
       type: 'value',
       axisLabel: { formatter: v => (v>0?'+':'')+(v*100).toFixed(0)+'%' },
-      splitLine: { show:true, lineStyle:{ color:'#e5e7eb' } }
+      splitLine:{show:true, lineStyle:{color:'#e5e7eb'}}
     },
     yAxis: { type: 'category', data: topN.map(r=>r.symbol), axisTick:{show:false} },
     series: [{ type: 'bar', data: topN.map(r=>r.ret_1d), label:{show:true,position:'right',formatter:p=>(p.value>=0?'+':'')+(p.value*100).toFixed(2)+'%'} }],
     animation: true
   });
+
   window.addEventListener('resize', ()=> chart.resize());
 }
 
 // ===== 이벤트 바인딩 & 실행 =====
-qs('#btnToggleLatest').addEventListener('click',()=>qs('#latestDump').classList.toggle('hide'));
-qs('#btnToggleSeries').addEventListener('click',()=>qs('#seriesDump').classList.toggle('hide'));
+(function safeBindToggles(){
+  const a = qs('#btnToggleLatest');
+  const b = qs('#btnToggleSeries');
+  if (a && qs('#latestDump')) a.addEventListener('click',()=>qs('#latestDump').classList.toggle('hide'));
+  if (b && qs('#seriesDump')) b.addEventListener('click',()=>qs('#seriesDump').classList.toggle('hide'));
+})();
 
 loadLatest();
 loadSeries();
-tryImages();
 loadComponentsAndRenderBars();
 </script>
 </body>
