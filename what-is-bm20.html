@@ -7,48 +7,7 @@
 
   <!-- ECharts (뉴스 섹션 바차트 등 확장 시 활용 가능) -->
   <script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
-
-  <style>
-    :root{--bg:#0b1020;--card:#11172a;--muted:#8aa0b5;--text:#e8f0ff;--up:#2E7D32;--down:#C62828;--brand:#1A237E;--accent:#4c74f2;}
-    *{box-sizing:border-box}
-    html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Apple Color Emoji,Segoe UI Emoji}
-    a{color:#aecdff;text-decoration:none}
-    a:hover{text-decoration:underline}
-    header{position:sticky;top:0;background:linear-gradient(180deg,rgba(17,23,42,.95),rgba(17,23,42,.75));backdrop-filter:saturate(1.2) blur(8px);z-index:10;border-bottom:1px solid #233}
-    .wrap{max-width:1100px;margin:0 auto;padding:16px}
-    .brand{display:flex;gap:10px;align-items:center}
-    .brand .dot{width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:0 0 18px var(--accent)}
-    nav{display:flex;gap:18px;align-items:center}
-
-    .card{background:var(--card);border:1px solid #26354a;border-radius:14px;padding:16px;box-shadow:0 8px 28px rgba(0,0,0,.3)}
-    .h{font-weight:700;letter-spacing:.2px}
-    .mini{font-size:12px;color:var(--muted)}
-    .section{margin-top:18px}
-
-    /* 소개 히어로 */
-    .hero{background:linear-gradient(180deg,#11183a 0%,#0f152b 100%);border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:18px;box-shadow:0 12px 30px rgba(0,0,0,.35)}
-    .hero h1{margin:0 0 8px 0;font-size:24px}
-    .hero p{margin:0;color:#d9e3ff}
-
-    /* 구성 표 */
-    .tbl{width:100%;border-collapse:collapse}
-    .tbl th,.tbl td{border-bottom:1px solid #223449;padding:10px 8px;text-align:left}
-    .tbl th{color:#a8bdd6;font-weight:600;background:rgba(22,28,48,.6)}
-    .tbl td.num{text-align:right}
-    .chg.up{color:var(--up);font-weight:700}
-    .chg.down{color:var(--down);font-weight:700}
-
-    /* FAQ */
-    .faq details{margin:8px 0;padding:10px 12px;border:1px solid #2b3d59;border-radius:12px;background:rgba(22,28,48,.6)}
-    .faq summary{font-weight:700;cursor:pointer}
-
-    /* 뉴스 카드 */
-    .news-card{background:linear-gradient(180deg,#11183a 0%,#0f152b 100%);border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:18px;box-shadow:0 12px 30px rgba(0,0,0,.35)}
-    .news-card h3{margin:0 0 8px 0}
-    .news-card p{margin:0;color:#d9e3ff}
-
-    footer{color:#92a7be;margin:40px 0 60px}
-  </style>
+<link rel="stylesheet" href="/bm/assets/bm20.css">
 </head>
 <body>
 
@@ -69,8 +28,6 @@
         <a href="https://ceciliamyeong.github.io/bm/methodology.html">Data</a>
         <a href="https://ceciliamyeong.github.io/bm/latest.html">Latest</a>
       </nav>
-    </div>
-  </header>
     </div>
   </header>
 
