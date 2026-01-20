@@ -188,207 +188,229 @@
       © Blockmedia · 본 페이지는 Google Sheets CSV 및(선택) latest.json을 사용해 렌더링됩니다.
     </footer>
   </main>
+<script>
+  // weights CSV (performance.html과 동일)
+  const CSV_WEIGHTS =
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTndyrPd3WWwFtfzv2CZxJeDcH-l8ibQIdO5ouYS4HsaGpbeXQQbs6WEr9qPqqZbRoT6cObdFxJpief/pub?gid=1533548287&single=true&output=csv";
 
-  <script>
-    // weights CSV (performance.html과 동일)
-    const CSV_WEIGHTS =
-      "https://docs.google.com/spreadsheets/d/e/2PACX-1vTndyrPd3WWwFtfzv2CZxJeDcH-l8ibQIdO5ouYS4HsaGpbeXQQbs6WEr9qPqqZbRoT6cObdFxJpief/pub?gid=1533548287&single=true&output=csv";
+  // (선택) 뉴스/요약
+  const LATEST_JSON = "/bm/latest.json?v=" + Date.now();
 
-    // (선택) 뉴스/요약
-    const LATEST_JSON = "/bm/latest.json?v=" + Date.now();
-
-    // ── performance에서 검증된 CSV split (따옴표/쉼표 안전) ──
-    function splitCsv(row){
-      const out=[]; let cur=""; let q=false;
-      for(let i=0;i<row.length;i++){
-        const ch=row[i];
-        if(ch=='"'){ q=!q; continue; }
-        if(ch=="," && !q){ out.push(cur); cur=""; continue; }
-        cur+=ch;
-      }
-      out.push(cur);
-      return out.map(s=>s.trim());
+  // ── CSV split (따옴표/쉼표 안전) ──
+  function splitCsv(row){
+    const out=[]; let cur=""; let q=false;
+    for(let i=0;i<row.length;i++){
+      const ch=row[i];
+      if(ch=='"'){ q=!q; continue; }
+      if(ch=="," && !q){ out.push(cur); cur=""; continue; }
+      cur+=ch;
     }
+    out.push(cur);
+    return out.map(s=>s.trim());
+  }
 
-    async function fetchCsv(url){
-      const u = url + (url.includes("?")?"&":"?") + "v=" + Date.now();
-      const r = await fetch(u,{cache:"no-store"});
-      if(!r.ok) throw new Error("fetch fail: " + r.status);
-      return r.text();
+  async function fetchCsv(url){
+    const u = url + (url.includes("?")?"&":"?") + "v=" + Date.now();
+    const r = await fetch(u,{cache:"no-store"});
+    if(!r.ok) throw new Error("fetch fail: " + r.status);
+    return r.text();
+  }
+
+  async function fetchJSON(u){
+    const r = await fetch(u,{cache:"no-store"});
+    if(!r.ok) throw new Error("fetch fail");
+    return r.json();
+  }
+
+  // ✅ Performance 방식: Symbol + Market Cap만 파싱
+  function parseMcapCsv(text){
+    const lines = text.trim().split(/\r?\n/);
+    const header = splitCsv(lines.shift()).map(h=>h.toLowerCase());
+
+    const iSym  = header.indexOf("symbol");
+    const iName = header.indexOf("name"); // optional
+    const iCap  = header.findIndex(h => h.includes("market") && h.includes("cap"));
+
+    if(iSym < 0) throw new Error("CSV missing symbol");
+    if(iCap < 0) throw new Error("CSV missing market cap");
+
+    const rows=[];
+    for(const l of lines){
+      if(!l.trim()) continue;
+      const c = splitCsv(l);
+      const sym = (c[iSym]||"").toUpperCase().trim();
+      const name = (iName>=0 ? (c[iName]||"").trim() : sym);
+      const cap = Number(String(c[iCap]||"").replace(/[, ]/g,""));
+      if(sym && Number.isFinite(cap)) rows.push({ sym, name, cap });
     }
+    return rows;
+  }
 
-    async function fetchJSON(u){
-      const r = await fetch(u,{cache:"no-store"});
-      if(!r.ok) throw new Error("fetch fail");
-      return r.json();
-    }
+  function makeBar(elId, labels, values, xMax){
+    const el = document.getElementById(elId);
+    const c = echarts.init(el);
+    c.setOption({
+      backgroundColor:'transparent',
+      grid:{ left:56, right:16, top:6, bottom:18 },
+      tooltip:{
+        trigger:'axis',
+        axisPointer:{ type:'shadow' },
+        formatter:(ps)=>{
+          const p=ps[0];
+          return `${p.name}<br/>${Number(p.value).toFixed(2)}%`;
+        }
+      },
+      xAxis:{
+        type:'value', min:0, max:xMax,
+        axisLabel:{ color:'#6b7280', formatter:v=>v+'%' },
+        splitLine:{ lineStyle:{ color:'#f1f5f9' } },
+        axisLine:{ lineStyle:{ color:'#e5e7eb' } }
+      },
+      yAxis:{
+        type:'category', data:labels,
+        axisLabel:{ color:'#111827' },
+        axisLine:{ lineStyle:{ color:'#e5e7eb' } }
+      },
+      series:[{
+        type:'bar',
+        data:values.map(v=>Number(v.toFixed(4))),
+        label:{ show:true, position:'right', formatter:p=>Number(p.value).toFixed(2)+'%' }
+      }]
+    });
+    return c;
+  }
 
-    // weights CSV 파싱: 헤더 index 기반이라 안정적
-    function parseWeightCsv(text){
-      const lines = text.trim().split(/\r?\n/);
-      const header = splitCsv(lines.shift()).map(h=>h.toLowerCase());
+  (async ()=>{
+    const charts = [];
 
-      const iSym  = header.indexOf("symbol");
-      const iName = header.indexOf("name");        // optional
-      const iW    = header.findIndex(h => /bm20.*weight|methodology.*weight|final.*weight|weight|비중/.test(h));
+    try{
+      const text = await fetchCsv(CSV_WEIGHTS);
+      const rows = parseMcapCsv(text);
+      if(!rows.length) throw new Error("mcap rows empty");
 
-      if(iSym < 0) throw new Error("CSV missing symbol column");
-      if(iW   < 0) throw new Error("CSV missing weight column");
+      // 기준 시간
+      const asofEl = document.getElementById("asof");
+      if(asofEl) asofEl.textContent = "기준: " + new Date().toLocaleString("ko-KR");
 
-      const rows=[];
-      for(const l of lines){
-        if(!l.trim()) continue;
-        const c = splitCsv(l);
-        const sym = (c[iSym]||"").toUpperCase().trim();
-        const name = (iName>=0 ? (c[iName]||"").trim() : sym);
-        let w = parseFloat(String(c[iW]||"").replace(/[% ,]/g,""));
-        if(!Number.isFinite(w)) continue;
-        // 0~1 비율이면 %로 변환
-        w = (w>0 && w<=1) ? w*100 : w;
-        rows.push({ sym, name, w });
-      }
-      return rows;
-    }
+      // 유니버스(코인 심볼) 확보
+      const universe = rows.map(r=>r.sym);
 
-    function makeBar(elId, labels, values, xMax){
-      const c = echarts.init(document.getElementById(elId));
-      c.setOption({
+      // ===== Rule View (4 buckets) — 룰 고정값 (설명 페이지에 최적)
+      const wBTC = 30, wETH = 20, w5 = 15, wOther = 35;
+
+      const rule = echarts.init(document.getElementById("ruleDonut"));
+      rule.setOption({
         backgroundColor:'transparent',
-        grid:{ left:56, right:16, top:6, bottom:18 },
-        tooltip:{
-          trigger:'axis',
-          axisPointer:{ type:'shadow' },
-          formatter:(ps)=>{
-            const p=ps[0];
-            return `${p.name}<br/>${Number(p.value).toFixed(2)}%`;
-          }
-        },
-        xAxis:{
-          type:'value', min:0, max:xMax,
-          axisLabel:{ color:'#6b7280', formatter:v=>v+'%' },
-          splitLine:{ lineStyle:{ color:'#f1f5f9' } },
-          axisLine:{ lineStyle:{ color:'#e5e7eb' } }
-        },
-        yAxis:{
-          type:'category', data:labels,
-          axisLabel:{ color:'#111827' },
-          axisLine:{ lineStyle:{ color:'#e5e7eb' } }
-        },
+        tooltip:{ trigger:'item', formatter:p=>`${p.name}<br/>${p.value.toFixed(2)}%` },
         series:[{
-          type:'bar',
-          data:values.map(v=>Number(v.toFixed(4))),
-          label:{ show:true, position:'right', formatter:p=>Number(p.value).toFixed(2)+'%' }
+          type:'pie',
+          radius:['58%','80%'],
+          center:['50%','50%'],
+          label:{ show:true, formatter:'{b}\n{d}%' },
+          labelLine:{ length:10, length2:8 },
+          data:[
+            { name:"BTC", value:wBTC },
+            { name:"ETH", value:wETH },
+            { name:"5% 그룹", value:w5 },
+            { name:"Others", value:wOther }
+          ]
+        }],
+        graphic:[{
+          type:'text',
+          left:'center', top:'center',
+          style:{
+            text:'BM20\nRule View',
+            textAlign:'center',
+            fill:'#111827',
+            fontSize:14,
+            fontWeight:700,
+            lineHeight:18
+          }
         }]
       });
-      return c;
+      charts.push(rule);
+
+      // ===== Right bars — 룰을 유니버스에 맞춰 예쁘게 분배
+      const FIXED = { BTC:30, ETH:20, XRP:5, USDT:5, BNB:5 };
+
+      // 코어 / 5% 그룹은 “유니버스에 있으면 표시” (없으면 자동 제외)
+      const core = ["BTC","ETH"].filter(s=>universe.includes(s));
+      const five = ["XRP","USDT","BNB"].filter(s=>universe.includes(s));
+
+      // Others는 FIXED 제외한 나머지
+      const rest = universe.filter(s=>!(s in FIXED)).sort((a,b)=>a.localeCompare(b));
+      const restW = rest.length ? (35/rest.length) : 0;
+
+      const half = Math.ceil(rest.length/2);
+      const otherA = rest.slice(0,half);
+      const otherB = rest.slice(half);
+
+      const cCore = makeBar(
+        "barsCore",
+        core.slice().reverse(),
+        core.map(s=>FIXED[s]).reverse(),
+        30
+      );
+
+      const cFive = makeBar(
+        "barsFive",
+        five.slice().reverse(),
+        five.map(s=>FIXED[s]).reverse(),
+        10
+      );
+
+      const cOA = makeBar(
+        "barsOtherA",
+        otherA.slice().reverse(),
+        otherA.map(_=>restW).reverse(),
+        5
+      );
+
+      const cOB = makeBar(
+        "barsOtherB",
+        otherB.slice().reverse(),
+        otherB.map(_=>restW).reverse(),
+        5
+      );
+
+      charts.push(cCore,cFive,cOA,cOB);
+
+    }catch(e){
+      console.warn(e);
+      const msg = String(e?.message || e);
+      const asofEl = document.getElementById("asof");
+      if(asofEl) asofEl.textContent = "기준: —";
+
+      const ruleEl = document.getElementById("ruleDonut");
+      if(ruleEl) ruleEl.innerHTML = `<div class="mini">데이터를 불러오지 못했습니다. (${msg})</div>`;
+
+      ["barsCore","barsFive","barsOtherA","barsOtherB"].forEach(id=>{
+        const el = document.getElementById(id);
+        if(el) el.innerHTML = `<div class="mini">—</div>`;
+      });
     }
 
-    (async ()=>{
-      const charts = [];
-
-      try{
-        // 1) weights 가져오기
-        const text = await fetchCsv(CSV_WEIGHTS);
-        const items = parseWeightCsv(text);
-        if(!items.length) throw new Error("weights empty");
-
-        // 2) asof
-        const asofEl = document.getElementById("asof");
-        if(asofEl) asofEl.textContent = "기준: " + new Date().toLocaleString("ko-KR");
-
-        // 3) rule donut (4 buckets)
-        const sum = arr => arr.reduce((a,b)=>a+b,0);
-        const wBTC = sum(items.filter(x=>x.sym==="BTC").map(x=>x.w)) || 30;
-        const wETH = sum(items.filter(x=>x.sym==="ETH").map(x=>x.w)) || 20;
-        const w5   = sum(items.filter(x=>["XRP","USDT","BNB"].includes(x.sym)).map(x=>x.w)) || 15;
-        const total = sum(items.map(x=>x.w)) || 100;
-        const wOther = Math.max(0, total - (wBTC+wETH+w5)) || 35;
-
-        const rule = echarts.init(document.getElementById("ruleDonut"));
-        rule.setOption({
-          backgroundColor:'transparent',
-          tooltip:{ trigger:'item', formatter:p=>`${p.name}<br/>${p.value.toFixed(2)}%` },
-          series:[{
-            type:'pie',
-            radius:['58%','80%'],
-            center:['50%','50%'],
-            label:{ show:true, formatter:'{b}\n{d}%' },
-            labelLine:{ length:10, length2:8 },
-            data:[
-              { name:"BTC", value:wBTC },
-              { name:"ETH", value:wETH },
-              { name:"5% 그룹", value:w5 },
-              { name:"Others", value:wOther }
-            ]
-          }],
-          graphic:[{
-            type:'text',
-            left:'center', top:'center',
-            style:{
-              text:'BM20\nRule View',
-              textAlign:'center',
-              fill:'#111827',
-              fontSize:14,
-              fontWeight:700,
-              lineHeight:18
-            }
-          }]
-        });
-        charts.push(rule);
-
-        // 4) 우측 그룹 바 — 룰 고정(예쁜 균등)
-        const universe = items.map(x=>x.sym);
-        const FIXED = { BTC:30, ETH:20, XRP:5, USDT:5, BNB:5 };
-
-        const rest = universe.filter(s=>!(s in FIXED)).sort((a,b)=>a.localeCompare(b));
-        const restW = rest.length ? (35/rest.length) : 0;
-
-        const core = ["BTC","ETH"].filter(s=>universe.includes(s));
-        const five = ["XRP","USDT","BNB"].filter(s=>universe.includes(s));
-
-        const half = Math.ceil(rest.length/2);
-        const otherA = rest.slice(0,half);
-        const otherB = rest.slice(half);
-
-        const cCore = makeBar("barsCore", core.slice().reverse(), core.map(s=>FIXED[s]).reverse(), 30);
-        const cFive = makeBar("barsFive", five.slice().reverse(), five.map(s=>FIXED[s]).reverse(), 10);
-        const cOA   = makeBar("barsOtherA", otherA.slice().reverse(), otherA.map(_=>restW).reverse(), 5);
-        const cOB   = makeBar("barsOtherB", otherB.slice().reverse(), otherB.map(_=>restW).reverse(), 5);
-
-        charts.push(cCore,cFive,cOA,cOB);
-
-      }catch(e){
-        console.warn(e);
-        const msg = String(e?.message || e);
-        const asofEl = document.getElementById("asof");
-        if(asofEl) asofEl.textContent = "기준: —";
-        const ruleEl = document.getElementById("ruleDonut");
-        if(ruleEl) ruleEl.innerHTML = `<div class="mini">데이터를 불러오지 못했습니다. (${msg})</div>`;
-        ["barsCore","barsFive","barsOtherA","barsOtherB"].forEach(id=>{
-          const el = document.getElementById(id);
-          if(el) el.innerHTML = `<div class="mini">—</div>`;
-        });
-      }
-
-      // (선택) 뉴스 섹션
-      try{
-        const d = await fetchJSON(LATEST_JSON);
-        if (d?.news?.title || d?.news?.body) {
-          document.getElementById("newsTitle").textContent = d.news.title || "BM20 데일리 뉴스";
-          document.getElementById("newsBody").textContent  = d.news.body  || "";
+    // (선택) 뉴스 섹션
+    try{
+      const d = await fetchJSON(LATEST_JSON);
+      if (d?.news?.title || d?.news?.body) {
+        document.getElementById("newsTitle").textContent = d.news.title || "BM20 데일리 뉴스";
+        document.getElementById("newsBody").textContent  = d.news.body  || "";
+        document.getElementById("newsBox").style.display = "";
+      } else {
+        const r = await fetch('/bm/bm20_news_latest.txt',{cache:'no-store'});
+        if (r.ok) {
+          document.getElementById("newsTitle").textContent = "BM20 데일리 뉴스";
+          document.getElementById("newsBody").textContent  = await r.text();
           document.getElementById("newsBox").style.display = "";
-        } else {
-          const r = await fetch('/bm/bm20_news_latest.txt',{cache:'no-store'});
-          if (r.ok) {
-            document.getElementById("newsTitle").textContent = "BM20 데일리 뉴스";
-            document.getElementById("newsBody").textContent  = await r.text();
-            document.getElementById("newsBox").style.display = "";
-          }
         }
-      }catch(e){}
+      }
+    }catch(e){}
 
-      addEventListener('resize', ()=> charts.forEach(c=>c.resize()));
-    })();
-  </script>
+    addEventListener('resize', ()=> charts.forEach(c=>c.resize()));
+  })();
+</script>
+
+
 </body>
 </html>
