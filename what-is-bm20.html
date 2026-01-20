@@ -41,7 +41,7 @@
 
     <!-- 2) 구성 종목 (실시간 CSV) -->
     <section class="card section">
-      <div class="h">구성 종목 (실시간)</div>
+      <div class="h">BM20 구성 종목 및 비중</div>
       <div class="mini" id="asof">—</div>
       <div style="overflow:auto;margin-top:10px">
         <table class="tbl" id="tbl"><tr><td class="mini">로딩 중…</td></tr></table>
@@ -155,7 +155,7 @@
   <script>
     // ===== 데이터 소스 (실시간 CSV)
     const v = Date.now();
-    const COMPONENTS_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTndyrPd3WWwFtfzv2CZxJeDcH-l8ibQIdO5ouYS4HsaGpbeXQQbs6WEr9qPqqZbRoT6cObdFxJpief/pub?gid=1533548287&single=true&output=csv&v="+v;
+    const WEIGHTS_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTndyrPd3WWwFtfzv2CZxJeDcH-l8ibQIdO5ouYS4HsaGpbeXQQbs6WEr9qPqqZbRoT6cObdFxJpief/pub?gid=1533548287&single=true&output=csv&v="+v;
     const LATEST_JSON     = "/bm/latest.json?v="+v;  // 있으면 뉴스/요약 보강
 
     async function fetchText(u){ const r=await fetch(u,{cache:'no-store'}); if(!r.ok) throw new Error("fetch fail"); return r.text(); }
@@ -167,69 +167,68 @@
     function numStr(x){ const n=+String(x||"").replace(/[, ]/g,""); return isFinite(n)?n.toLocaleString():x; }
 
     (async ()=>{
-      // (A) 구성 테이블
-      try{
-        const rows = parseCSV(await fetchText(COMPONENTS_CSV));
-        const symK = Object.keys(rows[0]).find(k=>/symbol|심볼/i.test(k)) || "Symbol";
-        const nameK= Object.keys(rows[0]).find(k=>/name|이름/i.test(k))   || "Name";
-        const pxK  = Object.keys(rows[0]).find(k=>/price|가격/i.test(k))  || "Price";
-        const mcK  = Object.keys(rows[0]).find(k=>/cap|총액/i.test(k))    || "Market Cap";
-        const vK   = Object.keys(rows[0]).find(k=>/vol|거래/i.test(k))    || "24h Volume";
-        const chK  = Object.keys(rows[0]).find(k=>/change_?24h|24h.*(chg|ret)|ret_?1d|1d/i.test(k)) || "change_24h";
-        const tsK  = Object.keys(rows[0]).find(k=>/as.?of|date|time/i.test(k)); // 있으면 기준 시각 표시
+   // (A) 구성(포트폴리오) 테이블: 코인 + 비중만 표시
+try{
+  const rows = parseCSV(await fetchText(WEIGHTS_CSV));
+  if(!rows.length) throw new Error("empty weights csv");
 
-        if (tsK && rows[0][tsK]) {
-          document.getElementById("asof").textContent = "기준: " + rows[0][tsK];
-        }
+  const keys = Object.keys(rows[0]||{});
 
-        const thead = `<tr>
-          <th>Symbol</th><th>Name</th>
-          <th class="num">Price</th>
-          <th class="num">Market Cap</th>
-          <th class="num">24h Vol</th>
-          <th class="num">24h</th>
-        </tr>`;
+  // 컬럼명 자동 탐색 (시트 헤더가 달라도 최대한 맞춤)
+  const symK  = keys.find(k=>/symbol|ticker|심볼/i.test(k)) || keys[0];
+  const nameK = keys.find(k=>/^name$|코인|종목|자산/i.test(k)); // 없을 수도
+  const wK    = keys.find(k=>/bm20.*weight|methodology.*weight|final.*weight/i.test(k))
+             || keys.find(k=>/weight|비중/i.test(k));
 
-        const tbody = rows.map(o=>{
-          const ch = parseFloat(String(o[chK]||"").replace(/[% ]/g,""));
-          const chHtml = isFinite(ch)
-            ? `<span class="chg ${ch>=0?'up':'down'}">${ch>=0?'+':''}${ch.toFixed(2)}%</span>`
-            : '';
-          return `<tr>
-            <td>${o[symK]||""}</td>
-            <td>${o[nameK]||""}</td>
-            <td class="num">${numStr(o[pxK])}</td>
-            <td class="num">${numStr(o[mcK])}</td>
-            <td class="num">${numStr(o[vK])}</td>
-            <td class="num">${chHtml}</td>
-          </tr>`;
-        }).join("");
+  if(!wK) throw new Error("no weight column (weight/비중) in sheet");
 
-        document.getElementById("tbl").innerHTML = thead + tbody;
-      }catch(e){
-        document.getElementById("tbl").innerHTML = `<tr><td class="mini">구성 데이터를 불러오지 못했습니다.</td></tr>`;
-        console.warn(e);
-      }
+  function toNum(x){
+    const s=String(x??"").trim();
+    if(!s) return NaN;
+    const n=Number(s.replace(/[% ,]/g,""));
+    return Number.isFinite(n)?n:NaN;
+  }
+  function smartPct(x){
+    const n=toNum(x);
+    if(!Number.isFinite(n)) return "—";
+    // 0~1로 들어오면 %로 변환
+    const v = (n > 0 && n <= 1) ? (n * 100) : n;
+    return v.toFixed(2) + "%";
+  }
 
-      // (B) 뉴스 섹션 (latest.json 또는 텍스트 파일 폴백)
-      try{
-        const d = await fetchJSON(LATEST_JSON);
-        if (d?.news?.title || d?.news?.body) {
-          document.getElementById("newsTitle").textContent = d.news.title || "BM20 데일리 뉴스";
-          document.getElementById("newsBody").textContent  = d.news.body  || "";
-          document.getElementById("newsBox").style.display = "";
-        } else {
-          // 텍스트 폴백
-          const r = await fetch('/bm/bm20_news_latest.txt',{cache:'no-store'});
-          if (r.ok) {
-            document.getElementById("newsTitle").textContent = "BM20 데일리 뉴스";
-            document.getElementById("newsBody").textContent  = await r.text();
-            document.getElementById("newsBox").style.display = "";
-          }
-        }
-      }catch(e){
-        // 뉴스가 없어도 페이지는 정상 표시
-      }
+  // 기준 표시(시트에 있으면 쓰고, 없으면 현재시간)
+  const tsK = keys.find(k=>/as.?of|date|time|updated/i.test(k));
+  document.getElementById("asof").textContent =
+    "기준: " + ((tsK && rows[0][tsK]) ? rows[0][tsK] : new Date().toLocaleString("ko-KR"));
+
+  const thead = `<tr>
+    <th>Symbol</th>
+    <th>Name</th>
+    <th class="num">Weight</th>
+  </tr>`;
+
+  // 비중 큰 순 정렬(원하면 삭제 가능)
+  const sorted = [...rows].sort((a,b)=> (toNum(b[wK]) - toNum(a[wK])) );
+
+  const tbody = sorted.map(o=>{
+    const sym  = String(o[symK]||"").trim();
+    const name = nameK ? String(o[nameK]||"").trim() : "";
+    const w    = smartPct(o[wK]);
+
+    return `<tr>
+      <td>${sym || "—"}</td>
+      <td>${name || "—"}</td>
+      <td class="num">${w}</td>
+    </tr>`;
+  }).join("");
+
+  document.getElementById("tbl").innerHTML = thead + tbody;
+
+}catch(e){
+  document.getElementById("tbl").innerHTML =
+    `<tr><td class="mini">포트폴리오(구성·비중) 데이터를 불러오지 못했습니다.</td></tr>`;
+  console.warn(e);
+}
     })();
   </script>
 </body>
