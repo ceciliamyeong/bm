@@ -5,13 +5,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>What is BM20?</title>
 
-  <!-- ECharts (뉴스 섹션 바차트 등 확장 시 활용 가능) -->
+  <!-- ECharts (차트) -->
   <script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
-<link rel="stylesheet" href="/bm/assets/bm20.css">
-</head>
-<body>
 
-  <!-- 헤더/네비 (메인과 통일) -->
+  <!-- BM20 White Theme -->
+  <link rel="stylesheet" href="/bm/assets/bm20.css?v=1">
+
+  <!-- 페이지 전용(최소) -->
+  <style>
+    .viz-grid{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:14px;
+      margin-top:12px;
+    }
+    @media (max-width: 860px){
+      .viz-grid{ grid-template-columns: 1fr; }
+    }
+    .chipline{
+      display:flex; gap:8px; flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .chip{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 10px;
+      border:1px solid var(--border);
+      border-radius:999px;
+      background:#fafafa;
+      font-size:12px;
+      color:var(--text);
+    }
+    .chip .dot{ width:8px; height:8px; border-radius:50%; background:var(--brand); }
+    .subnote{ margin-top:6px; }
+    hr{ border:0; border-top:1px solid var(--divider); margin:16px 0; }
+    code{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:13px; }
+  </style>
+</head>
+
+<body>
+  <!-- 헤더/네비 -->
   <header>
     <div class="wrap" style="display:flex;gap:14px;align-items:center;justify-content:space-between">
       <div class="brand">
@@ -35,21 +67,43 @@
     <!-- 1) 타이틀 + 개요 -->
     <section class="hero">
       <h1>What is BM20?</h1>
-      <p>BM20 Index는 글로벌 시가총액 상위 디지털 자산 20종을 한 바스켓으로 묶어, 한국 투자자 관점에서 시장의 “방향”과 “강도”를 한눈에 보여주는 대표 지수입니다. 글로벌 표준형 지수의 장점을 따르되, 국내 3대 거래소(KRW 마켓) 상장 종목에 가중치 보정(예: ×1.3)을 적용해 ‘한국 투자자 체감 유동성’을 반영하는 것이 특징입니다. 지수는 ETF/ETP 등 투자상품화까지 염두에 두고 설계되어, 산출·유지·배포 전 과정의 투명성과 재현성을 중시합니다.</p>
-      <p class="mini" style="margin-top:6px">가중치 상한: BTC 30%, ETH 20%, XRP/USDT/BNB 각 5%, 나머지 15종 균등(총 35%). 데이터 소스: Coingecko(기본), Yahoo Finance(폴백).</p>
+      <p>
+        BM20 Index는 글로벌 시가총액 상위 디지털 자산 20종을 한 바스켓으로 묶어, 한국 투자자 관점에서 시장의 “방향”과 “강도”를
+        한눈에 보여주는 대표 지수입니다. 글로벌 표준형 지수의 장점을 따르되, 국내 3대 거래소(KRW 마켓) 상장 종목에 가중치 보정(예: ×1.3)을
+        적용해 ‘한국 투자자 체감 유동성’을 반영하는 것이 특징입니다. 지수는 ETF/ETP 등 투자상품화까지 염두에 두고 설계되어,
+        산출·유지·배포 전 과정의 투명성과 재현성을 중시합니다.
+      </p>
+      <p class="mini" style="margin-top:6px">
+        가중치 상한: BTC 30%, ETH 20%, XRP/USDT/BNB 각 5%, 나머지 15종 균등(총 35%). 데이터 소스: Coingecko(기본), Yahoo Finance(폴백).
+      </p>
     </section>
 
-    <!-- 2) 구성 종목 (실시간 CSV) -->
+    <!-- 2) 구성/비중 시각화 -->
     <section class="card section">
-      <div class="h">BM20 구성 종목 및 비중</div>
+      <div class="h">BM20 구성 및 비중</div>
       <div class="mini" id="asof">—</div>
-      <div style="overflow:auto;margin-top:10px">
-        <table class="tbl" id="tbl"><tr><td class="mini">로딩 중…</td></tr></table>
+
+      <div class="chipline" aria-label="BM20 rules">
+        <span class="chip"><span class="dot"></span>BTC 30%</span>
+        <span class="chip"><span class="dot"></span>ETH 20%</span>
+        <span class="chip"><span class="dot"></span>XRP/USDT/BNB 각 5%</span>
+        <span class="chip"><span class="dot"></span>나머지 15종 합계 35%(균등)</span>
+      </div>
+      <div class="mini subnote">아래 차트는 “BM20 방법론 비중(포트폴리오)”을 기반으로 표시됩니다.</div>
+
+      <div class="viz-grid">
+        <div>
+          <div class="mini" style="margin-bottom:6px">Rule View (4 Buckets)</div>
+          <div id="ruleDonut" style="height:360px"></div>
+        </div>
+        <div>
+          <div class="mini" style="margin-bottom:6px">Portfolio View (Top Weights)</div>
+          <div id="topBars" style="height:360px"></div>
+        </div>
       </div>
     </section>
 
-
-<!-- 2.5) 방법론·운영 — (첫 번째·두 번째 이미지 내용 그대로, 얇은 톤) -->
+    <!-- 2.5) 방법론·운영 -->
     <section class="card section plain">
       <div class="h">설계 원칙</div>
       <ul>
@@ -77,7 +131,7 @@
       <h3>산출 방식(Index Calculation)</h3>
       <ul style="margin:0 0 6px 18px;color:var(--muted)">
         <li>지수 통화: USD</li>
-        <li>기준일(Base): <b style="font-weight:560;color:#dfe7ff">2018-01-01 = 100.00pt</b></li>
+        <li>기준일(Base): <b style="font-weight:560">2018-01-01 = 100.00pt</b></li>
         <li>산출 논리: 기준일 대비 각 종목의 가격수익률에 <i>가중치 Wᵢ</i>를 곱해 합산하는 라스파이레스형</li>
         <li>간단식: <code>BM20ₜ = 100 × Σ[ Wᵢ × ( Pᵢ,ₜ / Pᵢ,base ) ]</code></li>
         <li>공식 지수 공표: 일일 마감 값 기준(뉴스/리포트에 사용)</li>
@@ -97,7 +151,6 @@
       </ul>
     </section>
 
-    
     <!-- 3) FAQ -->
     <section class="card section">
       <div class="h">FAQ</div>
@@ -106,37 +159,16 @@
         <details><summary>언제 출시됐나?</summary><p class="mini">지수 기준일은 2018-01-01이며, 2025년 정식 공개를 목표로 개편/자동화를 진행 중입니다.</p></details>
         <details><summary>왜 만들었나?</summary><p class="mini">복잡한 종목 개별 노이즈를 지수 하나로 요약해 일간/주간/월간 흐름을 명확히 보여주고, 장기적으로 ETF·파생 벤치마크로 확장하기 위함입니다.</p></details>
         <details><summary>어떤 점이 다른가?</summary><p class="mini">국내 상장 코인 1.3× 보정, 상한 규칙(BTC 30·ETH 20·XRP/USDT/BNB 5), 분기 리밸런싱을 명시적으로 공개합니다.</p></details>
+      </div>
+    </section>
 
-        <details>
-        <summary> BM20은 왜 ‘한국형 보정’을 쓰나?</summary>
-        <p class="mini">KRW 마켓 상장 여부는 국내 투자자의 체감 유동성과 접근성에 직접 연결됩니다. ×1.3 보정은 이 현실을 지수에 반영해 국내 투자자 기준 대표성을 높입니다.</p>
-      </details>
-      <details>
-        <summary>시총가중인데도 상한(Cap)은 왜 필요한가?</summary>
-        <p class="mini">과도한 쏠림을 방지하고 다양한 섹터의 움직임을 균형 있게 반영하기 위해서입니다. BTC 30%, 기타 단일 종목 15% 등 상한을 적용하고 초과분은 다른 종목으로 재분배합니다.</p>
-      </details>
-      <details>
-        <summary>지수 값은 실시간인가?</summary>
-        <p class="mini">대시보드는 실시간/근실시간 조회가 가능하지만, 공식 공표 값은 일일 마감치로 확정됩니다.</p>
-      </details>
-      <details>
-        <summary>편입·편출은 얼마나 자주 바뀌나?</summary>
-        <p class="mini">정기 리밸런싱은 분기 1회(원칙). 상장폐지·거래중단·체결 신뢰도 저하 등 이벤트 발생 시 수시 교체가 가능하며, 모든 변경은 로그로 남깁니다.</p>
-      </details>
-      <details>
-        <summary>데이터 신뢰성은 어떻게 보증하는가?</summary>
-        <p class="mini">다중 소스 집계와 이상치 필터, 시간대 교차검증, 자동/수동 검증 플로우로 품질을 통제합니다. 코드·데이터는 버전 고정 및 감사 추적이 가능합니다.</p>
-      </details>
-    </div>
-  </section>
-   
     <!-- 4) 뉴스 섹션 -->
     <section class="news-card section" id="newsBox" style="display:none">
       <h3 class="h" id="newsTitle">BM20 데일리 뉴스</h3>
       <p id="newsBody" class="mini">—</p>
     </section>
 
-       <!-- 5) 로드맵 -->
+    <!-- 5) 로드맵 -->
     <section class="card section">
       <div class="h">로드맵</div>
       <ul class="mini" style="margin:8px 0 0 18px">
@@ -146,89 +178,176 @@
         <li><b style="font-weight:520">2026+</b> — API/임베드 위젯, ETF/ETP·파생상품 벤치마크 협의</li>
       </ul>
     </section>
-   
+
     <footer class="mini">
-      © Blockmedia · 본 페이지는 실시간 Google Sheets CSV 및(선택) latest.json을 사용해 렌더링됩니다.
+      © Blockmedia · 본 페이지는 Google Sheets CSV 및(선택) latest.json을 사용해 렌더링됩니다.
     </footer>
   </main>
 
   <script>
-    // ===== 데이터 소스 (실시간 CSV)
+    // ===== 데이터 소스 (Performance 포트폴리오 weights)
     const v = Date.now();
     const WEIGHTS_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTndyrPd3WWwFtfzv2CZxJeDcH-l8ibQIdO5ouYS4HsaGpbeXQQbs6WEr9qPqqZbRoT6cObdFxJpief/pub?gid=1533548287&single=true&output=csv&v="+v;
-    const LATEST_JSON     = "/bm/latest.json?v="+v;  // 있으면 뉴스/요약 보강
+    const LATEST_JSON = "/bm/latest.json?v="+v;
 
     async function fetchText(u){ const r=await fetch(u,{cache:'no-store'}); if(!r.ok) throw new Error("fetch fail"); return r.text(); }
     async function fetchJSON(u){ const r=await fetch(u,{cache:'no-store'}); if(!r.ok) throw new Error("fetch fail"); return r.json(); }
+
     function parseCSV(t){
       const rows=t.trim().split(/\r?\n/).map(l=>l.split(",").map(s=>s.trim()));
-      const h=rows[0]; return rows.slice(1).map(r=>Object.fromEntries(h.map((k,i)=>[k.trim(), r[i]??""])));
+      const h=rows[0];
+      return rows.slice(1).map(r=>Object.fromEntries(h.map((k,i)=>[k.trim(), r[i]??""])));
     }
-    function numStr(x){ const n=+String(x||"").replace(/[, ]/g,""); return isFinite(n)?n.toLocaleString():x; }
+    function toNum(x){
+      const s=String(x??"").trim();
+      if(!s) return NaN;
+      const n=Number(s.replace(/[% ,]/g,""));
+      return Number.isFinite(n)?n:NaN;
+    }
+    function asPct(x){
+      const n=toNum(x);
+      if(!Number.isFinite(n)) return NaN;
+      return (n > 0 && n <= 1) ? (n * 100) : n; // 0~1이면 %로 변환
+    }
+
+    function centerLabel(textTop, textBottom){
+      return {
+        show: true,
+        position: 'center',
+        formatter: `{t|${textTop}}\n{b|${textBottom}}`,
+        rich: {
+          t: { fontSize: 14, fontWeight: 700, color: '#111827', lineHeight: 18 },
+          b: { fontSize: 12, color: '#6b7280', lineHeight: 16 }
+        }
+      };
+    }
 
     (async ()=>{
-   // (A) 구성(포트폴리오) 테이블: 코인 + 비중만 표시
-try{
-  const rows = parseCSV(await fetchText(WEIGHTS_CSV));
-  if(!rows.length) throw new Error("empty weights csv");
+      // ===== (A) Weights 시각화
+      try{
+        const rows = parseCSV(await fetchText(WEIGHTS_CSV));
+        if(!rows.length) throw new Error("empty weights csv");
 
-  const keys = Object.keys(rows[0]||{});
+        const keys = Object.keys(rows[0]||{});
+        const symK  = keys.find(k=>/symbol|ticker|심볼/i.test(k)) || keys[0];
+        const nameK = keys.find(k=>/^name$|코인|종목|자산/i.test(k)); // optional
+        const wK    = keys.find(k=>/bm20.*weight|methodology.*weight|final.*weight/i.test(k))
+                   || keys.find(k=>/weight|비중/i.test(k));
+        if(!wK) throw new Error("no weight column");
 
-  // 컬럼명 자동 탐색 (시트 헤더가 달라도 최대한 맞춤)
-  const symK  = keys.find(k=>/symbol|ticker|심볼/i.test(k)) || keys[0];
-  const nameK = keys.find(k=>/^name$|코인|종목|자산/i.test(k)); // 없을 수도
-  const wK    = keys.find(k=>/bm20.*weight|methodology.*weight|final.*weight/i.test(k))
-             || keys.find(k=>/weight|비중/i.test(k));
+        const items = rows.map(o=>{
+          const sym = String(o[symK]||"").trim().toUpperCase();
+          const name = nameK ? String(o[nameK]||"").trim() : sym;
+          const w = asPct(o[wK]);
+          return { sym, name, w };
+        }).filter(x=>x.sym && Number.isFinite(x.w));
 
-  if(!wK) throw new Error("no weight column (weight/비중) in sheet");
+        document.getElementById("asof").textContent = "기준: " + new Date().toLocaleString("ko-KR");
 
-  function toNum(x){
-    const s=String(x??"").trim();
-    if(!s) return NaN;
-    const n=Number(s.replace(/[% ,]/g,""));
-    return Number.isFinite(n)?n:NaN;
-  }
-  function smartPct(x){
-    const n=toNum(x);
-    if(!Number.isFinite(n)) return "—";
-    // 0~1로 들어오면 %로 변환
-    const v = (n > 0 && n <= 1) ? (n * 100) : n;
-    return v.toFixed(2) + "%";
-  }
+        // ----- Rule View: 4 buckets (룰 기준 고정)
+        const sum = (arr)=>arr.reduce((a,b)=>a+b,0);
+        const wBTC = sum(items.filter(x=>x.sym==="BTC").map(x=>x.w));
+        const wETH = sum(items.filter(x=>x.sym==="ETH").map(x=>x.w));
+        const w5   = sum(items.filter(x=>["XRP","USDT","BNB"].includes(x.sym)).map(x=>x.w));
+        const wOther = Math.max(0, sum(items.map(x=>x.w)) - (wBTC+wETH+w5));
 
-  // 기준 표시(시트에 있으면 쓰고, 없으면 현재시간)
-  const tsK = keys.find(k=>/as.?of|date|time|updated/i.test(k));
-  document.getElementById("asof").textContent =
-    "기준: " + ((tsK && rows[0][tsK]) ? rows[0][tsK] : new Date().toLocaleString("ko-KR"));
+        const ruleData = [
+          { name: "BTC", value: wBTC || 30 },
+          { name: "ETH", value: wETH || 20 },
+          { name: "5% 그룹", value: w5 || 15 },
+          { name: "Others", value: wOther || 35 }
+        ];
 
-  const thead = `<tr>
-    <th>Symbol</th>
-    <th>Name</th>
-    <th class="num">Weight</th>
-  </tr>`;
+        const rule = echarts.init(document.getElementById("ruleDonut"));
+        rule.setOption({
+          backgroundColor: 'transparent',
+          tooltip: { trigger: 'item', formatter: (p)=> `${p.name}<br/>${p.value.toFixed(2)}%` },
+          series: [{
+            type: 'pie',
+            radius: ['58%','80%'],
+            center: ['50%','50%'],
+            label: { show: true, formatter: '{b}\n{d}%' },
+            labelLine: { length: 10, length2: 8 },
+            data: ruleData
+          }],
+          graphic: [{
+            type: 'text',
+            left: 'center',
+            top: 'center',
+            style: {
+              text: 'BM20\nRule View',
+              textAlign: 'center',
+              fill: '#111827',
+              fontSize: 14,
+              fontWeight: 700,
+              lineHeight: 18
+            }
+          }]
+        });
 
-  // 비중 큰 순 정렬(원하면 삭제 가능)
-  const sorted = [...rows].sort((a,b)=> (toNum(b[wK]) - toNum(a[wK])) );
+        // ----- Portfolio View: Top weights bar (코인별)
+        items.sort((a,b)=>b.w-a.w);
+        const topN = 12;
+        const top = items.slice(0, topN).reverse();
 
-  const tbody = sorted.map(o=>{
-    const sym  = String(o[symK]||"").trim();
-    const name = nameK ? String(o[nameK]||"").trim() : "";
-    const w    = smartPct(o[wK]);
+        const bars = echarts.init(document.getElementById("topBars"));
+        bars.setOption({
+          backgroundColor: 'transparent',
+          grid: { left: 70, right: 20, top: 10, bottom: 28 },
+          tooltip: {
+            trigger: 'axis',
+            axisPointer: { type: 'shadow' },
+            formatter: (ps)=>{
+              const p = ps[0];
+              return `${p.name}<br/>${Number(p.value).toFixed(2)}%`;
+            }
+          },
+          xAxis: {
+            type: 'value',
+            axisLabel: { color: '#6b7280', formatter: (v)=> v + '%' },
+            splitLine: { lineStyle: { color: '#f1f5f9' } },
+            axisLine: { lineStyle: { color: '#e5e7eb' } }
+          },
+          yAxis: {
+            type: 'category',
+            data: top.map(x=>x.sym),
+            axisLabel: { color: '#111827' },
+            axisLine: { lineStyle: { color: '#e5e7eb' } }
+          },
+          series: [{
+            type: 'bar',
+            data: top.map(x=>Number(x.w.toFixed(4))),
+          }]
+        });
 
-    return `<tr>
-      <td>${sym || "—"}</td>
-      <td>${name || "—"}</td>
-      <td class="num">${w}</td>
-    </tr>`;
-  }).join("");
+        window.addEventListener('resize', ()=>{ rule.resize(); bars.resize(); });
 
-  document.getElementById("tbl").innerHTML = thead + tbody;
+      }catch(e){
+        console.warn(e);
+        const a = document.getElementById("ruleDonut");
+        const b = document.getElementById("topBars");
+        if(a) a.innerHTML = '<div class="mini">차트 데이터를 불러오지 못했습니다.</div>';
+        if(b) b.innerHTML = '<div class="mini">—</div>';
+      }
 
-}catch(e){
-  document.getElementById("tbl").innerHTML =
-    `<tr><td class="mini">포트폴리오(구성·비중) 데이터를 불러오지 못했습니다.</td></tr>`;
-  console.warn(e);
-}
+      // ===== (B) 뉴스 섹션
+      try{
+        const d = await fetchJSON(LATEST_JSON);
+        if (d?.news?.title || d?.news?.body) {
+          document.getElementById("newsTitle").textContent = d.news.title || "BM20 데일리 뉴스";
+          document.getElementById("newsBody").textContent  = d.news.body  || "";
+          document.getElementById("newsBox").style.display = "";
+        } else {
+          const r = await fetch('/bm/bm20_news_latest.txt',{cache:'no-store'});
+          if (r.ok) {
+            document.getElementById("newsTitle").textContent = "BM20 데일리 뉴스";
+            document.getElementById("newsBody").textContent  = await r.text();
+            document.getElementById("newsBox").style.display = "";
+          }
+        }
+      }catch(e){
+        // 뉴스 없어도 OK
+      }
     })();
   </script>
 </body>
