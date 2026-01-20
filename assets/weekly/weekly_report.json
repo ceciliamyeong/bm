@@ -1,0 +1,143 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import argparse
+import json
+from datetime import datetime
+from pathlib import Path
+
+import pandas as pd
+
+# ---- CSV 컬럼 자동 인식 ----
+DATE_CANDS = ["date", "Date", "날짜"]
+CLOSE_CANDS = ["종가", "Close", "close", "Adj Close", "adj_close", "종가(원)"]
+
+def read_price_csv(path: str) -> pd.DataFrame:
+    df = pd.read_csv(path)
+    df.columns = [str(c).strip() for c in df.columns]
+
+    date_col = next((c for c in df.columns if c in DATE_CANDS), None)
+    close_col = next((c for c in df.columns if c in CLOSE_CANDS), None)
+
+    if date_col is None or close_col is None:
+        raise ValueError(f"[CSV] date/close 컬럼을 못 찾음: {path}\n컬럼={list(df.columns)}")
+
+    out = df[[date_col, close_col]].copy()
+    out.columns = ["date", "close"]
+    out["date"] = pd.to_datetime(out["date"]).dt.date
+    out["close"] = pd.to_numeric(out["close"], errors="coerce")
+    out = out.dropna(subset=["close"]).sort_values("date")
+    return out
+
+def read_bm20_series_json(path: str) -> pd.DataFrame:
+    raw = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(raw, list):
+        raise ValueError(f"[BM20] 예상 형식(list)이 아님: {path}")
+
+    df = pd.DataFrame(raw)
+    if "date" not in df.columns or "level" not in df.columns:
+        raise ValueError(f"[BM20] date/level 컬럼이 필요함. 컬럼={list(df.columns)}")
+
+    out = df[["date", "level"]].copy()
+    out.columns = ["date", "bm20"]
+    out["date"] = pd.to_datetime(out["date"]).dt.date
+    out["bm20"] = pd.to_numeric(out["bm20"], errors="coerce")
+    out = out.dropna(subset=["bm20"]).sort_values("date")
+    return out
+
+def mmdd(d) -> str:
+    return pd.Timestamp(d).strftime("%m/%d")
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--kospi_csv", default="bm/assets/weekly/코스피지수 과거 데이터.csv")
+    ap.add_argument("--nasdaq_csv", default="bm/assets/weekly/나스닥종합지수 과거 데이터.csv")
+    ap.add_argument("--btc_csv", default="bm/assets/weekly/비트코인 과거 데이터.csv")
+    ap.add_argument("--bm20_json", default="bm/bm20_series.json")
+    ap.add_argument("--out_json", default="bm/assets/weekly/weekly_report.json")
+    ap.add_argument("--title", default="BM20 Weekly Dashboard")
+    args = ap.parse_args()
+
+    # 1) 입력 로드
+    kospi = read_price_csv(args.kospi_csv).rename(columns={"close": "kospi"})
+    nasdaq = read_price_csv(args.nasdaq_csv).rename(columns={"close": "nasdaq"})
+    btc = read_price_csv(args.btc_csv).rename(columns={"close": "btc"})
+    bm20 = read_bm20_series_json(args.bm20_json)
+
+    # 2) "최근 5 거래일" 기준: KOSPI 최신 5개 날짜로 확정
+    kospi_5 = kospi.tail(5).copy()
+    week_dates = kospi_5["date"].tolist()
+
+    # 3) 같은 날짜로 매칭 (없으면 ffill)
+    base = pd.DataFrame({"date": week_dates}).sort_values("date")
+
+    base = base.merge(kospi, on="date", how="left")
+    base = base.merge(nasdaq, on="date", how="left")
+    base = base.merge(btc, on="date", how="left")
+    base = base.merge(bm20, on="date", how="left")
+
+    base = base.sort_values("date")
+    # NASDAQ는 휴장/시차로 비는 케이스, BTC/BM20도 데이터 누락 가능성 대비
+    for c in ["nasdaq", "btc", "bm20"]:
+        base[c] = base[c].ffill()
+
+    # 4) 검증
+    need_cols = ["kospi", "nasdaq", "btc", "bm20"]
+    if base[need_cols].isna().any().any():
+        missing = base[base[need_cols].isna().any(axis=1)][["date"] + need_cols]
+        raise ValueError("데이터 매칭 후 결측 발생(원천 데이터 확인 필요):\n" + missing.to_string(index=False))
+
+    # 5) weekly_report.json 저장 (레벨=종가 그대로 / 상대변화(%)는 HTML에서 처리)
+    payload = {
+        "meta": {
+            "title": args.title,
+            "week_start": str(base["date"].min()),
+            "week_end": str(base["date"].max()),
+            "timezone_note": "Close(종가/레벨) 기준. 차트에서 시작일 대비 상대변화(%)로 비교.",
+            "generated_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "sources": {
+                "kospi_csv": args.kospi_csv,
+                "nasdaq_csv": args.nasdaq_csv,
+                "btc_csv": args.btc_csv,
+                "bm20_json": args.bm20_json
+            }
+        },
+        "dates": [mmdd(d) for d in base["date"].tolist()],
+        "bm20": base["bm20"].round(6).tolist(),
+        "kospi": base["kospi"].round(6).tolist(),
+        "nasdaq": base["nasdaq"].round(6).tolist(),
+        "btc": base["btc"].round(6).tolist(),
+
+        # 아래 3개는 지금은 목업 유지 (원하면 다음 단계에서 실제 계산으로 교체)
+        "contrib_best3": [
+            ["BTC", 0.24],
+            ["XRP", 0.11],
+            ["SOL", 0.09]
+        ],
+        "contrib_worst3": [
+            ["ETH", -0.24],
+            ["BNB", -0.08],
+            ["DOGE", -0.06]
+        ],
+        "sectors": [
+            ["Smart Contract/L1", 3.8],
+            ["Payments", 2.4],
+            ["DeFi", 1.1],
+            ["Core", -0.6],
+            ["Meme", -1.9],
+            ["RWA", -3.2]
+        ]
+    }
+
+    out_path = Path(args.out_json)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"[OK] wrote {out_path}")
+    print("dates:", payload["dates"])
+    print("bm20:", payload["bm20"])
+    print("kospi:", payload["kospi"])
+    print("nasdaq:", payload["nasdaq"])
+    print("btc:", payload["btc"])
+
+if __name__ == "__main__":
+    main()
