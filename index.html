@@ -56,6 +56,12 @@
   .rows{display:grid;grid-template-columns:1fr;gap:16px;margin-top:16px}
   @media (min-width:900px){.rows{grid-template-columns:2fr 1fr}}
 
+  /* ✅ CHARTS 섹션은 항상 1컬럼(한 줄 꽉 채우기) */
+  #charts.rows{grid-template-columns:1fr !important;}
+  @media (min-width:900px){
+    #charts.rows{grid-template-columns:1fr !important;} 
+  }
+    
   .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
   @media (min-width:700px){.cards{grid-template-columns:repeat(6,1fr)}}
 
@@ -234,29 +240,20 @@
       </div>
     </section>
 
-    <!-- CHARTS -->
-    <section id="charts" class="rows">
-      <div class="card">
-        <div class="flex"><div class="h">BM20 시계열</div><button class="btn" id="btnZoom">범위: 1Y ▾</button></div>
-        <div class="svgwrap" id="svgHost"><svg></svg></div>
-        <div class="mini">※ series.json을 읽어 단순 라인 차트로 그립니다. 이미지가 있으면 아래에 표시합니다.</div>
+   <!-- CHARTS -->
+  <section id="charts" class="rows">
+    <div class="card">
+      <div class="flex">
+        <div class="h">BM20 시계열</div>
+        <button class="btn" id="btnZoom">범위: 1Y ▾</button>
       </div>
-
-      <div class="card">
-        <div class="h">이미지 차트(있을 경우만)</div>
-        <div class="grid2 section">
-          <div>
-            <div class="mini">1D Performance Bar</div>
-            <div class="chart aspect-16x9">
-              <img id="imgBar" alt="1D Bar"/>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 글로벌 퍼포먼스 -->
-    <section id="perf" class="card">
+      <div class="svgwrap" id="svgHost"><svg></svg></div>
+      <div class="mini">※ series.json을 읽어 단순 라인 차트로 그립니다.</div>
+    </div>
+  </section>
+    
+        <!-- 글로벌 퍼포먼스 -->
+        <section id="perf" class="card">
       <div class="h">글로벌 퍼포먼스 (1D, %)</div>
       <div id="perfBar" style="height:320px;margin-top:8px"></div>
       <div class="mini">※ <code>out/YYYY-MM-DD/bm20_daily_data_YYYY-MM-DD.csv</code> 기준.</div>
@@ -426,7 +423,7 @@ async function loadSeries(){
   }catch(e){ qs('#seriesDump').textContent='series.json을 불러오지 못했습니다.'; }
 }
 
-function tryImages(){ setImg('#imgBar','bm20_bar_2025-08-31.png'); /* 필요 시 파일명 최신으로 교체 */ }
+function 
 
 // ===== 글로벌 퍼포먼스 (CSV 기반) =====
 async function loadComponentsAndRenderBars(){
