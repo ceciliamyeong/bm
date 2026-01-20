@@ -5,45 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>What is BM20?</title>
 
-  <!-- ECharts (차트) -->
+  <!-- ECharts -->
   <script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
 
   <!-- BM20 White Theme -->
-  <link rel="stylesheet" href="/bm/assets/bm20.css?v=1">
+  <link rel="stylesheet" href="/bm/assets/bm20.css?v=2">
 
-  <!-- 페이지 전용(최소) -->
   <style>
-    .viz-grid{
-      display:grid;
-      grid-template-columns: 1.1fr .9fr;
-      gap:14px;
-      margin-top:12px;
-    }
-    @media (max-width: 860px){
-      .viz-grid{ grid-template-columns: 1fr; }
-    }
-    .chipline{
-      display:flex; gap:8px; flex-wrap:wrap;
-      margin-top:10px;
-    }
+    .viz-grid{ display:grid; grid-template-columns:1.1fr .9fr; gap:14px; margin-top:12px; }
+    @media (max-width: 860px){ .viz-grid{ grid-template-columns:1fr; } }
+    .chipline{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
     .chip{
       display:inline-flex; align-items:center; gap:6px;
-      padding:6px 10px;
-      border:1px solid var(--border);
-      border-radius:999px;
-      background:#fafafa;
-      font-size:12px;
-      color:var(--text);
+      padding:6px 10px; border:1px solid var(--border);
+      border-radius:999px; background:#fafafa;
+      font-size:12px; color:var(--text);
     }
     .chip .dot{ width:8px; height:8px; border-radius:50%; background:var(--brand); }
     .subnote{ margin-top:6px; }
+    .right-stack{ display:grid; gap:10px; }
+    .subcard{ border:1px solid var(--divider); border-radius:14px; padding:12px; background:#fff; }
+    .subcard .mini{ margin-bottom:6px; }
+    .others-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    @media (max-width: 860px){ .others-grid{ grid-template-columns:1fr; } }
     hr{ border:0; border-top:1px solid var(--divider); margin:16px 0; }
     code{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:13px; }
   </style>
 </head>
 
 <body>
-  <!-- 헤더/네비 -->
   <header>
     <div class="wrap" style="display:flex;gap:14px;align-items:center;justify-content:space-between">
       <div class="brand">
@@ -64,7 +54,6 @@
   </header>
 
   <main class="wrap">
-    <!-- 1) 타이틀 + 개요 -->
     <section class="hero">
       <h1>What is BM20?</h1>
       <p>
@@ -78,54 +67,51 @@
       </p>
     </section>
 
-    <!-- 2) 구성/비중 시각화 -->
     <section class="card section">
       <div class="h">BM20 구성 및 비중</div>
       <div class="mini" id="asof">—</div>
 
-      <div class="chipline" aria-label="BM20 rules">
+      <div class="chipline">
         <span class="chip"><span class="dot"></span>BTC 30%</span>
         <span class="chip"><span class="dot"></span>ETH 20%</span>
         <span class="chip"><span class="dot"></span>XRP/USDT/BNB 각 5%</span>
         <span class="chip"><span class="dot"></span>나머지 15종 합계 35%(균등)</span>
       </div>
-      <div class="mini subnote">아래 차트는 “BM20 방법론 비중(포트폴리오)”을 기반으로 표시됩니다.</div>
+      <div class="mini subnote">아래 차트는 Performance와 동일한 weights 시트를 기반으로 표시됩니다.</div>
 
       <div class="viz-grid">
         <div>
           <div class="mini" style="margin-bottom:6px">Rule View (4 Buckets)</div>
           <div id="ruleDonut" style="height:360px"></div>
         </div>
+
         <div>
-  <div class="mini" style="margin-bottom:6px">Methodology Weights (Grouped)</div>
+          <div class="mini" style="margin-bottom:6px">Methodology Weights (Grouped)</div>
 
-  <div style="display:grid;gap:10px">
-    <!-- (1) BTC/ETH 요약 -->
-    <div class="card" style="padding:12px">
-      <div class="mini" style="margin-bottom:6px">Core</div>
-      <div id="barsCore" style="height:120px"></div>
-    </div>
+          <div class="right-stack">
+            <div class="subcard">
+              <div class="mini">Core</div>
+              <div id="barsCore" style="height:120px"></div>
+            </div>
 
-    <!-- (2) 5% 그룹 -->
-    <div class="card" style="padding:12px">
-      <div class="mini" style="margin-bottom:6px">5% Group</div>
-      <div id="barsFive" style="height:120px"></div>
-    </div>
+            <div class="subcard">
+              <div class="mini">5% Group</div>
+              <div id="barsFive" style="height:120px"></div>
+            </div>
 
-    <!-- (3) Others 15종 (2열) -->
-    <div class="card" style="padding:12px">
-      <div class="mini" style="margin-bottom:6px">Others (15) — equal weight</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div id="barsOtherA" style="height:180px"></div>
-        <div id="barsOtherB" style="height:180px"></div>
-      </div>
-    </div>
-  </div>
-</div>
+            <div class="subcard">
+              <div class="mini">Others (15) — equal weight</div>
+              <div class="others-grid">
+                <div id="barsOtherA" style="height:180px"></div>
+                <div id="barsOtherB" style="height:180px"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
       </div>
     </section>
 
-    <!-- 2.5) 방법론·운영 -->
     <section class="card section plain">
       <div class="h">설계 원칙</div>
       <ul>
@@ -173,7 +159,6 @@
       </ul>
     </section>
 
-    <!-- 3) FAQ -->
     <section class="card section">
       <div class="h">FAQ</div>
       <div class="faq">
@@ -184,13 +169,11 @@
       </div>
     </section>
 
-    <!-- 4) 뉴스 섹션 -->
     <section class="news-card section" id="newsBox" style="display:none">
       <h3 class="h" id="newsTitle">BM20 데일리 뉴스</h3>
       <p id="newsBody" class="mini">—</p>
     </section>
 
-    <!-- 5) 로드맵 -->
     <section class="card section">
       <div class="h">로드맵</div>
       <ul class="mini" style="margin:8px 0 0 18px">
@@ -207,7 +190,6 @@
   </main>
 
   <script>
-    // ===== 데이터 소스 (Performance 포트폴리오 weights)
     const v = Date.now();
     const WEIGHTS_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTndyrPd3WWwFtfzv2CZxJeDcH-l8ibQIdO5ouYS4HsaGpbeXQQbs6WEr9qPqqZbRoT6cObdFxJpief/pub?gid=1533548287&single=true&output=csv&v="+v;
     const LATEST_JSON = "/bm/latest.json?v="+v;
@@ -215,11 +197,56 @@
     async function fetchText(u){ const r=await fetch(u,{cache:'no-store'}); if(!r.ok) throw new Error("fetch fail"); return r.text(); }
     async function fetchJSON(u){ const r=await fetch(u,{cache:'no-store'}); if(!r.ok) throw new Error("fetch fail"); return r.json(); }
 
-    function parseCSV(t){
-      const rows=t.trim().split(/\r?\n/).map(l=>l.split(",").map(s=>s.trim()));
-      const h=rows[0];
-      return rows.slice(1).map(r=>Object.fromEntries(h.map((k,i)=>[k.trim(), r[i]??""])));
+    // Robust CSV parser (quotes, commas inside quotes supported)
+    function parseCSV(text){
+      const rows = [];
+      let row = [];
+      let cur = "";
+      let inQuotes = false;
+
+      const s = (text || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+
+      for (let i = 0; i < s.length; i++){
+        const ch = s[i];
+        const next = s[i+1];
+
+        if (ch === '"'){
+          if (inQuotes && next === '"'){ cur += '"'; i++; }
+          else { inQuotes = !inQuotes; }
+          continue;
+        }
+        if (!inQuotes && ch === ","){
+          row.push(cur);
+          cur = "";
+          continue;
+        }
+        if (!inQuotes && ch === "\n"){
+          row.push(cur);
+          rows.push(row);
+          row = [];
+          cur = "";
+          continue;
+        }
+        cur += ch;
+      }
+      if (cur.length || row.length){
+        row.push(cur);
+        rows.push(row);
+      }
+
+      const cleaned = rows.filter(r => r.some(x => String(x).trim() !== ""));
+      if (!cleaned.length) return [];
+
+      const header = cleaned[0].map(h => String(h || "").trim());
+      return cleaned.slice(1).map(r => {
+        const obj = {};
+        for (let j = 0; j < header.length; j++){
+          obj[header[j]] = String(r[j] ?? "").trim();
+        }
+        return obj;
+      });
     }
+
     function toNum(x){
       const s=String(x??"").trim();
       if(!s) return NaN;
@@ -229,33 +256,59 @@
     function asPct(x){
       const n=toNum(x);
       if(!Number.isFinite(n)) return NaN;
-      return (n > 0 && n <= 1) ? (n * 100) : n; // 0~1이면 %로 변환
+      return (n > 0 && n <= 1) ? (n * 100) : n;
     }
 
-    function centerLabel(textTop, textBottom){
-      return {
-        show: true,
-        position: 'center',
-        formatter: `{t|${textTop}}\n{b|${textBottom}}`,
-        rich: {
-          t: { fontSize: 14, fontWeight: 700, color: '#111827', lineHeight: 18 },
-          b: { fontSize: 12, color: '#6b7280', lineHeight: 16 }
-        }
-      };
+    function makeBar(elId, labels, values, xMax){
+      const el = document.getElementById(elId);
+      const c = echarts.init(el);
+      c.setOption({
+        backgroundColor: 'transparent',
+        grid: { left: 56, right: 16, top: 6, bottom: 18 },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: { type: 'shadow' },
+          formatter: (ps)=>{
+            const p = ps[0];
+            return `${p.name}<br/>${Number(p.value).toFixed(2)}%`;
+          }
+        },
+        xAxis: {
+          type: 'value',
+          min: 0,
+          max: xMax,
+          axisLabel: { color: '#6b7280', formatter: (v)=> v + '%' },
+          splitLine: { lineStyle: { color: '#f1f5f9' } },
+          axisLine: { lineStyle: { color: '#e5e7eb' } }
+        },
+        yAxis: {
+          type: 'category',
+          data: labels,
+          axisLabel: { color: '#111827' },
+          axisLine: { lineStyle: { color: '#e5e7eb' } }
+        },
+        series: [{
+          type: 'bar',
+          data: values.map(v=>Number(v.toFixed(4))),
+          label: { show:true, position:'right', formatter:(p)=>`${Number(p.value).toFixed(2)}%` }
+        }]
+      });
+      return c;
     }
 
     (async ()=>{
-      // ===== (A) Weights 시각화
+      let charts = [];
+
       try{
         const rows = parseCSV(await fetchText(WEIGHTS_CSV));
-        if(!rows.length) throw new Error("empty weights csv");
+        if(!rows.length) throw new Error("weights csv empty");
 
         const keys = Object.keys(rows[0]||{});
         const symK  = keys.find(k=>/symbol|ticker|심볼/i.test(k)) || keys[0];
         const nameK = keys.find(k=>/^name$|코인|종목|자산/i.test(k)); // optional
         const wK    = keys.find(k=>/bm20.*weight|methodology.*weight|final.*weight/i.test(k))
                    || keys.find(k=>/weight|비중/i.test(k));
-        if(!wK) throw new Error("no weight column");
+        if(!wK) throw new Error("weight column not found");
 
         const items = rows.map(o=>{
           const sym = String(o[symK]||"").trim().toUpperCase();
@@ -266,93 +319,86 @@
 
         document.getElementById("asof").textContent = "기준: " + new Date().toLocaleString("ko-KR");
 
-        // ----- Rule View: 4 buckets (룰 기준 고정)
+        // ----- Rule Donut (4 buckets, prefer methodology constants if some missing)
         const sum = (arr)=>arr.reduce((a,b)=>a+b,0);
         const wBTC = sum(items.filter(x=>x.sym==="BTC").map(x=>x.w));
         const wETH = sum(items.filter(x=>x.sym==="ETH").map(x=>x.w));
         const w5   = sum(items.filter(x=>["XRP","USDT","BNB"].includes(x.sym)).map(x=>x.w));
-        const wOther = Math.max(0, sum(items.map(x=>x.w)) - (wBTC+wETH+w5));
+        const total = sum(items.map(x=>x.w));
+        const wOther = Math.max(0, total - (wBTC+wETH+w5));
 
         const ruleData = [
-          { name: "BTC", value: wBTC || 30 },
-          { name: "ETH", value: wETH || 20 },
-          { name: "5% 그룹", value: w5 || 15 },
-          { name: "Others", value: wOther || 35 }
+          { name: "BTC", value: (Number.isFinite(wBTC) && wBTC>0)?wBTC:30 },
+          { name: "ETH", value: (Number.isFinite(wETH) && wETH>0)?wETH:20 },
+          { name: "5% 그룹", value: (Number.isFinite(w5) && w5>0)?w5:15 },
+          { name: "Others", value: (Number.isFinite(wOther) && wOther>0)?wOther:35 }
         ];
 
         const rule = echarts.init(document.getElementById("ruleDonut"));
         rule.setOption({
-          backgroundColor: 'transparent',
-          tooltip: { trigger: 'item', formatter: (p)=> `${p.name}<br/>${p.value.toFixed(2)}%` },
-          series: [{
-            type: 'pie',
-            radius: ['58%','80%'],
-            center: ['50%','50%'],
-            label: { show: true, formatter: '{b}\n{d}%' },
-            labelLine: { length: 10, length2: 8 },
+          backgroundColor:'transparent',
+          tooltip:{ trigger:'item', formatter:(p)=>`${p.name}<br/>${p.value.toFixed(2)}%` },
+          series:[{
+            type:'pie',
+            radius:['58%','80%'],
+            center:['50%','50%'],
+            label:{ show:true, formatter:'{b}\n{d}%' },
+            labelLine:{ length:10, length2:8 },
             data: ruleData
           }],
-          graphic: [{
-            type: 'text',
-            left: 'center',
-            top: 'center',
-            style: {
-              text: 'BM20\nRule View',
-              textAlign: 'center',
-              fill: '#111827',
-              fontSize: 14,
-              fontWeight: 700,
-              lineHeight: 18
+          graphic:[{
+            type:'text',
+            left:'center',
+            top:'center',
+            style:{
+              text:'BM20\nRule View',
+              textAlign:'center',
+              fill:'#111827',
+              fontSize:14,
+              fontWeight:700,
+              lineHeight:18
             }
           }]
         });
+        charts.push(rule);
 
-        // ----- Portfolio View: Top weights bar (코인별)
-        items.sort((a,b)=>b.w-a.w);
-        const topN = 12;
-        const top = items.slice(0, topN).reverse();
+        // ----- Methodology grouped bars (fixed)
+        const universe = items.map(x=>x.sym);
+        const FIXED = { BTC:30, ETH:20, XRP:5, USDT:5, BNB:5 };
 
-        const bars = echarts.init(document.getElementById("topBars"));
-        bars.setOption({
-          backgroundColor: 'transparent',
-          grid: { left: 70, right: 20, top: 10, bottom: 28 },
-          tooltip: {
-            trigger: 'axis',
-            axisPointer: { type: 'shadow' },
-            formatter: (ps)=>{
-              const p = ps[0];
-              return `${p.name}<br/>${Number(p.value).toFixed(2)}%`;
-            }
-          },
-          xAxis: {
-            type: 'value',
-            axisLabel: { color: '#6b7280', formatter: (v)=> v + '%' },
-            splitLine: { lineStyle: { color: '#f1f5f9' } },
-            axisLine: { lineStyle: { color: '#e5e7eb' } }
-          },
-          yAxis: {
-            type: 'category',
-            data: top.map(x=>x.sym),
-            axisLabel: { color: '#111827' },
-            axisLine: { lineStyle: { color: '#e5e7eb' } }
-          },
-          series: [{
-            type: 'bar',
-            data: top.map(x=>Number(x.w.toFixed(4))),
-          }]
-        });
+        const restSymbols = universe.filter(s => !(s in FIXED)).sort((a,b)=>a.localeCompare(b));
+        const restW = restSymbols.length ? (35 / restSymbols.length) : 0;
 
-        window.addEventListener('resize', ()=>{ rule.resize(); });
+        const coreLabels = ["BTC","ETH"].filter(s=>universe.includes(s));
+        const coreValues = coreLabels.map(s=>FIXED[s]);
+
+        const fiveLabels = ["XRP","USDT","BNB"].filter(s=>universe.includes(s));
+        const fiveValues = fiveLabels.map(s=>FIXED[s]);
+
+        const half = Math.ceil(restSymbols.length/2);
+        const otherA = restSymbols.slice(0, half);
+        const otherB = restSymbols.slice(half);
+
+        const cCore   = makeBar("barsCore",   coreLabels.reverse(), coreValues.reverse(), 30);
+        const cFive   = makeBar("barsFive",   fiveLabels.reverse(), fiveValues.reverse(), 10);
+        const cOtherA = makeBar("barsOtherA", otherA.reverse(),     otherA.map(_=>restW).reverse(), 5);
+        const cOtherB = makeBar("barsOtherB", otherB.reverse(),     otherB.map(_=>restW).reverse(), 5);
+
+        charts.push(cCore, cFive, cOtherA, cOtherB);
 
       }catch(e){
         console.warn(e);
-        const a = document.getElementById("ruleDonut");
-        const b = document.getElementById("topBars");
-        if(a) a.innerHTML = '<div class="mini">차트 데이터를 불러오지 못했습니다.</div>';
-        if(b) b.innerHTML = '<div class="mini">—</div>';
+        const msg = String(e?.message || e);
+        document.getElementById("asof").textContent = "기준: —";
+        const ruleEl = document.getElementById("ruleDonut");
+        if(ruleEl) ruleEl.innerHTML = `<div class="mini">데이터를 불러오지 못했습니다. (${msg})</div>`;
+        ["barsCore","barsFive","barsOtherA","barsOtherB"].forEach(id=>{
+          const el = document.getElementById(id);
+          if(el) el.innerHTML = `<div class="mini">—</div>`;
+        });
       }
 
-      // ===== (B) 뉴스 섹션
+      // 뉴스 섹션
       try{
         const d = await fetchJSON(LATEST_JSON);
         if (d?.news?.title || d?.news?.body) {
@@ -367,9 +413,10 @@
             document.getElementById("newsBox").style.display = "";
           }
         }
-      }catch(e){
-        // 뉴스 없어도 OK
-      }
+      }catch(e){}
+
+      // resize
+      window.addEventListener('resize', ()=>{ charts.forEach(c=>c.resize()); });
     })();
   </script>
 </body>
