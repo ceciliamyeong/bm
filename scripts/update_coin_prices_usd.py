@@ -40,9 +40,8 @@ YF_TICKER: Dict[str, str] = {t: f"{t}-USD" for t in TICKERS}
 
 def yf_download_close(symbol: str, start: str, end: str) -> pd.Series:
     """
-    yfinance로 일봉 Close 수집
-    - index: date
-    - values: Close (float)
+    yfinance로 일봉 Close 수집 -> 어떤 형태로 와도 1D Series로 강제 변환
+    (MultiIndex columns 포함)
     """
     df = yf.download(
         symbol,
@@ -52,14 +51,35 @@ def yf_download_close(symbol: str, start: str, end: str) -> pd.Series:
         progress=False,
         auto_adjust=False,
         threads=False,
-        group_by="column",
+        group_by="column",   # ✅ 컬럼 기준으로 묶도록 명시
     )
+
     if df is None or df.empty:
         raise ValueError(f"Empty yfinance data for {symbol}")
 
-    s = df["Close"].copy()
-    s.index = pd.to_datetime(s.index).date
-    return s
+    # ✅ Close 추출 (MultiIndex 방어)
+    if isinstance(df.columns, pd.MultiIndex):
+        # 예: level0 = ['Open','High','Low','Close',...], level1 = ['BTC-USD']
+        if "Close" not in df.columns.get_level_values(0):
+            raise ValueError(f"No Close in MultiIndex columns for {symbol}")
+        close_df = df.xs("Close", axis=1, level=0)   # -> DataFrame (cols: ticker)
+        close = close_df.iloc[:, 0]                  # -> Series (1D)
+    else:
+        if "Close" not in df.columns:
+            raise ValueError(f"No Close column for {symbol}. cols={list(df.columns)}")
+        close = df["Close"]
+        # 혹시 Close가 DataFrame으로 오면 1열만
+        if isinstance(close, pd.DataFrame):
+            close = close.iloc[:, 0]
+
+    # ✅ 1D 강제 + 정리
+    close = pd.to_numeric(close, errors="coerce").dropna()
+    if close.empty:
+        raise ValueError(f"No valid Close data for {symbol}")
+
+    close.index = pd.to_datetime(close.index).date
+    return close
+
 
 def main():
     os.makedirs(OUT_DIR, exist_ok=True)
