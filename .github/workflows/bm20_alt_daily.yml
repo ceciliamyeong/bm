@@ -30,15 +30,15 @@ jobs:
         run: |
           python scripts/update_coin_prices_usd.py
 
-      - name: Make BM20 vs Alt chart
+      - name: Make BTC vs ALT dashboard data
         run: |
-          python scripts/make_bm20_vs_alt_chart.py
+          python scripts/make_btc_alt_dashboard_data.py
 
       - name: Commit & push
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add out/history/coin_prices_usd.csv out/history/coin_prices_usd.meta.json assets/bm20_vs_alt.png bm20_alt.html
+          git add out/history/coin_prices_usd.csv out/history/coin_prices_usd.meta.json assets/data/*.json btc_alt_dashboard.html
           git commit -m "Update coin prices + BTC vs ALT cumulative returns" || echo "No changes"
           git push
 
