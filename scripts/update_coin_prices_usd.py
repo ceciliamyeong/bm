@@ -1,6 +1,6 @@
 # scripts/update_coin_prices_usd.py
 # - out/history/coin_prices_usd.csv를 "증분 업데이트"
-# - CoinGecko range로 필요한 날짜만 갱신 (EOD용)
+# - CoinGecko PRO API: pro-api.coingecko.com 사용 (중요)
 from __future__ import annotations
 
 import os, time, json
@@ -50,7 +50,7 @@ TICKERS: List[str] = [
     "SUI",
 ]
 
-# CoinGecko ID mapping (validated from your table)
+# CoinGecko ID mapping
 CG_ID: Dict[str, str] = {
     "BTC": "bitcoin",
     "ETH": "ethereum",
@@ -75,37 +75,38 @@ CG_ID: Dict[str, str] = {
 }
 
 def to_unix(dt: datetime) -> int:
-    return int(dt.replace(tzinfo=timezone.utc).timestamp())
+    return int(dt.astimezone(timezone.utc).timestamp())
 
 def cg_range_daily_close(coin_id: str, start_utc: datetime, end_utc: datetime) -> pd.Series:
     """
-    CoinGecko Pro range endpoint
-    - Pro API는 반드시 pro-api.coingecko.com 사용
+    CoinGecko PRO range endpoint
+    - 반드시 pro-api.coingecko.com 사용
     - 긴 기간 요청 시 400 방지를 위해 기간 분할 호출
     - (UTC) 일 단위 resample 후 'last' = 종가
+    - index는 date(YYYY-MM-DD)
     """
 
-    # ✅ Pro API BASE URL (중요)
-    BASE_URL = "https://pro-api.coingecko.com/api/v3"
+    BASE_URL = "https://pro-api.coingecko.com/api/v3"  # ✅ 핵심
     url = f"{BASE_URL}/coins/{coin_id}/market_chart/range"
 
-    MAX_DAYS_PER_CALL = 90  # 필요시 30으로 축소 가능
+    # 길게 잡아도 되지만, 안전하게 90일 분할
+    MAX_DAYS_PER_CALL = 90
 
     headers = {
-        "x-cg-pro-api-key": COINGECKO_API_KEY,   # 🔑 Pro Key Header
+        "x-cg-pro-api-key": COINGECKO_API_KEY,  # ✅ Pro 키는 이 헤더
         "accept": "application/json",
     }
 
     all_points = []
-
     cur = start_utc
+
     while cur < end_utc:
         chunk_end = min(cur + timedelta(days=MAX_DAYS_PER_CALL), end_utc)
 
         params = {
             "vs_currency": "usd",
-            "from": int(cur.replace(tzinfo=timezone.utc).timestamp()),
-            "to": int(chunk_end.replace(tzinfo=timezone.utc).timestamp()),
+            "from": to_unix(cur),
+            "to": to_unix(chunk_end),
         }
 
         r = requests.get(url, params=params, headers=headers, timeout=30)
@@ -114,9 +115,8 @@ def cg_range_daily_close(coin_id: str, start_utc: datetime, end_utc: datetime) -
             r.raise_for_status()
         except requests.HTTPError as e:
             raise RuntimeError(
-                f"[CoinGecko PRO ERROR] {coin_id} "
-                f"{cur.date()} ~ {chunk_end.date()} | "
-                f"status={r.status_code} | body={r.text[:200]}"
+                f"[CoinGecko PRO ERROR] {coin_id} {cur.date()} ~ {chunk_end.date()} | "
+                f"status={r.status_code} | body={r.text[:220]}"
             ) from e
 
         data = r.json().get("prices", [])
@@ -124,7 +124,7 @@ def cg_range_daily_close(coin_id: str, start_utc: datetime, end_utc: datetime) -
             all_points.extend(data)
 
         cur = chunk_end
-        time.sleep(0.8)  # Pro는 호출 여유 있음
+        time.sleep(0.8)  # 너무 빠르면 1.2~1.5로
 
     if not all_points:
         raise ValueError(f"No price data for {coin_id}")
@@ -139,18 +139,16 @@ def cg_range_daily_close(coin_id: str, start_utc: datetime, end_utc: datetime) -
     daily.index = daily.index.date
     return daily
 
-
-
 def main(
     first_start: str = "2018-01-01",
     lookback_days: int = 3,
-    sleep_sec: float = 1.4,
+    sleep_sec: float = 1.2,
 ):
     os.makedirs(OUT_DIR, exist_ok=True)
 
     now_utc = datetime.now(timezone.utc)
 
-    # EOD 안정성: 최근 며칠(lookback_days)은 다시 덮어쓰기
+    # EOD 안정성: 최근 며칠은 다시 덮어쓰기
     if os.path.exists(OUT_CSV):
         old = pd.read_csv(OUT_CSV)
         old["date"] = pd.to_datetime(old["date"]).dt.date
@@ -166,6 +164,7 @@ def main(
     end_utc = now_utc
 
     series_map: Dict[str, pd.Series] = {}
+
     for t in TICKERS:
         coin_id = CG_ID.get(t)
         if not coin_id:
@@ -173,6 +172,7 @@ def main(
 
         s = cg_range_daily_close(coin_id, start_utc, end_utc)
         series_map[t] = s
+
         print(f"[OK] {t} {len(s)} rows ({start_date}~)")
         time.sleep(sleep_sec)
 
@@ -202,9 +202,11 @@ def main(
         "start": str(out.index.min()),
         "end": str(out.index.max()),
         "generated_utc": now_utc.isoformat(),
-        "source": "CoinGecko market_chart/range (USD, daily close via resample last)",
+        "source": "CoinGecko PRO market_chart/range (USD, daily close via resample last)",
         "lookback_days": lookback_days,
         "sleep_sec": sleep_sec,
+        "base_url": "https://pro-api.coingecko.com/api/v3",
+        "auth_header": "x-cg-pro-api-key",
     }
     with open(OUT_META, "w", encoding="utf-8") as f:
         json.dump(meta, f, ensure_ascii=False, indent=2)
@@ -214,3 +216,4 @@ def main(
 
 if __name__ == "__main__":
     main()
+
