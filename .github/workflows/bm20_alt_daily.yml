@@ -27,8 +27,11 @@ jobs:
           pip install pandas matplotlib requests
 
       - name: Update coin prices (USD, daily close)
+        env:
+          CG_API_KEY: ${{ secrets.CG-FXk2tc3zvSX7xAQhUVhW4Q8e }}
         run: |
           python scripts/update_coin_prices_usd.py
+
 
       - name: Make BM20 vs Alt chart
         run: |
