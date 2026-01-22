@@ -4,22 +4,30 @@
 from __future__ import annotations
 
 import os, time, json
-from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Optional
+from datetime import datetime, timezone
+from typing import Dict, List
 
 import pandas as pd
 import requests
 
+# -----------------------------
+# ENV (GitHub Secrets)
+# -----------------------------
 COINGECKO_API_KEY = os.getenv("COINGECKO_API_KEY")
 if not COINGECKO_API_KEY:
     raise RuntimeError("Missing COINGECKO_API_KEY (check GitHub Secrets + workflow env)")
 
+# -----------------------------
+# OUTPUT PATHS
+# -----------------------------
 OUT_DIR = "out/history"
 OUT_CSV = os.path.join(OUT_DIR, "coin_prices_usd.csv")
 OUT_META = os.path.join(OUT_DIR, "coin_prices_usd.meta.json")
 
-# 너희 BM20 구성에 맞게 확정 리스트로 교체해줘 (예시는 임시)
-TICKERS = [
+# -----------------------------
+# BM20 UNIVERSE (20)
+# -----------------------------
+TICKERS: List[str] = [
     "BTC",
     "ETH",
     "BNB",
@@ -42,27 +50,23 @@ TICKERS = [
     "SUI",
 ]
 
-
-# CoinGecko ID 매핑 (필수)
-CG_ID = {
+# CoinGecko ID mapping (validated from your table)
+CG_ID: Dict[str, str] = {
     "BTC": "bitcoin",
     "ETH": "ethereum",
     "BNB": "binancecoin",
     "XRP": "ripple",
     "USDT": "tether",
-
     "SOL": "solana",
     "TON": "toncoin",
     "ADA": "cardano",
     "DOGE": "dogecoin",
     "DOT": "polkadot",
-
     "LINK": "chainlink",
     "AVAX": "avalanche-2",
     "NEAR": "near",
     "ICP": "internet-computer",
     "ATOM": "cosmos-hub",
-
     "LTC": "litecoin",
     "OP": "optimism",
     "ARB": "arbitrum",
@@ -75,24 +79,28 @@ def to_unix(dt: datetime) -> int:
 
 def cg_range_daily_close(coin_id: str, start_utc: datetime, end_utc: datetime) -> pd.Series:
     """
-    CoinGecko range endpoint → (UTC) 일 단위로 resample 후 'last' = 종가.
+    CoinGecko range endpoint → (UTC) 일 단위 resample 후 'last' = 종가.
     index는 date(YYYY-MM-DD)
     """
     url = f"https://api.coingecko.com/api/v3/coins/{coin_id}/market_chart/range"
+
     params = {
-    "vs_currency": "usd",
-    "from": to_unix(start_utc),
-    "to": to_unix(end_utc),
-    "x_cg_demo_api_key": COINGECKO_API_KEY,
+        "vs_currency": "usd",
+        "from": to_unix(start_utc),
+        "to": to_unix(end_utc),
+        # query 방식 (Demo key)
+        "x_cg_demo_api_key": COINGECKO_API_KEY,
     }
 
-    headers = { 
-    "x-cg-demo-api-key": COINGECKO_API_KEY,
-    "accept": "application/json",
+    # header 방식까지 같이 넣어서 호환성 최대화
+    headers = {
+        "x-cg-demo-api-key": COINGECKO_API_KEY,
+        "accept": "application/json",
     }
-    
-    r = requests.get(url, params=params, timeout=30)
+
+    r = requests.get(url, params=params, headers=headers, timeout=30)
     r.raise_for_status()
+
     data = r.json().get("prices", [])
     if not data:
         raise ValueError(f"No prices for {coin_id}")
@@ -102,6 +110,7 @@ def cg_range_daily_close(coin_id: str, start_utc: datetime, end_utc: datetime) -
         index=pd.to_datetime([p[0] for p in data], unit="ms", utc=True),
         name=coin_id,
     )
+
     daily = s.resample("1D").last()
     daily.index = daily.index.date
     return daily
@@ -109,12 +118,13 @@ def cg_range_daily_close(coin_id: str, start_utc: datetime, end_utc: datetime) -
 def main(
     first_start: str = "2018-01-01",
     lookback_days: int = 3,
-    sleep_sec: float = 1.2,
+    sleep_sec: float = 1.4,
 ):
     os.makedirs(OUT_DIR, exist_ok=True)
 
     now_utc = datetime.now(timezone.utc)
-    # EOD 안정성: 최근 2~3일은 다시 덮어써서(lookback) 누락/수정 대비
+
+    # EOD 안정성: 최근 며칠(lookback_days)은 다시 덮어쓰기
     if os.path.exists(OUT_CSV):
         old = pd.read_csv(OUT_CSV)
         old["date"] = pd.to_datetime(old["date"]).dt.date
@@ -134,6 +144,7 @@ def main(
         coin_id = CG_ID.get(t)
         if not coin_id:
             raise KeyError(f"Missing CG_ID for {t}")
+
         s = cg_range_daily_close(coin_id, start_utc, end_utc)
         series_map[t] = s
         print(f"[OK] {t} {len(s)} rows ({start_date}~)")
@@ -142,19 +153,16 @@ def main(
     df_new = pd.DataFrame(series_map)
     df_new.index.name = "date"
 
-    # 기존이 있으면 lookback 구간부터 교체(덮어쓰기)
+    # 기존 데이터와 결합: new가 우선(덮어쓰기)
     if df_old is not None:
-        # 기존 index(date)로 맞춘 뒤, new와 결합하여 new 우선
         df_old2 = df_old.copy()
         df_old2.index = pd.to_datetime(df_old2.index).date
         df_new2 = df_new.copy()
         df_new2.index = pd.to_datetime(df_new2.index).date
 
         combined = pd.concat([df_old2, df_new2], axis=0)
-        # 동일 날짜 중복은 마지막(new)이 이기게
         combined = combined[~combined.index.duplicated(keep="last")]
-        combined = combined.sort_index()
-        out = combined
+        out = combined.sort_index()
     else:
         out = df_new.sort_index()
 
@@ -164,11 +172,13 @@ def main(
 
     meta = {
         "tickers": TICKERS,
+        "cg_ids": CG_ID,
         "start": str(out.index.min()),
         "end": str(out.index.max()),
         "generated_utc": now_utc.isoformat(),
         "source": "CoinGecko market_chart/range (USD, daily close via resample last)",
         "lookback_days": lookback_days,
+        "sleep_sec": sleep_sec,
     }
     with open(OUT_META, "w", encoding="utf-8") as f:
         json.dump(meta, f, ensure_ascii=False, indent=2)
