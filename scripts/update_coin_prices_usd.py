@@ -33,7 +33,7 @@ YF_TICKER: Dict[str, str] = {t: f"{t}-USD" for t in TICKERS}
 
 def yf_download_close(symbol: str, start: str, end: str) -> pd.Series:
     """
-    yfinance로 일봉 Close 수집 -> 반드시 pd.Series(date index)로 반환
+    yfinance로 일봉 Close 수집 -> 반드시 1차원 pd.Series(date index)로 반환
     """
     df = yf.download(
         symbol,
@@ -45,12 +45,17 @@ def yf_download_close(symbol: str, start: str, end: str) -> pd.Series:
         threads=False,
     )
 
-    if df is None or df.empty or "Close" not in df.columns:
+    if df is None or df.empty:
         raise ValueError(f"Empty yfinance data for {symbol}")
 
-    close = df["Close"]
+    # Close 추출 (Series/DataFrame/ndarray 어떤 형태로 와도 1D로 평탄화)
+    if "Close" not in df.columns:
+        raise ValueError(f"No Close column for {symbol}. cols={list(df.columns)}")
 
-    # ✅ 어떤 환경에서는 close가 스칼라/단일값처럼 취급되는 경우가 있어 방어
+    close = df[["Close"]]  # 항상 DataFrame으로 잡고
+    close = close.squeeze("columns")  # ✅ (n,1) -> (n,) Series로 변환
+
+    # 혹시 여전히 Series가 아니면 강제 변환
     if not isinstance(close, pd.Series):
         close = pd.Series(close)
 
@@ -60,6 +65,7 @@ def yf_download_close(symbol: str, start: str, end: str) -> pd.Series:
 
     close.index = pd.to_datetime(close.index).date
     return close
+
 
 
 def main():
