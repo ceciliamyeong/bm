@@ -15,34 +15,55 @@ OUT_CSV = os.path.join(OUT_DIR, "coin_prices_usd.csv")
 OUT_META = os.path.join(OUT_DIR, "coin_prices_usd.meta.json")
 
 # 너희 BM20 구성에 맞게 확정 리스트로 교체해줘 (예시는 임시)
-TICKERS: List[str] = [
-    "BTC","ETH","XRP","USDT","BNB",
-    "SOL","DOGE","TON","SUI",
-    "ADA","TRX","DOT","AVAX","LINK","MATIC","LTC","BCH","ATOM","UNI","XLM"
+TICKERS = [
+    "BTC",
+    "ETH",
+    "BNB",
+    "XRP",
+    "USDT",
+    "SOL",
+    "TON",
+    "ADA",
+    "DOGE",
+    "DOT",
+    "LINK",
+    "AVAX",
+    "NEAR",
+    "ICP",
+    "ATOM",
+    "LTC",
+    "OP",
+    "ARB",
+    "MATIC",
+    "SUI",
 ]
 
+
 # CoinGecko ID 매핑 (필수)
-CG_ID: Dict[str, str] = {
+CG_ID = {
     "BTC": "bitcoin",
     "ETH": "ethereum",
+    "BNB": "binancecoin",
     "XRP": "ripple",
     "USDT": "tether",
-    "BNB": "binancecoin",
+
     "SOL": "solana",
-    "DOGE": "dogecoin",
-    "TON": "the-open-network",
-    "SUI": "sui",
+    "TON": "toncoin",
     "ADA": "cardano",
-    "TRX": "tron",
+    "DOGE": "dogecoin",
     "DOT": "polkadot",
-    "AVAX": "avalanche-2",
+
     "LINK": "chainlink",
-    "MATIC": "matic-network",
+    "AVAX": "avalanche-2",
+    "NEAR": "near",
+    "ICP": "internet-computer",
+    "ATOM": "cosmos-hub",
+
     "LTC": "litecoin",
-    "BCH": "bitcoin-cash",
-    "ATOM": "cosmos",
-    "UNI": "uniswap",
-    "XLM": "stellar",
+    "OP": "optimism",
+    "ARB": "arbitrum",
+    "MATIC": "polygon",
+    "SUI": "sui",
 }
 
 def to_unix(dt: datetime) -> int:
