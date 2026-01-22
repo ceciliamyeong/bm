@@ -38,6 +38,7 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add out/history/coin_prices_usd.csv out/history/coin_prices_usd.meta.json assets/bm20_vs_alt.png
-          git commit -m "Update coin prices + BM20 vs Alt chart" || echo "No changes"
+          git add out/history/coin_prices_usd.csv out/history/coin_prices_usd.meta.json assets/bm20_vs_alt.png bm20_alt.html
+          git commit -m "Update coin prices + BTC vs ALT cumulative returns" || echo "No changes"
           git push
+
