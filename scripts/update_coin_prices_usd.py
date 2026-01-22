@@ -1,9 +1,9 @@
 # scripts/update_coin_prices_usd.py
 # - out/history/coin_prices_usd.csv를 "증분 업데이트"
-# - CoinGecko PRO API: pro-api.coingecko.com 사용 (중요)
+# - CoinGecko PRO API: 최근 2년(730일)만 유지 + 레이트리밋 대응
 from __future__ import annotations
 
-import os, time, json
+import os, time, json, random
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List
 
@@ -28,29 +28,13 @@ OUT_META = os.path.join(OUT_DIR, "coin_prices_usd.meta.json")
 # BM20 UNIVERSE (20)
 # -----------------------------
 TICKERS: List[str] = [
-    "BTC",
-    "ETH",
-    "BNB",
-    "XRP",
-    "USDT",
-    "SOL",
-    "TON",
-    "ADA",
-    "DOGE",
-    "DOT",
-    "LINK",
-    "AVAX",
-    "NEAR",
-    "ICP",
-    "ATOM",
-    "LTC",
-    "OP",
-    "ARB",
-    "MATIC",
-    "SUI",
+    "BTC","ETH","BNB","XRP","USDT",
+    "SOL","TON","ADA","DOGE","DOT",
+    "LINK","AVAX","NEAR","ICP","ATOM",
+    "LTC","OP","ARB","MATIC","SUI",
 ]
 
-# CoinGecko ID mapping
+# CoinGecko ID mapping (your verified table)
 CG_ID: Dict[str, str] = {
     "BTC": "bitcoin",
     "ETH": "ethereum",
@@ -74,26 +58,62 @@ CG_ID: Dict[str, str] = {
     "SUI": "sui",
 }
 
+# -----------------------------
+# SETTINGS
+# -----------------------------
+MAX_LOOKBACK_DAYS = 730          # ✅ 최근 2년만 유지 (플랜 제한 대응)
+CALLS_PER_MIN = 200              # ✅ 레이트리밋(분당 250)보다 여유 있게
+MIN_INTERVAL = 60.0 / CALLS_PER_MIN
+_last_call_ts = 0.0
+
+# CoinGecko Pro API
+BASE_URL = "https://pro-api.coingecko.com/api/v3"
+PRO_HEADERS = {
+    "x-cg-pro-api-key": COINGECKO_API_KEY,  # ✅ Pro는 헤더만
+    "accept": "application/json",
+}
+
+def rate_limit_sleep():
+    global _last_call_ts
+    now = time.time()
+    wait = (_last_call_ts + MIN_INTERVAL) - now
+    if wait > 0:
+        time.sleep(wait)
+    _last_call_ts = time.time()
+
+def get_with_retry(url: str, params: dict, headers: dict, timeout: int = 30, max_retries: int = 6):
+    """
+    429(Too Many Requests) / 5xx 대응용 재시도
+    """
+    for i in range(max_retries):
+        rate_limit_sleep()
+        r = requests.get(url, params=params, headers=headers, timeout=timeout)
+
+        if r.status_code == 429 or (500 <= r.status_code < 600):
+            # exponential backoff + jitter
+            sleep_s = min(30, (2 ** i) + random.random())
+            time.sleep(sleep_s)
+            continue
+
+        return r
+
+    # 마지막 응답 반환(raise_for_status에서 에러 표시)
+    return r
+
 def to_unix(dt: datetime) -> int:
     return int(dt.astimezone(timezone.utc).timestamp())
 
 def cg_range_daily_close(coin_id: str, start_utc: datetime, end_utc: datetime) -> pd.Series:
     """
-    CoinGecko PRO API (ONLY header auth)
-    - Base URL: https://pro-api.coingecko.com
-    - Auth: x-cg-pro-api-key (header ONLY)
-    - Long range is chunked to avoid 400
+    CoinGecko PRO range endpoint
+    - 최근 2년 구간만 사용 (start_utc는 main에서 clamp)
+    - 긴 기간은 chunk로 쪼개 호출
+    - (UTC) 일 단위 resample 후 'last' = 종가
     """
-
-    BASE_URL = "https://pro-api.coingecko.com/api/v3"
     url = f"{BASE_URL}/coins/{coin_id}/market_chart/range"
 
+    # 2년이면 90일 청크로도 충분히 안정적
     MAX_DAYS_PER_CALL = 90
-
-    headers = {
-        "x-cg-pro-api-key": COINGECKO_API_KEY,  # ✅ 이것만
-        "accept": "application/json",
-    }
 
     all_points = []
     cur = start_utc
@@ -103,19 +123,18 @@ def cg_range_daily_close(coin_id: str, start_utc: datetime, end_utc: datetime) -
 
         params = {
             "vs_currency": "usd",
-            "from": int(cur.timestamp()),
-            "to": int(chunk_end.timestamp()),
+            "from": to_unix(cur),
+            "to": to_unix(chunk_end),
         }
 
-        r = requests.get(url, params=params, headers=headers, timeout=30)
+        r = get_with_retry(url, params=params, headers=PRO_HEADERS, timeout=30, max_retries=6)
 
         try:
             r.raise_for_status()
         except requests.HTTPError as e:
             raise RuntimeError(
-                f"[CoinGecko PRO ERROR] {coin_id} "
-                f"{cur.date()} ~ {chunk_end.date()} | "
-                f"status={r.status_code} | body={r.text[:200]}"
+                f"[CoinGecko PRO ERROR] {coin_id} {cur.date()} ~ {chunk_end.date()} | "
+                f"status={r.status_code} | body={r.text[:220]}"
             ) from e
 
         data = r.json().get("prices", [])
@@ -123,7 +142,6 @@ def cg_range_daily_close(coin_id: str, start_utc: datetime, end_utc: datetime) -
             all_points.extend(data)
 
         cur = chunk_end
-        time.sleep(0.8)
 
     if not all_points:
         raise ValueError(f"No price data for {coin_id}")
@@ -138,26 +156,29 @@ def cg_range_daily_close(coin_id: str, start_utc: datetime, end_utc: datetime) -
     daily.index = daily.index.date
     return daily
 
-
 def main(
-    first_start: str = "2018-01-01",
     lookback_days: int = 3,
-    sleep_sec: float = 1.2,
+    sleep_sec_between_coins: float = 0.0,  # 코인 단위로 추가 쉬고 싶으면 0.2~0.5
 ):
     os.makedirs(OUT_DIR, exist_ok=True)
 
     now_utc = datetime.now(timezone.utc)
+    min_date = (now_utc - timedelta(days=MAX_LOOKBACK_DAYS)).date()
 
-    # EOD 안정성: 최근 며칠은 다시 덮어쓰기
+    # ✅ start_date 결정: 기존 파일 있으면 last_date - lookback, 없으면 min_date
     if os.path.exists(OUT_CSV):
         old = pd.read_csv(OUT_CSV)
         old["date"] = pd.to_datetime(old["date"]).dt.date
         old = old.sort_values("date")
         last_date = old["date"].max()
+
         start_date = (pd.to_datetime(last_date) - pd.Timedelta(days=lookback_days)).date()
+        if start_date < min_date:
+            start_date = min_date
+
         df_old = old.set_index("date")
     else:
-        start_date = pd.to_datetime(first_start).date()
+        start_date = min_date
         df_old = None
 
     start_utc = datetime.combine(start_date, datetime.min.time(), tzinfo=timezone.utc)
@@ -173,16 +194,19 @@ def main(
         s = cg_range_daily_close(coin_id, start_utc, end_utc)
         series_map[t] = s
 
-        print(f"[OK] {t} {len(s)} rows ({start_date}~)")
-        time.sleep(sleep_sec)
+        print(f"[OK] {t} rows={len(s)} ({start_date}~{end_utc.date()})")
+
+        if sleep_sec_between_coins > 0:
+            time.sleep(sleep_sec_between_coins)
 
     df_new = pd.DataFrame(series_map)
     df_new.index.name = "date"
 
-    # 기존 데이터와 결합: new가 우선(덮어쓰기)
+    # ✅ 기존 데이터와 결합: new가 우선(덮어쓰기) + 최근 2년 유지
     if df_old is not None:
         df_old2 = df_old.copy()
         df_old2.index = pd.to_datetime(df_old2.index).date
+
         df_new2 = df_new.copy()
         df_new2.index = pd.to_datetime(df_new2.index).date
 
@@ -191,6 +215,9 @@ def main(
         out = combined.sort_index()
     else:
         out = df_new.sort_index()
+
+    # 최근 2년만 남기기 (최종 clamp)
+    out = out[out.index >= min_date]
 
     out2 = out.reset_index()
     out2["date"] = out2["date"].astype(str)
@@ -203,10 +230,11 @@ def main(
         "end": str(out.index.max()),
         "generated_utc": now_utc.isoformat(),
         "source": "CoinGecko PRO market_chart/range (USD, daily close via resample last)",
-        "lookback_days": lookback_days,
-        "sleep_sec": sleep_sec,
-        "base_url": "https://pro-api.coingecko.com/api/v3",
+        "base_url": BASE_URL,
         "auth_header": "x-cg-pro-api-key",
+        "max_lookback_days": MAX_LOOKBACK_DAYS,
+        "lookback_days": lookback_days,
+        "calls_per_min": CALLS_PER_MIN,
     }
     with open(OUT_META, "w", encoding="utf-8") as f:
         json.dump(meta, f, ensure_ascii=False, indent=2)
@@ -216,4 +244,3 @@ def main(
 
 if __name__ == "__main__":
     main()
-
