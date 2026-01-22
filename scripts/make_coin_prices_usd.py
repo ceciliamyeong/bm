@@ -37,27 +37,30 @@ TICKERS = [
 # CoinGecko ID 매핑 (필수)
 # - 각 티커가 CoinGecko에서 어떤 coin id인지 매핑해줘야 함.
 # - 아래도 예시 포함. (필요 시 수정/추가)
-CG_ID: Dict[str, str] = {
+CG_ID = {
     "BTC": "bitcoin",
     "ETH": "ethereum",
+    "BNB": "binancecoin",
     "XRP": "ripple",
     "USDT": "tether",
-    "BNB": "binancecoin",
+
     "SOL": "solana",
-    "DOGE": "dogecoin",
-    "TON": "the-open-network",
-    "SUI": "sui",
+    "TON": "toncoin",
     "ADA": "cardano",
-    "TRX": "tron",
+    "DOGE": "dogecoin",
     "DOT": "polkadot",
-    "AVAX": "avalanche-2",
+
     "LINK": "chainlink",
-    "MATIC": "matic-network",   # (Polygon 티커 변화 있을 수 있어 확인 권장)
+    "AVAX": "avalanche-2",
+    "NEAR": "near",
+    "ICP": "internet-computer",
+    "ATOM": "cosmos-hub",
+
     "LTC": "litecoin",
-    "BCH": "bitcoin-cash",
-    "ATOM": "cosmos",
-    "UNI": "uniswap",
-    "XLM": "stellar",
+    "OP": "optimism",
+    "ARB": "arbitrum",
+    "MATIC": "polygon",
+    "SUI": "sui",
 }
 
 # (옵션) Yahoo Finance 티커 폴백용 매핑: yfinance가 설치되어 있으면 사용 가능
