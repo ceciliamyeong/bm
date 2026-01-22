@@ -157,9 +157,10 @@ def main():
     out = out[TICKERS]
 
     # save csv
+    out.index.name = "date"
     out2 = out.reset_index()
     out2["date"] = out2["date"].astype(str)
-    out2.to_csv(OUT_CSV, index=False)
+
 
     meta = {
         "source": "Yahoo Finance (yfinance)",
