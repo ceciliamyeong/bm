@@ -1,25 +1,29 @@
 # scripts/update_coin_prices_usd.py
 # - Yahoo Finance (yfinance)로 BM20 코인 USD 일봉 종가 패널 생성/증분 업데이트
 # - 최근 2년(730일)만 유지
-# - Yahoo에서 일부 코인이 이상하게 내려오거나(스칼라/빈 DF) 데이터가 짧아도 파이프라인이 죽지 않게 설계
+# - 일부 코인이 Yahoo에서 안 잡히면: 해당 코인만 NaN으로 남기고 전체 파이프라인은 성공 처리
 from __future__ import annotations
 
 import os
 import json
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import pandas as pd
-import yfinance as yf
 
+# yfinance is required (install in GitHub Actions)
+import yfinance as yf
 
 OUT_DIR = "out/history"
 OUT_CSV = os.path.join(OUT_DIR, "coin_prices_usd.csv")
 OUT_META = os.path.join(OUT_DIR, "coin_prices_usd.meta.json")
 
+# 최근 2년만 유지
 MAX_LOOKBACK_DAYS = 730
+# 증분 업데이트 시 마지막 n일은 다시 덮어쓰기 (Yahoo 수정/누락 대비)
 LOOKBACK_DAYS = 3
 
+# BM20 UNIVERSE (20)
 TICKERS: List[str] = [
     "BTC","ETH","BNB","XRP","USDT",
     "SOL","TON","ADA","DOGE","DOT",
@@ -27,13 +31,18 @@ TICKERS: List[str] = [
     "LTC","OP","ARB","MATIC","SUI",
 ]
 
-# 기본 심볼: XXX-USD (안 잡히는 건 나중에 여기만 수정)
+# Yahoo 심볼 매핑
+# 기본은 {TICKER}-USD. (안 잡히는 코인은 나중에 여기만 고치면 됨)
 YF_TICKER: Dict[str, str] = {t: f"{t}-USD" for t in TICKERS}
 
+# 예: USDT는 종종 데이터가 이상할 수 있어서, 필요하면 나중에 별도 처리
+# YF_TICKER["USDT"] = "USDT-USD"
 
 def yf_download_close(symbol: str, start: str, end: str) -> pd.Series:
     """
-    yfinance로 일봉 Close 수집 -> 반드시 1차원 pd.Series(date index)로 반환
+    yfinance로 일봉 Close 수집
+    - index: date
+    - values: Close (float)
     """
     df = yf.download(
         symbol,
@@ -44,29 +53,12 @@ def yf_download_close(symbol: str, start: str, end: str) -> pd.Series:
         auto_adjust=False,
         threads=False,
     )
-
     if df is None or df.empty:
         raise ValueError(f"Empty yfinance data for {symbol}")
 
-    # Close 추출 (Series/DataFrame/ndarray 어떤 형태로 와도 1D로 평탄화)
-    if "Close" not in df.columns:
-        raise ValueError(f"No Close column for {symbol}. cols={list(df.columns)}")
-
-    close = df[["Close"]]  # 항상 DataFrame으로 잡고
-    close = close.squeeze("columns")  # ✅ (n,1) -> (n,) Series로 변환
-
-    # 혹시 여전히 Series가 아니면 강제 변환
-    if not isinstance(close, pd.Series):
-        close = pd.Series(close)
-
-    close = close.dropna()
-    if close.empty:
-        raise ValueError(f"No valid Close data for {symbol}")
-
-    close.index = pd.to_datetime(close.index).date
-    return close
-
-
+    s = df["Close"].copy()
+    s.index = pd.to_datetime(s.index).date
+    return s
 
 def main():
     os.makedirs(OUT_DIR, exist_ok=True)
@@ -74,7 +66,7 @@ def main():
     now_utc = datetime.now(timezone.utc)
     min_date = (now_utc - timedelta(days=MAX_LOOKBACK_DAYS)).date()
 
-    # 기존 CSV 있으면 마지막 날짜 기준 증분(lookback 포함), 없으면 최근 2년부터
+    # 기존 CSV가 있으면 마지막 날짜 기준으로 증분(lookback 포함), 없으면 최근 2년부터
     if os.path.exists(OUT_CSV):
         old = pd.read_csv(OUT_CSV)
         old["date"] = pd.to_datetime(old["date"]).dt.date
@@ -90,7 +82,7 @@ def main():
         start_date = min_date
         df_old = None
 
-    # yfinance는 end가 배타적으로 동작하는 경우가 있어 하루 여유
+    # yfinance download는 end가 "exclusive" 처럼 동작하는 경우가 있어 하루 여유
     start_str = str(start_date)
     end_str = str((now_utc + timedelta(days=1)).date())
 
@@ -98,31 +90,24 @@ def main():
     failures: Dict[str, str] = {}
 
     for t in TICKERS:
-        symbol = YF_TICKER.get(t, f"{t}-USD")
+        symbol = YF_TICKER.get(t)
+        if not symbol:
+            failures[t] = "No Yahoo symbol mapping"
+            continue
+
         try:
             s = yf_download_close(symbol, start=start_str, end=end_str)
-
-            # ✅ 혹시라도 스칼라가 섞이면 여기서 차단
-            if not isinstance(s, pd.Series):
-                raise TypeError(f"Expected Series, got {type(s)}")
-
-            s.name = t
             series_map[t] = s
             print(f"[OK] {t} ({symbol}) rows={len(s)}")
-
         except Exception as e:
+            # ✅ 여기서 죽지 않고 계속 진행
             failures[t] = f"{type(e).__name__}: {e}"
             print(f"[FAIL] {t} ({symbol}) -> {type(e).__name__}: {e}")
 
-    # ✅ 여기가 핵심: DataFrame(series_map) 대신 concat으로 안정화
-    if series_map:
-        df_new = pd.concat(series_map.values(), axis=1)
-        df_new.columns = list(series_map.keys())
-        df_new.index.name = "date"
-        df_new = df_new.sort_index()
-    else:
-        # 전부 실패해도 파일 형식은 유지 (단, 차트 단계에서 의미 없으니 여기서 명확히 터뜨려도 됨)
-        raise RuntimeError("All tickers failed on Yahoo Finance. Cannot build price panel.")
+    # wide dataframe
+    df_new = pd.DataFrame(series_map)
+    df_new.index.name = "date"
+    df_new = df_new.sort_index()
 
     # 기존 데이터와 결합: new 우선(덮어쓰기)
     if df_old is not None:
@@ -138,14 +123,16 @@ def main():
     else:
         out = df_new
 
-    # 최근 2년만 유지
+    # ✅ 최근 2년만 유지
     out = out[out.index >= min_date]
 
-    # 실패한 티커도 칼럼은 유지
+    # ✅ 실패한 티커도 칼럼은 유지(차트/후속 계산에서 컬럼 존재가 더 편함)
+    # 컬럼이 아예 없으면 만들기
     for t in TICKERS:
         if t not in out.columns:
             out[t] = pd.NA
 
+    # 컬럼 순서 정렬
     out = out[TICKERS]
 
     # save csv
@@ -162,7 +149,7 @@ def main():
         "end": str(out.index.max()) if len(out.index) else None,
         "tickers": TICKERS,
         "yahoo_symbols": YF_TICKER,
-        "failures": failures,
+        "failures": failures,  # 어떤 코인이 안 잡혔는지 기록
     }
     with open(OUT_META, "w", encoding="utf-8") as f:
         json.dump(meta, f, ensure_ascii=False, indent=2)
@@ -173,7 +160,6 @@ def main():
         print("\nFailed tickers (kept as NaN columns):")
         for k, v in failures.items():
             print(f"- {k}: {v}")
-
 
 if __name__ == "__main__":
     main()
