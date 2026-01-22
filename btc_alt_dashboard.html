@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BTC vs ALT Dashboard</title>
+
+  <!-- ECharts -->
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
+
+  <style>
+    :root{
+      --bg:#fff; --text:#111; --muted:#666;
+      --border:#e5e7eb; --card:#fff; --shadow:0 1px 2px rgba(0,0,0,.04);
+    }
+    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans KR",Arial,sans-serif; background:var(--bg); color:var(--text); }
+    header{ position:sticky; top:0; background:rgba(255,255,255,.92); backdrop-filter:saturate(180%) blur(10px);
+            border-bottom:1px solid var(--border); z-index:10; }
+    .wrap{ max-width:1180px; margin:0 auto; padding:18px 18px; }
+    .top{ display:flex; gap:14px; align-items:baseline; justify-content:space-between; flex-wrap:wrap; }
+    h1{ font-size:20px; margin:0; }
+    .meta{ font-size:13px; color:var(--muted); }
+    .grid{ display:grid; grid-template-columns:1fr; gap:14px; margin-top:16px; }
+    @media (min-width: 980px){ .grid{ grid-template-columns:1fr 1fr; } }
+    .card{ border:1px solid var(--border); border-radius:14px; background:var(--card); box-shadow:var(--shadow); padding:14px; }
+    .cardhead{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+    .title{ font-weight:800; font-size:14px; }
+    .sub{ font-size:12px; color:var(--muted); }
+    .chart{ width:100%; height:320px; }
+    .chips{ display:flex; gap:6px; flex-wrap:wrap; }
+    .chip{ font-size:12px; border:1px solid var(--border); padding:6px 10px; border-radius:999px; background:#fff; cursor:pointer; }
+    .chip.active{ border-color:#111; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap top">
+      <h1>BTC vs ALT 성과 대시보드</h1>
+      <div class="meta" id="meta">Loading…</div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="card" style="margin-top:14px;">
+      <div class="cardhead">
+        <div>
+          <div class="title">BTC vs ALT 누적수익률 비교</div>
+          <div class="sub">ALT = 동일가중( BTC/USDT 제외 ) · 같은 기간 누가 더 성적이 좋았나</div>
+        </div>
+        <div class="chips" id="rangeChips">
+          <button class="chip active" data-tag="7d">7D</button>
+          <button class="chip" data-tag="30d">30D</button>
+          <button class="chip" data-tag="1y">1Y</button>
+          <button class="chip" data-tag="2y">2Y</button>
+        </div>
+      </div>
+      <div id="mainChart" class="chart"></div>
+      <div class="sub" id="footnote" style="margin-top:8px;">Source: Yahoo Finance panel · Updated: —</div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="cardhead"><div><div class="title">최근 7일</div><div class="sub">누적수익률(%)</div></div></div>
+        <div id="c7d" class="chart"></div>
+      </div>
+      <div class="card">
+        <div class="cardhead"><div><div class="title">최근 30일</div><div class="sub">누적수익률(%)</div></div></div>
+        <div id="c30d" class="chart"></div>
+      </div>
+      <div class="card">
+        <div class="cardhead"><div><div class="title">최근 1년</div><div class="sub">누적수익률(%)</div></div></div>
+        <div id="c1y" class="chart"></div>
+      </div>
+      <div class="card">
+        <div class="cardhead"><div><div class="title">최근 2년</div><div class="sub">누적수익률(%)</div></div></div>
+        <div id="c2y" class="chart"></div>
+      </div>
+    </div>
+  </main>
+
+<script>
+  const $ = (s)=>document.querySelector(s);
+  const $$ = (s)=>Array.from(document.querySelectorAll(s));
+
+  async function loadJSON(path){
+    const r = await fetch(path + (path.includes('?')?'':'') , {cache:'no-store'});
+    if(!r.ok) throw new Error(`fetch failed: ${path} ${r.status}`);
+    return await r.json();
+  }
+
+  function renderLine(el, rows, title){
+    const dates = rows.map(d=>d.date);
+    const btc = rows.map(d=>d.btc);
+    const alt = rows.map(d=>d.alt);
+
+    const chart = echarts.init(el);
+    chart.setOption({
+      title: { text: title || "", left: 8, top: 6, textStyle:{fontSize:12, fontWeight:700} },
+      tooltip: { trigger:'axis' },
+      grid: { left: 48, right: 16, top: 34, bottom: 34 },
+      xAxis: { type:'category', data:dates, axisLabel:{hideOverlap:true} },
+      yAxis: { type:'value', axisLabel:{ formatter:(v)=> `${v.toFixed(0)}%` } },
+      series: [
+        { name:'BTC', type:'line', data:btc, showSymbol:false },
+        { name:'ALT', type:'line', data:alt, showSymbol:false }
+      ]
+    });
+    window.addEventListener('resize', ()=>chart.resize());
+    return chart;
+  }
+
+  let mainChart;
+
+  async function boot(){
+    const meta = await loadJSON('assets/data/meta.json?v=1');
+    $('#meta').textContent = `매일 1회 자동 업데이트 · ALT 코인 ${meta.alt_coins}개 · Updated(UTC) ${meta.updated_utc.slice(0,19).replace('T',' ')}`;
+    $('#footnote').textContent = `Source: ${meta.source} · Updated(UTC): ${meta.updated_utc.slice(0,19).replace('T',' ')}`;
+
+    const d7 = await loadJSON('assets/data/btc_alt_7d.json?v=1');
+    const d30 = await loadJSON('assets/data/btc_alt_30d.json?v=1');
+    const d1y = await loadJSON('assets/data/btc_alt_1y.json?v=1');
+    const d2y = await loadJSON('assets/data/btc_alt_2y.json?v=1');
+
+    renderLine($('#c7d'), d7, "");
+    renderLine($('#c30d'), d30, "");
+    renderLine($('#c1y'), d1y, "");
+    renderLine($('#c2y'), d2y, "");
+
+    mainChart = renderLine($('#mainChart'), d7, "");
+    const map = { '7d': d7, '30d': d30, '1y': d1y, '2y': d2y };
+
+    $$('#rangeChips .chip').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        $$('#rangeChips .chip').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        const tag = btn.dataset.tag;
+        const rows = map[tag];
+        mainChart.setOption({
+          xAxis:{ data: rows.map(d=>d.date) },
+          series:[
+            { data: rows.map(d=>d.btc) },
+            { data: rows.map(d=>d.alt) }
+          ]
+        });
+      });
+    });
+  }
+
+  boot().catch(e=>{
+    $('#meta').textContent = '데이터 로드 실패: ' + e.message;
+  });
+</script>
+</body>
+</html>
