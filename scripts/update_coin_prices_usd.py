@@ -79,21 +79,19 @@ def to_unix(dt: datetime) -> int:
 
 def cg_range_daily_close(coin_id: str, start_utc: datetime, end_utc: datetime) -> pd.Series:
     """
-    CoinGecko PRO range endpoint
-    - 반드시 pro-api.coingecko.com 사용
-    - 긴 기간 요청 시 400 방지를 위해 기간 분할 호출
-    - (UTC) 일 단위 resample 후 'last' = 종가
-    - index는 date(YYYY-MM-DD)
+    CoinGecko PRO API (ONLY header auth)
+    - Base URL: https://pro-api.coingecko.com
+    - Auth: x-cg-pro-api-key (header ONLY)
+    - Long range is chunked to avoid 400
     """
 
-    BASE_URL = "https://pro-api.coingecko.com/api/v3"  # ✅ 핵심
+    BASE_URL = "https://pro-api.coingecko.com/api/v3"
     url = f"{BASE_URL}/coins/{coin_id}/market_chart/range"
 
-    # 길게 잡아도 되지만, 안전하게 90일 분할
     MAX_DAYS_PER_CALL = 90
 
     headers = {
-        "x-cg-pro-api-key": COINGECKO_API_KEY,  # ✅ Pro 키는 이 헤더
+        "x-cg-pro-api-key": COINGECKO_API_KEY,  # ✅ 이것만
         "accept": "application/json",
     }
 
@@ -105,8 +103,8 @@ def cg_range_daily_close(coin_id: str, start_utc: datetime, end_utc: datetime) -
 
         params = {
             "vs_currency": "usd",
-            "from": to_unix(cur),
-            "to": to_unix(chunk_end),
+            "from": int(cur.timestamp()),
+            "to": int(chunk_end.timestamp()),
         }
 
         r = requests.get(url, params=params, headers=headers, timeout=30)
@@ -115,8 +113,9 @@ def cg_range_daily_close(coin_id: str, start_utc: datetime, end_utc: datetime) -
             r.raise_for_status()
         except requests.HTTPError as e:
             raise RuntimeError(
-                f"[CoinGecko PRO ERROR] {coin_id} {cur.date()} ~ {chunk_end.date()} | "
-                f"status={r.status_code} | body={r.text[:220]}"
+                f"[CoinGecko PRO ERROR] {coin_id} "
+                f"{cur.date()} ~ {chunk_end.date()} | "
+                f"status={r.status_code} | body={r.text[:200]}"
             ) from e
 
         data = r.json().get("prices", [])
@@ -124,7 +123,7 @@ def cg_range_daily_close(coin_id: str, start_utc: datetime, end_utc: datetime) -
             all_points.extend(data)
 
         cur = chunk_end
-        time.sleep(0.8)  # 너무 빠르면 1.2~1.5로
+        time.sleep(0.8)
 
     if not all_points:
         raise ValueError(f"No price data for {coin_id}")
@@ -138,6 +137,7 @@ def cg_range_daily_close(coin_id: str, start_utc: datetime, end_utc: datetime) -
     daily = s.resample("1D").last()
     daily.index = daily.index.date
     return daily
+
 
 def main(
     first_start: str = "2018-01-01",
