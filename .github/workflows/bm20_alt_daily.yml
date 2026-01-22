@@ -28,7 +28,7 @@ jobs:
 
       - name: Update coin prices (USD, daily close)
         env:
-          CG_API_KEY: ${{ secrets.CG_API_KEY }}
+          COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
         run: |
           python scripts/update_coin_prices_usd.py
 
