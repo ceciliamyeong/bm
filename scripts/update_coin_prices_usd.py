@@ -52,6 +52,7 @@ def yf_download_close(symbol: str, start: str, end: str) -> pd.Series:
         progress=False,
         auto_adjust=False,
         threads=False,
+        group_by="column",
     )
     if df is None or df.empty:
         raise ValueError(f"Empty yfinance data for {symbol}")
