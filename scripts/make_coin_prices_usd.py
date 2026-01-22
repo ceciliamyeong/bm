@@ -75,7 +75,7 @@ def cg_market_chart_range(coin_id: str, start: datetime, end: datetime) -> pd.Se
     CoinGecko range endpoint returns [timestamp_ms, price] points.
     We resample to daily and take last (close).
     """
-    url = f"https://api.coingecko.com/api/v3/coins/{coin_id}/market_chart/range"
+    url = f"https://pro-api.coingecko.com/api/v3/coins/{coin_id}/market_chart/range"
     params = {
         "vs_currency": "usd",
         "from": to_unix(start),
