@@ -10,7 +10,7 @@ from typing import Dict, List, Optional
 import pandas as pd
 import requests
 
-CG_API_KEY = os.getenv("CG_API_KEY")
+CG_API_KEY = os.getenv("COINGECKO_API_KEY")
 
 OUT_DIR = "out/history"
 OUT_CSV = os.path.join(OUT_DIR, "coin_prices_usd.csv")
@@ -78,8 +78,14 @@ def cg_range_daily_close(coin_id: str, start_utc: datetime, end_utc: datetime) -
     """
     url = f"https://api.coingecko.com/api/v3/coins/{coin_id}/market_chart/range"
     params = {"vs_currency": "usd", "from": to_unix(start_utc), "to": to_unix(end_utc),
-             "x_cg_demo_api_key": CG_API_KEY,
+             "x_cg_demo_api_key": COINGECKO_API_KEY,
     }
+
+    headers = { 
+    "x-cg-demo-api-key": COINGECKO_API_KEY,
+    "accept": "application/json",
+    }
+    
     r = requests.get(url, params=params, timeout=30)
     r.raise_for_status()
     data = r.json().get("prices", [])
