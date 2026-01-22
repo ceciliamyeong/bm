@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import os, time, json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List
 
 import pandas as pd
@@ -79,41 +79,69 @@ def to_unix(dt: datetime) -> int:
 
 def cg_range_daily_close(coin_id: str, start_utc: datetime, end_utc: datetime) -> pd.Series:
     """
-    CoinGecko range endpoint → (UTC) 일 단위 resample 후 'last' = 종가.
-    index는 date(YYYY-MM-DD)
+    CoinGecko range endpoint
+    - 긴 기간 요청 시 400 방지를 위해 기간 분할 호출
+    - (UTC) 일 단위 resample 후 'last' = 종가
+    - index는 date(YYYY-MM-DD)
     """
+
     url = f"https://api.coingecko.com/api/v3/coins/{coin_id}/market_chart/range"
 
-    params = {
-        "vs_currency": "usd",
-        "from": to_unix(start_utc),
-        "to": to_unix(end_utc),
-        # query 방식 (Demo key)
-        "x_cg_demo_api_key": COINGECKO_API_KEY,
-    }
+    # 🔒 무료/Demo 키 기준 안전한 최대 구간 (문제 생기면 30으로 더 줄여도 됨)
+    MAX_DAYS_PER_CALL = 90
 
-    # header 방식까지 같이 넣어서 호환성 최대화
     headers = {
         "x-cg-demo-api-key": COINGECKO_API_KEY,
         "accept": "application/json",
     }
 
-    r = requests.get(url, params=params, headers=headers, timeout=30)
-    r.raise_for_status()
+    all_points = []  # (timestamp_ms, price)
 
-    data = r.json().get("prices", [])
-    if not data:
-        raise ValueError(f"No prices for {coin_id}")
+    cur = start_utc
+    while cur < end_utc:
+        chunk_end = min(cur + timedelta(days=MAX_DAYS_PER_CALL), end_utc)
+
+        params = {
+            "vs_currency": "usd",
+            "from": int(cur.replace(tzinfo=timezone.utc).timestamp()),
+            "to": int(chunk_end.replace(tzinfo=timezone.utc).timestamp()),
+            "x_cg_demo_api_key": COINGECKO_API_KEY,
+        }
+
+        r = requests.get(url, params=params, headers=headers, timeout=30)
+
+        try:
+            r.raise_for_status()
+        except requests.HTTPError as e:
+            raise RuntimeError(
+                f"[CoinGecko ERROR] {coin_id} "
+                f"{cur.date()} ~ {chunk_end.date()} | "
+                f"status={r.status_code} | body={r.text[:200]}"
+            ) from e
+
+        data = r.json().get("prices", [])
+        if data:
+            all_points.extend(data)
+
+        # 다음 구간으로 이동
+        cur = chunk_end
+
+        # ⏱ Rate limit 완화용 sleep
+        time.sleep(1.2)
+
+    if not all_points:
+        raise ValueError(f"No price data for {coin_id}")
 
     s = pd.Series(
-        [p[1] for p in data],
-        index=pd.to_datetime([p[0] for p in data], unit="ms", utc=True),
+        [p[1] for p in all_points],
+        index=pd.to_datetime([p[0] for p in all_points], unit="ms", utc=True),
         name=coin_id,
     )
 
     daily = s.resample("1D").last()
     daily.index = daily.index.date
     return daily
+
 
 def main(
     first_start: str = "2018-01-01",
