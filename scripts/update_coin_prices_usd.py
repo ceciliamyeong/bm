@@ -1,32 +1,29 @@
 # scripts/update_coin_prices_usd.py
-# - out/history/coin_prices_usd.csv를 "증분 업데이트"
-# - CoinGecko PRO API: 최근 2년(730일)만 유지 + 레이트리밋 대응
+# - Yahoo Finance (yfinance)로 BM20 코인 USD 일봉 종가 패널 생성/증분 업데이트
+# - 최근 2년(730일)만 유지
+# - 일부 코인이 Yahoo에서 안 잡히면: 해당 코인만 NaN으로 남기고 전체 파이프라인은 성공 처리
 from __future__ import annotations
 
-import os, time, json, random
+import os
+import json
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import pandas as pd
-import requests
 
-# -----------------------------
-# ENV (GitHub Secrets)
-# -----------------------------
-COINGECKO_API_KEY = os.getenv("COINGECKO_API_KEY")
-if not COINGECKO_API_KEY:
-    raise RuntimeError("Missing COINGECKO_API_KEY (check GitHub Secrets + workflow env)")
+# yfinance is required (install in GitHub Actions)
+import yfinance as yf
 
-# -----------------------------
-# OUTPUT PATHS
-# -----------------------------
 OUT_DIR = "out/history"
 OUT_CSV = os.path.join(OUT_DIR, "coin_prices_usd.csv")
 OUT_META = os.path.join(OUT_DIR, "coin_prices_usd.meta.json")
 
-# -----------------------------
+# 최근 2년만 유지
+MAX_LOOKBACK_DAYS = 730
+# 증분 업데이트 시 마지막 n일은 다시 덮어쓰기 (Yahoo 수정/누락 대비)
+LOOKBACK_DAYS = 3
+
 # BM20 UNIVERSE (20)
-# -----------------------------
 TICKERS: List[str] = [
     "BTC","ETH","BNB","XRP","USDT",
     "SOL","TON","ADA","DOGE","DOT",
@@ -34,145 +31,49 @@ TICKERS: List[str] = [
     "LTC","OP","ARB","MATIC","SUI",
 ]
 
-# CoinGecko ID mapping (your verified table)
-CG_ID: Dict[str, str] = {
-    "BTC": "bitcoin",
-    "ETH": "ethereum",
-    "BNB": "binancecoin",
-    "XRP": "ripple",
-    "USDT": "tether",
-    "SOL": "solana",
-    "TON": "toncoin",
-    "ADA": "cardano",
-    "DOGE": "dogecoin",
-    "DOT": "polkadot",
-    "LINK": "chainlink",
-    "AVAX": "avalanche-2",
-    "NEAR": "near",
-    "ICP": "internet-computer",
-    "ATOM": "cosmos-hub",
-    "LTC": "litecoin",
-    "OP": "optimism",
-    "ARB": "arbitrum",
-    "MATIC": "polygon",
-    "SUI": "sui",
-}
+# Yahoo 심볼 매핑
+# 기본은 {TICKER}-USD. (안 잡히는 코인은 나중에 여기만 고치면 됨)
+YF_TICKER: Dict[str, str] = {t: f"{t}-USD" for t in TICKERS}
 
-# -----------------------------
-# SETTINGS
-# -----------------------------
-MAX_LOOKBACK_DAYS = 730          # ✅ 최근 2년만 유지 (플랜 제한 대응)
-CALLS_PER_MIN = 200              # ✅ 레이트리밋(분당 250)보다 여유 있게
-MIN_INTERVAL = 60.0 / CALLS_PER_MIN
-_last_call_ts = 0.0
+# 예: USDT는 종종 데이터가 이상할 수 있어서, 필요하면 나중에 별도 처리
+# YF_TICKER["USDT"] = "USDT-USD"
 
-# CoinGecko Pro API
-BASE_URL = "https://pro-api.coingecko.com/api/v3"
-PRO_HEADERS = {
-    "x-cg-pro-api-key": COINGECKO_API_KEY,  # ✅ Pro는 헤더만
-    "accept": "application/json",
-}
-
-def rate_limit_sleep():
-    global _last_call_ts
-    now = time.time()
-    wait = (_last_call_ts + MIN_INTERVAL) - now
-    if wait > 0:
-        time.sleep(wait)
-    _last_call_ts = time.time()
-
-def get_with_retry(url: str, params: dict, headers: dict, timeout: int = 30, max_retries: int = 6):
+def yf_download_close(symbol: str, start: str, end: str) -> pd.Series:
     """
-    429(Too Many Requests) / 5xx 대응용 재시도
+    yfinance로 일봉 Close 수집
+    - index: date
+    - values: Close (float)
     """
-    for i in range(max_retries):
-        rate_limit_sleep()
-        r = requests.get(url, params=params, headers=headers, timeout=timeout)
-
-        if r.status_code == 429 or (500 <= r.status_code < 600):
-            # exponential backoff + jitter
-            sleep_s = min(30, (2 ** i) + random.random())
-            time.sleep(sleep_s)
-            continue
-
-        return r
-
-    # 마지막 응답 반환(raise_for_status에서 에러 표시)
-    return r
-
-def to_unix(dt: datetime) -> int:
-    return int(dt.astimezone(timezone.utc).timestamp())
-
-def cg_range_daily_close(coin_id: str, start_utc: datetime, end_utc: datetime) -> pd.Series:
-    """
-    CoinGecko PRO range endpoint
-    - 최근 2년 구간만 사용 (start_utc는 main에서 clamp)
-    - 긴 기간은 chunk로 쪼개 호출
-    - (UTC) 일 단위 resample 후 'last' = 종가
-    """
-    url = f"{BASE_URL}/coins/{coin_id}/market_chart/range"
-
-    # 2년이면 90일 청크로도 충분히 안정적
-    MAX_DAYS_PER_CALL = 90
-
-    all_points = []
-    cur = start_utc
-
-    while cur < end_utc:
-        chunk_end = min(cur + timedelta(days=MAX_DAYS_PER_CALL), end_utc)
-
-        params = {
-            "vs_currency": "usd",
-            "from": to_unix(cur),
-            "to": to_unix(chunk_end),
-        }
-
-        r = get_with_retry(url, params=params, headers=PRO_HEADERS, timeout=30, max_retries=6)
-
-        try:
-            r.raise_for_status()
-        except requests.HTTPError as e:
-            raise RuntimeError(
-                f"[CoinGecko PRO ERROR] {coin_id} {cur.date()} ~ {chunk_end.date()} | "
-                f"status={r.status_code} | body={r.text[:220]}"
-            ) from e
-
-        data = r.json().get("prices", [])
-        if data:
-            all_points.extend(data)
-
-        cur = chunk_end
-
-    if not all_points:
-        raise ValueError(f"No price data for {coin_id}")
-
-    s = pd.Series(
-        [p[1] for p in all_points],
-        index=pd.to_datetime([p[0] for p in all_points], unit="ms", utc=True),
-        name=coin_id,
+    df = yf.download(
+        symbol,
+        start=start,
+        end=end,
+        interval="1d",
+        progress=False,
+        auto_adjust=False,
+        threads=False,
     )
+    if df is None or df.empty:
+        raise ValueError(f"Empty yfinance data for {symbol}")
 
-    daily = s.resample("1D").last()
-    daily.index = daily.index.date
-    return daily
+    s = df["Close"].copy()
+    s.index = pd.to_datetime(s.index).date
+    return s
 
-def main(
-    lookback_days: int = 3,
-    sleep_sec_between_coins: float = 0.0,  # 코인 단위로 추가 쉬고 싶으면 0.2~0.5
-):
+def main():
     os.makedirs(OUT_DIR, exist_ok=True)
 
     now_utc = datetime.now(timezone.utc)
     min_date = (now_utc - timedelta(days=MAX_LOOKBACK_DAYS)).date()
 
-    # ✅ start_date 결정: 기존 파일 있으면 last_date - lookback, 없으면 min_date
+    # 기존 CSV가 있으면 마지막 날짜 기준으로 증분(lookback 포함), 없으면 최근 2년부터
     if os.path.exists(OUT_CSV):
         old = pd.read_csv(OUT_CSV)
         old["date"] = pd.to_datetime(old["date"]).dt.date
         old = old.sort_values("date")
         last_date = old["date"].max()
 
-        start_date = (pd.to_datetime(last_date) - pd.Timedelta(days=lookback_days)).date()
+        start_date = (pd.to_datetime(last_date) - pd.Timedelta(days=LOOKBACK_DAYS)).date()
         if start_date < min_date:
             start_date = min_date
 
@@ -181,28 +82,34 @@ def main(
         start_date = min_date
         df_old = None
 
-    start_utc = datetime.combine(start_date, datetime.min.time(), tzinfo=timezone.utc)
-    end_utc = now_utc
+    # yfinance download는 end가 "exclusive" 처럼 동작하는 경우가 있어 하루 여유
+    start_str = str(start_date)
+    end_str = str((now_utc + timedelta(days=1)).date())
 
     series_map: Dict[str, pd.Series] = {}
+    failures: Dict[str, str] = {}
 
     for t in TICKERS:
-        coin_id = CG_ID.get(t)
-        if not coin_id:
-            raise KeyError(f"Missing CG_ID for {t}")
+        symbol = YF_TICKER.get(t)
+        if not symbol:
+            failures[t] = "No Yahoo symbol mapping"
+            continue
 
-        s = cg_range_daily_close(coin_id, start_utc, end_utc)
-        series_map[t] = s
+        try:
+            s = yf_download_close(symbol, start=start_str, end=end_str)
+            series_map[t] = s
+            print(f"[OK] {t} ({symbol}) rows={len(s)}")
+        except Exception as e:
+            # ✅ 여기서 죽지 않고 계속 진행
+            failures[t] = f"{type(e).__name__}: {e}"
+            print(f"[FAIL] {t} ({symbol}) -> {type(e).__name__}: {e}")
 
-        print(f"[OK] {t} rows={len(s)} ({start_date}~{end_utc.date()})")
-
-        if sleep_sec_between_coins > 0:
-            time.sleep(sleep_sec_between_coins)
-
+    # wide dataframe
     df_new = pd.DataFrame(series_map)
     df_new.index.name = "date"
+    df_new = df_new.sort_index()
 
-    # ✅ 기존 데이터와 결합: new가 우선(덮어쓰기) + 최근 2년 유지
+    # 기존 데이터와 결합: new 우선(덮어쓰기)
     if df_old is not None:
         df_old2 = df_old.copy()
         df_old2.index = pd.to_datetime(df_old2.index).date
@@ -214,33 +121,45 @@ def main(
         combined = combined[~combined.index.duplicated(keep="last")]
         out = combined.sort_index()
     else:
-        out = df_new.sort_index()
+        out = df_new
 
-    # 최근 2년만 남기기 (최종 clamp)
+    # ✅ 최근 2년만 유지
     out = out[out.index >= min_date]
 
+    # ✅ 실패한 티커도 칼럼은 유지(차트/후속 계산에서 컬럼 존재가 더 편함)
+    # 컬럼이 아예 없으면 만들기
+    for t in TICKERS:
+        if t not in out.columns:
+            out[t] = pd.NA
+
+    # 컬럼 순서 정렬
+    out = out[TICKERS]
+
+    # save csv
     out2 = out.reset_index()
     out2["date"] = out2["date"].astype(str)
     out2.to_csv(OUT_CSV, index=False)
 
     meta = {
-        "tickers": TICKERS,
-        "cg_ids": CG_ID,
-        "start": str(out.index.min()),
-        "end": str(out.index.max()),
+        "source": "Yahoo Finance (yfinance)",
         "generated_utc": now_utc.isoformat(),
-        "source": "CoinGecko PRO market_chart/range (USD, daily close via resample last)",
-        "base_url": BASE_URL,
-        "auth_header": "x-cg-pro-api-key",
         "max_lookback_days": MAX_LOOKBACK_DAYS,
-        "lookback_days": lookback_days,
-        "calls_per_min": CALLS_PER_MIN,
+        "lookback_days": LOOKBACK_DAYS,
+        "start": str(out.index.min()) if len(out.index) else None,
+        "end": str(out.index.max()) if len(out.index) else None,
+        "tickers": TICKERS,
+        "yahoo_symbols": YF_TICKER,
+        "failures": failures,  # 어떤 코인이 안 잡혔는지 기록
     }
     with open(OUT_META, "w", encoding="utf-8") as f:
         json.dump(meta, f, ensure_ascii=False, indent=2)
 
     print(f"\nSaved: {OUT_CSV}")
     print(f"Saved: {OUT_META}")
+    if failures:
+        print("\nFailed tickers (kept as NaN columns):")
+        for k, v in failures.items():
+            print(f"- {k}: {v}")
 
 if __name__ == "__main__":
     main()
