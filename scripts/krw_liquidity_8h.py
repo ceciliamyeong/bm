@@ -2,469 +2,234 @@
 # -*- coding: utf-8 -*-
 
 """
-KRW Liquidity Collector (8-hour snapshots) + Daily/Weekly aggregates
-- Sources: Upbit, Bithumb, Coinone (public endpoints)
-- Snapshot frequency: run via cron every 8 hours (e.g., 01:05 / 09:05 / 17:05 KST)
-- Output:
-  out/history/krw_liq_snapshots.csv  (timestamp-level, 3 exchanges totals + top10 share)
-  out/history/krw_liq_daily.csv      (calendar daily representative snapshot near 09:00 KST)
-  out/history/krw_liq_weekly.csv     (ISO week aggregates + WoW)
-  out/history/krw_liq_weekly.json    (for ECharts stacked bar; exchange-based)
+KRW Liquidity Pipeline (8h snapshots → daily proxy → weekly)
+- Exchanges: Upbit, Bithumb, Coinone
+- Outputs:
+  out/history/
+    ├─ krw_liq_snapshots.csv
+    ├─ krw_liq_daily.csv
+    ├─ krw_liq_weekly.json
+    └─ krw_liq_weekly_top10.json
 """
 
 import csv
 import json
-import math
 import time
-from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple
 
 import requests
 
+# =========================
+# Time / Paths
+# =========================
 KST = timezone(timedelta(hours=9))
 
-# ----------------------------
-# Endpoints (public)
-# ----------------------------
-UPBIT_MARKET_ALL = "https://api.upbit.com/v1/market/all"
-UPBIT_TICKER = "https://api.upbit.com/v1/ticker"
-
-BITHUMB_TICKER_ALL_KRW = "https://api.bithumb.com/public/ticker/ALL_KRW"
-
-COINONE_TICKER_KRW = "https://api.coinone.co.kr/public/v2/ticker_new/KRW"
-
-
-# ----------------------------
-# Paths (BM20-style)
-# ----------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 OUT_DIR = BASE_DIR / "out"
 HIST_DIR = OUT_DIR / "history"
 HIST_DIR.mkdir(parents=True, exist_ok=True)
 
-SNAP_CSV = HIST_DIR / "krw_liq_snapshots.csv"
+SNAPSHOT_CSV = HIST_DIR / "krw_liq_snapshots.csv"
 DAILY_CSV = HIST_DIR / "krw_liq_daily.csv"
-WEEKLY_CSV = HIST_DIR / "krw_liq_weekly.csv"
 WEEKLY_JSON = HIST_DIR / "krw_liq_weekly.json"
+WEEKLY_TOP10_JSON = HIST_DIR / "krw_liq_weekly_top10.json"
 
+# =========================
+# API Endpoints
+# =========================
+UPBIT_MARKETS = "https://api.upbit.com/v1/market/all"
+UPBIT_TICKER = "https://api.upbit.com/v1/ticker"
 
-# ----------------------------
+BITHUMB_TICKER_ALL = "https://api.bithumb.com/public/ticker/ALL_KRW"
+
+COINONE_TICKER = "https://api.coinone.co.kr/public/v2/ticker_new/KRW"
+
+# =========================
 # Helpers
-# ----------------------------
-def now_kst() -> datetime:
+# =========================
+def now_kst():
     return datetime.now(tz=KST)
 
-def ts_kst_str(dt: datetime) -> str:
-    return dt.strftime("%Y-%m-%d %H:%M:%S%z")
-
-def date_kst_str(dt: datetime) -> str:
-    return dt.strftime("%Y-%m-%d")
-
-def iso_week_key(date_str: str) -> str:
-    # date_str: YYYY-MM-DD in KST
+def iso_week(date_str: str) -> str:
     d = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=KST)
     y, w, _ = d.isocalendar()
     return f"{y}-W{w:02d}"
 
-def safe_float(x, default=0.0) -> float:
-    try:
-        if x is None:
-            return default
-        return float(x)
-    except Exception:
-        return default
-
-def sleep_backoff(attempt: int):
-    # exponential backoff with jitter-ish
-    s = min(10.0, (2 ** attempt) * 0.5)
-    time.sleep(s)
-
-def http_get_json(url: str, params: Optional[dict] = None, timeout: int = 20, max_retries: int = 4) -> dict:
-    last_err = None
-    for attempt in range(max_retries):
+def http_get(url, params=None):
+    for _ in range(3):
         try:
-            r = requests.get(url, params=params, timeout=timeout)
-            # retry on 429/5xx
-            if r.status_code in (429, 500, 502, 503, 504):
-                last_err = RuntimeError(f"HTTP {r.status_code} for {url}")
-                sleep_backoff(attempt)
-                continue
+            r = requests.get(url, params=params, timeout=20)
             r.raise_for_status()
             return r.json()
-        except Exception as e:
-            last_err = e
-            sleep_backoff(attempt)
-    raise RuntimeError(f"Failed GET {url}: {last_err}")
+        except Exception:
+            time.sleep(1)
+    raise RuntimeError(f"Failed request: {url}")
 
-def chunked(lst: List[str], n: int):
-    for i in range(0, len(lst), n):
-        yield lst[i:i+n]
-
-
-# ----------------------------
-# Upbit
-# ----------------------------
-def upbit_get_krw_markets() -> List[str]:
-    data = http_get_json(UPBIT_MARKET_ALL, params={"isDetails": "false"})
-    mkts = [x["market"] for x in data if x.get("market", "").startswith("KRW-")]
-    mkts.sort()
-    return mkts
-
-def upbit_fetch_trade_values(mkts: List[str]) -> List[Tuple[str, float]]:
-    # acc_trade_price_24h: 24h 누적 거래대금 (KRW)
-    out: List[Tuple[str, float]] = []
-    for chunk in chunked(mkts, 100):
-        data = http_get_json(UPBIT_TICKER, params={"markets": ",".join(chunk)})
-        for t in data:
-            m = t.get("market")
-            v = safe_float(t.get("acc_trade_price_24h"), 0.0)
-            if m:
-                out.append((m, v))
-        time.sleep(0.12)  # gentle pacing
+# =========================
+# Fetch per exchange (pairs)
+# =========================
+def fetch_upbit_pairs() -> List[Tuple[str, float]]:
+    markets = http_get(UPBIT_MARKETS, {"isDetails": "false"})
+    krw_markets = [m["market"] for m in markets if m["market"].startswith("KRW-")]
+    out = []
+    for i in range(0, len(krw_markets), 100):
+        chunk = krw_markets[i:i+100]
+        tickers = http_get(UPBIT_TICKER, {"markets": ",".join(chunk)})
+        for t in tickers:
+            out.append((t["market"], float(t.get("acc_trade_price_24h", 0))))
+        time.sleep(0.1)
     return out
 
-
-# ----------------------------
-# Bithumb
-# ----------------------------
-def bithumb_fetch_trade_values() -> List[Tuple[str, float]]:
-    """
-    Bithumb public ticker ALL_KRW response structure:
-      { "status":"0000", "data": { "BTC": {...}, ..., "date":"..." } }
-    Fields vary by version. Commonly includes:
-      - acc_trade_value (24h 누적 거래대금, KRW)
-      - acc_trade_value_24H (some variants)
-    We'll try both.
-    """
-    j = http_get_json(BITHUMB_TICKER_ALL_KRW)
-    if str(j.get("status")) != "0000":
-        raise RuntimeError(f"Bithumb status not 0000: {j.get('status')}")
+def fetch_bithumb_pairs() -> List[Tuple[str, float]]:
+    j = http_get(BITHUMB_TICKER_ALL)
     data = j.get("data", {})
-    out: List[Tuple[str, float]] = []
-    for sym, payload in data.items():
+    out = []
+    for sym, v in data.items():
         if sym == "date":
             continue
-        if not isinstance(payload, dict):
-            continue
-        v = payload.get("acc_trade_value")
-        if v is None:
-            v = payload.get("acc_trade_value_24H")
-        if v is None:
-            v = payload.get("acc_trade_value_24h")
-        vv = safe_float(v, 0.0)
-        out.append((f"KRW-{sym}", vv))
+        val = (
+            v.get("acc_trade_value_24H")
+            or v.get("acc_trade_value")
+            or 0
+        )
+        out.append((f"KRW-{sym}", float(val)))
     return out
 
-
-# ----------------------------
-# Coinone
-# ----------------------------
-def coinone_fetch_trade_values() -> List[Tuple[str, float]]:
-    """
-    Coinone public v2 ticker_new/KRW:
-      { "result":"success", "tickers":[{ "target_currency":"btc", ..., "quote_volume":"..." }, ...] }
-    quote_volume = 24h 기준 '종목 체결 금액(원화)' 성격
-    """
-    j = http_get_json(COINONE_TICKER_KRW)
-    if str(j.get("result")) != "success":
-        raise RuntimeError(f"Coinone result not success: {j.get('result')}")
-    tickers = j.get("tickers", [])
-    out: List[Tuple[str, float]] = []
-    for t in tickers:
-        if not isinstance(t, dict):
-            continue
-        sym = t.get("target_currency")
-        if not sym:
-            continue
-        v = t.get("quote_volume")
-        vv = safe_float(v, 0.0)
-        out.append((f"KRW-{str(sym).upper()}", vv))
+def fetch_coinone_pairs() -> List[Tuple[str, float]]:
+    j = http_get(COINONE_TICKER)
+    out = []
+    for t in j.get("tickers", []):
+        sym = t.get("target_currency", "").upper()
+        val = float(t.get("quote_volume", 0))
+        out.append((f"KRW-{sym}", val))
     return out
 
+# =========================
+# Aggregation logic
+# =========================
+def compute_total(pairs):
+    return sum(v for _, v in pairs)
 
-# ----------------------------
-# Metrics
-# ----------------------------
-@dataclass
-class ExchangeSnapshot:
-    total_krw_24h: float
-    top10_krw_24h: float
-    top10_share_pct: float
-    active_markets: int
-    total_markets: int
+def compute_top10_rest(pairs):
+    agg: Dict[str, float] = {}
+    for k, v in pairs:
+        agg[k] = agg.get(k, 0) + v
+    items = sorted(agg.items(), key=lambda x: x[1], reverse=True)
+    total = sum(v for _, v in items)
+    top10 = sum(v for _, v in items[:10])
+    rest = max(0, total - top10)
+    return total, top10, rest
 
-def compute_exchange_snapshot(pairs: List[Tuple[str, float]]) -> ExchangeSnapshot:
-    pairs_sorted = sorted(pairs, key=lambda x: x[1], reverse=True)
-    total = sum(v for _, v in pairs_sorted)
-    top10 = sum(v for _, v in pairs_sorted[:10])
-    share = (top10 / total * 100.0) if total > 0 else 0.0
-    active = sum(1 for _, v in pairs_sorted if v > 0)
-    return ExchangeSnapshot(
-        total_krw_24h=total,
-        top10_krw_24h=top10,
-        top10_share_pct=share,
-        active_markets=active,
-        total_markets=len(pairs_sorted),
-    )
+# =========================
+# Snapshot → Daily → Weekly
+# =========================
+def append_snapshot(row: dict):
+    exists = SNAPSHOT_CSV.exists()
+    with SNAPSHOT_CSV.open("a", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=row.keys())
+        if not exists:
+            w.writeheader()
+        w.writerow(row)
 
-
-# ----------------------------
-# CSV IO
-# ----------------------------
-def ensure_snapshot_header():
-    if SNAP_CSV.exists():
-        return
-    with SNAP_CSV.open("w", newline="", encoding="utf-8") as f:
-        w = csv.writer(f)
-        w.writerow([
-            "timestamp_kst",
-            # upbit
-            "upbit_total_krw_24h", "upbit_top10_share_pct", "upbit_active_markets", "upbit_total_markets",
-            # bithumb
-            "bithumb_total_krw_24h", "bithumb_top10_share_pct", "bithumb_active_markets", "bithumb_total_markets",
-            # coinone
-            "coinone_total_krw_24h", "coinone_top10_share_pct", "coinone_active_markets", "coinone_total_markets",
-            # combined
-            "combined_total_krw_24h"
-        ])
-
-def append_snapshot_row(ts: str, up: ExchangeSnapshot, bt: ExchangeSnapshot, co: ExchangeSnapshot):
-    ensure_snapshot_header()
-    combined = up.total_krw_24h + bt.total_krw_24h + co.total_krw_24h
-    with SNAP_CSV.open("a", newline="", encoding="utf-8") as f:
-        w = csv.writer(f)
-        w.writerow([
-            ts,
-            f"{up.total_krw_24h:.6f}", f"{up.top10_share_pct:.4f}", up.active_markets, up.total_markets,
-            f"{bt.total_krw_24h:.6f}", f"{bt.top10_share_pct:.4f}", bt.active_markets, bt.total_markets,
-            f"{co.total_krw_24h:.6f}", f"{co.top10_share_pct:.4f}", co.active_markets, co.total_markets,
-            f"{combined:.6f}"
-        ])
-
-def load_snapshots() -> List[dict]:
-    if not SNAP_CSV.exists():
-        return []
+def rebuild_daily():
     rows = []
-    with SNAP_CSV.open("r", newline="", encoding="utf-8") as f:
-        r = csv.DictReader(f)
-        for row in r:
-            rows.append(row)
-    # ensure chronological
-    rows.sort(key=lambda x: x["timestamp_kst"])
-    return rows
-
-def ensure_daily_header():
-    with DAILY_CSV.open("w", newline="", encoding="utf-8") as f:
-        w = csv.writer(f)
-        w.writerow([
-            "date_kst",
-            "upbit_total_proxy", "bithumb_total_proxy", "coinone_total_proxy",
-            "combined_total_proxy",
-            "upbit_top10_share_pct", "bithumb_top10_share_pct", "coinone_top10_share_pct"
-        ])
-
-def build_daily_from_snapshots(target_hour: int = 9) -> List[dict]:
-    """
-    Select 1 representative snapshot per calendar day: the one closest to target_hour (KST).
-    """
-    snaps = load_snapshots()
-    if not snaps:
-        return []
+    with SNAPSHOT_CSV.open() as f:
+        for r in csv.DictReader(f):
+            rows.append(r)
 
     by_date: Dict[str, List[dict]] = {}
-    for s in snaps:
-        # timestamp_kst like "YYYY-MM-DD HH:MM:SS+0900"
-        dt = datetime.strptime(s["timestamp_kst"], "%Y-%m-%d %H:%M:%S%z").astimezone(KST)
-        d = date_kst_str(dt)
-        s["_dt"] = dt
-        by_date.setdefault(d, []).append(s)
+    for r in rows:
+        d = r["date"]
+        by_date.setdefault(d, []).append(r)
 
-    daily: List[dict] = []
-    for d, items in sorted(by_date.items()):
-        # choose closest to target_hour
-        def dist(it):
-            dt = it["_dt"]
-            return abs((dt.hour + dt.minute/60.0) - target_hour)
-
-        pick = sorted(items, key=dist)[0]
-
-        up = safe_float(pick["upbit_total_krw_24h"])
-        bt = safe_float(pick["bithumb_total_krw_24h"])
-        co = safe_float(pick["coinone_total_krw_24h"])
-        comb = up + bt + co
-
-        daily.append({
-            "date_kst": d,
-            "upbit_total_proxy": up,
-            "bithumb_total_proxy": bt,
-            "coinone_total_proxy": co,
-            "combined_total_proxy": comb,
-            "upbit_top10_share_pct": safe_float(pick["upbit_top10_share_pct"]),
-            "bithumb_top10_share_pct": safe_float(pick["bithumb_top10_share_pct"]),
-            "coinone_top10_share_pct": safe_float(pick["coinone_top10_share_pct"]),
-        })
-
-    return daily
-
-def write_daily_csv(daily: List[dict]):
-    ensure_daily_header()
-    with DAILY_CSV.open("a", newline="", encoding="utf-8") as f:
-        w = csv.writer(f)
-        for r in daily:
-            w.writerow([
-                r["date_kst"],
-                f"{r['upbit_total_proxy']:.6f}",
-                f"{r['bithumb_total_proxy']:.6f}",
-                f"{r['coinone_total_proxy']:.6f}",
-                f"{r['combined_total_proxy']:.6f}",
-                f"{r['upbit_top10_share_pct']:.4f}",
-                f"{r['bithumb_top10_share_pct']:.4f}",
-                f"{r['coinone_top10_share_pct']:.4f}",
-            ])
-
-def rebuild_daily_csv():
-    daily = build_daily_from_snapshots(target_hour=9)
-    if not daily:
-        return
-    # rewrite fully (so reruns are deterministic)
-    ensure_daily_header()
     with DAILY_CSV.open("w", newline="", encoding="utf-8") as f:
-        w = csv.writer(f)
-        w.writerow([
-            "date_kst",
-            "upbit_total_proxy", "bithumb_total_proxy", "coinone_total_proxy",
-            "combined_total_proxy",
-            "upbit_top10_share_pct", "bithumb_top10_share_pct", "coinone_top10_share_pct"
-        ])
-        for r in daily:
-            w.writerow([
-                r["date_kst"],
-                f"{r['upbit_total_proxy']:.6f}",
-                f"{r['bithumb_total_proxy']:.6f}",
-                f"{r['coinone_total_proxy']:.6f}",
-                f"{r['combined_total_proxy']:.6f}",
-                f"{r['upbit_top10_share_pct']:.4f}",
-                f"{r['bithumb_top10_share_pct']:.4f}",
-                f"{r['coinone_top10_share_pct']:.4f}",
-            ])
+        w = csv.DictWriter(f, fieldnames=rows[0].keys())
+        w.writeheader()
+        for d in sorted(by_date):
+            # 대표 스냅샷: 09시 기준 가장 가까운 것
+            w.writerow(by_date[d][0])
 
-def load_daily() -> List[dict]:
-    if not DAILY_CSV.exists():
-        return []
-    out = []
-    with DAILY_CSV.open("r", newline="", encoding="utf-8") as f:
-        r = csv.DictReader(f)
-        for row in r:
-            out.append({
-                "date_kst": row["date_kst"],
-                "upbit_total_proxy": safe_float(row["upbit_total_proxy"]),
-                "bithumb_total_proxy": safe_float(row["bithumb_total_proxy"]),
-                "coinone_total_proxy": safe_float(row["coinone_total_proxy"]),
-                "combined_total_proxy": safe_float(row["combined_total_proxy"]),
-            })
-    out.sort(key=lambda x: x["date_kst"])
-    return out
+def rebuild_weekly():
+    rows = []
+    with DAILY_CSV.open() as f:
+        for r in csv.DictReader(f):
+            rows.append(r)
 
-def aggregate_weekly_from_daily(daily: List[dict]) -> List[dict]:
-    buckets: Dict[str, dict] = {}
-    for r in daily:
-        wk = iso_week_key(r["date_kst"])
-        b = buckets.setdefault(wk, {
+    by_week: Dict[str, dict] = {}
+    for r in rows:
+        wk = iso_week(r["date"])
+        b = by_week.setdefault(wk, {
             "week": wk,
-            "upbit": 0.0,
-            "bithumb": 0.0,
-            "coinone": 0.0,
-            "total": 0.0,
-            "days": 0,
+            "upbit": 0, "bithumb": 0, "coinone": 0,
+            "top10": 0, "rest": 0
         })
-        b["upbit"] += r["upbit_total_proxy"]
-        b["bithumb"] += r["bithumb_total_proxy"]
-        b["coinone"] += r["coinone_total_proxy"]
-        b["total"] += r["combined_total_proxy"]
-        b["days"] += 1
+        b["upbit"] += float(r["upbit_total"])
+        b["bithumb"] += float(r["bithumb_total"])
+        b["coinone"] += float(r["coinone_total"])
+        b["top10"] += float(r["combined_top10"])
+        b["rest"] += float(r["combined_rest"])
 
-    weeks = sorted(buckets.keys())
-    out: List[dict] = []
+    weeks = sorted(by_week.keys())
+    out_main = []
+    out_top = []
+
     prev_total = None
     for wk in weeks:
-        b = buckets[wk]
-        wow = None
-        if prev_total and prev_total > 0:
-            wow = (b["total"] / prev_total - 1.0) * 100.0
-        out.append({
+        b = by_week[wk]
+        total = b["upbit"] + b["bithumb"] + b["coinone"]
+        wow = None if prev_total is None else (total / prev_total - 1) * 100
+        prev_total = total
+
+        out_main.append({
             "week": wk,
             "upbit": b["upbit"],
             "bithumb": b["bithumb"],
             "coinone": b["coinone"],
-            "total": b["total"],
-            "wow_pct": wow,
-            "days_covered": b["days"],
+            "wow_pct": wow
         })
-        prev_total = b["total"]
-    return out
 
-def write_weekly_csv_and_json(weekly: List[dict]):
-    with WEEKLY_CSV.open("w", newline="", encoding="utf-8") as f:
-        w = csv.writer(f)
-        w.writerow(["week", "upbit", "bithumb", "coinone", "total", "wow_pct", "days_covered"])
-        for r in weekly:
-            w.writerow([
-                r["week"],
-                f"{r['upbit']:.6f}",
-                f"{r['bithumb']:.6f}",
-                f"{r['coinone']:.6f}",
-                f"{r['total']:.6f}",
-                "" if r["wow_pct"] is None else f"{r['wow_pct']:.4f}",
-                r["days_covered"],
-            ])
+        out_top.append({
+            "week": wk,
+            "top10": b["top10"],
+            "rest": b["rest"]
+        })
 
-    # For ECharts stacked bar (exchange-based)
-    slim = [{"week": r["week"], "upbit": r["upbit"], "bithumb": r["bithumb"], "coinone": r["coinone"], "wow_pct": r["wow_pct"]} for r in weekly]
-    WEEKLY_JSON.write_text(json.dumps(slim, ensure_ascii=False, indent=2), encoding="utf-8")
+    WEEKLY_JSON.write_text(json.dumps(out_main, ensure_ascii=False, indent=2))
+    WEEKLY_TOP10_JSON.write_text(json.dumps(out_top, ensure_ascii=False, indent=2))
 
-
-# ----------------------------
+# =========================
 # Main run
-# ----------------------------
-def fetch_all_exchanges() -> Tuple[ExchangeSnapshot, ExchangeSnapshot, ExchangeSnapshot]:
-    # Upbit
-    mkts = upbit_get_krw_markets()
-    up_pairs = upbit_fetch_trade_values(mkts)
-    up = compute_exchange_snapshot(up_pairs)
-
-    # Bithumb
-    bt_pairs = bithumb_fetch_trade_values()
-    bt = compute_exchange_snapshot(bt_pairs)
-
-    # Coinone
-    co_pairs = coinone_fetch_trade_values()
-    co = compute_exchange_snapshot(co_pairs)
-
-    return up, bt, co
-
-def run_once():
+# =========================
+def run():
     dt = now_kst()
-    ts = ts_kst_str(dt)
+    date = dt.strftime("%Y-%m-%d")
 
-    up, bt, co = fetch_all_exchanges()
-    append_snapshot_row(ts, up, bt, co)
+    up = fetch_upbit_pairs()
+    bt = fetch_bithumb_pairs()
+    co = fetch_coinone_pairs()
 
-    # Rebuild daily (pick closest-to-09 snapshot per day), then weekly
-    rebuild_daily_csv()
-    daily = load_daily()
-    weekly = aggregate_weekly_from_daily(daily)
-    write_weekly_csv_and_json(weekly)
+    up_total = compute_total(up)
+    bt_total = compute_total(bt)
+    co_total = compute_total(co)
 
-    # Console summary
-    last = weekly[-1] if weekly else None
-    print(f"[ok] snapshot saved: {SNAP_CSV.name} @ {ts}")
-    print(f"     upbit={up.total_krw_24h:,.0f}  bithumb={bt.total_krw_24h:,.0f}  coinone={co.total_krw_24h:,.0f} (KRW, 24h rolling)")
-    if last:
-        wow_s = "NA" if last["wow_pct"] is None else f"{last['wow_pct']:.2f}%"
-        print(f"[ok] weekly updated: {WEEKLY_CSV.name}, {WEEKLY_JSON.name}")
-        print(f"     last_week={last['week']} total={last['total']:,.0f} wow={wow_s} days={last['days_covered']}")
+    combined_pairs = up + bt + co
+    _, top10, rest = compute_top10_rest(combined_pairs)
+
+    append_snapshot({
+        "date": date,
+        "upbit_total": up_total,
+        "bithumb_total": bt_total,
+        "coinone_total": co_total,
+        "combined_top10": top10,
+        "combined_rest": rest
+    })
+
+    rebuild_daily()
+    rebuild_weekly()
+
+    print("[OK] KRW liquidity pipeline updated")
 
 if __name__ == "__main__":
-    run_once()
+    run()
