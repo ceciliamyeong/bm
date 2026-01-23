@@ -47,7 +47,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           # Only commit if there are changes
-          git add out/history/krw_liq_*.csv out/history/krw_liq_weekly.json || true
+          git add out/history/krw_liq_*.csv out/history/krw_liq_weekly.json out/history/krw_liq_weekly_top10.json || true
           if git diff --cached --quiet; then
             echo "No changes to commit."
             exit 0
