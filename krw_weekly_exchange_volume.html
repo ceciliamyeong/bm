@@ -63,7 +63,7 @@
 
   async function loadWeekly(){
     // 필요 시 경로를 /bm/out/history/... 식으로 바꾸면 됨
-    const res = await fetch("./out/history/krw_liq_weekly.json");
+    const res = await fetch("/bm/out/history/krw_liq_weekly.json");
     if (!res.ok) throw new Error("Failed to load weekly json");
     return await res.json();
   }
