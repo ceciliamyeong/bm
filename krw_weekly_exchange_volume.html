@@ -6,30 +6,46 @@
   <title>KRW Weekly Exchange Volume (Upbit/Bithumb/Coinone)</title>
   <script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
   <style>
-    :root{ --bg:#fff; --card:#fff; --border:#e5e7eb; --text:#111827; --muted:#6b7280;
-      --shadow:0 1px 2px rgba(0,0,0,0.05); --radius:16px; }
-    body{ margin:24px; background:var(--bg); color:var(--text);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Arial, sans-serif; }
+    :root{
+      --bg:#fff; --card:#fff; --border:#e5e7eb; --text:#111827; --muted:#6b7280;
+      --shadow:0 1px 2px rgba(0,0,0,0.05); --radius:16px;
+    }
+    body{
+      margin:24px; background:var(--bg); color:var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Arial, sans-serif;
+    }
     .wrap{ max-width:1100px; margin:0 auto; }
     h1{ font-size:20px; margin:0 0 6px; }
+    h2{ font-size:16px; margin:22px 0 6px; }
     .sub{ color:var(--muted); font-size:13px; margin:0 0 16px; }
-    .card{ border:1px solid var(--border); border-radius:var(--radius);
-      padding:14px 14px 10px; background:var(--card); box-shadow:var(--shadow); }
+    .card{
+      border:1px solid var(--border); border-radius:var(--radius);
+      padding:14px 14px 14px; background:var(--card); box-shadow:var(--shadow);
+    }
     .row{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
-    .kpi{ border:1px solid var(--border); border-radius:14px; padding:10px 12px; min-width:210px; flex:1; }
+    .kpi{
+      border:1px solid var(--border); border-radius:14px;
+      padding:10px 12px; min-width:210px; flex:1;
+    }
     .kpi .label{ color:var(--muted); font-size:12px; margin-bottom:6px; }
     .kpi .value{ font-size:18px; font-weight:700; letter-spacing:-0.2px; }
     .kpi .note{ color:var(--muted); font-size:12px; margin-top:4px; }
-    #chart{ height: 440px; width:100%; }
+    #chart{ height:440px; width:100%; }
+    #shareChart{ height:320px; width:100%; margin-top:8px; }
     .foot{ color:var(--muted); font-size:12px; margin-top:10px; }
   </style>
 </head>
+
 <body>
 <div class="wrap">
   <h1>KRW 주간 거래대금 (업비트·빗썸·코인원)</h1>
-  <p class="sub">주간 거래대금(원화)을 거래소별로 스택 막대로 표시하고, 전체 합산의 전주 대비(WoW) 변화율을 라인으로 함께 제공합니다.</p>
+  <p class="sub">
+    주간 거래대금(원화)을 거래소별로 스택 막대로 표시하고,
+    전체 합산의 전주 대비(WoW) 변화율과 거래소 점유율 변화를 함께 제공합니다.
+  </p>
 
   <div class="card">
+    <!-- KPI -->
     <div class="row">
       <div class="kpi">
         <div class="label">최근 주간 총 거래대금(합산)</div>
@@ -43,8 +59,19 @@
       </div>
     </div>
 
+    <!-- Main chart -->
     <div id="chart"></div>
-    <div class="foot">데이터: out/history/krw_liq_weekly.json (파이썬 스크립트가 자동 생성)</div>
+
+    <!-- Share Shift -->
+    <h2>거래소 점유율(%) 추이</h2>
+    <p class="sub">
+      주간 합산 거래대금 기준 업비트·빗썸·코인원 점유율을 100% 기준으로 비교합니다.
+    </p>
+    <div id="shareChart"></div>
+
+    <div class="foot">
+      데이터: <code>/bm/out/history/krw_liq_weekly.json</code>
+    </div>
   </div>
 </div>
 
@@ -62,104 +89,107 @@
   }
 
   async function loadWeekly(){
-    // 필요 시 경로를 /bm/out/history/... 식으로 바꾸면 됨
     const res = await fetch("/bm/out/history/krw_liq_weekly.json");
     if (!res.ok) throw new Error("Failed to load weekly json");
     return await res.json();
   }
 
   loadWeekly().then((weeklyData) => {
-    const weeks = weeklyData.map(d => d.week);
-    const upbit = weeklyData.map(d => Number(d.upbit || 0));
+    const weeks   = weeklyData.map(d => d.week);
+    const upbit   = weeklyData.map(d => Number(d.upbit || 0));
     const bithumb = weeklyData.map(d => Number(d.bithumb || 0));
     const coinone = weeklyData.map(d => Number(d.coinone || 0));
-    const wow = weeklyData.map(d => (d.wow_pct === null || d.wow_pct === undefined) ? null : Number(d.wow_pct));
+    const wow     = weeklyData.map(d =>
+      (d.wow_pct === null || d.wow_pct === undefined) ? null : Number(d.wow_pct)
+    );
 
-    const total = weeklyData.map((d, i) => upbit[i] + bithumb[i] + coinone[i]);
+    const total = weeks.map((_, i) => upbit[i] + bithumb[i] + coinone[i]);
 
-    // KPI: last week
-    const lastIdx = weeklyData.length - 1;
+    const lastIdx = weeks.length - 1;
     if (lastIdx >= 0){
       document.getElementById("kpiTotal").textContent = fmtKRW(total[lastIdx]);
       document.getElementById("kpiBreakdown").textContent =
         `업비트 ${fmtKRW(upbit[lastIdx])} · 빗썸 ${fmtKRW(bithumb[lastIdx])} · 코인원 ${fmtKRW(coinone[lastIdx])}`;
-
       document.getElementById("kpiWoW").textContent = fmtPct(wow[lastIdx]);
       document.getElementById("kpiWoWNote").textContent =
-        (lastIdx === 0 || wow[lastIdx] === null) ? "전주 데이터 없음" : `전주 ${fmtKRW(total[lastIdx-1])} 대비`;
+        (lastIdx === 0 || wow[lastIdx] === null)
+          ? "전주 데이터 없음"
+          : `전주 ${fmtKRW(total[lastIdx-1])} 대비`;
     }
 
-    const chart = echarts.init(document.getElementById("chart"), null, { renderer:"canvas" });
-
-    const option = {
-      grid: { left: 56, right: 56, top: 40, bottom: 50 },
-      tooltip: {
-        trigger: "axis",
-        axisPointer: { type: "shadow" },
-        backgroundColor: "#ffffff",
-        borderColor: "#e5e7eb",
-        borderWidth: 1,
-        textStyle: { color: "#111827" },
-        extraCssText: "box-shadow: 0 6px 20px rgba(0,0,0,0.08); border-radius: 12px; padding: 10px 12px;",
-        formatter: (params) => {
-          const w = params[0].axisValue;
-          const idx = weeks.indexOf(w);
-          const lines = [];
-          lines.push(`<b>${w}</b>`);
-          lines.push(`총: ${fmtKRW(total[idx])}`);
-          lines.push(`업비트: ${fmtKRW(upbit[idx])}`);
-          lines.push(`빗썸: ${fmtKRW(bithumb[idx])}`);
-          lines.push(`코인원: ${fmtKRW(coinone[idx])}`);
-          lines.push(`WoW: ${fmtPct(wow[idx])}`);
-          return lines.join("<br/>");
+    /* ======================
+       Main volume chart
+       ====================== */
+    const chart = echarts.init(document.getElementById("chart"));
+    chart.setOption({
+      grid:{ left:56, right:56, top:40, bottom:50 },
+      tooltip:{
+        trigger:"axis", axisPointer:{ type:"shadow" },
+        formatter:(params)=>{
+          const i = weeks.indexOf(params[0].axisValue);
+          return `
+            <b>${weeks[i]}</b><br/>
+            총 ${fmtKRW(total[i])}<br/>
+            업비트 ${fmtKRW(upbit[i])}<br/>
+            빗썸 ${fmtKRW(bithumb[i])}<br/>
+            코인원 ${fmtKRW(coinone[i])}<br/>
+            WoW ${fmtPct(wow[i])}
+          `;
         }
       },
-      legend: {
-        top: 8, left: 10,
-        itemWidth: 12, itemHeight: 12,
-        textStyle: { color: "#374151" },
-        data: ["Upbit", "Bithumb", "Coinone", "WoW %"]
-      },
-      xAxis: {
-        type: "category",
-        data: weeks,
-        axisLabel: { color: "#6b7280" },
-        axisLine: { lineStyle: { color: "#e5e7eb" } }
-      },
-      yAxis: [
-        {
-          type: "value",
-          name: "KRW 거래대금",
-          axisLabel: {
-            color: "#6b7280",
-            formatter: (v) => (Math.abs(v) >= 1e12) ? (v/1e12).toFixed(0) + "조" : v
-          },
-          nameTextStyle: { color: "#6b7280" },
-          splitLine: { lineStyle: { color: "#f3f4f6" } },
-          axisLine: { lineStyle: { color: "#e5e7eb" } }
-        },
-        {
-          type: "value",
-          name: "WoW %",
-          axisLabel: { color: "#6b7280", formatter: (v) => v + "%" },
-          nameTextStyle: { color: "#6b7280" },
-          splitLine: { show: false },
-          axisLine: { lineStyle: { color: "#e5e7eb" } }
-        }
+      legend:{ top:8, left:10, data:["Upbit","Bithumb","Coinone","WoW %"] },
+      xAxis:{ type:"category", data:weeks },
+      yAxis:[
+        { type:"value", name:"KRW 거래대금" },
+        { type:"value", name:"WoW %", splitLine:{ show:false } }
       ],
-      series: [
-        { name: "Upbit", type: "bar", stack: "vol", data: upbit, barWidth: 26, emphasis: { focus:"series" } },
-        { name: "Bithumb", type: "bar", stack: "vol", data: bithumb, barWidth: 26, emphasis: { focus:"series" } },
-        { name: "Coinone", type: "bar", stack: "vol", data: coinone, barWidth: 26, emphasis: { focus:"series" } },
-        { name: "WoW %", type: "line", yAxisIndex: 1, data: wow, smooth: true, symbolSize: 7, connectNulls: false }
+      series:[
+        { name:"Upbit", type:"bar", stack:"vol", data:upbit },
+        { name:"Bithumb", type:"bar", stack:"vol", data:bithumb },
+        { name:"Coinone", type:"bar", stack:"vol", data:coinone },
+        { name:"WoW %", type:"line", yAxisIndex:1, data:wow, smooth:true }
       ]
-    };
+    });
 
-    chart.setOption(option);
-    window.addEventListener("resize", () => chart.resize());
-  }).catch((e) => {
-    console.error(e);
-    alert("주간 JSON 로딩 실패: 경로를 확인하세요. (콘솔 확인)");
+    /* ======================
+       Share shift chart
+       ====================== */
+    const shareUp = weeks.map((_,i)=> total[i]>0 ? upbit[i]/total[i]*100 : 0);
+    const shareBt = weeks.map((_,i)=> total[i]>0 ? bithumb[i]/total[i]*100 : 0);
+    const shareCo = weeks.map((_,i)=> total[i]>0 ? coinone[i]/total[i]*100 : 0);
+
+    const shareChart = echarts.init(document.getElementById("shareChart"));
+    shareChart.setOption({
+      grid:{ left:56, right:16, top:20, bottom:40 },
+      tooltip:{
+        trigger:"axis",
+        formatter:(params)=>{
+          const i = weeks.indexOf(params[0].axisValue);
+          return `
+            <b>${weeks[i]}</b><br/>
+            업비트 ${shareUp[i].toFixed(1)}%<br/>
+            빗썸 ${shareBt[i].toFixed(1)}%<br/>
+            코인원 ${shareCo[i].toFixed(1)}%
+          `;
+        }
+      },
+      legend:{ top:0, left:0, data:["Upbit","Bithumb","Coinone"] },
+      xAxis:{ type:"category", data:weeks },
+      yAxis:{ type:"value", min:0, max:100, name:"점유율(%)" },
+      series:[
+        { name:"Upbit", type:"line", stack:"share", areaStyle:{}, smooth:true, data:shareUp },
+        { name:"Bithumb", type:"line", stack:"share", areaStyle:{}, smooth:true, data:shareBt },
+        { name:"Coinone", type:"line", stack:"share", areaStyle:{}, smooth:true, data:shareCo }
+      ]
+    });
+
+    window.addEventListener("resize", ()=>{
+      chart.resize();
+      shareChart.resize();
+    });
+  }).catch(err=>{
+    console.error(err);
+    alert("주간 JSON 로딩 실패 — 경로 또는 Actions 실행 여부 확인");
   });
 </script>
 </body>
