@@ -39,7 +39,7 @@ COINONE_TICKER_KRW = "https://api.coinone.co.kr/public/v2/ticker_new/KRW"
 # ----------------------------
 # Paths (BM20-style)
 # ----------------------------
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 OUT_DIR = BASE_DIR / "out"
 HIST_DIR = OUT_DIR / "history"
 HIST_DIR.mkdir(parents=True, exist_ok=True)
