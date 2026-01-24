@@ -51,14 +51,8 @@
     #topRestChart{ height:320px; }
     #treemap{ height:360px; }
 
-    .two{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:14px;
-    }
-    @media (min-width: 1100px){
-      .two{ grid-template-columns: 1fr 1fr; }
-    }
+    .two{ display:grid; grid-template-columns: 1fr; gap:14px; }
+    @media (min-width: 1100px){ .two{ grid-template-columns: 1fr 1fr; } }
     #shareChart{ height:340px; }
     #topRestChart{ height:340px; }
 
@@ -82,10 +76,7 @@
       color:#111827;
       font-weight:700;
     }
-    .hint{
-      color:var(--muted);
-      font-size:12px;
-    }
+    .hint{ color:var(--muted); font-size:12px; }
 
     .list{ margin:0; padding:0; list-style:none; }
     .list li{
@@ -143,6 +134,7 @@
 
     <div class="foot">
       데이터: <code>/bm/out/history/krw_24h_latest.json</code> · <code>/bm/out/history/krw_24h_snapshots.json</code>
+      · <code>/bm/out/history/kimchi_latest.json</code> · <code>/bm/out/history/kimchi_snapshots.json</code>
     </div>
   </div>
 
@@ -195,7 +187,7 @@
 
       <ul class="list" id="top10List" style="margin-top:10px;"></ul>
 
-      <!-- ✅ Exchange Top5 (Upbit/Bithumb/Coinone) -->
+      <!-- ✅ Exchange Top5 -->
       <div style="margin-top:14px;">
         <h2 style="margin:0 0 6px; font-size:16px;">거래소별 Top5 (최근 24h)</h2>
         <p class="sub" style="margin-bottom:10px;">업비트·빗썸·코인원의 “채널별 쏠림”을 봅니다.</p>
@@ -226,22 +218,23 @@
             </div>
             <div class="hint" id="kimchiUpdated">-</div>
           </div>
-        
+
           <div class="two" style="margin-top:10px;">
             <div>
               <h3 style="margin:0 0 6px; font-size:14px;">Kimchi Premium % (BTC/ETH/Combo)</h3>
               <div id="kimchiPremChart" class="chart" style="height:320px;"></div>
             </div>
             <div>
-              <h3 style="margin:0 0 6px; font-size:14px;">Kimchi Type & Score (v1)</h3>
+              <h3 style="margin:0 0 6px; font-size:14px;">Kimchi Type & Score (v1.1)</h3>
               <div id="kimchiScoreChart" class="chart" style="height:320px;"></div>
             </div>
           </div>
-        
+
           <div style="display:flex; gap:10px; align-items:center; margin-top:10px; flex-wrap:wrap;">
             <span class="pill" id="kimchiTypePill">-</span>
             <span class="pill" id="kimchiScorePill">-</span>
             <span class="pill" id="kimchiPremPill">-</span>
+            <span class="pill" id="usdtPremPill">-</span>
           </div>
         </div>
       </div>
@@ -254,7 +247,6 @@
     const n = Number(x);
     return Number.isFinite(n) ? n : 0;
   }
-
   function fmtKRW(n){
     n = num(n);
     const abs = Math.abs(n);
@@ -262,17 +254,28 @@
     if (abs >= 1e8)  return (n/1e8).toFixed(0) + "억원";
     return n.toLocaleString("ko-KR") + "원";
   }
-
   function fmtPct(p){
+    if (p === null || p === undefined || Number.isNaN(p)) return "-";
+    const sign = p > 0 ? "+" : "";
+    return sign + Number(p).toFixed(2) + "%";
+  }
+  function fmtPct1(p){
     if (p === null || p === undefined || Number.isNaN(p)) return "-";
     const sign = p > 0 ? "+" : "";
     return sign + Number(p).toFixed(1) + "%";
   }
-
   async function loadJSON(url){
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) throw new Error("Failed to load: " + url + " (" + res.status + ")");
     return await res.json();
+  }
+  function pillTypeColor(type){
+    // 아주 가벼운 시각 구분(배경색 안쓰고, border만 바꿈)
+    if (!type) return "#e5e7eb";
+    if (type.includes("Retail")) return "#16a34a";
+    if (type.includes("Constraint")) return "#2563eb";
+    if (type.includes("Reverse")) return "#dc2626";
+    return "#e5e7eb";
   }
 
   // ✅ Cache bust (Pages/CDN 캐시 방지)
@@ -280,13 +283,16 @@
     const bust = "v=" + Date.now();
     return {
       latest: "/bm/out/history/krw_24h_latest.json?" + bust,
-      hist:   "/bm/out/history/krw_24h_snapshots.json?" + bust
+      hist:   "/bm/out/history/krw_24h_snapshots.json?" + bust,
+      kimchiLatest: "/bm/out/history/kimchi_latest.json?" + bust,
+      kimchiHist:   "/bm/out/history/kimchi_snapshots.json?" + bust
     };
   }
 
-  let treemap, totalChart, shareChart, topRestChart, stableChart;
-  let HISTORY = [];
-  let LATEST = null;
+  let treemap, totalChart, shareChart, topRestChart, stableChart, kimchiPremChart, kimchiScoreChart;
+  let HISTORY = [], LATEST = null;
+  let KIMCHI_HIST = [], KIMCHI_LATEST = null;
+
   let CURRENT_RANGE = 3; // default
 
   function setActive(range){
@@ -424,6 +430,63 @@
         { name:"Top10 Share %", type:"line", yAxisIndex:1, smooth:true, symbolSize:6, data: s.topShare }
       ]
     }, true);
+
+    // ---- Smart Kimchi charts (same range slicing, but from kimchi history) ----
+    if (kimchiPremChart && kimchiScoreChart) {
+      const kHist = sliceByDays(KIMCHI_HIST, rangeDays);
+      const kx = kHist.map(h => h.timestamp_label);
+
+      const kb = kHist.map(h => num(h.kimchi_premium_pct?.BTC));
+      const ke = kHist.map(h => num(h.kimchi_premium_pct?.ETH));
+      const kc = kHist.map(h => num(h.kimchi_premium_pct?.COMBO));
+      const kd = kHist.map(h => num(h.delta?.COMBO));
+      const kScore = kHist.map(h => num(h.smart_kimchi?.score_v1));
+      const kUsdtPrem = kHist.map(h => num(h.usdt_premium_pct));
+
+      kimchiPremChart.setOption({
+        grid: { left: 44, right: 18, top: 30, bottom: 36, containLabel: true },
+        tooltip: {
+          trigger:"axis",
+          formatter:(params)=>{
+            const i = params[0].dataIndex;
+            return `<b>${kx[i]}</b><br/>BTC ${fmtPct(kb[i])}<br/>ETH ${fmtPct(ke[i])}<br/>COMBO ${fmtPct(kc[i])}<br/>ΔCOMBO ${fmtPct(kd[i])}`;
+          }
+        },
+        legend: { top: 6, left: 0, itemWidth: 14, itemHeight: 8, data: ["BTC","ETH","COMBO","ΔCOMBO"] },
+        xAxis: { type:"category", data:kx, axisLabel:{ rotate:(kx.length>10?25:0) } },
+        yAxis: [
+          { type:"value", name:"%", axisLabel:{ formatter:(v)=> v.toFixed(1) } },
+          { type:"value", name:"Δp", splitLine:{ show:false }, axisLabel:{ formatter:(v)=> v.toFixed(1) } }
+        ],
+        series: [
+          { name:"BTC", type:"line", smooth:true, symbolSize:5, data: kb },
+          { name:"ETH", type:"line", smooth:true, symbolSize:5, data: ke },
+          { name:"COMBO", type:"line", smooth:true, symbolSize:6, lineStyle:{ width:3 }, data: kc },
+          { name:"ΔCOMBO", type:"bar", yAxisIndex:1, barWidth: 12, data: kd }
+        ]
+      }, true);
+
+      kimchiScoreChart.setOption({
+        grid: { left: 44, right: 44, top: 30, bottom: 36, containLabel: true },
+        tooltip: {
+          trigger:"axis",
+          formatter:(params)=>{
+            const i = params[0].dataIndex;
+            return `<b>${kx[i]}</b><br/>Score ${kScore[i].toFixed(1)}<br/>USDT Prem ${fmtPct(kUsdtPrem[i])}`;
+          }
+        },
+        legend: { top: 6, left: 0, itemWidth: 14, itemHeight: 8, data: ["Score","USDT Prem %"] },
+        xAxis: { type:"category", data:kx, axisLabel:{ rotate:(kx.length>10?25:0) } },
+        yAxis: [
+          { type:"value", name:"Score", min:0, max:100 },
+          { type:"value", name:"%", splitLine:{ show:false } }
+        ],
+        series: [
+          { name:"Score", type:"line", smooth:true, symbolSize:6, data: kScore },
+          { name:"USDT Prem %", type:"line", yAxisIndex:1, smooth:true, symbolSize:5, data: kUsdtPrem }
+        ]
+      }, true);
+    }
   }
 
   function fillTopList(elId, arr){
@@ -440,17 +503,26 @@
 
   async function refreshData(){
     const u = urls();
-    const [latest, history] = await Promise.all([loadJSON(u.latest), loadJSON(u.hist)]);
+
+    const [latest, history, kLatest, kHist] = await Promise.all([
+      loadJSON(u.latest), loadJSON(u.hist),
+      loadJSON(u.kimchiLatest), loadJSON(u.kimchiHist)
+    ]);
+
     LATEST = latest;
     HISTORY = Array.isArray(history) ? history : [];
 
+    KIMCHI_LATEST = kLatest;
+    KIMCHI_HIST = Array.isArray(kHist) ? kHist : [];
+
+    // --- KPI (KRW dashboard) ---
     const t = latest.totals || {};
     const top = latest.top10 || {};
 
     document.getElementById("kpiTotal").textContent = fmtKRW(t.combined_24h);
     document.getElementById("kpiTs").textContent = `업데이트: ${latest.timestamp_label || "-"}`;
 
-    document.getElementById("kpiTop10").textContent = `${fmtPct(top.top10_share_pct)} (Top10)`;
+    document.getElementById("kpiTop10").textContent = `${fmtPct1(top.top10_share_pct)} (Top10)`;
     document.getElementById("kpiTop10Note").textContent =
       `Top10 ${fmtKRW(top.top10_total_24h)} · Rest ${fmtKRW(top.rest_total_24h)}`;
 
@@ -473,6 +545,7 @@
       : "데이터 없음";
     document.getElementById("kpiStableNote").textContent = `합계 ${fmtKRW(stVol)} · ${byText}`;
 
+    // --- Top10 list + treemap ---
     const list = document.getElementById("top10List");
     list.innerHTML = "";
     const coins = top.coins || [];
@@ -511,13 +584,36 @@
       }]
     });
 
-    // ✅ Exchange Top5 lists
+    // --- Exchange top5 lists ---
     const exTop = latest.by_exchange_top || {};
     fillTopList("upTop5", exTop.upbit_top5);
     fillTopList("btTop5", exTop.bithumb_top5);
     fillTopList("coTop5", exTop.coinone_top5);
 
-    // ✅ Re-render charts (막대/포인트 추가 반영)
+    // --- Smart Kimchi pills (latest) ---
+    const kl = kLatest || {};
+    const kPrem = kl.kimchi_premium_pct || {};
+    const sk = kl.smart_kimchi || {};
+    const kType = sk.type || "-";
+    const kScore = num(sk.score_v1);
+    const combo = num(kPrem.COMBO);
+    const delta = num(kl.delta?.COMBO);
+    const usdtPrem = num(kl.usdt_premium_pct);
+    const fx = num(kl.fx_usdkrw);
+
+    document.getElementById("kimchiUpdated").textContent =
+      `업데이트: ${kl.timestamp_label || "-"} · FX ${fx ? fx.toFixed(1) : "-"}원`;
+
+    const typePill = document.getElementById("kimchiTypePill");
+    typePill.textContent = `Type: ${kType}`;
+    typePill.style.borderColor = pillTypeColor(kType);
+
+    document.getElementById("kimchiScorePill").textContent = `Score: ${kScore.toFixed(1)} / 100`;
+    document.getElementById("kimchiPremPill").textContent =
+      `COMBO: ${fmtPct(combo)} (Δ ${delta>=0?"+":""}${delta.toFixed(2)}p)`;
+    document.getElementById("usdtPremPill").textContent = `USDT Prem: ${fmtPct(usdtPrem)}`;
+
+    // ✅ charts rerender
     render(CURRENT_RANGE);
   }
 
@@ -528,6 +624,9 @@
       shareChart = echarts.init(document.getElementById("shareChart"));
       topRestChart = echarts.init(document.getElementById("topRestChart"));
       stableChart = echarts.init(document.getElementById("stableChart"));
+
+      kimchiPremChart = echarts.init(document.getElementById("kimchiPremChart"));
+      kimchiScoreChart = echarts.init(document.getElementById("kimchiScoreChart"));
 
       document.getElementById("btn1d").addEventListener("click", ()=> render(1));
       document.getElementById("btn3d").addEventListener("click", ()=> render(3));
@@ -542,10 +641,12 @@
         shareChart.resize();
         topRestChart.resize();
         stableChart.resize();
+        kimchiPremChart.resize();
+        kimchiScoreChart.resize();
       });
     }catch(err){
       console.error(err);
-      alert("JSON 로딩 실패: /bm/out/history/krw_24h_latest.json 및 snapshots.json 경로/배포를 확인하세요.");
+      alert("JSON 로딩 실패: /bm/out/history/*.json 경로/배포를 확인하세요.");
     }
   })();
 </script>
