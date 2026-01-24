@@ -195,6 +195,14 @@ def run():
 
     stable_info = analyze_stables(combined_map, combined_total)
 
+    def topn_pairs(pairs: List[Tuple[str, float]], n: int = 5) -> List[Dict]:
+    items = sorted(pairs, key=lambda x: x[1], reverse=True)[:n]
+    return [{"symbol": sym, "value": float(val)} for sym, val in items]
+
+    up_top5 = topn_pairs(up, 5)
+    bt_top5 = topn_pairs(bt, 5)
+    co_top5 = topn_pairs(co, 5)
+
     top10_items = topn_from_map(combined_map, 10)
     top10_total = float(sum(v for _, v in top10_items))
     rest_total = max(0.0, combined_total - top10_total)
@@ -219,6 +227,12 @@ def run():
             "coinone_24h": co_total,
         },
         "stablecoins": stable_info,
+        "by_exchange_top": {
+            "upbit_top5": up_top5,
+            "bithumb_top5": bt_top5,
+            "coinone_top5": co_top5
+        },
+
         "top10": {
             "top10_total_24h": top10_total,
             "rest_total_24h": rest_total,
