@@ -196,8 +196,8 @@ def run():
     stable_info = analyze_stables(combined_map, combined_total)
 
     def topn_pairs(pairs: List[Tuple[str, float]], n: int = 5) -> List[Dict]:
-    items = sorted(pairs, key=lambda x: x[1], reverse=True)[:n]
-    return [{"symbol": sym, "value": float(val)} for sym, val in items]
+        items = sorted(pairs, key=lambda x: x[1], reverse=True)[:n]
+        return [{"symbol": sym, "value": float(val)} for sym, val in items]
 
     up_top5 = topn_pairs(up, 5)
     bt_top5 = topn_pairs(bt, 5)
