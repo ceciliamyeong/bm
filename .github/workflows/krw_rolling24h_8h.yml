@@ -1,0 +1,57 @@
+name: KRW Rolling 24h (8h)
+
+on:
+  workflow_dispatch:
+  schedule:
+    # GitHub Actions cron is UTC
+    # KST 01:05 = UTC 16:05 (previous day)
+    # KST 09:05 = UTC 00:05
+    # KST 17:05 = UTC 08:05
+    - cron: "5 16 * * *"
+    - cron: "5 0 * * *"
+    - cron: "5 8 * * *"
+
+concurrency:
+  group: krw-rolling24h-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Run rolling24h script
+        run: |
+          python scripts/krw_rolling24h_8h.py
+
+      - name: Commit & push outputs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add out/history/krw_24h_*.json || true
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Update KRW rolling24h snapshots (8h)"
+          git pull --rebase
+          git push
