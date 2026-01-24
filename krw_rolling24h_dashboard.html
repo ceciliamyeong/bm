@@ -190,6 +190,29 @@
       </div>
 
       <ul class="list" id="top10List" style="margin-top:10px;"></ul>
+
+      <!-- ✅ Exchange Top5 (Upbit/Bithumb/Coinone) -->
+      <div style="margin-top:14px;">
+        <h2 style="margin:0 0 6px; font-size:16px;">거래소별 Top5 (최근 24h)</h2>
+        <p class="sub" style="margin-bottom:10px;">업비트·빗썸·코인원의 “채널별 쏠림”을 봅니다.</p>
+
+        <div class="two">
+          <div class="card" style="box-shadow:none; padding:12px;">
+            <div class="pill" style="margin-bottom:8px;">Upbit Top5</div>
+            <ul class="list" id="upTop5"></ul>
+          </div>
+
+          <div class="card" style="box-shadow:none; padding:12px;">
+            <div class="pill" style="margin-bottom:8px;">Bithumb Top5</div>
+            <ul class="list" id="btTop5"></ul>
+          </div>
+        </div>
+
+        <div class="card" style="box-shadow:none; padding:12px; margin-top:12px;">
+          <div class="pill" style="margin-bottom:8px;">Coinone Top5</div>
+          <ul class="list" id="coTop5"></ul>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -220,12 +243,19 @@
     return await res.json();
   }
 
-  const LATEST_URL = "/bm/out/history/krw_24h_latest.json";
-  const HIST_URL   = "/bm/out/history/krw_24h_snapshots.json";
+  // ✅ Cache bust (Pages/CDN 캐시 방지)
+  function urls(){
+    const bust = "v=" + Date.now();
+    return {
+      latest: "/bm/out/history/krw_24h_latest.json?" + bust,
+      hist:   "/bm/out/history/krw_24h_snapshots.json?" + bust
+    };
+  }
 
   let treemap, totalChart, shareChart, topRestChart, stableChart;
   let HISTORY = [];
   let LATEST = null;
+  let CURRENT_RANGE = 3; // default
 
   function setActive(range){
     document.getElementById("btn1d").classList.toggle("active", range === 1);
@@ -253,6 +283,7 @@
   }
 
   function render(rangeDays){
+    CURRENT_RANGE = rangeDays;
     setActive(rangeDays);
 
     const hist = sliceByDays(HISTORY, rangeDays);
@@ -363,95 +394,115 @@
     }, true);
   }
 
-  Promise.all([loadJSON(LATEST_URL), loadJSON(HIST_URL)])
-    .then(([latest, history]) => {
-      LATEST = latest;
-      HISTORY = Array.isArray(history) ? history : [];
+  function fillTopList(elId, arr){
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.innerHTML = "";
+    (arr || []).slice(0,5).forEach((c, idx) => {
+      const sym = (c.symbol || "").replace("KRW-","");
+      const li = document.createElement("li");
+      li.innerHTML = `<span>${idx+1}. ${sym}</span><span>${fmtKRW(c.value)}</span>`;
+      el.appendChild(li);
+    });
+  }
 
+  async function refreshData(){
+    const u = urls();
+    const [latest, history] = await Promise.all([loadJSON(u.latest), loadJSON(u.hist)]);
+    LATEST = latest;
+    HISTORY = Array.isArray(history) ? history : [];
+
+    const t = latest.totals || {};
+    const top = latest.top10 || {};
+
+    document.getElementById("kpiTotal").textContent = fmtKRW(t.combined_24h);
+    document.getElementById("kpiTs").textContent = `업데이트: ${latest.timestamp_label || "-"}`;
+
+    document.getElementById("kpiTop10").textContent = `${fmtPct(top.top10_share_pct)} (Top10)`;
+    document.getElementById("kpiTop10Note").textContent =
+      `Top10 ${fmtKRW(top.top10_total_24h)} · Rest ${fmtKRW(top.rest_total_24h)}`;
+
+    const combined = num(t.combined_24h);
+    const upShare = combined > 0 ? (num(t.upbit_24h) / combined * 100) : 0;
+    const btShare = combined > 0 ? (num(t.bithumb_24h) / combined * 100) : 0;
+    const coShare = combined > 0 ? (num(t.coinone_24h) / combined * 100) : 0;
+
+    document.getElementById("kpiEx").textContent = `업비트 ${upShare.toFixed(1)}%`;
+    document.getElementById("kpiExNote").textContent =
+      `빗썸 ${btShare.toFixed(1)}% · 코인원 ${coShare.toFixed(1)}%`;
+
+    const st = latest.stablecoins || {};
+    const stPct = num(st.stable_dominance_pct);
+    const stVol = num(st.total_stable_vol_24h);
+    document.getElementById("kpiStable").textContent = `${stPct.toFixed(1)}%`;
+    const by = st.by_asset || {};
+    const byText = Object.keys(by).length
+      ? Object.entries(by).sort((a,b)=> num(b[1]) - num(a[1])).map(([k,v])=> `${k} ${fmtKRW(v)}`).join(" · ")
+      : "데이터 없음";
+    document.getElementById("kpiStableNote").textContent = `합계 ${fmtKRW(stVol)} · ${byText}`;
+
+    const list = document.getElementById("top10List");
+    list.innerHTML = "";
+    const coins = top.coins || [];
+    coins.forEach((c, idx) => {
+      const li = document.createElement("li");
+      const sym = (c.symbol || "").replace("KRW-","");
+      li.innerHTML = `<span>${idx+1}. ${sym}</span><span>${fmtKRW(c.value)} · ${num(c.share_pct).toFixed(1)}%</span>`;
+      list.appendChild(li);
+    });
+
+    document.getElementById("pillNow").textContent = `현재판: ${latest.timestamp_label || "-"}`;
+    const topPct = num(top.top10_share_pct);
+    const signal = topPct >= 70 ? "쏠림 강함" : (topPct >= 60 ? "쏠림" : "확산");
+    document.getElementById("pillSignal").textContent = `신호: ${signal}`;
+
+    treemap.setOption({
+      tooltip: {
+        formatter: (p) => {
+          const d = p.data || {};
+          return `<b>${d.name}</b><br/>${fmtKRW(d.value)}<br/>${num(d.share_pct).toFixed(1)}%`;
+        }
+      },
+      series: [{
+        type: "treemap",
+        roam: false,
+        nodeClick: false,
+        breadcrumb: { show: false },
+        label: { show: true, formatter: "{b}" },
+        upperLabel: { show: false },
+        itemStyle: { borderColor: "#fff", borderWidth: 2 },
+        data: coins.map(c => ({
+          name: (c.symbol || "").replace("KRW-",""),
+          value: num(c.value),
+          share_pct: num(c.share_pct)
+        }))
+      }]
+    });
+
+    // ✅ Exchange Top5 lists
+    const exTop = latest.by_exchange_top || {};
+    fillTopList("upTop5", exTop.upbit_top5);
+    fillTopList("btTop5", exTop.bithumb_top5);
+    fillTopList("coTop5", exTop.coinone_top5);
+
+    // ✅ Re-render charts (막대/포인트 추가 반영)
+    render(CURRENT_RANGE);
+  }
+
+  (async function init(){
+    try{
       treemap = echarts.init(document.getElementById("treemap"));
       totalChart = echarts.init(document.getElementById("totalChart"));
       shareChart = echarts.init(document.getElementById("shareChart"));
       topRestChart = echarts.init(document.getElementById("topRestChart"));
       stableChart = echarts.init(document.getElementById("stableChart"));
 
-      const t = latest.totals || {};
-      const top = latest.top10 || {};
-
-      document.getElementById("kpiTotal").textContent = fmtKRW(t.combined_24h);
-      document.getElementById("kpiTs").textContent = `업데이트: ${latest.timestamp_label || "-"}`;
-
-      document.getElementById("kpiTop10").textContent = `${fmtPct(top.top10_share_pct)} (Top10)`;
-      document.getElementById("kpiTop10Note").textContent =
-        `Top10 ${fmtKRW(top.top10_total_24h)} · Rest ${fmtKRW(top.rest_total_24h)}`;
-
-      const combined = num(t.combined_24h);
-      const upShare = combined > 0 ? (num(t.upbit_24h) / combined * 100) : 0;
-      const btShare = combined > 0 ? (num(t.bithumb_24h) / combined * 100) : 0;
-      const coShare = combined > 0 ? (num(t.coinone_24h) / combined * 100) : 0;
-
-      document.getElementById("kpiEx").textContent = `업비트 ${upShare.toFixed(1)}%`;
-      document.getElementById("kpiExNote").textContent =
-        `빗썸 ${btShare.toFixed(1)}% · 코인원 ${coShare.toFixed(1)}%`;
-
-      // ✅ Stablecoin KPI 표시 (Python JSON 구조와 매칭)
-      const st = latest.stablecoins || {};
-      const stPct = num(st.stable_dominance_pct);
-      const stVol = num(st.total_stable_vol_24h);
-      document.getElementById("kpiStable").textContent = `${stPct.toFixed(1)}%`;
-      const by = st.by_asset || {};
-      const byText = Object.keys(by).length
-        ? Object.entries(by).sort((a,b)=> num(b[1]) - num(a[1])).map(([k,v])=> `${k} ${fmtKRW(v)}`).join(" · ")
-        : "데이터 없음";
-      document.getElementById("kpiStableNote").textContent = `합계 ${fmtKRW(stVol)} · ${byText}`;
-
-      // Top10 list
-      const list = document.getElementById("top10List");
-      list.innerHTML = "";
-      const coins = top.coins || [];
-      coins.forEach((c, idx) => {
-        const li = document.createElement("li");
-        const sym = (c.symbol || "").replace("KRW-","");
-        li.innerHTML = `
-          <span>${idx+1}. ${sym}</span>
-          <span>${fmtKRW(c.value)} · ${num(c.share_pct).toFixed(1)}%</span>
-        `;
-        list.appendChild(li);
-      });
-
-      document.getElementById("pillNow").textContent = `현재판: ${latest.timestamp_label || "-"}`;
-      const topPct = num(top.top10_share_pct);
-      const signal = topPct >= 70 ? "쏠림 강함" : (topPct >= 60 ? "쏠림" : "확산");
-      document.getElementById("pillSignal").textContent = `신호: ${signal}`;
-
-      // Treemap
-      treemap.setOption({
-        tooltip: {
-          formatter: (p) => {
-            const d = p.data || {};
-            return `<b>${d.name}</b><br/>${fmtKRW(d.value)}<br/>${num(d.share_pct).toFixed(1)}%`;
-          }
-        },
-        series: [{
-          type: "treemap",
-          roam: false,
-          nodeClick: false,
-          breadcrumb: { show: false },
-          label: { show: true, formatter: "{b}" },
-          upperLabel: { show: false },
-          itemStyle: { borderColor: "#fff", borderWidth: 2 },
-          data: coins.map(c => ({
-            name: (c.symbol || "").replace("KRW-",""),
-            value: num(c.value),
-            share_pct: num(c.share_pct)
-          }))
-        }]
-      });
-
       document.getElementById("btn1d").addEventListener("click", ()=> render(1));
       document.getElementById("btn3d").addEventListener("click", ()=> render(3));
       document.getElementById("btn7d").addEventListener("click", ()=> render(7));
 
-      render(3);
+      await refreshData();               // initial
+      setInterval(refreshData, 60*1000); // auto refresh
 
       window.addEventListener("resize", ()=>{
         treemap.resize();
@@ -460,11 +511,11 @@
         topRestChart.resize();
         stableChart.resize();
       });
-    })
-    .catch(err => {
+    }catch(err){
       console.error(err);
       alert("JSON 로딩 실패: /bm/out/history/krw_24h_latest.json 및 snapshots.json 경로/배포를 확인하세요.");
-    });
+    }
+  })();
 </script>
 </body>
 </html>
