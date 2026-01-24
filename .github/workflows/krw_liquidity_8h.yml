@@ -37,6 +37,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests
 
+      - name: Reset old KRW liquidity files (schema change)
+        run: |
+          rm -f out/history/krw_liq_snapshots.csv
+          rm -f out/history/krw_liq_daily.csv
+          rm -f out/history/krw_liq_weekly.json
+          rm -f out/history/krw_liq_weekly_top10.json
+
       - name: Run liquidity script
         run: |
           python scripts/krw_liquidity_8h.py
@@ -45,6 +52,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add out/history/krw_liq_* || true
+
 
           # Only commit if there are changes
           git add out/history/krw_liq_*.csv out/history/krw_liq_weekly.json out/history/krw_liq_weekly_top10.json || true
