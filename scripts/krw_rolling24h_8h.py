@@ -95,10 +95,11 @@ def fetch_bithumb_pairs() -> List[Tuple[str, float]]:
         if sym == "date":
             continue
         # Different docs sometimes use these keys; try safe fallbacks.
+        vv = (v or {})
         val = (
-            (v or {}).get("acc_trade_value_24H")
-            or (v or {}).get("acc_trade_value_24h")
-            or (v or {}).get("acc_trade_value")
+            vv.get("acc_trade_value_24H")
+            or vv.get("acc_trade_value_24h")
+            or vv.get("acc_trade_value")
             or 0
         )
         out.append((f"KRW-{sym}", float(val or 0)))
@@ -135,30 +136,29 @@ def topn_from_map(m: Dict[str, float], n: int = 10) -> List[Tuple[str, float]]:
     return items[:n]
 
 # -------------------------
-# Stablecoin Intelligence (추가)
+# Stablecoin Intelligence
 # -------------------------
-STABLES = ["USDT", "USDC", "DAI", "PYUSD"]
+STABLES = {"USDT", "USDC", "DAI", "PYUSD"}
 
-def analyze_stables(combined_map: Dict[str, float], total_vol: float):
-    stable_data = {}
+def analyze_stables(combined_map: Dict[str, float], total_vol: float) -> Dict:
+    stable_data: Dict[str, float] = {}
     total_stable_vol = 0.0
-    
+
     for sym, vol in combined_map.items():
-        asset = sym.split('-')[1] if '-' in sym else sym
+        # sym expected: "KRW-XXX"
+        asset = sym.split("-", 1)[1] if "-" in sym else sym
+        asset = asset.upper()
         if asset in STABLES:
-            stable_data[asset] = vol
-            total_stable_vol += vol
-            
+            stable_data[asset] = float(vol or 0.0)
+            total_stable_vol += float(vol or 0.0)
+
+    dominance = (total_stable_vol / total_vol * 100.0) if total_vol > 0 else 0.0
+
     return {
         "total_stable_vol_24h": total_stable_vol,
-        "stable_dominance_pct": (total_stable_vol / total_vol * 100) if total_vol > 0 else 0,
+        "stable_dominance_pct": dominance,
         "by_asset": stable_data
     }
-
-# run() 함수 내부 적용 예시
-# ... combined_total 계산 후 ...
-stable_info = analyze_stables(combined_map, combined_total)
-latest["stablecoins"] = stable_info  # JSON 결과에 포함
 
 # -------------------------
 # IO
@@ -192,8 +192,9 @@ def run():
 
     combined_map = merge_maps(up, bt, co)
     combined_total = float(sum(combined_map.values()))
-    
+
     stable_info = analyze_stables(combined_map, combined_total)
+
     top10_items = topn_from_map(combined_map, 10)
     top10_total = float(sum(v for _, v in top10_items))
     rest_total = max(0.0, combined_total - top10_total)
