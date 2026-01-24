@@ -45,7 +45,7 @@
     .kpi .note{ color:var(--muted); font-size:12px; margin-top:4px; }
 
     .chart{ width:100%; height:320px; }
-    #totalChart{ height:340px; }
+    #totalChart{ height:360px; }
     #shareChart{ height:320px; }
     #topRestChart{ height:320px; }
     #treemap{ height:360px; }
@@ -57,9 +57,32 @@
       .two{ grid-template-columns: 1fr 1fr; }
     }
 
-    .list{
-      margin:0; padding:0; list-style:none;
+    .toolbar{
+      display:flex; justify-content:space-between; align-items:center;
+      gap:10px; flex-wrap:wrap;
+      margin:8px 0 10px;
     }
+    .btns{ display:flex; gap:8px; }
+    .btn{
+      border:1px solid var(--border);
+      background:#fff;
+      color:#374151;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      cursor:pointer;
+    }
+    .btn.active{
+      border-color:#111827;
+      color:#111827;
+      font-weight:700;
+    }
+    .hint{
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .list{ margin:0; padding:0; list-style:none; }
     .list li{
       display:flex; justify-content:space-between; gap:12px;
       border-top:1px solid var(--border);
@@ -67,6 +90,7 @@
       font-size:13px;
     }
     .list li:first-child{ border-top:none; }
+
     .pill{
       font-size:11px; color:var(--muted);
       border:1px solid var(--border);
@@ -109,10 +133,23 @@
   </div>
 
   <div class="grid" style="margin-top:14px;">
-    <!-- LEFT (Charts) -->
+    <!-- LEFT -->
     <div class="card">
-      <h2 style="margin:0 0 6px; font-size:16px;">총 거래대금 추이 (최근 24h, 8시간 업데이트)</h2>
-      <p class="sub" style="margin-bottom:10px;">스냅샷 시점별 “최근 24시간” 총 거래대금을 봅니다. (값은 겹칠 수 있음)</p>
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap;">
+        <div>
+          <h2 style="margin:0 0 6px; font-size:16px;">총 거래대금 추이 (최근 24h, 8시간 업데이트)</h2>
+          <p class="sub" style="margin-bottom:0;">Step Line(수준) + Delta Bar(직전 대비 변화)로 “시장 온도”를 봅니다.</p>
+        </div>
+        <div class="toolbar">
+          <div class="btns">
+            <button class="btn" id="btn1d">1D</button>
+            <button class="btn active" id="btn3d">3D</button>
+            <button class="btn" id="btn7d">7D</button>
+          </div>
+          <div class="hint">※ 값은 rolling 24h 스냅샷이라 겹칠 수 있음</div>
+        </div>
+      </div>
+
       <div id="totalChart" class="chart"></div>
 
       <div class="two">
@@ -123,16 +160,16 @@
         </div>
         <div>
           <h2 style="margin:14px 0 6px; font-size:16px;">Top10 vs Rest (쏠림/확산)</h2>
-          <p class="sub" style="margin-bottom:10px;">Top10 합계와 나머지를 분해하고, Top10 점유율을 라인으로 봅니다.</p>
+          <p class="sub" style="margin-bottom:10px;">Top10/Rest를 분해하고, Top10 점유율을 라인으로 봅니다.</p>
           <div id="topRestChart" class="chart"></div>
         </div>
       </div>
     </div>
 
-    <!-- RIGHT (Current Board) -->
+    <!-- RIGHT -->
     <div class="card">
       <h2 style="margin:0 0 6px; font-size:16px;">현재 Top10 코인 (최근 24h)</h2>
-      <p class="sub" style="margin-bottom:10px;">“어떤 알트에 쏠렸는지”를 한 눈에 보도록 Treemap으로 표시합니다.</p>
+      <p class="sub" style="margin-bottom:10px;">“어떤 알트에 쏠렸는지”를 Treemap으로 한 눈에 봅니다.</p>
       <div id="treemap" class="chart"></div>
 
       <div style="display:flex; gap:10px; align-items:center; margin-top:10px;">
@@ -157,7 +194,6 @@
     const sign = p > 0 ? "+" : "";
     return sign + p.toFixed(1) + "%";
   }
-
   async function loadJSON(url){
     const res = await fetch(url);
     if (!res.ok) throw new Error("Failed to load: " + url);
@@ -167,11 +203,160 @@
   const LATEST_URL = "/bm/out/history/krw_24h_latest.json";
   const HIST_URL   = "/bm/out/history/krw_24h_snapshots.json";
 
+  // charts (global)
+  let treemap, totalChart, shareChart, topRestChart;
+  let HISTORY = [];
+  let LATEST = null;
+
+  function setActive(range){
+    document.getElementById("btn1d").classList.toggle("active", range === 1);
+    document.getElementById("btn3d").classList.toggle("active", range === 3);
+    document.getElementById("btn7d").classList.toggle("active", range === 7);
+  }
+
+  function sliceByDays(history, days){
+    // 8h snapshots -> ~3 points per day
+    const need = days * 3;
+    const arr = Array.isArray(history) ? history : [];
+    return arr.slice(-Math.max(need, 2)); // 최소 2개는 있어야 delta가 의미 있음
+  }
+
+  function buildSeries(hist){
+    const x = hist.map(h => h.timestamp_label);
+    const total = hist.map(h => Number(h.totals?.combined_24h || 0));
+    const up = hist.map(h => Number(h.totals?.upbit_24h || 0));
+    const bt = hist.map(h => Number(h.totals?.bithumb_24h || 0));
+    const co = hist.map(h => Number(h.totals?.coinone_24h || 0));
+    const top10 = hist.map(h => Number(h.top10?.top10_total_24h || 0));
+    const rest = hist.map(h => Number(h.top10?.rest_total_24h || 0));
+    const topShare = hist.map(h => Number(h.top10?.top10_share_pct || 0));
+
+    // delta = current - prev (rolling 24h snapshot change)
+    const delta = total.map((v,i)=> i===0 ? null : (v - total[i-1]));
+    return { x, total, delta, up, bt, co, top10, rest, topShare };
+  }
+
+  function render(rangeDays){
+    setActive(rangeDays);
+
+    const hist = sliceByDays(HISTORY, rangeDays);
+    const s = buildSeries(hist);
+
+    // ---- totalChart: Step line (level) + Delta bar (change) ----
+    totalChart.setOption({
+      grid: { left: 56, right: 56, top: 22, bottom: 40 },
+      tooltip: {
+        trigger: "axis",
+        axisPointer: { type: "cross" },
+        formatter: (params) => {
+          const i = params[0].dataIndex;
+          const d = s.delta[i];
+          const dText = (d === null) ? "-" : (d>=0 ? "▲ " : "▼ ") + fmtKRW(Math.abs(d));
+          return `<b>${s.x[i]}</b><br/>총 ${fmtKRW(s.total[i])}<br/>직전 대비 ${dText}`;
+        }
+      },
+      legend: { top: 0, left: 0, data: ["Total (24h)", "Δ vs prev"] },
+      xAxis: {
+        type: "category",
+        data: s.x,
+        axisLabel: { color: "#6b7280", rotate: (s.x.length > 10 ? 25 : 0) }
+      },
+      yAxis: [
+        {
+          type: "value",
+          name: "KRW (level)",
+          axisLabel: { color: "#6b7280", formatter: (v)=> (Math.abs(v)>=1e12)?(v/1e12).toFixed(0)+"조":v }
+        },
+        {
+          type: "value",
+          name: "KRW (Δ)",
+          axisLabel: { color: "#6b7280", formatter: (v)=> (Math.abs(v)>=1e12)?(v/1e12).toFixed(1)+"조":v },
+          splitLine: { show: false }
+        }
+      ],
+      series: [
+        {
+          name: "Total (24h)",
+          type: "line",
+          step: "end",
+          smooth: false,
+          symbolSize: 6,
+          data: s.total
+        },
+        {
+          name: "Δ vs prev",
+          type: "bar",
+          yAxisIndex: 1,
+          barWidth: 14,
+          data: s.delta
+        }
+      ]
+    }, true);
+
+    // ---- shareChart: 100% area (same sliced period) ----
+    const shareUp = s.total.map((_,i)=> s.total[i] > 0 ? s.up[i]/s.total[i]*100 : 0);
+    const shareBt = s.total.map((_,i)=> s.total[i] > 0 ? s.bt[i]/s.total[i]*100 : 0);
+    const shareCo = s.total.map((_,i)=> s.total[i] > 0 ? s.co[i]/s.total[i]*100 : 0);
+
+    shareChart.setOption({
+      grid: { left: 56, right: 16, top: 20, bottom: 40 },
+      tooltip: {
+        trigger:"axis",
+        formatter:(params)=>{
+          const i = params[0].dataIndex;
+          return `<b>${s.x[i]}</b><br/>업비트 ${shareUp[i].toFixed(1)}%<br/>빗썸 ${shareBt[i].toFixed(1)}%<br/>코인원 ${shareCo[i].toFixed(1)}%`;
+        }
+      },
+      legend: { top: 0, left: 0, data: ["Upbit","Bithumb","Coinone"] },
+      xAxis: { type:"category", data:s.x, axisLabel:{ rotate:(s.x.length>10?25:0) } },
+      yAxis: { type:"value", min:0, max:100, name:"%" },
+      series: [
+        { name:"Upbit", type:"line", stack:"s", areaStyle:{}, smooth:true, symbolSize:3, data: shareUp },
+        { name:"Bithumb", type:"line", stack:"s", areaStyle:{}, smooth:true, symbolSize:3, data: shareBt },
+        { name:"Coinone", type:"line", stack:"s", areaStyle:{}, smooth:true, symbolSize:3, data: shareCo }
+      ]
+    }, true);
+
+    // ---- topRestChart: stacked bars + share line (same sliced period) ----
+    topRestChart.setOption({
+      grid: { left: 56, right: 56, top: 30, bottom: 40 },
+      tooltip: {
+        trigger:"axis",
+        axisPointer:{ type:"shadow" },
+        formatter:(params)=>{
+          const i = params[0].dataIndex;
+          return `<b>${s.x[i]}</b><br/>Top10 ${fmtKRW(s.top10[i])}<br/>Rest ${fmtKRW(s.rest[i])}<br/>Top10 Share ${s.topShare[i].toFixed(1)}%`;
+        }
+      },
+      legend: { top: 0, left: 0, data: ["Top10","Rest","Top10 Share %"] },
+      xAxis: { type:"category", data:s.x, axisLabel:{ rotate:(s.x.length>10?25:0) } },
+      yAxis: [
+        { type:"value", name:"KRW", axisLabel:{ formatter:(v)=> (Math.abs(v)>=1e12)?(v/1e12).toFixed(0)+"조":v } },
+        { type:"value", name:"%", min:0, max:100, splitLine:{ show:false } }
+      ],
+      series: [
+        { name:"Top10", type:"bar", stack:"t", data: s.top10, barWidth: 16 },
+        { name:"Rest", type:"bar", stack:"t", data: s.rest, barWidth: 16 },
+        { name:"Top10 Share %", type:"line", yAxisIndex:1, smooth:true, symbolSize:6, data: s.topShare }
+      ]
+    }, true);
+  }
+
   Promise.all([loadJSON(LATEST_URL), loadJSON(HIST_URL)])
     .then(([latest, history]) => {
+      LATEST = latest;
+      HISTORY = Array.isArray(history) ? history : [];
+
+      // Init charts
+      treemap = echarts.init(document.getElementById("treemap"));
+      totalChart = echarts.init(document.getElementById("totalChart"));
+      shareChart = echarts.init(document.getElementById("shareChart"));
+      topRestChart = echarts.init(document.getElementById("topRestChart"));
+
       // ----- KPI -----
       const t = latest.totals;
       const top = latest.top10;
+
       document.getElementById("kpiTotal").textContent = fmtKRW(t.combined_24h);
       document.getElementById("kpiTs").textContent = `업데이트: ${latest.timestamp_label}`;
 
@@ -200,12 +385,10 @@
       });
 
       document.getElementById("pillNow").textContent = `현재판: ${latest.timestamp_label}`;
-      // crude signal label (you can refine later)
       const signal = top.top10_share_pct >= 70 ? "쏠림 강함" : (top.top10_share_pct >= 60 ? "쏠림" : "확산");
       document.getElementById("pillSignal").textContent = `신호: ${signal}`;
 
       // ----- Treemap -----
-      const treemap = echarts.init(document.getElementById("treemap"));
       treemap.setOption({
         tooltip: {
           formatter: (p) => {
@@ -229,93 +412,13 @@
         }]
       });
 
-      // ----- History series -----
-      // Keep last N points for readability
-      const hist = Array.isArray(history) ? history.slice(-90) : [];
-      const x = hist.map(h => h.timestamp_label);
-      const total = hist.map(h => Number(h.totals?.combined_24h || 0));
-      const up = hist.map(h => Number(h.totals?.upbit_24h || 0));
-      const bt = hist.map(h => Number(h.totals?.bithumb_24h || 0));
-      const co = hist.map(h => Number(h.totals?.coinone_24h || 0));
-      const top10 = hist.map(h => Number(h.top10?.top10_total_24h || 0));
-      const rest = hist.map(h => Number(h.top10?.rest_total_24h || 0));
-      const topShare = hist.map(h => Number(h.top10?.top10_share_pct || 0));
+      // ----- Buttons -----
+      document.getElementById("btn1d").addEventListener("click", ()=> render(1));
+      document.getElementById("btn3d").addEventListener("click", ()=> render(3));
+      document.getElementById("btn7d").addEventListener("click", ()=> render(7));
 
-      // Total chart
-      const totalChart = echarts.init(document.getElementById("totalChart"));
-      totalChart.setOption({
-        grid: { left: 56, right: 16, top: 20, bottom: 40 },
-        tooltip: {
-          trigger: "axis",
-          formatter: (params) => {
-            const i = params[0].dataIndex;
-            return `<b>${x[i]}</b><br/>총 ${fmtKRW(total[i])}`;
-          }
-        },
-        xAxis: { type: "category", data: x, axisLabel: { color: "#6b7280" } },
-        yAxis: {
-          type: "value",
-          name: "KRW",
-          axisLabel: { color: "#6b7280", formatter: (v)=> (Math.abs(v)>=1e12)?(v/1e12).toFixed(0)+"조":v }
-        },
-        series: [{
-          name: "Total",
-          type: "line",
-          smooth: true,
-          symbolSize: 5,
-          data: total
-        }]
-      });
-
-      // Exchange share chart (100% area)
-      const shareUp = total.map((_,i)=> total[i] > 0 ? up[i]/total[i]*100 : 0);
-      const shareBt = total.map((_,i)=> total[i] > 0 ? bt[i]/total[i]*100 : 0);
-      const shareCo = total.map((_,i)=> total[i] > 0 ? co[i]/total[i]*100 : 0);
-
-      const shareChart = echarts.init(document.getElementById("shareChart"));
-      shareChart.setOption({
-        grid: { left: 56, right: 16, top: 20, bottom: 40 },
-        tooltip: {
-          trigger:"axis",
-          formatter:(params)=>{
-            const i = params[0].dataIndex;
-            return `<b>${x[i]}</b><br/>업비트 ${shareUp[i].toFixed(1)}%<br/>빗썸 ${shareBt[i].toFixed(1)}%<br/>코인원 ${shareCo[i].toFixed(1)}%`;
-          }
-        },
-        legend: { top: 0, left: 0, data: ["Upbit","Bithumb","Coinone"] },
-        xAxis: { type:"category", data:x },
-        yAxis: { type:"value", min:0, max:100, name:"%" },
-        series: [
-          { name:"Upbit", type:"line", stack:"s", areaStyle:{}, smooth:true, symbolSize:3, data: shareUp },
-          { name:"Bithumb", type:"line", stack:"s", areaStyle:{}, smooth:true, symbolSize:3, data: shareBt },
-          { name:"Coinone", type:"line", stack:"s", areaStyle:{}, smooth:true, symbolSize:3, data: shareCo }
-        ]
-      });
-
-      // Top10 vs Rest chart
-      const topRestChart = echarts.init(document.getElementById("topRestChart"));
-      topRestChart.setOption({
-        grid: { left: 56, right: 56, top: 30, bottom: 40 },
-        tooltip: {
-          trigger:"axis",
-          axisPointer:{ type:"shadow" },
-          formatter:(params)=>{
-            const i = params[0].dataIndex;
-            return `<b>${x[i]}</b><br/>Top10 ${fmtKRW(top10[i])}<br/>Rest ${fmtKRW(rest[i])}<br/>Top10 Share ${topShare[i].toFixed(1)}%`;
-          }
-        },
-        legend: { top: 0, left: 0, data: ["Top10","Rest","Top10 Share %"] },
-        xAxis: { type:"category", data:x },
-        yAxis: [
-          { type:"value", name:"KRW", axisLabel:{ formatter:(v)=> (Math.abs(v)>=1e12)?(v/1e12).toFixed(0)+"조":v } },
-          { type:"value", name:"%", min:0, max:100, splitLine:{ show:false } }
-        ],
-        series: [
-          { name:"Top10", type:"bar", stack:"t", data: top10, barWidth: 18 },
-          { name:"Rest", type:"bar", stack:"t", data: rest, barWidth: 18 },
-          { name:"Top10 Share %", type:"line", yAxisIndex:1, smooth:true, symbolSize:5, data: topShare }
-        ]
-      });
+      // Initial render: 3D
+      render(3);
 
       window.addEventListener("resize", ()=>{
         treemap.resize();
