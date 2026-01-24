@@ -52,11 +52,15 @@
     #treemap{ height:360px; }
 
     .two{
-      display:grid; grid-template-columns: 1fr; gap:14px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:14px;
     }
-    @media (min-width: 980px){
+    @media (min-width: 1100px){
       .two{ grid-template-columns: 1fr 1fr; }
     }
+    #shareChart{ height:340px; }
+    #topRestChart{ height:340px; }
 
     .toolbar{
       display:flex; justify-content:space-between; align-items:center;
@@ -212,6 +216,34 @@
           <div class="pill" style="margin-bottom:8px;">Coinone Top5</div>
           <ul class="list" id="coTop5"></ul>
         </div>
+
+        <!-- ✅ Smart Kimchi Section -->
+        <div class="card" style="margin-top:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap;">
+            <div>
+              <h2 style="margin:0 0 6px; font-size:16px;">Smart Kimchi Index (김치 프리미엄: 성격/압력)</h2>
+              <p class="sub" style="margin-bottom:0;">BTC/ETH 김프 추이 + Kimchi Type/Score로 “지금 김프의 성격”을 봅니다.</p>
+            </div>
+            <div class="hint" id="kimchiUpdated">-</div>
+          </div>
+        
+          <div class="two" style="margin-top:10px;">
+            <div>
+              <h3 style="margin:0 0 6px; font-size:14px;">Kimchi Premium % (BTC/ETH/Combo)</h3>
+              <div id="kimchiPremChart" class="chart" style="height:320px;"></div>
+            </div>
+            <div>
+              <h3 style="margin:0 0 6px; font-size:14px;">Kimchi Type & Score (v1)</h3>
+              <div id="kimchiScoreChart" class="chart" style="height:320px;"></div>
+            </div>
+          </div>
+        
+          <div style="display:flex; gap:10px; align-items:center; margin-top:10px; flex-wrap:wrap;">
+            <span class="pill" id="kimchiTypePill">-</span>
+            <span class="pill" id="kimchiScorePill">-</span>
+            <span class="pill" id="kimchiPremPill">-</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -351,7 +383,7 @@
     const shareCo = s.total.map((_,i)=> s.total[i] > 0 ? s.co[i]/s.total[i]*100 : 0);
 
     shareChart.setOption({
-      grid: { left: 56, right: 16, top: 20, bottom: 40 },
+      grid: { left: 44, right: 14, top: 34, bottom: 34, containLabel: true },
       tooltip: {
         trigger:"axis",
         formatter:(params)=>{
@@ -359,7 +391,7 @@
           return `<b>${s.x[i]}</b><br/>업비트 ${shareUp[i].toFixed(1)}%<br/>빗썸 ${shareBt[i].toFixed(1)}%<br/>코인원 ${shareCo[i].toFixed(1)}%`;
         }
       },
-      legend: { top: 0, left: 0, data: ["Upbit","Bithumb","Coinone"] },
+      legend: { top: 6, left: 0, itemWidth: 14, itemHeight: 8, data: ["Upbit","Bithumb","Coinone"] },
       xAxis: { type:"category", data:s.x, axisLabel:{ rotate:(s.x.length>10?25:0) } },
       yAxis: { type:"value", min:0, max:100, name:"%" },
       series: [
@@ -371,7 +403,7 @@
 
     // ---- topRestChart: Top10 vs Rest + share line ----
     topRestChart.setOption({
-      grid: { left: 56, right: 56, top: 30, bottom: 40 },
+      grid: { left: 44, right: 44, top: 40, bottom: 34, containLabel: true },
       tooltip: {
         trigger:"axis",
         axisPointer:{ type:"shadow" },
@@ -380,7 +412,7 @@
           return `<b>${s.x[i]}</b><br/>Top10 ${fmtKRW(s.top10[i])}<br/>Rest ${fmtKRW(s.rest[i])}<br/>Top10 Share ${s.topShare[i].toFixed(1)}%`;
         }
       },
-      legend: { top: 0, left: 0, data: ["Top10","Rest","Top10 Share %"] },
+      legend: { top: 6, left: 0, itemWidth: 14, itemHeight: 8, data: ["Top10","Rest","Top10 Share %"] },
       xAxis: { type:"category", data:s.x, axisLabel:{ rotate:(s.x.length>10?25:0) } },
       yAxis: [
         { type:"value", name:"KRW" },
