@@ -28,14 +28,13 @@
     }
 
     .card{
-      border:1px solid var(--border); border-radius:var(--radius);
+      border:1px solid var(--border); border-radius:16px;
       background:var(--card); box-shadow:var(--shadow);
       padding:14px;
     }
 
     .kpi-row{ display:grid; grid-template-columns: 1fr; gap:12px; }
     @media (min-width: 980px){
-      /* ✅ 4개 KPI 대응 */
       .kpi-row{ grid-template-columns: 1fr 1fr 1fr 1fr; }
     }
     .kpi{
@@ -131,7 +130,6 @@
         <div class="note" id="kpiExNote">-</div>
       </div>
 
-      <!-- ✅ 닫는 태그/들여쓰기 정리 + KPI 4개 구조 정상화 -->
       <div class="kpi" style="border-color:#3b82f6;">
         <div class="label" style="color:#2563eb;">K-Safety (Stablecoin Share)</div>
         <div class="value" id="kpiStable">-</div>
@@ -183,8 +181,9 @@
       <h2 style="margin:0 0 6px; font-size:16px;">현재 Top10 코인 (최근 24h)</h2>
       <p class="sub" style="margin-bottom:10px;">“어떤 알트에 쏠렸는지”를 Treemap으로 한 눈에 봅니다.</p>
       <div id="treemap" class="chart"></div>
+
       <div id="stableChart" class="chart" style="height:220px; margin-top:10px;"></div>
-      
+
       <div style="display:flex; gap:10px; align-items:center; margin-top:10px;">
         <span class="pill" id="pillNow">-</span>
         <span class="pill" id="pillSignal">-</span>
@@ -235,8 +234,7 @@
   }
 
   function sliceByDays(history, days){
-    // 8h snapshots -> ~3 points per day (best-effort)
-    const need = days * 3;
+    const need = days * 3; // 8h snapshots -> ~3 points per day
     const arr = Array.isArray(history) ? history : [];
     return arr.slice(-Math.max(need, 2));
   }
@@ -260,6 +258,7 @@
     const hist = sliceByDays(HISTORY, rangeDays);
     const s = buildSeries(hist);
 
+    // ---- totalChart: Step line + Delta bar ----
     totalChart.setOption({
       grid: { left: 56, right: 56, top: 22, bottom: 40 },
       tooltip: {
@@ -288,30 +287,37 @@
       ]
     }, true);
 
+    // ---- stableChart: Stable Dominance % ----
+    if (stableChart) {
+      const stablePct = hist.map(h => num(h.stablecoins?.stable_dominance_pct));
+      const stableVol = hist.map(h => num(h.stablecoins?.total_stable_vol_24h));
+
+      stableChart.setOption({
+        grid: { left: 56, right: 18, top: 22, bottom: 36 },
+        tooltip: {
+          trigger: "axis",
+          formatter: (params) => {
+            const i = params[0].dataIndex;
+            return `<b>${s.x[i]}</b><br/>Stable Dom ${stablePct[i].toFixed(1)}%<br/>Stable Vol ${fmtKRW(stableVol[i])}`;
+          }
+        },
+        legend: { top: 0, left: 0, data: ["Stable Dom %"] },
+        xAxis: {
+          type: "category",
+          data: s.x,
+          axisLabel: { rotate: (s.x.length > 10 ? 25 : 0) }
+        },
+        yAxis: { type: "value", name: "%", min: 0, max: 100, splitLine: { show: true } },
+        series: [
+          { name: "Stable Dom %", type: "line", smooth: true, symbolSize: 6, data: stablePct }
+        ]
+      }, true);
+    }
+
+    // ---- shareChart: exchange shares ----
     const shareUp = s.total.map((_,i)=> s.total[i] > 0 ? s.up[i]/s.total[i]*100 : 0);
     const shareBt = s.total.map((_,i)=> s.total[i] > 0 ? s.bt[i]/s.total[i]*100 : 0);
     const shareCo = s.total.map((_,i)=> s.total[i] > 0 ? s.co[i]/s.total[i]*100 : 0);
-
-        const stablePct = hist.map(h => num(h.stablecoins?.stable_dominance_pct));
-    const stableVol = hist.map(h => num(h.stablecoins?.total_stable_vol_24h));
-
-    stableChart.setOption({
-      grid: { left: 56, right: 18, top: 22, bottom: 36 },
-      tooltip: {
-        trigger: "axis",
-        formatter: (params) => {
-          const i = params[0].dataIndex;
-          return `<b>${s.x[i]}</b><br/>Stable Dom ${stablePct[i].toFixed(1)}%<br/>Stable Vol ${fmtKRW(stableVol[i])}`;
-        }
-      },
-      legend: { top: 0, left: 0, data: ["Stable Dom %"] },
-      xAxis: { type: "category", data: s.x, axisLabel: { rotate: (s.x.length > 10 ? 25 : 0) } },
-      yAxis: { type: "value", name: "%", min: 0, max: 100, splitLine: { show: true } },
-      series: [
-        { name: "Stable Dom %", type: "line", smooth: true, symbolSize: 6, data: stablePct }
-      ]
-    }, true);
-
 
     shareChart.setOption({
       grid: { left: 56, right: 16, top: 20, bottom: 40 },
@@ -332,6 +338,7 @@
       ]
     }, true);
 
+    // ---- topRestChart: Top10 vs Rest + share line ----
     topRestChart.setOption({
       grid: { left: 56, right: 56, top: 30, bottom: 40 },
       tooltip: {
@@ -386,17 +393,18 @@
       document.getElementById("kpiExNote").textContent =
         `빗썸 ${btShare.toFixed(1)}% · 코인원 ${coShare.toFixed(1)}%`;
 
-      /* ✅ Stablecoin KㅍㅍPI 실제 표시 (Python JSON 구조와 매칭) */
+      // ✅ Stablecoin KPI 표시 (Python JSON 구조와 매칭)
       const st = latest.stablecoins || {};
       const stPct = num(st.stable_dominance_pct);
       const stVol = num(st.total_stable_vol_24h);
       document.getElementById("kpiStable").textContent = `${stPct.toFixed(1)}%`;
       const by = st.by_asset || {};
       const byText = Object.keys(by).length
-        ? Object.entries(by).sort((a,b)=> num(b[1])-num(a[1])).map(([k,v])=> `${k} ${fmtKRW(v)}`).join(" · ")
+        ? Object.entries(by).sort((a,b)=> num(b[1]) - num(a[1])).map(([k,v])=> `${k} ${fmtKRW(v)}`).join(" · ")
         : "데이터 없음";
       document.getElementById("kpiStableNote").textContent = `합계 ${fmtKRW(stVol)} · ${byText}`;
 
+      // Top10 list
       const list = document.getElementById("top10List");
       list.innerHTML = "";
       const coins = top.coins || [];
@@ -415,6 +423,7 @@
       const signal = topPct >= 70 ? "쏠림 강함" : (topPct >= 60 ? "쏠림" : "확산");
       document.getElementById("pillSignal").textContent = `신호: ${signal}`;
 
+      // Treemap
       treemap.setOption({
         tooltip: {
           formatter: (p) => {
@@ -449,6 +458,7 @@
         totalChart.resize();
         shareChart.resize();
         topRestChart.resize();
+        stableChart.resize();
       });
     })
     .catch(err => {
