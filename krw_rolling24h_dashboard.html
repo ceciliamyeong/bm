@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>KRW Rolling 24h Dashboard (8h Snapshots)</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
+  <style>
+    :root{
+      --bg:#fff; --card:#fff; --border:#e5e7eb; --text:#111827; --muted:#6b7280;
+      --shadow:0 1px 2px rgba(0,0,0,0.05); --radius:16px;
+    }
+    body{
+      margin:24px; background:var(--bg); color:var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Arial, sans-serif;
+    }
+    .wrap{ max-width:1200px; margin:0 auto; }
+    h1{ font-size:20px; margin:0 0 6px; }
+    .sub{ color:var(--muted); font-size:13px; margin:0 0 16px; }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:14px;
+    }
+    @media (min-width: 980px){
+      .grid{ grid-template-columns: 1.2fr 0.8fr; }
+    }
+
+    .card{
+      border:1px solid var(--border); border-radius:var(--radius);
+      background:var(--card); box-shadow:var(--shadow);
+      padding:14px;
+    }
+
+    .kpi-row{ display:grid; grid-template-columns: 1fr; gap:12px; }
+    @media (min-width: 980px){
+      .kpi-row{ grid-template-columns: 1fr 1fr 1fr; }
+    }
+    .kpi{
+      border:1px solid var(--border); border-radius:14px; padding:10px 12px;
+    }
+    .kpi .label{ color:var(--muted); font-size:12px; margin-bottom:6px; }
+    .kpi .value{ font-size:18px; font-weight:700; letter-spacing:-0.2px; }
+    .kpi .note{ color:var(--muted); font-size:12px; margin-top:4px; }
+
+    .chart{ width:100%; height:320px; }
+    #totalChart{ height:340px; }
+    #shareChart{ height:320px; }
+    #topRestChart{ height:320px; }
+    #treemap{ height:360px; }
+
+    .two{
+      display:grid; grid-template-columns: 1fr; gap:14px;
+    }
+    @media (min-width: 980px){
+      .two{ grid-template-columns: 1fr 1fr; }
+    }
+
+    .list{
+      margin:0; padding:0; list-style:none;
+    }
+    .list li{
+      display:flex; justify-content:space-between; gap:12px;
+      border-top:1px solid var(--border);
+      padding:10px 2px;
+      font-size:13px;
+    }
+    .list li:first-child{ border-top:none; }
+    .pill{
+      font-size:11px; color:var(--muted);
+      border:1px solid var(--border);
+      padding:2px 8px; border-radius:999px;
+      white-space:nowrap;
+    }
+    .foot{ color:var(--muted); font-size:12px; margin-top:10px; }
+    code{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+  <h1>KRW Rolling 24h 대시보드 (8시간 스냅샷)</h1>
+  <p class="sub">
+    “최근 24시간(rolling) 거래대금”을 8시간마다 갱신해 한국 KRW 시장의 현재 판(테마/쏠림/거래소 이동)을 한 페이지에서 확인합니다.
+  </p>
+
+  <div class="card">
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="label">현재(최근 24h) 총 거래대금</div>
+        <div class="value" id="kpiTotal">-</div>
+        <div class="note" id="kpiTs">-</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Top10 쏠림 (최근 24h)</div>
+        <div class="value" id="kpiTop10">-</div>
+        <div class="note" id="kpiTop10Note">-</div>
+      </div>
+      <div class="kpi">
+        <div class="label">거래소 구도 (최근 24h)</div>
+        <div class="value" id="kpiEx">-</div>
+        <div class="note" id="kpiExNote">-</div>
+      </div>
+    </div>
+    <div class="foot">
+      데이터: <code>/bm/out/history/krw_24h_latest.json</code> · <code>/bm/out/history/krw_24h_snapshots.json</code>
+    </div>
+  </div>
+
+  <div class="grid" style="margin-top:14px;">
+    <!-- LEFT (Charts) -->
+    <div class="card">
+      <h2 style="margin:0 0 6px; font-size:16px;">총 거래대금 추이 (최근 24h, 8시간 업데이트)</h2>
+      <p class="sub" style="margin-bottom:10px;">스냅샷 시점별 “최근 24시간” 총 거래대금을 봅니다. (값은 겹칠 수 있음)</p>
+      <div id="totalChart" class="chart"></div>
+
+      <div class="two">
+        <div>
+          <h2 style="margin:14px 0 6px; font-size:16px;">거래소 점유율(%) 추이</h2>
+          <p class="sub" style="margin-bottom:10px;">업비트·빗썸·코인원 비중이 어떻게 이동하는지 봅니다.</p>
+          <div id="shareChart" class="chart"></div>
+        </div>
+        <div>
+          <h2 style="margin:14px 0 6px; font-size:16px;">Top10 vs Rest (쏠림/확산)</h2>
+          <p class="sub" style="margin-bottom:10px;">Top10 합계와 나머지를 분해하고, Top10 점유율을 라인으로 봅니다.</p>
+          <div id="topRestChart" class="chart"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT (Current Board) -->
+    <div class="card">
+      <h2 style="margin:0 0 6px; font-size:16px;">현재 Top10 코인 (최근 24h)</h2>
+      <p class="sub" style="margin-bottom:10px;">“어떤 알트에 쏠렸는지”를 한 눈에 보도록 Treemap으로 표시합니다.</p>
+      <div id="treemap" class="chart"></div>
+
+      <div style="display:flex; gap:10px; align-items:center; margin-top:10px;">
+        <span class="pill" id="pillNow">-</span>
+        <span class="pill" id="pillSignal">-</span>
+      </div>
+
+      <ul class="list" id="top10List" style="margin-top:10px;"></ul>
+    </div>
+  </div>
+</div>
+
+<script>
+  function fmtKRW(n){
+    const abs = Math.abs(n);
+    if (abs >= 1e12) return (n/1e12).toFixed(2) + "조원";
+    if (abs >= 1e8)  return (n/1e8).toFixed(0) + "억원";
+    return n.toLocaleString("ko-KR") + "원";
+  }
+  function fmtPct(p){
+    if (p === null || p === undefined || Number.isNaN(p)) return "-";
+    const sign = p > 0 ? "+" : "";
+    return sign + p.toFixed(1) + "%";
+  }
+
+  async function loadJSON(url){
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Failed to load: " + url);
+    return await res.json();
+  }
+
+  const LATEST_URL = "/bm/out/history/krw_24h_latest.json";
+  const HIST_URL   = "/bm/out/history/krw_24h_snapshots.json";
+
+  Promise.all([loadJSON(LATEST_URL), loadJSON(HIST_URL)])
+    .then(([latest, history]) => {
+      // ----- KPI -----
+      const t = latest.totals;
+      const top = latest.top10;
+      document.getElementById("kpiTotal").textContent = fmtKRW(t.combined_24h);
+      document.getElementById("kpiTs").textContent = `업데이트: ${latest.timestamp_label}`;
+
+      document.getElementById("kpiTop10").textContent = `${fmtPct(top.top10_share_pct)} (Top10)`;
+      document.getElementById("kpiTop10Note").textContent =
+        `Top10 ${fmtKRW(top.top10_total_24h)} · Rest ${fmtKRW(top.rest_total_24h)}`;
+
+      const upShare = t.combined_24h > 0 ? (t.upbit_24h / t.combined_24h * 100) : 0;
+      const btShare = t.combined_24h > 0 ? (t.bithumb_24h / t.combined_24h * 100) : 0;
+      const coShare = t.combined_24h > 0 ? (t.coinone_24h / t.combined_24h * 100) : 0;
+      document.getElementById("kpiEx").textContent = `업비트 ${upShare.toFixed(1)}%`;
+      document.getElementById("kpiExNote").textContent =
+        `빗썸 ${btShare.toFixed(1)}% · 코인원 ${coShare.toFixed(1)}%`;
+
+      // ----- Current Top10 list -----
+      const list = document.getElementById("top10List");
+      list.innerHTML = "";
+      const coins = top.coins || [];
+      coins.forEach((c, idx) => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <span>${idx+1}. ${c.symbol.replace("KRW-","")}</span>
+          <span>${fmtKRW(c.value)} · ${c.share_pct.toFixed(1)}%</span>
+        `;
+        list.appendChild(li);
+      });
+
+      document.getElementById("pillNow").textContent = `현재판: ${latest.timestamp_label}`;
+      // crude signal label (you can refine later)
+      const signal = top.top10_share_pct >= 70 ? "쏠림 강함" : (top.top10_share_pct >= 60 ? "쏠림" : "확산");
+      document.getElementById("pillSignal").textContent = `신호: ${signal}`;
+
+      // ----- Treemap -----
+      const treemap = echarts.init(document.getElementById("treemap"));
+      treemap.setOption({
+        tooltip: {
+          formatter: (p) => {
+            const d = p.data || {};
+            return `<b>${d.name}</b><br/>${fmtKRW(d.value)}<br/>${(d.share_pct||0).toFixed(1)}%`;
+          }
+        },
+        series: [{
+          type: "treemap",
+          roam: false,
+          nodeClick: false,
+          breadcrumb: { show: false },
+          label: { show: true, formatter: "{b}" },
+          upperLabel: { show: false },
+          itemStyle: { borderColor: "#fff", borderWidth: 2 },
+          data: coins.map(c => ({
+            name: c.symbol.replace("KRW-",""),
+            value: c.value,
+            share_pct: c.share_pct
+          }))
+        }]
+      });
+
+      // ----- History series -----
+      // Keep last N points for readability
+      const hist = Array.isArray(history) ? history.slice(-90) : [];
+      const x = hist.map(h => h.timestamp_label);
+      const total = hist.map(h => Number(h.totals?.combined_24h || 0));
+      const up = hist.map(h => Number(h.totals?.upbit_24h || 0));
+      const bt = hist.map(h => Number(h.totals?.bithumb_24h || 0));
+      const co = hist.map(h => Number(h.totals?.coinone_24h || 0));
+      const top10 = hist.map(h => Number(h.top10?.top10_total_24h || 0));
+      const rest = hist.map(h => Number(h.top10?.rest_total_24h || 0));
+      const topShare = hist.map(h => Number(h.top10?.top10_share_pct || 0));
+
+      // Total chart
+      const totalChart = echarts.init(document.getElementById("totalChart"));
+      totalChart.setOption({
+        grid: { left: 56, right: 16, top: 20, bottom: 40 },
+        tooltip: {
+          trigger: "axis",
+          formatter: (params) => {
+            const i = params[0].dataIndex;
+            return `<b>${x[i]}</b><br/>총 ${fmtKRW(total[i])}`;
+          }
+        },
+        xAxis: { type: "category", data: x, axisLabel: { color: "#6b7280" } },
+        yAxis: {
+          type: "value",
+          name: "KRW",
+          axisLabel: { color: "#6b7280", formatter: (v)=> (Math.abs(v)>=1e12)?(v/1e12).toFixed(0)+"조":v }
+        },
+        series: [{
+          name: "Total",
+          type: "line",
+          smooth: true,
+          symbolSize: 5,
+          data: total
+        }]
+      });
+
+      // Exchange share chart (100% area)
+      const shareUp = total.map((_,i)=> total[i] > 0 ? up[i]/total[i]*100 : 0);
+      const shareBt = total.map((_,i)=> total[i] > 0 ? bt[i]/total[i]*100 : 0);
+      const shareCo = total.map((_,i)=> total[i] > 0 ? co[i]/total[i]*100 : 0);
+
+      const shareChart = echarts.init(document.getElementById("shareChart"));
+      shareChart.setOption({
+        grid: { left: 56, right: 16, top: 20, bottom: 40 },
+        tooltip: {
+          trigger:"axis",
+          formatter:(params)=>{
+            const i = params[0].dataIndex;
+            return `<b>${x[i]}</b><br/>업비트 ${shareUp[i].toFixed(1)}%<br/>빗썸 ${shareBt[i].toFixed(1)}%<br/>코인원 ${shareCo[i].toFixed(1)}%`;
+          }
+        },
+        legend: { top: 0, left: 0, data: ["Upbit","Bithumb","Coinone"] },
+        xAxis: { type:"category", data:x },
+        yAxis: { type:"value", min:0, max:100, name:"%" },
+        series: [
+          { name:"Upbit", type:"line", stack:"s", areaStyle:{}, smooth:true, symbolSize:3, data: shareUp },
+          { name:"Bithumb", type:"line", stack:"s", areaStyle:{}, smooth:true, symbolSize:3, data: shareBt },
+          { name:"Coinone", type:"line", stack:"s", areaStyle:{}, smooth:true, symbolSize:3, data: shareCo }
+        ]
+      });
+
+      // Top10 vs Rest chart
+      const topRestChart = echarts.init(document.getElementById("topRestChart"));
+      topRestChart.setOption({
+        grid: { left: 56, right: 56, top: 30, bottom: 40 },
+        tooltip: {
+          trigger:"axis",
+          axisPointer:{ type:"shadow" },
+          formatter:(params)=>{
+            const i = params[0].dataIndex;
+            return `<b>${x[i]}</b><br/>Top10 ${fmtKRW(top10[i])}<br/>Rest ${fmtKRW(rest[i])}<br/>Top10 Share ${topShare[i].toFixed(1)}%`;
+          }
+        },
+        legend: { top: 0, left: 0, data: ["Top10","Rest","Top10 Share %"] },
+        xAxis: { type:"category", data:x },
+        yAxis: [
+          { type:"value", name:"KRW", axisLabel:{ formatter:(v)=> (Math.abs(v)>=1e12)?(v/1e12).toFixed(0)+"조":v } },
+          { type:"value", name:"%", min:0, max:100, splitLine:{ show:false } }
+        ],
+        series: [
+          { name:"Top10", type:"bar", stack:"t", data: top10, barWidth: 18 },
+          { name:"Rest", type:"bar", stack:"t", data: rest, barWidth: 18 },
+          { name:"Top10 Share %", type:"line", yAxisIndex:1, smooth:true, symbolSize:5, data: topShare }
+        ]
+      });
+
+      window.addEventListener("resize", ()=>{
+        treemap.resize();
+        totalChart.resize();
+        shareChart.resize();
+        topRestChart.resize();
+      });
+    })
+    .catch(err => {
+      console.error(err);
+      alert("JSON 로딩 실패: /bm/out/history/krw_24h_latest.json 및 snapshots.json 경로/배포를 확인하세요.");
+    });
+</script>
+</body>
+</html>
