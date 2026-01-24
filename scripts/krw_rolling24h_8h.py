@@ -135,6 +135,32 @@ def topn_from_map(m: Dict[str, float], n: int = 10) -> List[Tuple[str, float]]:
     return items[:n]
 
 # -------------------------
+# Stablecoin Intelligence (추가)
+# -------------------------
+STABLES = ["USDT", "USDC", "DAI", "PYUSD"]
+
+def analyze_stables(combined_map: Dict[str, float], total_vol: float):
+    stable_data = {}
+    total_stable_vol = 0.0
+    
+    for sym, vol in combined_map.items():
+        asset = sym.split('-')[1] if '-' in sym else sym
+        if asset in STABLES:
+            stable_data[asset] = vol
+            total_stable_vol += vol
+            
+    return {
+        "total_stable_vol_24h": total_stable_vol,
+        "stable_dominance_pct": (total_stable_vol / total_vol * 100) if total_vol > 0 else 0,
+        "by_asset": stable_data
+    }
+
+# run() 함수 내부 적용 예시
+# ... combined_total 계산 후 ...
+stable_info = analyze_stables(combined_map, combined_total)
+latest["stablecoins"] = stable_info  # JSON 결과에 포함
+
+# -------------------------
 # IO
 # -------------------------
 def safe_read_json(path: Path):
@@ -166,7 +192,8 @@ def run():
 
     combined_map = merge_maps(up, bt, co)
     combined_total = float(sum(combined_map.values()))
-
+    
+    stable_info = analyze_stables(combined_map, combined_total)
     top10_items = topn_from_map(combined_map, 10)
     top10_total = float(sum(v for _, v in top10_items))
     rest_total = max(0.0, combined_total - top10_total)
@@ -190,6 +217,7 @@ def run():
             "bithumb_24h": bt_total,
             "coinone_24h": co_total,
         },
+        "stablecoins": stable_info,
         "top10": {
             "top10_total_24h": top10_total,
             "rest_total_24h": rest_total,
@@ -213,7 +241,8 @@ def run():
     write_json(LATEST_JSON, latest)
     write_json(SNAPSHOTS_JSON, history)
 
-    print("[OK] Rolling 24h snapshot saved")
+    print("[OK] Rolling 24h snapshot saved with Stablecoin data")
+    print(f"     Stable Dom: {stable_info['stable_dominance_pct']:.1f}%")
     print(f"     {ts_label} | total={combined_total:,.0f} | top10_share={top10_share:.1f}%")
     print(f"     upbit={up_total:,.0f} bithumb={bt_total:,.0f} coinone={co_total:,.0f}")
 
