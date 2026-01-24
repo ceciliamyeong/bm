@@ -37,6 +37,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests
 
+      # ✅ 커밋/푸시 꼬임 방지: 먼저 최신을 pull(rebase)로 맞춰둠
+      - name: Sync with remote
+        run: |
+          git pull --rebase --autostash
+
       - name: Run rolling24h script
         run: |
           python scripts/krw_rolling24h_8h.py
@@ -47,11 +52,11 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git add out/history/krw_24h_*.json || true
+
           if git diff --cached --quiet; then
             echo "No changes to commit."
             exit 0
           fi
 
           git commit -m "Update KRW rolling24h snapshots (8h)"
-          git pull --rebase
           git push
