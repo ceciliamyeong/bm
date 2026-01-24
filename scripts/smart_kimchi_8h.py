@@ -2,13 +2,12 @@
 # -*- coding: utf-8 -*-
 
 """
-Smart Kimchi Index v1.1 (8h snapshots)
-- Kimchi Premium (BTC/ETH) using:
+Smart Kimchi Index v1 (8h snapshots)
+- Compute Kimchi Premium (BTC/ETH) using:
   - Upbit KRW price
-  - Binance USDT price (USDT≈USD proxy)
-  - FX USDKRW (external)  ✅ use real FX, not KRW-USDT
-- Keep KRW-USDT as a separate "USDT premium" (constraint) indicator.
-- Enrich with context from your existing KRW rolling dashboard:
+  - Binance USDT price (with binance.vision fallback for GitHub Actions 451)
+  - USDT->KRW proxy via Upbit KRW-USDT price (if available)
+- Enrich with "context" from your existing KRW rolling dashboard:
   - total KRW volume (combined_24h)
   - top10 share
   - stable dominance
@@ -22,7 +21,7 @@ import json
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 import requests
 
@@ -41,22 +40,33 @@ KIMCHI_SNAPSHOTS_JSON = HIST_DIR / "kimchi_snapshots.json"
 MAX_SNAPSHOTS = 270
 
 # --------- endpoints ----------
-UPBIT_TICKER = "https://api.upbit.com/v1/ticker"                 # markets=KRW-BTC
-BINANCE_TICKER = "https://api.binance.com/api/v3/ticker/price"   # symbol=BTCUSDT
-FX_URL = "https://api.exchangerate.host/latest"                  # base=USD&symbols=KRW
+UPBIT_TICKER = "https://api.upbit.com/v1/ticker"  # markets=KRW-BTC
+
+# Binance endpoints: api.binance.com may return 451 on GitHub Actions.
+# Use binance.vision as fallback (same response format).
+BINANCE_TICKER_URLS = [
+    "https://api.binance.com/api/v3/ticker/price",
+    "https://data-api.binance.vision/api/v3/ticker/price",
+]
+
+# If Upbit KRW-USDT is missing, use your current proxy assumption
+USDT_KRW_FALLBACK = 1450.0  # <-- you said it's almost fixed around 1450
 
 
 def now_kst() -> datetime:
     return datetime.now(tz=KST)
 
 
-def http_get(url: str, params=None):
+def http_get(url: str, params=None, timeout: int = 20):
     last_err = None
     for _ in range(3):
         try:
-            r = requests.get(url, params=params, timeout=20)
-            r.raise_for_status()
-            return r.json()
+            r = requests.get(url, params=params, timeout=timeout, headers={"User-Agent": "Mozilla/5.0"})
+            # don’t r.raise_for_status() immediately; capture status for debugging/fallback
+            if r.status_code >= 200 and r.status_code < 300:
+                return r.json()
+            last_err = RuntimeError(f"{r.status_code} {r.text[:200]}")
+            time.sleep(1)
         except Exception as e:
             last_err = e
             time.sleep(1)
@@ -77,6 +87,7 @@ def write_json(path: Path, obj):
 
 
 def upbit_price(market: str) -> float:
+    # market like "KRW-BTC"
     j = http_get(UPBIT_TICKER, {"markets": market})
     if isinstance(j, list) and j:
         return float(j[0].get("trade_price", 0) or 0)
@@ -84,60 +95,60 @@ def upbit_price(market: str) -> float:
 
 
 def binance_price(symbol: str) -> float:
-    j = http_get(BINANCE_TICKER, {"symbol": symbol})
-    return float(j.get("price", 0) or 0)
+    # symbol like "BTCUSDT"
+    last_err = None
+    for base in BINANCE_TICKER_URLS:
+        try:
+            j = http_get(base, {"symbol": symbol})
+            return float(j.get("price", 0) or 0)
+        except Exception as e:
+            last_err = e
+            continue
+    raise RuntimeError(f"Binance price failed for {symbol}: {last_err}")
 
 
-def fx_usdkrw() -> float:
+def kimchi_premium_pct(krw_price: float, usdt_price: float, usdt_krw: float) -> float:
     """
-    Real USDKRW FX. If this fails, fallback to a sane range using last saved value.
+    premium = (KRW_domestic - (USDT_global * USDTKRW)) / (USDT_global * USDTKRW) * 100
     """
-    j = http_get(FX_URL, {"base": "USD", "symbols": "KRW"})
-    rates = j.get("rates") or {}
-    v = float(rates.get("KRW", 0) or 0)
-    return v
-
-
-def kimchi_premium_pct(krw_price: float, usd_price: float, usdkrw: float) -> float:
-    fair_krw = float(usd_price) * float(usdkrw)
+    fair_krw = float(usdt_price) * float(usdt_krw)
     if fair_krw <= 0:
         return 0.0
     return (float(krw_price) - fair_krw) / fair_krw * 100.0
 
 
-def classify_kimchi_type(premium: float, delta: float, ctx: Dict[str, Any], usdt_prem: float) -> Dict[str, Any]:
+def classify_kimchi_type(premium: float, ctx: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Very simple v1 heuristic using your existing KRW dashboard context.
+    (v2: use snapshot deltas, onchain netflow, banking windows, etc.)
+    """
     total = float(((ctx.get("totals") or {}).get("combined_24h")) or 0)
     top10_share = float(((ctx.get("top10") or {}).get("top10_share_pct")) or 0)
     stable_dom = float(((ctx.get("stablecoins") or {}).get("stable_dominance_pct")) or 0)
 
     prem_hi = premium >= 1.5
-    prem_lo = premium <= -1.0
-    vol_hi = total >= 2_000_000_000_000
+    vol_hi = total >= 2_000_000_000_000  # 2조 KRW (튜닝 포인트)
     top_hi = top10_share >= 65
-    stable_hi = stable_dom >= 10
-    usdt_hi = usdt_prem >= 1.0  # KRW-USDT가 FX 대비 1% 이상 비싸면 "자본제약/수요" 신호
+    stable_hi = stable_dom >= 10  # 튜닝 포인트
 
-    if prem_hi and delta > 0 and vol_hi and top_hi:
+    if prem_hi and vol_hi and top_hi:
         kind = "Retail-driven"
-        rationale = "김프↑(확대) + 거래대금↑ + Top10 쏠림↑ → 리테일 매수 주도 가능성"
-    elif prem_hi and usdt_hi:
+        rationale = "김프↑ + 거래대금↑ + Top10 쏠림↑ → 리테일 매수 주도 가능성"
+    elif prem_hi and (not vol_hi or not stable_hi):
         kind = "Constraint-driven"
-        rationale = "김프↑ + USDT 프리미엄↑ → 환전/차익거래 제약·국내 달러수요 신호 가능성"
-    elif prem_lo:
+        rationale = "김프↑ + 거래대금/스테이블 비중 약함 → 구조/제약(차익거래 비활성) 가능성"
+    elif premium <= -1.0:
         kind = "Reverse/Outflow"
-        rationale = "역김프 구간 → 국내 수요 약화 또는 해외 프리미엄"
+        rationale = "역김프 구간 → 해외가 더 비싸거나 국내 매수 약함/해외 이동 가능성"
     else:
         kind = "Neutral"
         rationale = "뚜렷한 과열/제약 신호가 약함"
 
-    # score 0~100 (premium + momentum + constraints)
     score = 50.0
-    score += min(25.0, max(-25.0, premium * 6.0))
-    score += min(15.0, max(-15.0, delta * 8.0))
-    score += 8.0 if vol_hi else -4.0
-    score += 8.0 if top_hi else -4.0
-    score += 4.0 if stable_hi else -4.0
-    score += 6.0 if usdt_hi else 0.0
+    score += min(20.0, max(-20.0, premium * 5.0))
+    score += 10.0 if vol_hi else -5.0
+    score += 10.0 if top_hi else -5.0
+    score += 5.0 if stable_hi else -5.0
     score = max(0.0, min(100.0, score))
 
     return {
@@ -148,9 +159,7 @@ def classify_kimchi_type(premium: float, delta: float, ctx: Dict[str, Any], usdt
             "total_krw_24h": total,
             "top10_share_pct": top10_share,
             "stable_dominance_pct": stable_dom,
-            "usdt_premium_pct": usdt_prem,
-            "delta_combo": delta,
-        }
+        },
     }
 
 
@@ -165,47 +174,26 @@ def run():
     krw_btc = upbit_price("KRW-BTC")
     krw_eth = upbit_price("KRW-ETH")
 
-    # Upbit KRW-USDT (keep as separate indicator)
-    krw_usdt = upbit_price("KRW-USDT")  # may be 0 if not listed; that's okay
+    # USDT KRW proxy (Upbit KRW-USDT market exists on Upbit)
+    usdt_krw = upbit_price("KRW-USDT")
+    if usdt_krw <= 0:
+        usdt_krw = USDT_KRW_FALLBACK
 
-    # Global (USDT ≈ USD proxy)
     usdt_btc = binance_price("BTCUSDT")
     usdt_eth = binance_price("ETHUSDT")
 
-    # FX USDKRW (real)
-    usdkrw = 0.0
-    try:
-        usdkrw = fx_usdkrw()
-    except Exception:
-        # fallback: try last saved value
-        prev = safe_read_json(KIMCHI_LATEST_JSON) or {}
-        usdkrw = float(prev.get("fx_usdkrw", 0) or 0)
-    if usdkrw <= 0:
-        usdkrw = 1350.0  # absolute last resort
+    prem_btc = kimchi_premium_pct(krw_btc, usdt_btc, usdt_krw)
+    prem_eth = kimchi_premium_pct(krw_eth, usdt_eth, usdt_krw)
 
-    prem_btc = kimchi_premium_pct(krw_btc, usdt_btc, usdkrw)
-    prem_eth = kimchi_premium_pct(krw_eth, usdt_eth, usdkrw)
     prem_combo = prem_btc * 0.7 + prem_eth * 0.3
-
-    # deltas vs previous
-    prev = safe_read_json(KIMCHI_LATEST_JSON) or {}
-    prev_combo = float((prev.get("kimchi_premium_pct") or {}).get("COMBO", 0) or 0)
-    delta_combo = prem_combo - prev_combo
-
-    # USDT premium vs FX (only if KRW-USDT exists)
-    usdt_prem = 0.0
-    if krw_usdt > 0 and usdkrw > 0:
-        usdt_prem = (krw_usdt / usdkrw - 1.0) * 100.0
-
-    analysis = classify_kimchi_type(prem_combo, delta_combo, ctx, usdt_prem)
+    analysis = classify_kimchi_type(prem_combo, ctx)
 
     latest = {
-        "schema": "smart_kimchi_v1_1",
+        "schema": "smart_kimchi_v1",
         "timestamp_kst": ts_iso,
         "timestamp_label": ts_label,
-        "fx_usdkrw": round(usdkrw, 4),
         "prices": {
-            "upbit": {"KRW-BTC": krw_btc, "KRW-ETH": krw_eth, "KRW-USDT": krw_usdt},
+            "upbit": {"KRW-BTC": krw_btc, "KRW-ETH": krw_eth, "KRW-USDT": usdt_krw},
             "binance": {"BTCUSDT": usdt_btc, "ETHUSDT": usdt_eth},
         },
         "kimchi_premium_pct": {
@@ -213,10 +201,6 @@ def run():
             "ETH": round(prem_eth, 3),
             "COMBO": round(prem_combo, 3),
         },
-        "delta": {
-            "COMBO": round(delta_combo, 3),
-        },
-        "usdt_premium_pct": round(usdt_prem, 3),
         "smart_kimchi": analysis,
     }
 
@@ -230,10 +214,10 @@ def run():
     write_json(KIMCHI_LATEST_JSON, latest)
     write_json(KIMCHI_SNAPSHOTS_JSON, history)
 
-    print("[OK] Smart Kimchi v1.1 saved")
-    print(f"     {ts_label} | FX={usdkrw:,.2f} | USDTprem={usdt_prem:+.2f}%")
-    print(f"     BTC {prem_btc:+.2f}% | ETH {prem_eth:+.2f}% | COMBO {prem_combo:+.2f}% (Δ {delta_combo:+.2f}p)")
+    print("[OK] Smart Kimchi v1 saved")
+    print(f"     {ts_label} | BTC {prem_btc:.2f}% | ETH {prem_eth:.2f}% | COMBO {prem_combo:.2f}%")
     print(f"     Type={analysis['type']} Score={analysis['score_v1']}")
+
 
 if __name__ == "__main__":
     run()
