@@ -1,4 +1,4 @@
-name: KRW Rolling 24h (8h)
+name: KRW Rolling 24h (8h) + Smart Kimchi
 
 on:
   workflow_dispatch:
@@ -37,26 +37,25 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests
 
-      # ✅ 커밋/푸시 꼬임 방지: 먼저 최신을 pull(rebase)로 맞춰둠
-      - name: Sync with remote
-        run: |
-          git pull --rebase --autostash
-
       - name: Run rolling24h script
         run: |
           python scripts/krw_rolling24h_8h.py
+
+      - name: Run smart kimchi script
+        run: |
+          python scripts/smart_kimchi_8h.py
 
       - name: Commit & push outputs
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add out/history/krw_24h_*.json || true
-
+          git add out/history/krw_24h_*.json out/history/kimchi_*.json || true
           if git diff --cached --quiet; then
             echo "No changes to commit."
             exit 0
           fi
 
-          git commit -m "Update KRW rolling24h snapshots (8h)"
+          git commit -m "Update KRW rolling24h + smart kimchi (8h)"
+          git pull --rebase
           git push
