@@ -34,7 +34,7 @@
       color:var(--text);
       font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Arial, sans-serif;
     }
-
+     
     /* Layout */
     .app{
       display:grid;
@@ -454,7 +454,7 @@
                 <div class="desc">업비트·빗썸·코인원 비중 이동</div>
               </div>
             </div>
-            <div class="wMeta">SOURCE: internal</div>
+            <div class="wMeta">SOURCE:BLOCKMEDIA</div>
           </div>
           <div id="shareChart" class="chart"></div>
         </div>
@@ -468,7 +468,7 @@
                 <div class="desc">Top10/Rest 분해 + Top10 점유율 라인</div>
               </div>
             </div>
-            <div class="wMeta">SOURCE: internal</div>
+            <div class="wMeta">SOURCE:BLOCKMEDIA</div>
           </div>
           <div id="topRestChart" class="chart"></div>
         </div>
@@ -731,7 +731,7 @@
     const s = buildSeries(hist);
 
     totalChart?.setOption({
-      grid: { left: 56, right: 56, top: 22, bottom: 40 },
+      grid: { left: 72, right: 72, top: 44, bottom: 44 },
       tooltip: {
         trigger: "axis",
         axisPointer: { type: "cross" },
@@ -743,9 +743,15 @@
         }
       },
       legend: { top: 0, left: 0, data: ["Total (24h)", "Δ vs prev"] },
-      xAxis: { type: "category", data: s.x, axisLabel: { color: "#6b7280", rotate: (s.x.length > 10 ? 25 : 0) } },
+      xAxis: { type: "category", 
+               data: s.x, 
+               axisLabel: { color: "#6b7280", rotate: (s.x.length > 10 ? 25 : 0) } 
+      },
       yAxis: [
-        { type: "value", name: "KRW (level)", axisLabel: { color: "#6b7280" } },
+        { 
+          type: "value", 
+          name: "", 
+          axisLabel: { color: "#6b7280", margin: 14 },
         { type: "value", name: "KRW (Δ)", axisLabel: { color: "#6b7280" }, splitLine: { show: false } }
       ],
       series: [
