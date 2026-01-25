@@ -616,6 +616,14 @@
           </div>
           <div id="kimchiScoreChart" class="chart"></div>
 
+          <div style="margin-top:10px;">
+            <div class="pill" style="display:inline-block; margin-bottom:8px;">Kimchi Comment</div>
+            <div style="font-size:14px; line-height:1.55;">
+              <div id="kimchiCommentHead" style="font-weight:700;">-</div>
+              <div id="kimchiCommentBody" class="sub" style="margin:6px 0 0;">-</div>
+            </div>
+          </div>
+          
           <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
             <span class="pill" id="kimchiTypePill">-</span>
             <span class="pill" id="kimchiScorePill">-</span>
@@ -646,7 +654,7 @@
 
   </main>
 </div>
-
+  
 <script>
   function num(x){
     const n = Number(x);
@@ -697,7 +705,7 @@
   }
 
   function sliceByDays(history, days){
-    const need = days * 3; // 8h snapshots -> ~3 points per day
+    const need = days * 3;
     const arr = Array.isArray(history) ? history : [];
     return arr.slice(-Math.max(need, 2));
   }
@@ -722,7 +730,6 @@
     const hist = sliceByDays(HISTORY, rangeDays);
     const s = buildSeries(hist);
 
-    // totalChart: step line + delta bar
     totalChart?.setOption({
       grid: { left: 56, right: 56, top: 22, bottom: 40 },
       tooltip: {
@@ -747,7 +754,6 @@
       ]
     }, true);
 
-    // stableChart: dominance %
     if (stableChart){
       const stablePct = hist.map(h => num(h.stablecoins?.stable_dominance_pct));
       const stableVol = hist.map(h => num(h.stablecoins?.total_stable_vol_24h));
@@ -767,7 +773,6 @@
       }, true);
     }
 
-    // shareChart: exchange share
     const shareUp = s.total.map((_,i)=> s.total[i] > 0 ? s.up[i]/s.total[i]*100 : 0);
     const shareBt = s.total.map((_,i)=> s.total[i] > 0 ? s.bt[i]/s.total[i]*100 : 0);
     const shareCo = s.total.map((_,i)=> s.total[i] > 0 ? s.co[i]/s.total[i]*100 : 0);
@@ -790,7 +795,6 @@
       ]
     }, true);
 
-    // topRestChart
     topRestChart?.setOption({
       grid: { left: 44, right: 44, top: 40, bottom: 34, containLabel: true },
       tooltip: {
@@ -813,6 +817,20 @@
         { name:"Top10 Share %", type:"line", yAxisIndex:1, smooth:true, symbolSize:6, data: s.topShare }
       ]
     }, true);
+
+    // ✅ Kimchi Score chart (range에 맞춰 같이 갱신)
+    if (kimchiScoreChart && Array.isArray(KIMCHI_HIST) && KIMCHI_HIST.length){
+      const kHist = sliceByDays(KIMCHI_HIST, rangeDays);
+      const kx = kHist.map(h => h.timestamp_label);
+      const ks = kHist.map(h => num(h.smart_kimchi?.score_v1));
+      kimchiScoreChart.setOption({
+        grid: { left: 44, right: 18, top: 30, bottom: 36, containLabel: true },
+        tooltip: { trigger:"axis" },
+        xAxis: { type:"category", data:kx, axisLabel:{ rotate:(kx.length>10?25:0) } },
+        yAxis: { type:"value", min:0, max:100, name:"Score" },
+        series: [{ type:"line", smooth:true, symbolSize:6, data: ks }]
+      }, true);
+    }
   }
 
   function fillTopList(elId, arr){
@@ -827,14 +845,61 @@
     });
   }
 
+  // ✅ 김치 코멘트 생성기
+  function buildKimchiComment(latest, history, kimchiLatest){
+    const ts = (latest?.timestamp_label || "-");
+    const t = latest?.totals || {};
+    const top = latest?.top10 || {};
+    const st = latest?.stablecoins || {};
+
+    const total = num(t.combined_24h);
+    const topShare = num(top.top10_share_pct);
+    const stableDom = num(st.stable_dominance_pct);
+
+    const kl = kimchiLatest || {};
+    const kPrem = kl.kimchi_premium_pct || {};
+    const combo = num(kPrem.COMBO);
+    const btc = num(kPrem.BTC);
+    const eth = num(kPrem.ETH);
+
+    const kType = (kl.smart_kimchi?.type || "-");
+    const kScore = num(kl.smart_kimchi?.score_v1);
+
+    const heat =
+      total >= 4e12 ? "거래대금이 4조원대까지 올라 판이 과열 쪽으로 기운다" :
+      total >= 2e12 ? "유동성이 2조원대에서 유지되며 리스크온/리스크오프가 교차한다" :
+      "거래대금이 낮아지며 방향성이 약해진 구간";
+
+    const crowd =
+      topShare >= 70 ? "상위 10종목 쏠림이 강해 테마 장세 성격이 짙다" :
+      topShare >= 60 ? "쏠림이 유지되지만 확산 여지도 남는다" :
+      "쏠림이 약해지며 종목 확산이 진행된다";
+
+    const stable =
+      stableDom >= 10 ? "스테이블 비중이 높아 대기성 유동성이 두껍다" :
+      stableDom >= 5 ? "스테이블 비중은 중간 수준" :
+      "스테이블 비중이 낮아 현물 알트 쪽으로 자금이 더 기운다";
+
+    const head = `COMBO ${combo.toFixed(2)}% · ${kType} (${kScore.toFixed(1)}점)`;
+    const body = `${ts} 기준, BTC ${btc.toFixed(2)}%·ETH ${eth.toFixed(2)}%로 집계됐다. ${heat}. ${crowd}. ${stable}.`;
+
+    return { head, body };
+  }
+
   async function refreshData(){
     const u = urls();
-    const [latest, history] = await Promise.all([
-      loadJSON(u.latest), loadJSON(u.hist),
+
+    const [latest, history, kimchiLatest, kimchiHist] = await Promise.all([
+      loadJSON(u.latest),
+      loadJSON(u.hist),
+      loadJSON(u.kimchiLatest),
+      loadJSON(u.kimchiHist),
     ]);
 
     LATEST = latest;
     HISTORY = Array.isArray(history) ? history : [];
+    KIMCHI_LATEST = kimchiLatest;
+    KIMCHI_HIST = Array.isArray(kimchiHist) ? kimchiHist : [];
 
     // KPI
     const t = latest.totals || {};
@@ -900,11 +965,24 @@
       }]
     });
 
-    // Exchange Top5 (있으면)
+    // Exchange Top5
     const exTop = latest.by_exchange_top || {};
     fillTopList("upTop5", exTop.upbit_top5);
     fillTopList("btTop5", exTop.bithumb_top5);
     fillTopList("coTop5", exTop.coinone_top5);
+
+    // ✅ 김치 코멘트 + pill 업데이트
+    const c = buildKimchiComment(LATEST, HISTORY, KIMCHI_LATEST);
+    document.getElementById("kimchiCommentHead").textContent = c.head;
+    document.getElementById("kimchiCommentBody").textContent = c.body;
+
+    const kType = (KIMCHI_LATEST?.smart_kimchi?.type || "-");
+    const kScore = num(KIMCHI_LATEST?.smart_kimchi?.score_v1);
+    const combo = num(KIMCHI_LATEST?.kimchi_premium_pct?.COMBO);
+
+    document.getElementById("kimchiTypePill").textContent = `Type: ${kType}`;
+    document.getElementById("kimchiScorePill").textContent = `Score: ${kScore.toFixed(1)} / 100`;
+    document.getElementById("kimchiPremPill").textContent = `COMBO: ${fmtPct(combo)}`;
 
     render(CURRENT_RANGE);
   }
@@ -916,6 +994,12 @@
       shareChart = echarts.init(document.getElementById("shareChart"));
       topRestChart = echarts.init(document.getElementById("topRestChart"));
       stableChart = echarts.init(document.getElementById("stableChart"));
+
+      // ✅ 김치 차트 init (이게 네 코드에서 빠져있던 핵심)
+      kimchiScoreChart = echarts.init(document.getElementById("kimchiScoreChart"));
+      // kimchiPremChart도 있으면:
+      const premEl = document.getElementById("kimchiPremChart");
+      if (premEl) kimchiPremChart = echarts.init(premEl);
 
       document.getElementById("btn1d")?.addEventListener("click", ()=> render(1));
       document.getElementById("btn3d")?.addEventListener("click", ()=> render(3));
@@ -930,6 +1014,8 @@
         shareChart?.resize();
         topRestChart?.resize();
         stableChart?.resize();
+        kimchiScoreChart?.resize();
+        kimchiPremChart?.resize();
       });
     }catch(err){
       console.error(err);
@@ -937,7 +1023,6 @@
     }
   })();
 </script>
-
 
 </body>
 </html>
