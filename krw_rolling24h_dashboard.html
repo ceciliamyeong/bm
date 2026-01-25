@@ -833,6 +833,44 @@
     }
   }
 
+
+   // ✅ Kimchi Premium chart (BTC/ETH/COMBO + ΔCOMBO)
+    if (kimchiPremChart && Array.isArray(KIMCHI_HIST) && KIMCHI_HIST.length){
+      const kHist = sliceByDays(KIMCHI_HIST, rangeDays);
+      const kx = kHist.map(h => h.timestamp_label);
+    
+      const kb = kHist.map(h => num(h.kimchi_premium_pct?.BTC));
+      const ke = kHist.map(h => num(h.kimchi_premium_pct?.ETH));
+      const kc = kHist.map(h => num(h.kimchi_premium_pct?.COMBO));
+      const kd = kc.map((v,i)=> i===0 ? null : (num(v) - num(kc[i-1]))); // ΔCOMBO (p)
+    
+      kimchiPremChart.setOption({
+        grid: { left: 44, right: 18, top: 30, bottom: 36, containLabel: true },
+        tooltip: {
+          trigger:"axis",
+          formatter:(params)=>{
+            const i = params[0].dataIndex;
+            const d = kd[i];
+            const dText = (d===null) ? "-" : ((d>=0?"+":"") + d.toFixed(2) + "p");
+            return `<b>${kx[i]}</b><br/>BTC ${fmtPct(kb[i])}<br/>ETH ${fmtPct(ke[i])}<br/>COMBO ${fmtPct(kc[i])}<br/>ΔCOMBO ${dText}`;
+          }
+        },
+        legend: { top: 6, left: 0, itemWidth: 14, itemHeight: 8, data: ["BTC","ETH","COMBO","ΔCOMBO"] },
+        xAxis: { type:"category", data:kx, axisLabel:{ rotate:(kx.length>10?25:0) } },
+        yAxis: [
+          { type:"value", name:"%", axisLabel:{ formatter:(v)=> Number(v).toFixed(1) } },
+          { type:"value", name:"Δp", splitLine:{ show:false }, axisLabel:{ formatter:(v)=> Number(v).toFixed(1) } }
+        ],
+        series: [
+          { name:"BTC", type:"line", smooth:true, symbolSize:5, data: kb },
+          { name:"ETH", type:"line", smooth:true, symbolSize:5, data: ke },
+          { name:"COMBO", type:"line", smooth:true, symbolSize:6, lineStyle:{ width:3 }, data: kc },
+          { name:"ΔCOMBO", type:"bar", yAxisIndex:1, barWidth: 12, data: kd }
+        ]
+      }, true);
+    }
+ 
+  
   function fillTopList(elId, arr){
     const el = document.getElementById(elId);
     if (!el) return;
@@ -995,11 +1033,8 @@
       topRestChart = echarts.init(document.getElementById("topRestChart"));
       stableChart = echarts.init(document.getElementById("stableChart"));
 
-      // ✅ 김치 차트 init (이게 네 코드에서 빠져있던 핵심)
       kimchiScoreChart = echarts.init(document.getElementById("kimchiScoreChart"));
-      // kimchiPremChart도 있으면:
-      const premEl = document.getElementById("kimchiPremChart");
-      if (premEl) kimchiPremChart = echarts.init(premEl);
+      kimchiPremChart  = echarts.init(document.getElementById("kimchiPremChart"));
 
       document.getElementById("btn1d")?.addEventListener("click", ()=> render(1));
       document.getElementById("btn3d")?.addEventListener("click", ()=> render(3));
