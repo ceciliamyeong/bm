@@ -41,6 +41,13 @@ jobs:
         run: |
           python scripts/krw_rolling24h_8h.py
 
+      - name: Update FX (USD/KRW)
+        run: |
+          python scripts/update_fx_8h.py
+        env:
+          ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
+
+
       - name: Run smart kimchi script
         run: |
           python scripts/smart_kimchi_8h.py
