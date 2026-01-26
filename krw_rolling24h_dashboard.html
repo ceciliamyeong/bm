@@ -171,6 +171,9 @@
       box-shadow:var(--shadow);
     }
 
+    .widget{
+      min-width: 0;
+
     .kpiGrid{
       display:grid;
       grid-template-columns: 1fr;
@@ -875,158 +878,6 @@
     }, true);
   }
 }
-function render(rangeDays){
-  CURRENT_RANGE = rangeDays;
-  setActive(rangeDays);
-
-  const hist = sliceByDays(HISTORY, rangeDays);
-  const s = buildSeries(hist);
-
-  // ===== TOTAL =====
-  totalChart?.setOption({
-    grid: { left: 72, right: 72, top: 44, bottom: 44 },
-    tooltip: {
-      trigger: "axis",
-      axisPointer: { type: "cross" },
-      formatter: (params) => {
-        const i = params[0].dataIndex;
-        const d = s.delta[i];
-        const dText = (d === null) ? "-" : (d>=0 ? "▲ " : "▼ ") + fmtKRW(Math.abs(d));
-        return `<b>${s.x[i]}</b><br/>총 ${fmtKRW(s.total[i])}<br/>직전 대비 ${dText}`;
-      }
-    },
-    legend: { top: 0, left: 0, data: ["Total (24h)", "Δ vs prev"] },
-    xAxis: {
-      type: "category",
-      data: s.x,
-      axisLabel: { color: "#6b7280", rotate: (s.x.length > 10 ? 25 : 0) }
-    },
-    yAxis: [
-      { type: "value", axisLabel: { color: "#6b7280", margin: 14 } },
-      { type: "value", axisLabel: { color: "#6b7280", margin: 14 }, splitLine: { show: false } }
-    ],
-    series: [
-      { name: "Total (24h)", type: "line", step: "end", symbolSize: 6, data: s.total },
-      { name: "Δ vs prev", type: "bar", yAxisIndex: 1, barWidth: 14, data: s.delta }
-    ]
-  }, true);
-
-  // ===== STABLE =====
-  if (stableChart){
-    const stablePct = hist.map(h => num(h.stablecoins?.stable_dominance_pct));
-    const stableVol = hist.map(h => num(h.stablecoins?.total_stable_vol_24h));
-    stableChart.setOption({
-      grid: { left: 56, right: 18, top: 22, bottom: 36 },
-      tooltip: {
-        trigger: "axis",
-        formatter: (params) => {
-          const i = params[0].dataIndex;
-          return `<b>${s.x[i]}</b><br/>Stable Dom ${stablePct[i].toFixed(1)}%<br/>Stable Vol ${fmtKRW(stableVol[i])}`;
-        }
-      },
-      xAxis: { type: "category", data: s.x, axisLabel:{ rotate:(s.x.length>10?25:0) } },
-      yAxis: { type: "value", min: 0, max: 100 },
-      series: [{ type: "line", smooth: true, symbolSize: 6, data: stablePct }]
-    }, true);
-  }
-
-  // ===== SHARE =====
-  const shareUp = s.total.map((_,i)=> s.total[i] ? s.up[i]/s.total[i]*100 : 0);
-  const shareBt = s.total.map((_,i)=> s.total[i] ? s.bt[i]/s.total[i]*100 : 0);
-  const shareCo = s.total.map((_,i)=> s.total[i] ? s.co[i]/s.total[i]*100 : 0);
-  shareChart?.setOption({
-    grid: { left: 44, right: 14, top: 34, bottom: 34, containLabel: true },
-    tooltip: {
-      trigger:"axis",
-      formatter:(params)=>{
-        const i = params[0].dataIndex;
-        return `<b>${s.x[i]}</b><br/>업비트 ${shareUp[i].toFixed(1)}%<br/>빗썸 ${shareBt[i].toFixed(1)}%<br/>코인원 ${shareCo[i].toFixed(1)}%`;
-      }
-    },
-    legend: { top: 6, left: 0, itemWidth: 14, itemHeight: 8, data: ["Upbit","Bithumb","Coinone"] },
-    xAxis: { type:"category", data:s.x, axisLabel:{ rotate:(s.x.length>10?25:0) } },
-    yAxis: { type:"value", min:0, max:100 },
-    series: [
-      { name:"Upbit", type:"line", stack:"s", areaStyle:{}, smooth:true, symbolSize:3, data: shareUp },
-      { name:"Bithumb", type:"line", stack:"s", areaStyle:{}, smooth:true, symbolSize:3, data: shareBt },
-      { name:"Coinone", type:"line", stack:"s", areaStyle:{}, smooth:true, symbolSize:3, data: shareCo }
-    ]
-  }, true);
-
-  // ===== TOP10 vs REST =====
-  topRestChart?.setOption({
-    grid: { left: 44, right: 44, top: 40, bottom: 34, containLabel: true },
-    tooltip: {
-      trigger:"axis",
-      axisPointer:{ type:"shadow" },
-      formatter:(params)=>{
-        const i = params[0].dataIndex;
-        return `<b>${s.x[i]}</b><br/>Top10 ${fmtKRW(s.top10[i])}<br/>Rest ${fmtKRW(s.rest[i])}<br/>Top10 Share ${s.topShare[i].toFixed(1)}%`;
-      }
-    },
-    legend: { top: 6, left: 0, itemWidth: 14, itemHeight: 8, data: ["Top10","Rest","Top10 Share %"] },
-    xAxis: { type:"category", data:s.x, axisLabel:{ rotate:(s.x.length>10?25:0) } },
-    yAxis: [
-      { type:"value" },
-      { type:"value", min:0, max:100, splitLine:{ show:false } }
-    ],
-    series: [
-      { name:"Top10", type:"bar", stack:"t", data: s.top10, barWidth: 16 },
-      { name:"Rest", type:"bar", stack:"t", data: s.rest, barWidth: 16 },
-      { name:"Top10 Share %", type:"line", yAxisIndex:1, smooth:true, symbolSize:6, data: s.topShare }
-    ]
-  }, true);
-
-  // ===== KIMCHI SCORE =====
-  if (kimchiScoreChart && Array.isArray(KIMCHI_HIST) && KIMCHI_HIST.length){
-    const kHist = sliceByDays(KIMCHI_HIST, rangeDays);
-    const kx = kHist.map(h => h.timestamp_label);
-    const ks = kHist.map(h => num(h.smart_kimchi?.score_v1));
-    kimchiScoreChart.setOption({
-      grid: { left: 44, right: 18, top: 30, bottom: 36, containLabel: true },
-      tooltip: { trigger:"axis" },
-      xAxis: { type:"category", data:kx, axisLabel:{ rotate:(kx.length>10?25:0) } },
-      yAxis: { type:"value", min:0, max:100, name:"Score" },
-      series: [{ type:"line", smooth:true, symbolSize:6, data: ks }]
-    }, true);
-  }
-
-  // ===== KIMCHI PREMIUM =====
-  if (kimchiPremChart && Array.isArray(KIMCHI_HIST) && KIMCHI_HIST.length){
-    const kHist = sliceByDays(KIMCHI_HIST, rangeDays);
-    const kx = kHist.map(h=>h.timestamp_label);
-
-    const kb = kHist.map(h=>num(h.kimchi_premium_pct?.BTC));
-    const ke = kHist.map(h=>num(h.kimchi_premium_pct?.ETH));
-    const kc = kHist.map(h=>num(h.kimchi_premium_pct?.COMBO));
-    const kd = kc.map((v,i)=> i===0 ? null : (v-kc[i-1])); // ΔCOMBO (p)
-
-    kimchiPremChart.setOption({
-      grid: { left: 44, right: 18, top: 30, bottom: 36, containLabel: true },
-      tooltip: {
-        trigger:"axis",
-        formatter:(params)=>{
-          const i = params[0].dataIndex;
-          const d = kd[i];
-          const dText = (d===null) ? "-" : ((d>=0?"+":"") + d.toFixed(2) + "p");
-          return `<b>${kx[i]}</b><br/>BTC ${fmtPct(kb[i])}<br/>ETH ${fmtPct(ke[i])}<br/>COMBO ${fmtPct(kc[i])}<br/>ΔCOMBO ${dText}`;
-        }
-      },
-      legend: { top: 6, left: 0, itemWidth: 14, itemHeight: 8, data: ["BTC","ETH","COMBO","ΔCOMBO"] },
-      xAxis:{ type:"category", data:kx, axisLabel:{ rotate:(kx.length>10?25:0) } },
-      yAxis:[
-        { type:"value", name:"%", axisLabel:{ formatter:(v)=> Number(v).toFixed(1) } },
-        { type:"value", name:"Δp", splitLine:{ show:false }, axisLabel:{ formatter:(v)=> Number(v).toFixed(1) } }
-      ],
-      series:[
-        { name:"BTC", type:"line", smooth:true, symbolSize:5, data: kb },
-        { name:"ETH", type:"line", smooth:true, symbolSize:5, data: ke },
-        { name:"COMBO", type:"line", smooth:true, symbolSize:6, lineStyle:{ width:3 }, data: kc },
-        { name:"ΔCOMBO", type:"bar", yAxisIndex:1, barWidth:12, data: kd }
-      ]
-    }, true);
-  }
-}
 
   
   function fillTopList(elId, arr){
@@ -1082,6 +933,32 @@ function render(rangeDays){
     return { head, body };
   }
 
+  function attachAutoResize(charts){
+  const ro = new ResizeObserver(() => {
+    requestAnimationFrame(() => charts.forEach(c => c?.resize()));
+  });
+  charts.forEach(c => c && ro.observe(c.getDom()));
+
+  // 탭 전환/백그라운드 복귀 시 깨짐 방지
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) setTimeout(() => charts.forEach(c => c?.resize()), 50);
+  });
+
+  // 폰트 로딩으로 레이아웃 바뀌는 케이스 방지
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() =>
+      setTimeout(() => charts.forEach(c => c?.resize()), 50)
+    );
+  }
+
+  // 모바일 회전 대응
+  window.addEventListener("orientationchange", () => {
+    setTimeout(() => charts.forEach(c => c?.resize()), 200);
+  });
+}
+
+
+  
   async function refreshData(){
     const u = urls();
 
@@ -1193,6 +1070,10 @@ function render(rangeDays){
 
       kimchiScoreChart = echarts.init(document.getElementById("kimchiScoreChart"));
       kimchiPremChart  = echarts.init(document.getElementById("kimchiPremChart"));
+      
+      const allCharts = [treemap, totalChart, shareChart, topRestChart, stableChart, kimchiScoreChart, kimchiPremChart];
+      attachAutoResize(allCharts);
+
 
       document.getElementById("btn1d")?.addEventListener("click", ()=> render(1));
       document.getElementById("btn3d")?.addEventListener("click", ()=> render(3));
