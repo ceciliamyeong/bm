@@ -962,25 +962,27 @@
   });
 }
 
-   let FX_LATEST = null;
-  
- 
-      const u = urls();
-    
-      const [latest, history, kimchiLatest, kimchiHist, fxLatest] = await Promise.all([
-        loadJSON(u.latest),
-        loadJSON(u.hist),
-        loadJSON(u.kimchiLatest),
-        loadJSON(u.kimchiHist),
-        loadJSON(u.fxLatest),
-      ]);
-    
-      LATEST = latest;
-      HISTORY = Array.isArray(history) ? history : [];
-      KIMCHI_LATEST = kimchiLatest;
-      KIMCHI_HIST = Array.isArray(kimchiHist) ? kimchiHist : [];
-      FX_LATEST = fxLatest;
-  
+
+  let FX_LATEST = null;
+
+async function refreshData(){
+  const u = urls();
+
+  const [latest, history, kimchiLatest, kimchiHist, fxLatest] = await Promise.all([
+    loadJSON(u.latest),
+    loadJSON(u.hist),
+    loadJSON(u.kimchiLatest),
+    loadJSON(u.kimchiHist),
+    loadJSON(u.fxLatest),
+  ]);
+
+  LATEST = latest;
+  HISTORY = Array.isArray(history) ? history : [];
+  KIMCHI_LATEST = kimchiLatest;
+  KIMCHI_HIST = Array.isArray(kimchiHist) ? kimchiHist : [];
+  FX_LATEST = fxLatest;
+
+   
     // KPI
   
     console.log("FX:", FX_LATEST);
