@@ -13,7 +13,7 @@ on:
 
 concurrency:
   group: krw-rolling24h-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: write
@@ -47,6 +47,8 @@ jobs:
 
       - name: Commit & push outputs
         run: |
+          set -e
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
@@ -57,5 +59,28 @@ jobs:
           fi
 
           git commit -m "Update KRW rolling24h + smart kimchi (8h)"
-          git pull --rebase
-          git push
+
+          BRANCH="${GITHUB_REF_NAME}"
+
+          for i in 1 2 3; do
+            if git push origin "HEAD:${BRANCH}"; then
+              echo "Pushed successfully."
+              exit 0
+            fi
+
+            echo "Push failed (attempt $i). Syncing with remote and retrying..."
+            git fetch origin "${BRANCH}"
+            git reset --hard "origin/${BRANCH}"
+
+            # Re-stage outputs from this run
+            git add out/history/krw_24h_*.json out/history/kimchi_*.json || true
+            if git diff --cached --quiet; then
+              echo "After sync, no changes remain to push."
+              exit 0
+            fi
+
+            git commit -m "Update KRW rolling24h + smart kimchi (8h)" || true
+          done
+
+          echo "Failed to push after retries."
+          exit 1
