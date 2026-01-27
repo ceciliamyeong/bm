@@ -698,7 +698,7 @@
       latest: "/bm/out/history/krw_24h_latest.json?" + bust,
       hist:   "/bm/out/history/krw_24h_snapshots.json?" + bust,
       kimchiLatest: "/bm/out/history/kimchi_latest.json?" + bust,
-      kimchiHist:   "/bm/out/history/kimchi_snapshots.json?" + bust
+      kimchiHist:   "/bm/out/history/kimchi_snapshots.json?" + bust,
       fxLatest: "/bm/out/history/fx_latest.json?" + bust  
     };
   }
@@ -1082,6 +1082,23 @@
     document.getElementById("kimchiTypePill").textContent = `Type: ${kType}`;
     document.getElementById("kimchiScorePill").textContent = `Score: ${kScore.toFixed(1)} / 100`;
     document.getElementById("kimchiPremPill").textContent = `COMBO: ${fmtPct(combo)}`;
+
+    // ✅ FX 코멘트 (김치 pill 다음, render 이전)
+    const fxEl = document.getElementById("fxComment");
+    if (FX_LATEST && fxEl){
+      const official = num(FX_LATEST.usdkrw_official);
+      const market   = num(FX_LATEST.usdtkrw_market);
+      const gap = market - official;
+    
+      const fxText =
+        gap > 15
+          ? `시장 환율(${market.toFixed(1)}원)이 공식 환율(${official.toFixed(1)}원)보다 크게 높아, 환전 제약이 김프를 지지하는 구조입니다.`
+          : gap > 5
+            ? `시장 환율이 공식 환율 대비 소폭 높은 수준으로, 김프에 환율 요인이 일부 반영돼 있습니다.`
+            : `시장·공식 환율 괴리가 크지 않아, 현재 김프는 수급 요인의 영향이 더 큽니다.`;
+    
+      fxEl.textContent = fxText;
+    }
 
     render(CURRENT_RANGE);
   }
