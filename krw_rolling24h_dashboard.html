@@ -676,6 +676,19 @@
     if (abs >= 1e8)  return (n/1e8).toFixed(0) + "억원";
     return n.toLocaleString("ko-KR") + "원";
   }
+  function nowKST(){
+  const d = new Date();
+  const utc = d.getTime() + d.getTimezoneOffset() * 60000;
+  const kst = new Date(utc + 9 * 60 * 60000);
+
+  const MM = String(kst.getMonth() + 1).padStart(2, "0");
+  const DD = String(kst.getDate()).padStart(2, "0");
+  const hh = String(kst.getHours()).padStart(2, "0");
+  const mm = String(kst.getMinutes()).padStart(2, "0");
+
+  return `${MM}/${DD} ${hh}:${mm} KST`;
+  }
+
   function fmtPct(p){
     if (p === null || p === undefined || Number.isNaN(p)) return "-";
     const sign = p > 0 ? "+" : "";
@@ -1004,7 +1017,7 @@
     const t = latest.totals || {};
     const top = latest.top10 || {};
     document.getElementById("kpiTotal").textContent = fmtKRW(t.combined_24h);
-    document.getElementById("kpiTs").textContent = `업데이트: ${latest.timestamp_label || "-"}`;
+    document.getElementById("kpiTs").textContent =  `현재 시각: ${nowKST()}`;
     document.getElementById("kpiTop10").textContent = `${fmtPct1(top.top10_share_pct)} (Top10)`;
     document.getElementById("kpiTop10Note").textContent = `Top10 ${fmtKRW(top.top10_total_24h)} · Rest ${fmtKRW(top.rest_total_24h)}`;
 
