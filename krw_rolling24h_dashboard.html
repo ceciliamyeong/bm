@@ -1083,6 +1083,9 @@
     document.getElementById("kimchiScorePill").textContent = `Score: ${kScore.toFixed(1)} / 100`;
     document.getElementById("kimchiPremPill").textContent = `COMBO: ${fmtPct(combo)}`;
 
+    console.log("FX_LATEST", FX_LATEST);
+    console.log("fxEl", document.getElementById("fxComment"));
+
     // ✅ FX 코멘트 (김치 pill 다음, render 이전)
     const fxEl = document.getElementById("fxComment");
     if (FX_LATEST && fxEl){
