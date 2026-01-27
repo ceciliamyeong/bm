@@ -79,7 +79,26 @@
       color:#334155;
       white-space:nowrap;
     }
+       /* KPI: The Block-like (big value + small delta) */
+    .kpi .row{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .kpi .delta{
+      font-size:12px;
+      font-weight:800;
+      white-space:nowrap;
+    }
+    .kpi .delta.up{ color:#16a34a; }   /* green */
+    .kpi .delta.down{ color:#dc2626; } /* red */
+    .kpi .delta.flat{ color:#64748b; } /* muted */
 
+   
+    
+    
+    
     /* Panels */
     .panel{
       background:var(--panel);
@@ -319,23 +338,6 @@
   </div>
 
 <script>
-
-  /* KPI: The Block-like (big value + small delta) */
-  .kpi .row{
-    display:flex;
-    align-items:baseline;
-    justify-content:space-between;
-    gap:10px;
-  }
-  .kpi .delta{
-    font-size:12px;
-    font-weight:800;
-    white-space:nowrap;
-  }
-  .kpi .delta.up{ color:#16a34a; }   /* green */
-  .kpi .delta.down{ color:#dc2626; } /* red */
-  .kpi .delta.flat{ color:#64748b; } /* muted */
-
   
   
   function num(x){
@@ -526,80 +528,72 @@
   }
 
   async function refresh(){
-    const u = urls();
+  const u = urls();
 
-    const latest = await loadFirstOk(u.latestCandidates);
-    const seriesRaw = await loadFirstOk(u.seriesCandidates);
+  const latest = await loadFirstOk(u.latestCandidates);
+  const seriesRaw = await loadFirstOk(u.seriesCandidates);
 
-    SERIES_ALL = normalizeSeries(seriesRaw);
-    // --- series 기반으로 "직전 대비" 계산 (레벨 Δ%)
-    const last = SERIES_ALL.length ? SERIES_ALL[SERIES_ALL.length - 1] : null;
-    const prev = SERIES_ALL.length >= 2 ? SERIES_ALL[SERIES_ALL.length - 2] : null;
-    
-    const levelNow = (last && last.v) ? last.v : num(level);
-    const levelPrev = prev ? prev.v : null;
-    const levelDeltaPct = (levelPrev && levelPrev !== 0) ? ((levelNow - levelPrev) / levelPrev * 100) : null;
-    
-    // 기존 텍스트
-    setText("kpiLevel", level===null ? "-" : fmtLevel(levelNow));
-    setText("kpiLevelNote", "as of " + updated);
-    
-    // ✅ 큰 숫자 옆의 작은 변화(▲/▼)
-    setDelta("kpiLevelDelta", levelDeltaPct);
-    
-    // returns(이미 latest에 있던 값)도 ▲/▼로 같이 표시
-    setText("kpi1d",  fmtPct(r1d, 2));
-    setText("kpi7d",  fmtPct(r7d, 2));
-    setText("kpi30d", fmtPct(r30d, 2));
-    setText("kpiYtd", fmtPct(rytd, 2));
-    
-    setDelta("kpi1dDelta",  r1d);
-    setDelta("kpi7dDelta",  r7d);
-    setDelta("kpi30dDelta", r30d);
-    setDelta("kpiYtdDelta", rytd);
+  SERIES_ALL = normalizeSeries(seriesRaw);
 
+  // timestamps
+  const updated =
+    latest?.updated_at ||
+    latest?.timestamp_label ||
+    latest?.timestamp ||
+    latest?.asof ||
+    "-";
 
-    
-    // timestamps
-    const updated =
-      latest?.updated_at ||
-      latest?.timestamp_label ||
-      latest?.timestamp ||
-      latest?.asof ||
-      "-";
+  // level/returns (유연 처리)
+  const level = latest?.index_level ?? latest?.level ?? latest?.index ?? latest?.value ?? null;
 
-    // level/returns (유연 처리)
-    const level = latest?.index_level ?? latest?.level ?? latest?.index ?? latest?.value ?? null;
+  // returns
+  const R = latest?.returns || latest?.performance || latest || {};
+  const r1d  = R.r1d  ?? R.ret_1d  ?? R.return_1d  ?? null;
+  const r7d  = R.r7d  ?? R.ret_7d  ?? R.return_7d  ?? null;
+  const r30d = R.r30d ?? R.ret_30d ?? R.return_30d ?? null;
+  const rytd = R.rytd ?? R.ret_ytd ?? R.return_ytd ?? null;
 
-    // returns: {r1d, r7d, r30d, rytd} or {returns:{...}} etc
-    const R = latest?.returns || latest?.performance || latest || {};
-    const r1d  = R.r1d  ?? R.ret_1d  ?? R.return_1d  ?? null;
-    const r7d  = R.r7d  ?? R.ret_7d  ?? R.return_7d  ?? null;
-    const r30d = R.r30d ?? R.ret_30d ?? R.return_30d ?? null;
-    const rytd = R.rytd ?? R.ret_ytd ?? R.return_ytd ?? null;
+  // --- series 기반 "직전 대비" (레벨 Δ%)
+  const last = SERIES_ALL.length ? SERIES_ALL[SERIES_ALL.length - 1] : null;
+  const prev = SERIES_ALL.length >= 2 ? SERIES_ALL[SERIES_ALL.length - 2] : null;
 
-    setText("metaUpdated", "UPDATED: " + updated);
-    setText("metaLevel", "INDEX: " + (level===null ? "-" : fmtLevel(level)));
+  const levelNow = (last && Number.isFinite(last.v)) ? last.v : (level===null ? NaN : num(level));
+  const levelPrev = prev && Number.isFinite(prev.v) ? prev.v : null;
+  const levelDeltaPct = (levelPrev && levelPrev !== 0) ? ((levelNow - levelPrev) / levelPrev * 100) : null;
 
-    setText("wChartMeta", "UPDATED: " + updated);
-    setText("sourceUpdated", "UPDATED: " + updated);
+  // header/meta
+  setText("metaUpdated", "UPDATED: " + updated);
+  setText("metaLevel", "INDEX: " + (level===null ? "-" : fmtLevel(level)));
+  setText("wChartMeta", "UPDATED: " + updated);
+  setText("sourceUpdated", "UPDATED: " + updated);
 
-    setText("kpiLevel", level===null ? "-" : fmtLevel(level));
-    setText("kpiLevelNote", "as of " + updated);
+  // KPI (한 번만!)
+  setText("kpiLevel", (Number.isFinite(levelNow) ? fmtLevel(levelNow) : "-"));
+  setText("kpiLevelNote", "as of " + updated);
+  setDelta("kpiLevelDelta", levelDeltaPct);
 
-    setText("kpi1d",  fmtPct(r1d, 2));
-    setText("kpi7d",  fmtPct(r7d, 2));
-    setText("kpi30d", fmtPct(r30d, 2));
-    setText("kpiYtd", fmtPct(rytd, 2));
+  setText("kpi1d",  fmtPct(r1d, 2));
+  setText("kpi7d",  fmtPct(r7d, 2));
+  setText("kpi30d", fmtPct(r30d, 2));
+  setText("kpiYtd", fmtPct(rytd, 2));
 
-    setText("kpi1dNote",  "return");
-    setText("kpi7dNote",  "return");
-    setText("kpi30dNote", "return");
-    setText("kpiYtdNote", "return");
+  setDelta("kpi1dDelta",  r1d);
+  setDelta("kpi7dDelta",  r7d);
+  setDelta("kpi30dDelta", r30d);
+  setDelta("kpiYtdDelta", rytd);
 
-    fillComponents(latest);
-    renderChart();
-  }
+  setText("kpi1dNote",  "return");
+  setText("kpi7dNote",  "return");
+  setText("kpi30dNote", "return");
+  setText("kpiYtdNote", "return");
+
+  // side list
+  fillComponents(latest);
+
+  // chart
+  renderChart();
+}
+
 
   (async function init(){
     try{
