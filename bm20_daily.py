@@ -113,9 +113,9 @@ BM20_IDS = [
     # 고정 가중 5종
     "bitcoin","ethereum","ripple","tether","binancecoin",
     # 균등 15종 (APT 제외, SUI 포함) — 총 20종 되도록 유지
-    "solana","toncoin","avalanche-2","chainlink","cardano","polygon",
+    "solana","toncoin","avalanche-2","chainlink","cardano","tron",
     "near","polkadot","cosmos-hub","litecoin","arbitrum","optimism",
-    "internet-computer","sui","dogecoin",
+    "internet-computer","shiba-inu","dogecoin",
 ]
 
 # TON 야후 심볼 자동 탐지(환경마다 TON-USD / TON11419-USD 다를 수 있음)
@@ -141,14 +141,6 @@ def _yf_ton_symbol():
         except Exception:
             pass
     return "TON-USD"
-
-def _yf_polygon_symbol():
-    # MATIC은 이제 POL-USD로 조회해야 하는 경우가 많습니다.
-    return _yf_resolve("POL-USD", ["MATIC-USD", "MATIC2016-USD"])
-
-def _yf_sui_symbol():
-    # SUI의 야후 파이낸스 공식 심볼 후보들입니다.
-    return _yf_resolve("SUI-USD", ["SUI26162-USD", "SUI28251-USD"])
     
 YF_MAP = {
     "bitcoin":"BTC-USD",
@@ -161,7 +153,7 @@ YF_MAP = {
     "avalanche-2":"AVAX-USD",
     "chainlink":"LINK-USD",
     "cardano":"ADA-USD",
-    "polygon":_yf_polygon_symbol(), # 함수 호출로 변경
+    "shiba-inu": "SHIB-USD",
     "near":"NEAR-USD",
     "polkadot":"DOT-USD",
     "cosmos-hub":"ATOM-USD",
@@ -169,16 +161,16 @@ YF_MAP = {
     "arbitrum":"ARB-USD",
     "optimism":"OP-USD",
     "internet-computer":"ICP-USD",
-    "sui":_yf_sui_symbol(),         # 함수 호출로 변경
+    "tron": "TRX-USD",
     "dogecoin":"DOGE-USD",
 }
 
 SYMBOL_MAP = {
     "bitcoin":"BTC","ethereum":"ETH","ripple":"XRP","tether":"USDT","binancecoin":"BNB",
     "solana":"SOL","toncoin":"TON","avalanche-2":"AVAX",
-    "chainlink":"LINK","cardano":"ADA","polygon":"MATIC","near":"NEAR",
+    "chainlink":"LINK","cardano":"ADA","shiba-inu": "SHIB","near":"NEAR",
     "polkadot":"DOT","cosmos-hub":"ATOM","litecoin":"LTC","arbitrum":"ARB",
-    "optimism":"OP","internet-computer":"ICP","sui":"SUI","dogecoin":"DOGE",
+    "optimism":"OP","internet-computer":"ICP","tron": "TRX","dogecoin":"DOGE",
 }
 
 # ================== Prices: yfinance ==================
