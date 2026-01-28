@@ -119,6 +119,19 @@ BM20_IDS = [
 ]
 
 # TON 야후 심볼 자동 탐지(환경마다 TON-USD / TON11419-USD 다를 수 있음)
+def _yf_resolve(default_symbol, fallback_list):
+    """여러 심볼 중 유효한 데이터를 가진 첫 번째 심볼을 반환합니다."""
+    for t in [default_symbol] + fallback_list:
+        try:
+            # 매우 짧은 기간 데이터를 받아와서 존재하는지 확인
+            h = yf.download(t, period="1d", interval="1d", progress=False)
+            if h is not None and not h.empty:
+                return t
+        except Exception:
+            continue
+    return default_symbol
+
+
 def _yf_ton_symbol():
     for t in ["TON-USD", "TON11419-USD"]:
         try:
@@ -130,20 +143,34 @@ def _yf_ton_symbol():
     return "TON-USD"
 
 def _yf_polygon_symbol():
-    # 야후가 가끔 숫자붙은 MATIC 심볼로 옮깁니다 (예: MATIC2016-USD 등)
-    return _yf_resolve("MATIC-USD",
-                       ["MATIC2016-USD","MATIC2194-USD","MATIC11419-USD"])
+    # MATIC은 이제 POL-USD로 조회해야 하는 경우가 많습니다.
+    return _yf_resolve("POL-USD", ["MATIC-USD", "MATIC2016-USD"])
 
 def _yf_sui_symbol():
-    # 마찬가지로 SUI도 숫자붙은 변형이 생길 수 있음
-    return _yf_resolve("SUI-USD",
-                       ["SUI26162-USD","SUI28251-USD","SUI11419-USD"])
+    # SUI의 야후 파이낸스 공식 심볼 후보들입니다.
+    return _yf_resolve("SUI-USD", ["SUI26162-USD", "SUI28251-USD"])
+    
 YF_MAP = {
-    "bitcoin":"BTC-USD","ethereum":"ETH-USD","ripple":"XRP-USD","tether":"USDT-USD","binancecoin":"BNB-USD",
-    "solana":"SOL-USD","toncoin":_yf_ton_symbol(),"avalanche-2":"AVAX-USD",
-    "chainlink":"LINK-USD","cardano":"ADA-USD","polygon":"MATIC-USD","near":"NEAR-USD",
-    "polkadot":"DOT-USD","cosmos-hub":"ATOM-USD","litecoin":"LTC-USD","arbitrum":"ARB-USD",
-    "optimism":"OP-USD","internet-computer":"ICP-USD","sui":"SUI-USD","dogecoin":"DOGE-USD",
+    "bitcoin":"BTC-USD",
+    "ethereum":"ETH-USD",
+    "ripple":"XRP-USD",
+    "tether":"USDT-USD",
+    "binancecoin":"BNB-USD",
+    "solana":"SOL-USD",
+    "toncoin":_yf_ton_symbol(), 
+    "avalanche-2":"AVAX-USD",
+    "chainlink":"LINK-USD",
+    "cardano":"ADA-USD",
+    "polygon":_yf_polygon_symbol(), # 함수 호출로 변경
+    "near":"NEAR-USD",
+    "polkadot":"DOT-USD",
+    "cosmos-hub":"ATOM-USD",
+    "litecoin":"LTC-USD",
+    "arbitrum":"ARB-USD",
+    "optimism":"OP-USD",
+    "internet-computer":"ICP-USD",
+    "sui":_yf_sui_symbol(),         # 함수 호출로 변경
+    "dogecoin":"DOGE-USD",
 }
 
 SYMBOL_MAP = {
