@@ -2,26 +2,28 @@
 # -*- coding: utf-8 -*-
 
 """
-Kimchi Premium Top10 (Market-based)
-- Definition (market kimchi):
-  kimchi_market_pct = (Upbit_KRW - Yahoo_USD * Yahoo_USDKRW) / (Yahoo_USD * Yahoo_USDKRW) * 100
+Kimchi Premium Top10 (Yahoo-only, v8 chart)
+- Fix: Avoid Yahoo v7 quote (401 Unauthorized). Use v8 finance/chart instead.
+- Market FX: Yahoo KRW=X
+- Global coin USD: Yahoo {COIN}-USD (via v8 chart)
+- Domestic coin KRW: Upbit KRW-{COIN}
+- Domestic USDTKRW (context): Upbit KRW-USDT
+- Output:
+  out/history/kimchi_top10_latest.json
+  out/history/kimchi_top10_snapshots.json
 
-- Also stores:
-  - USDKRW market (Yahoo: KRW=X)
-  - USDTKRW domestic (Upbit: KRW-USDT)  # 참고용
-  - FX premium pct (domestic vs market)
+Definition (market kimchi):
+  premium_market_pct = (Upbit_KRW - Yahoo_USD * Yahoo_USDKRW) / (Yahoo_USD * Yahoo_USDKRW) * 100
 
-Outputs:
-  out/history/
-    - kimchi_top10_latest.json
-    - kimchi_top10_snapshots.json
+Also:
+  fx_premium_pct = (Upbit_KRWUSDT - Yahoo_USDKRW) / Yahoo_USDKRW * 100
 """
 
 import json
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional
 
 import requests
 
@@ -33,28 +35,16 @@ HIST_DIR.mkdir(parents=True, exist_ok=True)
 
 OUT_LATEST = HIST_DIR / "kimchi_top10_latest.json"
 OUT_SNAPSHOTS = HIST_DIR / "kimchi_top10_snapshots.json"
-MAX_SNAPSHOTS = 400  # 넉넉히
+MAX_SNAPSHOTS = 400
 
 UPBIT_TICKER = "https://api.upbit.com/v1/ticker"
-YAHOO_QUOTE = "https://query1.finance.yahoo.com/v7/finance/quote"
+YAHOO_CHART = "https://query1.finance.yahoo.com/v8/finance/chart"
 
-# 너희가 보고 싶은 Top10을 여기서 고정 (KRW 마켓 존재하는 것 위주로)
+# Top10: 너희가 보고 싶은 코인(Upbit KRW 마켓 있는 것 위주)
 TOP10 = ["BTC", "ETH", "XRP", "SOL", "BNB", "ADA", "DOGE", "TRX", "TON", "SUI"]
 
-# Yahoo 심볼 매핑 (필요시 여기만 수정)
-# 기본은 "{SYM}-USD"로 가고, 예외만 따로 둠.
-YAHOO_MAP = {
-    "BTC": "BTC-USD",
-    "ETH": "ETH-USD",
-    "XRP": "XRP-USD",
-    "SOL": "SOL-USD",
-    "BNB": "BNB-USD",
-    "ADA": "ADA-USD",
-    "DOGE": "DOGE-USD",
-    "TRX": "TRX-USD",
-    "TON": "TON-USD",
-    "SUI": "SUI-USD",
-}
+# Yahoo 심볼 매핑 (예외 있으면 여기서만 수정)
+YAHOO_MAP = {c: f"{c}-USD" for c in TOP10}
 
 def now_kst() -> datetime:
     return datetime.now(tz=KST)
@@ -85,7 +75,6 @@ def http_get_json(url: str, params=None, timeout: int = 20) -> Any:
     raise RuntimeError(f"Failed request: {url} ({last_err})")
 
 def upbit_prices(markets: List[str]) -> Dict[str, float]:
-    # Upbit는 markets를 콤마로 한 번에 받을 수 있음
     j = http_get_json(UPBIT_TICKER, {"markets": ",".join(markets)})
     out: Dict[str, float] = {}
     if isinstance(j, list):
@@ -96,17 +85,37 @@ def upbit_prices(markets: List[str]) -> Dict[str, float]:
                 out[m] = float(p)
     return out
 
-def yahoo_quotes(symbols: List[str]) -> Dict[str, float]:
-    # Yahoo는 여러 심볼을 한 번에 가능
-    j = http_get_json(YAHOO_QUOTE, {"symbols": ",".join(symbols)})
-    result = (((j or {}).get("quoteResponse") or {}).get("result") or [])
-    out: Dict[str, float] = {}
-    for row in result:
-        sym = row.get("symbol")
-        px = row.get("regularMarketPrice")
-        if sym and px is not None:
-            out[sym] = float(px)
-    return out
+def yahoo_chart_last(symbol: str) -> Optional[float]:
+    """
+    Get last price using Yahoo v8 finance/chart endpoint.
+    - For FX: "KRW=X"
+    - For coins: "BTC-USD", "ETH-USD", ...
+    """
+    url = f"{YAHOO_CHART}/{symbol}"
+    j = http_get_json(url, {"range": "1d", "interval": "1m"})
+
+    try:
+        res = (((j or {}).get("chart") or {}).get("result") or [])[0]
+        meta = res.get("meta") or {}
+
+        # 1) meta.regularMarketPrice (가장 깔끔)
+        px = meta.get("regularMarketPrice")
+        if px is not None:
+            px = float(px)
+            if px > 0:
+                return px
+
+        # 2) indicators.quote[0].close 마지막 유효값
+        closes = (((res.get("indicators") or {}).get("quote") or [])[0].get("close") or [])
+        closes = [c for c in closes if c is not None]
+        if closes:
+            px = float(closes[-1])
+            if px > 0:
+                return px
+    except Exception:
+        return None
+
+    return None
 
 def kimchi_market_pct(upbit_krw: float, yahoo_usd: float, usdkrw_market: float) -> Optional[float]:
     fair = yahoo_usd * usdkrw_market
@@ -119,78 +128,83 @@ def run():
     ts_iso = ts.strftime("%Y-%m-%dT%H:%M:%S%z")
     ts_label = ts.strftime("%m/%d %H:%M KST")
 
-    # 1) FX: Yahoo USDKRW (KRW=X)
-    # 2) Global coin USD: Yahoo (BTC-USD 등)
-    yahoo_syms = ["KRW=X"] + [YAHOO_MAP.get(c, f"{c}-USD") for c in TOP10]
-    yq = yahoo_quotes(yahoo_syms)
-
-    usdkrw_market = yq.get("KRW=X")
+    # --- Yahoo FX (market) ---
+    usdkrw_market = yahoo_chart_last("KRW=X")
     if not usdkrw_market:
         latest_err = {
-            "schema": "kimchi_top10_v1",
+            "schema": "kimchi_top10_yahoo_v1",
+            "status": "error",
             "timestamp_kst": ts_iso,
             "timestamp_label": ts_label,
-            "status": "error",
-            "error": "Yahoo FX (KRW=X) missing",
+            "error": "Yahoo FX (KRW=X) missing via v8 chart",
         }
+        # 에러여도 파일은 만들어서 pathspec 방지
         write_json(OUT_LATEST, latest_err)
-        print("[WARN] Yahoo KRW=X missing -> wrote error latest")
+        hist = safe_read_json(OUT_SNAPSHOTS)
+        if not isinstance(hist, list):
+            hist = []
+        hist.append(latest_err)
+        hist = hist[-MAX_SNAPSHOTS:]
+        write_json(OUT_SNAPSHOTS, hist)
+        print("[WARN] KRW=X missing -> wrote error latest + snapshots")
         return
 
-    # 3) Domestic prices: Upbit KRW-COIN + KRW-USDT(참고용)
+    # --- Upbit domestic prices ---
     upbit_markets = [f"KRW-{c}" for c in TOP10] + ["KRW-USDT"]
     up = upbit_prices(upbit_markets)
 
     usdtkrw_domestic = up.get("KRW-USDT")
     fx_premium_pct = None
-    if usdtkrw_domestic and usdkrw_market:
+    if usdtkrw_domestic:
         fx_premium_pct = (usdtkrw_domestic - usdkrw_market) / usdkrw_market * 100.0
 
-    # prev snapshot for delta
+    # --- Yahoo global USD coin prices ---
+    yahoo_usd_by_coin: Dict[str, Optional[float]] = {}
+    for coin in TOP10:
+        sym = YAHOO_MAP.get(coin, f"{coin}-USD")
+        yahoo_usd_by_coin[coin] = yahoo_chart_last(sym)
+        # 너무 빠른 연속 호출 방지(야후가 민감할 때가 있음)
+        time.sleep(0.2)
+
+    # prev snapshot for delta_pp
     history = safe_read_json(OUT_SNAPSHOTS)
     if not isinstance(history, list):
         history = []
     prev = history[-1] if history else {}
-    prev_map = {}
-    for row in (prev.get("coins") or []):
-        prev_map[row.get("coin")] = row
+    prev_map = {r.get("coin"): r for r in (prev.get("coins") or [])}
 
     coins_out = []
     for coin in TOP10:
-        mkt = f"KRW-{coin}"
-        up_krw = up.get(mkt)
-        ysym = YAHOO_MAP.get(coin, f"{coin}-USD")
-        y_usd = yq.get(ysym)
+        up_krw = up.get(f"KRW-{coin}")
+        y_usd = yahoo_usd_by_coin.get(coin)
 
         prem = None
-        if up_krw and y_usd:
+        if up_krw is not None and y_usd is not None:
             prem = kimchi_market_pct(up_krw, y_usd, usdkrw_market)
 
-        # delta in percentage points vs prev
         delta_pp = None
-        prev_row = prev_map.get(coin) or {}
-        prev_p = prev_row.get("premium_market_pct")
+        prev_p = (prev_map.get(coin) or {}).get("premium_market_pct")
         if prem is not None and isinstance(prev_p, (int, float)):
             delta_pp = prem - float(prev_p)
 
         coins_out.append({
             "coin": coin,
+            "upbit_market": f"KRW-{coin}",
+            "yahoo_symbol": YAHOO_MAP.get(coin, f"{coin}-USD"),
             "upbit_krw": up_krw if up_krw is not None else None,
             "yahoo_usd": y_usd if y_usd is not None else None,
             "premium_market_pct": round(prem, 4) if prem is not None else None,
             "delta_pp": round(delta_pp, 4) if delta_pp is not None else None,
-            "yahoo_symbol": ysym,
-            "upbit_market": mkt,
         })
 
-    # 김프 높은 순으로 정렬(없으면 아래로)
+    # 김프 높은 순 정렬 (None은 아래로)
     coins_sorted = sorted(
         coins_out,
         key=lambda x: (-1e18 if x["premium_market_pct"] is None else -x["premium_market_pct"])
     )
 
     latest = {
-        "schema": "kimchi_top10_v1",
+        "schema": "kimchi_top10_yahoo_v1",
         "status": "ok",
         "timestamp_kst": ts_iso,
         "timestamp_label": ts_label,
@@ -198,7 +212,7 @@ def run():
             "usdkrw_market": round(float(usdkrw_market), 4),
             "usdtkrw_domestic": round(float(usdtkrw_domestic), 4) if usdtkrw_domestic else None,
             "fx_premium_pct": round(float(fx_premium_pct), 4) if fx_premium_pct is not None else None,
-            "sources": {"market": "yahoo(KRW=X)", "domestic": "upbit(KRW-USDT)"},
+            "sources": {"market": "yahoo(KRW=X, v8 chart)", "domestic": "upbit(KRW-USDT)"},
         },
         "definition": {
             "premium_market_pct": "(Upbit_KRW - Yahoo_USD*Yahoo_USDKRW) / (Yahoo_USD*Yahoo_USDKRW) * 100"
@@ -214,7 +228,7 @@ def run():
     write_json(OUT_LATEST, latest)
     write_json(OUT_SNAPSHOTS, history)
 
-    print("[OK] Kimchi Top10 saved:", ts_label)
+    print("[OK] Kimchi Top10 (Yahoo v8) saved:", ts_label)
     print("     USDKRW(market):", usdkrw_market, "USDTKRW(domestic):", usdtkrw_domestic)
 
 if __name__ == "__main__":
