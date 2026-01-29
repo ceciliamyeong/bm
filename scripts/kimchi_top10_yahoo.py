@@ -41,7 +41,7 @@ UPBIT_TICKER = "https://api.upbit.com/v1/ticker"
 YAHOO_CHART = "https://query1.finance.yahoo.com/v8/finance/chart"
 
 # Top10: 너희가 보고 싶은 코인(Upbit KRW 마켓 있는 것 위주)
-TOP10 = ["BTC", "ETH", "XRP", "SOL", "BNB", "ADA", "DOGE", "TRX", "TON", "SUI"]
+TOP10 = ["BTC", "ETH", "XRP", "SOL", "LTC", "ADA", "DOGE", "TRX", "TON", "SUI"]
 
 # Yahoo 심볼 매핑 (예외 있으면 여기서만 수정)
 YAHOO_MAP = {c: f"{c}-USD" for c in TOP10}
