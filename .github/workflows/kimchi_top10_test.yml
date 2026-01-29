@@ -23,6 +23,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests
 
+      - name: Run FX updater
+        env:
+          ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
+        run: |
+          python scripts/update_fx_8h.py
+
       - name: Run Kimchi Top10 script
         env:
           ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
