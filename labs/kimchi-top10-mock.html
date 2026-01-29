@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kimchi Top10 Mock (Sandbox)</title>
+  <style>
+    :root{
+      --bg:#0b1020; --card:#111a33; --muted:#9fb0d0; --text:#e9f0ff;
+      --border:#243157; --green:#3ddc97; --red:#ff5c7a; --yellow:#f6c945;
+      --chip:#172248;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; background:linear-gradient(180deg,#070a14 0%, #0b1020 40%, #0b1020 100%);
+      color:var(--text); font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,sans-serif;
+    }
+    .wrap{max-width:1120px; margin:0 auto; padding:18px 14px 60px;}
+    h1{font-size:18px; margin:0 0 10px;}
+    .sub{color:var(--muted); font-size:12px; margin-bottom:14px;}
+    .grid{display:grid; grid-template-columns: 1.1fr 0.9fr; gap:12px;}
+    .card{
+      background:rgba(17,26,51,0.92);
+      border:1px solid var(--border);
+      border-radius:16px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.25);
+      padding:14px;
+    }
+    .card h2{font-size:14px; margin:0 0 8px;}
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+    .chip{
+      display:inline-flex; gap:8px; align-items:center;
+      padding:8px 10px; border-radius:999px;
+      border:1px solid var(--border); background:var(--chip);
+      color:var(--text); font-size:12px;
+    }
+    .chip .k{color:var(--muted)}
+    .btn{
+      background:#16214a; border:1px solid var(--border); color:var(--text);
+      padding:8px 10px; border-radius:10px; font-size:12px; cursor:pointer;
+    }
+    .btn:hover{filter:brightness(1.08)}
+    .btn.active{outline:2px solid rgba(61,220,151,0.35); border-color:rgba(61,220,151,0.55)}
+    input{
+      background:#0e1632; border:1px solid var(--border); color:var(--text);
+      padding:8px 10px; border-radius:10px; font-size:12px;
+      min-width:220px;
+    }
+    table{width:100%; border-collapse:collapse; overflow:hidden; border-radius:12px;}
+    th,td{padding:10px 10px; border-bottom:1px solid rgba(36,49,87,0.55); font-size:12px;}
+    th{color:var(--muted); text-align:left; font-weight:600;}
+    tr:hover{background:rgba(255,255,255,0.03)}
+    .num{font-variant-numeric:tabular-nums}
+    .p{font-weight:700}
+    .p.pos{color:var(--green)}
+    .p.neg{color:var(--red)}
+    .delta{font-weight:600}
+    .delta.pos{color:var(--green)}
+    .delta.neg{color:var(--red)}
+    .muted{color:var(--muted)}
+    .small{font-size:11px}
+    canvas{width:100%; height:260px; background:#0a1025; border:1px solid var(--border); border-radius:14px;}
+    .footerNote{color:var(--muted); font-size:11px; margin-top:10px; line-height:1.4}
+    @media (max-width: 980px){
+      .grid{grid-template-columns:1fr;}
+      input{min-width:0; flex:1;}
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Kimchi Premium Top10 — Mock (Sandbox)</h1>
+  <div class="sub">운영 페이지에 붙이기 전에, 별도 페이지에서 데이터/차트/UI를 검증하기 위한 목업입니다.</div>
+
+  <div class="card" style="margin-bottom:12px;">
+    <div class="row">
+      <span class="chip"><span class="k">As of</span> <span id="asof">-</span></span>
+      <span class="chip"><span class="k">FX (USDKRW)</span> <span id="fx">-</span></span>
+      <span class="chip"><span class="k">FX basis</span> <span id="fxBasis">-</span></span>
+      <span class="chip"><span class="k">Global source</span> <span id="globalSrc">Kraken → Bitstamp</span></span>
+      <button class="btn" id="btnReload">Reload</button>
+    </div>
+    <div class="footerNote">
+      정의: premium_pct = (Upbit_KRW − Global_USD × USDKRW_BOK) / (Global_USD × USDKRW_BOK) × 100
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- Left: table -->
+    <div class="card">
+      <h2>Top10 Kimchi Premium (coin-level)</h2>
+      <div class="row" style="margin-bottom:10px;">
+        <input id="q" placeholder="검색: BTC / ETH / XRP ..." />
+        <button class="btn active" data-sort="premium_desc">김프 높은순</button>
+        <button class="btn" data-sort="premium_asc">김프 낮은순</button>
+        <button class="btn" data-sort="delta_desc">Δ(직전) 높은순</button>
+        <button class="btn" data-sort="name_asc">이름순</button>
+      </div>
+      <div class="small muted" style="margin-bottom:8px;">
+        행을 클릭하면 오른쪽 차트가 해당 코인으로 전환됩니다.
+      </div>
+      <div style="overflow:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:90px;">코인</th>
+              <th style="width:120px;">김프(%)</th>
+              <th style="width:120px;">Δpp</th>
+              <th>국내가(KRW)</th>
+              <th>글로벌가(USD)</th>
+              <th style="width:110px;">출처</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div class="footerNote" id="skippedNote"></div>
+    </div>
+
+    <!-- Right: chart -->
+    <div class="card">
+      <div class="row" style="justify-content:space-between; align-items:flex-end;">
+        <div>
+          <h2 style="margin-bottom:4px;">Chart</h2>
+          <div class="muted small">
+            선택 코인: <b id="selSym">-</b>
+            <span id="selMeta" class="muted"></span>
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn active" id="btnModePremium">김프(%)</button>
+          <button class="btn" id="btnModeSpread">스프레드(선택−BTC)</button>
+        </div>
+      </div>
+
+      <div style="margin-top:10px;">
+        <canvas id="chart" width="900" height="320"></canvas>
+      </div>
+
+      <div class="footerNote" id="chartNote">
+        snapshots 파일이 있으면 라인 차트를 그립니다. 없으면 latest 기반 단일 스냅샷만 표시됩니다.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ====== config (paths) ======
+  // GitHub Pages /bm/ 기준이면, 이 HTML이 /bm/labs/ 안에 있을 때 아래 상대경로로 접근 가능
+  const PATH_LATEST = "../out/history/kimchi_top10_latest.json";
+  const PATH_SNAPSHOTS = "../out/history/kimchi_top10_snapshots.json";
+
+  // ====== state ======
+  let latest = null;
+  let snapshots = null;
+  let sortMode = "premium_desc";
+  let searchQ = "";
+  let selectedSym = null;
+  let chartMode = "premium"; // "premium" | "spread"
+
+  // ====== helpers ======
+  const $ = (id)=>document.getElementById(id);
+  const fmt0 = (x)=> (x===null || x===undefined) ? "-" : Number(x).toLocaleString("en-US");
+  const fmt2 = (x)=> (x===null || x===undefined) ? "-" : Number(x).toFixed(2);
+  const fmt3 = (x)=> (x===null || x===undefined) ? "-" : Number(x).toFixed(3);
+
+  function clsPosNeg(v){
+    if (v===null || v===undefined) return "";
+    if (Number(v) > 0) return "pos";
+    if (Number(v) < 0) return "neg";
+    retu
