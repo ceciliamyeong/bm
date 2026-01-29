@@ -23,7 +23,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests
 
-      - name: Run Kimchi Top10 (Yahoo)
+      - name: Run Kimchi Top10 (Yahoo v8 chart)
         run: |
           python scripts/kimchi_top10_yahoo.py
 
@@ -32,9 +32,8 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-          # add only if files exist (avoid fatal pathspec)
           test -f out/history/kimchi_top10_latest.json && git add out/history/kimchi_top10_latest.json || true
           test -f out/history/kimchi_top10_snapshots.json && git add out/history/kimchi_top10_snapshots.json || true
 
-          git commit -m "Update Kimchi Top10 (Yahoo)" || echo "No changes to commit"
+          git commit -m "Update Kimchi Top10 (Yahoo v8)" || echo "No changes to commit"
           git push
