@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BM Pro Labs | Kimchi Alpha Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap');
+        body { font-family: 'Pretendard', sans-serif; background-color: #020408; }
+        .glass { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(75, 85, 99, 0.3); }
+        .k-premium-up { color: #ef4444; text-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
+    </style>
+</head>
+<body class="text-white">
+
+    <nav class="p-6 border-b border-gray-800 flex justify-between items-center sticky top-0 bg-[#020408]/80 z-50">
+        <div class="flex items-center gap-3">
+            <span class="bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded">LABS</span>
+            <h1 class="text-xl font-black tracking-tight">BLOCK MEDIA <span class="text-blue-500">PRO</span></h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <span id="live-indicator" class="flex items-center gap-2 text-[10px] text-green-400 font-bold">
+                <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                </span>
+                LIVE DATA
+            </span>
+        </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto p-6">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="glass p-5 rounded-3xl">
+                <p class="text-gray-500 text-[10px] font-bold mb-1 uppercase">BTC 김치 프리미엄 [cite: 123]</p>
+                <h3 class="text-3xl font-black k-premium-up">+4.25%</h3>
+                <p class="text-[9px] text-gray-500 mt-2">업비트 vs 바이낸스 실시간 [cite: 20]</p>
+            </div>
+            <div class="glass p-5 rounded-3xl">
+                <p class="text-gray-500 text-[10px] font-bold mb-1 uppercase">업비트 임팩트 지수 [cite: 125]</p>
+                <h3 class="text-3xl font-black">82<span class="text-sm text-gray-500 font-normal">/100</span></h3>
+                <p class="text-[9px] text-orange-400 mt-2">신규 상장 펌핑 주의보 [cite: 34]</p>
+            </div>
+            <div class="glass p-5 rounded-3xl">
+                <p class="text-gray-500 text-[10px] font-bold mb-1 uppercase">온체인 베스팅 감시 [cite: 127]</p>
+                <h3 class="text-3xl font-black text-blue-400">KAIA</h3>
+                <p class="text-[9px] text-gray-500 mt-2">1,500만 토큰 이동 포착 [cite: 36]</p>
+            </div>
+            <div class="glass p-5 rounded-3xl">
+                <p class="text-gray-500 text-[10px] font-bold mb-1 uppercase">한-미 상관계수 [cite: 51]</p>
+                <h3 class="text-3xl font-black text-green-500">0.88</h3>
+                <p class="text-[9px] text-gray-500 mt-2">나스닥-K알트 동조화 [cite: 131]</p>
+            </div>
+        </div>
+
+        <div class="glass p-8 rounded-[2rem] mb-8">
+            <div class="flex justify-between items-end mb-8">
+                <div>
+                    <h2 class="text-2xl font-black mb-1 italic uppercase">Kimchi Alpha Heatmap</h2>
+                    <p class="text-gray-500 text-xs">한국 시장 특유의 유동성 패턴 정량화 [cite: 8]</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] text-gray-400 mb-1">Last Update (KST)</p>
+                    <p id="time-display" class="text-xs font-mono font-bold text-blue-500"></p>
+                </div>
+            </div>
+            <canvas id="alphaChart" height="150"></canvas>
+        </div>
+
+        <div class="relative overflow-hidden bg-gradient-to-br from-blue-900/50 to-black border border-blue-500/30 rounded-[2.5rem] p-10 text-center">
+            <div class="relative z-10">
+                <h2 class="text-3xl font-black mb-4 leading-tight italic">
+                    "당신이 잠든 사이,<br>월가는 무엇을 준비했는가?"
+                </h2>
+                <p class="text-gray-400 text-sm mb-8 leading-relaxed max-w-xl mx-auto">
+                    멕시코 특파원 James Jung이 분석한 미국 시장 마감 시황과<br> 
+                    오늘 아침 여의도가 주목할 'K-유동성' 전략을 확인하세요. [cite: 143, 251]
+                </p>
+                <button class="bg-white text-black font-black px-12 py-4 rounded-full text-sm hover:scale-105 transition-all shadow-xl shadow-blue-500/20">
+                    프로 레터 읽기 (Access Protocol) [cite: 44]
+                </button>
+            </div>
+            <div class="absolute -bottom-10 -right-10 w-64 h-64 bg-blue-600/10 blur-[100px] rounded-full"></div>
+        </div>
+    </main>
+
+    <footer class="py-12 px-6 text-center text-gray-600 text-[10px] tracking-widest border-t border-gray-900 mt-20">
+        © 2026 BLOCK MEDIA PRO | DATA INTELLIGENCE FIRM [cite: 5]<br>
+        <div class="mt-4 max-w-lg mx-auto leading-loose text-gray-700">
+            본 정보는 투자의 참고 자료이며 투자 결과에 대한 책임을 지지 않습니다. [cite: 68]<br>
+            자본시장법 및 가상자산 이용자 보호법을 준수합니다. [cite: 162]
+        </div>
+    </footer>
+
+    <script>
+        // 현재 시간 표시
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('time-display').innerText = now.toLocaleString('ko-KR');
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // 알파 히트맵 데이터 시뮬레이션 [cite: 123]
+        const ctx = document.getElementById('alphaChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['SOL', 'XRP', 'ADA', 'DOGE', 'KAIA', 'WEMIX', 'TRX', 'JUP'],
+                datasets: [{
+                    label: 'Premium (%)',
+                    data: [5.2, 3.8, 4.1, 4.5, 6.2, 5.8, 2.1, 7.4],
+                    backgroundColor: (ctx) => {
+                        const val = ctx.raw;
+                        return val > 5 ? '#ef4444' : '#2563eb';
+                    },
+                    borderRadius: 15,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#4b5563', font: { weight: 'bold' } } },
+                    y: { grid: { color: '#1f2937' }, ticks: { color: '#4b5563' } }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
