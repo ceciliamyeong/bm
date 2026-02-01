@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Block Media Pro Intelligence</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, sans-serif; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; }
+        .header { background-color: #ffffff; padding: 40px 20px; text-align: center; border-bottom: 1px solid #f1f5f9; }
+        .dashboard-container { padding: 25px; background-color: #ffffff; }
+        .metric-table { width: 100%; border-collapse: separate; border-spacing: 10px; }
+        .metric-box { 
+            width: 50%; 
+            padding: 20px; 
+            background-color: #ffffff; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 20px;
+            text-align: left;
+        }
+        .label { font-size: 10px; color: #64748b; text-transform: uppercase; font-weight: 800; letter-spacing: 0.05em; }
+        .value { font-size: 24px; font-weight: 900; margin-top: 8px; color: #0f172a; }
+        .section-title { font-size: 18px; font-weight: 900; color: #0f172a; padding: 0 25px; margin: 40px 0 15px; border-left: 4px solid #2563eb; }
+        .onchain-card { background-color: #f8fafc; border-radius: 16px; padding: 20px; margin: 0 25px 12px; border: 1px solid #f1f5f9; }
+        .btn { 
+            display: block; 
+            background-color: #ffffff; 
+            color: #000000; 
+            text-align: center; 
+            padding: 18px; 
+            text-decoration: none; 
+            border-radius: 50px; 
+            font-weight: 900; 
+            margin: 40px 25px; 
+            border: 2px solid #000000;
+            font-size: 15px;
+            letter-spacing: 0.02em;
+        }
+        .footer { padding: 50px 25px; text-align: center; color: #94a3b8; font-size: 11px; line-height: 1.8; border-top: 1px solid #f1f5f9; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 style="margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -0.02em;">
+                BLOCK MEDIA <span style="color: #2563eb;">PRO</span>
+            </h1>
+            <p style="color: #64748b; font-size: 11px; font-weight: bold; margin-top: 8px; letter-spacing: 0.2em; text-transform: uppercase;">
+                Daily Intelligence Report
+            </p>
+        </div>
+
+        <div class="dashboard-container">
+            <p style="font-size: 12px; color: #0f172a; font-weight: 900; margin-bottom: 20px; padding-left: 10px;">📊 실시간 마켓 지표 (07:00 KST)</p>
+            <table class="metric-table">
+                <tr>
+                    <td class="metric-box">
+                        <div class="label">BTC 김치 프리미엄</div>
+                        <div class="value" style="color: #ef4444;">+4.25%</div>
+                    </td>
+                    <td class="metric-box">
+                        <div class="label">업비트 임팩트 지수</div>
+                        <div class="value">82 <span style="font-size: 14px; color: #94a3b8; font-weight: normal;">/ 100</span></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="metric-box">
+                        <div class="label">온체인 베스팅 감시</div>
+                        <div class="value" style="color: #2563eb;">KAIA: 15.2M</div>
+                    </td>
+                    <td class="metric-box">
+                        <div class="label">한-미 상관계수</div>
+                        <div class="value">0.88</div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="section-title">DATA INTELLIGENCE</div>
+        <div class="onchain-card">
+            <strong style="color: #1e293b; font-size: 15px;">🐳 고래 유입량 알림</strong><br>
+            <p style="margin-top: 8px; font-size: 13px; color: #475569; line-height: 1.6;">
+                지난 1시간 동안 업비트로 **1,200 BTC**가 유입되었습니다. [cite: 179] 고래 자금의 급격한 유입은 통상 매도 신호로 해석되므로 개장 직후 변동성에 주의하십시오. [cite: 80]
+            </p>
+        </div>
+        <div class="onchain-card">
+            <strong style="color: #1e293b; font-size: 15px;">🚀 펌핑 시뮬레이션 결과</strong><br>
+            <p style="margin-top: 8px; font-size: 13px; color: #475569; line-height: 1.6;">
+                오늘 상장 예정인 **JUP(주피터)**의 예상 펌핑 규모는 **+45%**입니다. [cite: 33] 현재 시장 유동성 강도(82점)를 고려할 때 변동성을 활용한 전략적 접근을 권장합니다. [cite: 114]
+            </p>
+        </div>
+
+        <div class="section-title">MEXICO-NY BREAKING</div>
+        <div class="content-box" style="padding: 0 25px 10px; font-size: 14px; color: #334155; line-height: 1.7;">
+            <p><strong>James Jung 특파원 분석:</strong> [cite: 130] "나스닥은 하락했지만 미국 기관들은 비트코인 현물 ETF를 통해 조용히 매집 중입니다." [cite: 159] 멕시코에서 확인한 월가의 데이터는 개인의 공포와 정반대의 방향을 가리키고 있습니다. [cite: 212] 오늘의 전략적 판단은 '저점 매수'입니다.</p>
+        </div>
+
+        <a href="https://ceciliamyeong.github.io/bm/labs/dashboard.html" class="btn">
+            UNLOCK PRO LETTER (ACCESS PROTOCOL)
+        </a>
+
+        <div class="footer">
+            © 2026 BLOCK MEDIA PRO | DATA INTELLIGENCE FIRM [cite: 5, 101]<br>
+            본 정보는 투자의 참고 자료이며 투자 결과에 대한 법적 책임을 지지 않습니다. [cite: 63, 153]<br>
+            자본시장법 및 가상자산 이용자 보호법을 준수합니다. [cite: 92]
+        </div>
+    </div>
+</body>
+</html>
