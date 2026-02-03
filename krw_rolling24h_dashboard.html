@@ -764,7 +764,7 @@
 
   // ===== TOTAL =====
   totalChart?.setOption({
-    grid: { left: 72, right: 72, top: 44, bottom: 44 },
+    grid: { left: 88, right: 88, top: 44, bottom: 44 },
     tooltip: {
       trigger: "axis",
       axisPointer: { type: "cross" },
@@ -782,8 +782,27 @@
       axisLabel: { color: "#6b7280", rotate: (s.x.length > 10 ? 25 : 0) }
     },
     yAxis: [
-      { type: "value", axisLabel: { color: "#6b7280", margin: 14 } },
-      { type: "value", axisLabel: { color: "#6b7280", margin: 14 }, splitLine: { show: false } }
+      {
+        type: "value",
+        name: `(${AXIS_UNIT_LABEL})`,   // (백억원)
+        nameGap: 10,
+        axisLabel: {
+          color: "#6b7280",
+          margin: 14,
+          formatter: (v) => fmtAxis(v)
+        }
+      },
+      {
+        type: "value",
+        name: `(${AXIS_UNIT_LABEL})`,   // (백억원)
+        nameGap: 10,
+        axisLabel: {
+          color: "#6b7280",
+          margin: 14,
+          formatter: (v) => fmtAxis(v)
+        },
+        splitLine: { show: false }
+      }
     ],
     series: [
       { name: "Total (24h)", type: "line", step: "end", symbolSize: 6, data: s.total },
