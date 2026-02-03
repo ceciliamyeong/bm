@@ -665,6 +665,14 @@
 </div>
   
 <script>
+  const AXIS_UNIT = 1e10;        // ✅ 백억원 = 10,000,000,000원
+  const AXIS_UNIT_LABEL = "백억원";
+
+  function fmtAxis(v){
+  if (!Number.isFinite(v)) return "";
+  return (v / AXIS_UNIT).toLocaleString("ko-KR");
+  }
+  
   function num(x){
     const n = Number(x);
     return Number.isFinite(n) ? n : 0;
