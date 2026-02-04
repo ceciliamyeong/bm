@@ -854,7 +854,7 @@
 
   // ===== TOP10 vs REST =====
   topRestChart?.setOption({
-    grid: { left: 44, right: 44, top: 40, bottom: 34, containLabel: true },
+    grid: { left: 56, right: 44, top: 40, bottom: 34, containLabel: true },
     tooltip: {
       trigger:"axis",
       axisPointer:{ type:"shadow" },
@@ -866,9 +866,17 @@
     legend: { top: 6, left: 0, itemWidth: 14, itemHeight: 8, data: ["Top10","Rest","Top10 Share %"] },
     xAxis: { type:"category", data:s.x, axisLabel:{ rotate:(s.x.length>10?25:0) } },
     yAxis: [
-      { type:"value" },
+      {
+        type: "value",
+        name: `(${AXIS_UNIT_LABEL})`,     // (억원)
+        nameGap: 10,
+        axisLabel: {
+          formatter: (v) => fmtAxis(v)    // ✅ 억원 단위 축 표시
+        }
+      },
       { type:"value", min:0, max:100, splitLine:{ show:false } }
     ],
+
     series: [
       { name:"Top10", type:"bar", stack:"t", data: s.top10, barWidth: 16 },
       { name:"Rest", type:"bar", stack:"t", data: s.rest, barWidth: 16 },
