@@ -814,6 +814,16 @@
   if (stableChart){
     const stablePct = hist.map(h => num(h.stablecoins?.stable_dominance_pct));
     const stableVol = hist.map(h => num(h.stablecoins?.total_stable_vol_24h));
+
+    // ✅ auto range (data-driven) with padding
+    const vals = stablePct.filter(v => Number.isFinite(v));
+    const lo = vals.length ? Math.min(...vals) : 0;
+    const hi = vals.length ? Math.max(...vals) : 100;
+  
+    const pad = Math.max(2, (hi - lo) * 0.25); // 최소 2%p 여유
+    const ymin = Math.max(0, Math.floor((lo - pad) * 10) / 10);
+    const ymax = Math.min(100, Math.ceil((hi + pad) * 10) / 10);
+    
     stableChart.setOption({
       grid: { left: 56, right: 18, top: 22, bottom: 36 },
       tooltip: {
@@ -824,7 +834,7 @@
         }
       },
       xAxis: { type: "category", data: s.x, axisLabel:{ rotate:(s.x.length>10?25:0) } },
-      yAxis: { type: "value", min: 0, max: 100 },
+      yAxis: { type: "value", min: ymin, max: ymax },
       series: [{ type: "line", smooth: true, symbolSize: 6, data: stablePct }]
     }, true);
   }
