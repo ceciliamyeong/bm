@@ -665,8 +665,8 @@
 </div>
   
 <script>
-  const AXIS_UNIT = 1e10;        // ✅ 백억원 = 10,000,000,000원
-  const AXIS_UNIT_LABEL = "백억원";
+  const AXIS_UNIT = 1e8;        // ✅ 억원 = 100,000,000원
+  const AXIS_UNIT_LABEL = "억원";
 
   function fmtAxis(v){
   if (!Number.isFinite(v)) return "";
@@ -784,7 +784,7 @@
     yAxis: [
       {
         type: "value",
-        name: `(${AXIS_UNIT_LABEL})`,   // (백억원)
+        name: `(${AXIS_UNIT_LABEL})`,   // (억원)
         nameGap: 10,
         axisLabel: {
           color: "#6b7280",
@@ -794,7 +794,7 @@
       },
       {
         type: "value",
-        name: `(${AXIS_UNIT_LABEL})`,   // (백억원)
+        name: `(${AXIS_UNIT_LABEL})`,   // (억원)
         nameGap: 10,
         axisLabel: {
           color: "#6b7280",
