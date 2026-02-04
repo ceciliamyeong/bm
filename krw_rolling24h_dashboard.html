@@ -665,6 +665,13 @@
 </div>
   
 <script>
+  
+  const EX_COLORS = {
+    upbit:   "#2563eb", // 파랑
+    bithumb:"#16a34a", // 초록
+    coinone:"#7c3aed", // 보라
+  };
+  
   const AXIS_UNIT = 1e8;        // ✅ 억원 = 100,000,000원
   const AXIS_UNIT_LABEL = "억원";
 
@@ -762,53 +769,74 @@
   const hist = sliceByDays(HISTORY, rangeDays);
   const s = buildSeries(hist);
 
-  // ===== TOTAL =====
-  totalChart?.setOption({
-    grid: { left: 88, right: 88, top: 44, bottom: 44 },
+ // ===== TOTAL (Exchange stacked absolute bars) =====
+totalChart?.setOption({
+    grid: { left: 72, right: 18, top: 44, bottom: 44, containLabel: true },
+  
     tooltip: {
       trigger: "axis",
-      axisPointer: { type: "cross" },
+      axisPointer: { type: "shadow" },
       formatter: (params) => {
         const i = params[0].dataIndex;
-        const d = s.delta[i];
-        const dText = (d === null) ? "-" : (d>=0 ? "▲ " : "▼ ") + fmtKRW(Math.abs(d));
-        return `<b>${s.x[i]}</b><br/>총 ${fmtKRW(s.total[i])}<br/>직전 대비 ${dText}`;
+  
+        const up = s.up[i] || 0;
+        const bt = s.bt[i] || 0;
+        const co = s.co[i] || 0;
+  
+        const total = (s.total && s.total[i] != null) ? s.total[i] : (up + bt + co);
+  
+        return `<b>${s.x[i]}</b>` +
+               `<br/>총 ${fmtKRW(total)}` +
+               `<br/>업비트 ${fmtKRW(up)}` +
+               `<br/>빗썸 ${fmtKRW(bt)}` +
+               `<br/>코인원 ${fmtKRW(co)}`;
       }
     },
-    legend: { top: 0, left: 0, data: ["Total (24h)", "Δ vs prev"] },
+  
+    legend: { top: 0, left: 0, data: ["Upbit", "Bithumb", "Coinone"] },
+  
     xAxis: {
       type: "category",
       data: s.x,
       axisLabel: { color: "#6b7280", rotate: (s.x.length > 10 ? 25 : 0) }
     },
-    yAxis: [
+  
+    yAxis: {
+      type: "value",
+      name: `(${AXIS_UNIT_LABEL})`, // (억원)
+      nameGap: 10,
+      axisLabel: { color: "#6b7280", margin: 14, formatter: (v) => fmtAxis(v) }
+    },
+  
+    series: [
       {
-        type: "value",
-        name: `(${AXIS_UNIT_LABEL})`,   // (억원)
-        nameGap: 10,
-        axisLabel: {
-          color: "#6b7280",
-          margin: 14,
-          formatter: (v) => fmtAxis(v)
-        }
+        name: "Upbit",
+        type: "bar",
+        stack: "total",
+        barWidth: 8,
+        barGap: "30%",                  // 👈 여기
+        itemStyle: { color: EX_COLORS.upbit },
+        data: s.up
       },
       {
-        type: "value",
-        name: `(${AXIS_UNIT_LABEL})`,   // (억원)
-        nameGap: 10,
-        axisLabel: {
-          color: "#6b7280",
-          margin: 14,
-          formatter: (v) => fmtAxis(v)
-        },
-        splitLine: { show: false }
+        name: "Bithumb",
+        type: "bar",
+        stack: "total",
+        barWidth: 8,
+        itemStyle: { color: EX_COLORS.bithumb },
+        data: s.bt
+      },
+      {
+        name: "Coinone",
+        type: "bar",
+        stack: "total",
+        barWidth: 8,
+        itemStyle: { color: EX_COLORS.coinone },
+        data: s.co
       }
-    ],
-    series: [
-      { name: "Total (24h)", type: "line", step: "end", symbolSize: 6, data: s.total },
-      { name: "Δ vs prev", type: "bar", yAxisIndex: 1, barWidth: 14, data: s.delta }
     ]
   }, true);
+    
 
   // ===== STABLE =====
   if (stableChart){
