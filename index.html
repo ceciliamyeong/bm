@@ -405,18 +405,16 @@ async function getKimchiFromOut(asof){
       `archive/${d}/kimchi_${d}.json`,
     ] : []),
 
+    // /out/... 경로 추가
+    `/out/${d}/kimchi_${d}.json`,
+
     // 루트에서 접근할 때 대비
     `bm/out/${d}/kimchi_${d}.json`,
     `bm/archive/${d}/kimchi_${d}.json`,
 
     // 절대경로로도 한 번 더 (캐시/상대경로 이슈 방지)
-    ...(inBm ? [
-      `/bm/out/${d}/kimchi_${d}.json`,
-      `/bm/archive/${d}/kimchi_${d}.json`,
-    ] : [
-      `/bm/out/${d}/kimchi_${d}.json`,
-      `/bm/archive/${d}/kimchi_${d}.json`,
-    ]),
+    `/bm/out/${d}/kimchi_${d}.json`,
+    `/bm/archive/${d}/kimchi_${d}.json`,
   ]);
 
   for (const d of dates){
