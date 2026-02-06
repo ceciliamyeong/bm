@@ -585,7 +585,7 @@
       <div class="sectionHead">
         <div>
           <h3>Smart Kimchi</h3>
-          <p>BTC/ETH 김프 추이 + Kimchi Type/Score로 “지금 김프의 성격”을 봅니다.</p>
+          <p>BTC/ETH/XRP 김프 추이 + Kimchi Type/Score로 “지금 김프의 성격”을 봅니다.</p>
         </div>
         <div class="right" id="kimchiUpdated">UPDATED: -</div>
       </div>
@@ -596,7 +596,7 @@
             <div class="wTitle">
               <div class="wIcon">%</div>
               <div>
-                <h4>Kimchi Premium % (BTC/ETH/Combo)</h4>
+                <h4>Kimchi Premium % (BTC / ETH / XRP)</h4>
                 <div class="desc">국내(Upbit KRW) vs 글로벌(USD) * 환산</div>
               </div>
             </div>
@@ -947,35 +947,46 @@ totalChart?.setOption({
 
     const kb = kHist.map(h=>num(h.kimchi_premium_pct?.BTC));
     const ke = kHist.map(h=>num(h.kimchi_premium_pct?.ETH));
-    const kc = kHist.map(h=>num(h.kimchi_premium_pct?.COMBO));
-    const kd = kc.map((v,i)=> i===0 ? null : (v-kc[i-1])); // ΔCOMBO (p)
+    const kxrp = kHist.map(h=>num(h.kimchi_premium_pct?.XRP));
+    
+    // ΔKimchi = |ΔBTC| + |ΔETH| + |ΔXRP|
+    const kd = kb.map((_, i) => {
+      if (i === 0) return null;
+      return Math.abs(kb[i]-kb[i-1]) +
+             Math.abs(ke[i]-ke[i-1]) +
+             Math.abs(kxrp[i]-kxrp[i-1]);
+    });
 
-    kimchiPremChart.setOption({
-      grid: { left: 44, right: 18, top: 30, bottom: 36, containLabel: true },
-      tooltip: {
-        trigger:"axis",
-        formatter:(params)=>{
-          const i = params[0].dataIndex;
-          const d = kd[i];
-          const dText = (d===null) ? "-" : ((d>=0?"+":"") + d.toFixed(2) + "p");
-          return `<b>${kx[i]}</b><br/>BTC ${fmtPct(kb[i])}<br/>ETH ${fmtPct(ke[i])}<br/>COMBO ${fmtPct(kc[i])}<br/>ΔCOMBO ${dText}`;
-        }
-      },
-      legend: { top: 6, left: 0, itemWidth: 14, itemHeight: 8, data: ["BTC","ETH","COMBO","ΔCOMBO"] },
-      xAxis:{ type:"category", data:kx, axisLabel:{ rotate:(kx.length>10?25:0) } },
-      yAxis:[
-        { type:"value", name:"%", axisLabel:{ formatter:(v)=> Number(v).toFixed(1) } },
-        { type:"value", name:"Δp", splitLine:{ show:false }, axisLabel:{ formatter:(v)=> Number(v).toFixed(1) } }
-      ],
-      series:[
-        { name:"BTC", type:"line", smooth:true, symbolSize:5, data: kb },
-        { name:"ETH", type:"line", smooth:true, symbolSize:5, data: ke },
-        { name:"COMBO", type:"line", smooth:true, symbolSize:6, lineStyle:{ width:3 }, data: kc },
-        { name:"ΔCOMBO", type:"bar", yAxisIndex:1, barWidth:12, data: kd }
-      ]
-    }, true);
+  kimchiPremChart.setOption({
+    grid: { left: 44, right: 18, top: 30, bottom: 36, containLabel: true },
+    tooltip: {
+      trigger:"axis",
+      formatter:(params)=>{
+        const i = params[0].dataIndex;
+        const d = kd[i];
+        const dText = (d===null) ? "-" : ((d>=0?"+":"") + d.toFixed(2) + "p");
+        return `<b>${kx[i]}</b>` +
+               `<br/>BTC ${fmtPct(kb[i])}` +
+               `<br/>ETH ${fmtPct(ke[i])}` +
+               `<br/>XRP ${fmtPct(kxrp[i])}` +
+               `<br/>ΔKimchi ${dText}`;
+      }
+    },
+    legend: { top: 6, left: 0, itemWidth: 14, itemHeight: 8, data: ["BTC","ETH","XRP","ΔKimchi"] },
+    xAxis:{ type:"category", data:kx, axisLabel:{ rotate:(kx.length>10?25:0) } },
+    yAxis:[
+      { type:"value", name:"%", axisLabel:{ formatter:(v)=> Number(v).toFixed(1) } },
+      { type:"value", name:"Δp", splitLine:{ show:false }, axisLabel:{ formatter:(v)=> Number(v).toFixed(1) } }
+    ],
+    series:[
+      { name:"BTC", type:"line", smooth:true, symbolSize:5, data: kb },
+      { name:"ETH", type:"line", smooth:true, symbolSize:5, data: ke },
+      { name:"XRP", type:"line", smooth:true, symbolSize:5, data: kxrp },
+      { name:"ΔKimchi", type:"bar", yAxisIndex:1, barWidth:12, data: kd }
+    ]
+  }, true);
   }
-}
+
 
   
   function fillTopList(elId, arr){
@@ -1003,16 +1014,17 @@ totalChart?.setOption({
 
     const kl = kimchiLatest || {};
     const kPrem = kl.kimchi_premium_pct || {};
-    const combo = num(kPrem.COMBO);
+    
     const btc = num(kPrem.BTC);
     const eth = num(kPrem.ETH);
+    const xrp  = num(kPrem.XRP);
 
     const kType = (kl.smart_kimchi?.type || "-");
     const kScore = num(kl.smart_kimchi?.score_v1);
 
     const heat =
-      total >= 4e12 ? "거래대금이 4조원대까지 올라 판이 과열 쪽으로 기운다" :
-      total >= 2e12 ? "유동성이 2조원대에서 유지되며 리스크온/리스크오프가 교차한다" :
+      total >= 4e12 ? "거래대금이 4조원대까지 올라 시장환경이 과열 쪽으로 기운다" :
+      total >= 2e12 ? "유동성이 2조원대에서 유지되고 있으며 리스크온/리스크오프가 교차하는 상황이다" :
       "거래대금이 낮아지며 방향성이 약해진 구간";
 
     const crowd =
@@ -1023,9 +1035,9 @@ totalChart?.setOption({
     const stable =
       stableDom >= 10 ? "스테이블 비중이 높아 대기성 유동성이 두껍다" :
       stableDom >= 5 ? "스테이블 비중은 중간 수준" :
-      "스테이블 비중이 낮아 현물 알트 쪽으로 자금이 더 기운다";
+      "스테이블 비중이 낮아 현물 알트 쪽으로 자금이 움직이고 있다";
 
-    const head = `COMBO ${combo.toFixed(2)}% · ${kType} (${kScore.toFixed(1)}점)`;
+    const head = `Kimchi ${kType} (${kScore.toFixed(1)}점)`;
     const body = `${ts} 기준, BTC ${btc.toFixed(2)}%·ETH ${eth.toFixed(2)}%로 집계됐다. ${heat}. ${crowd}. ${stable}.`;
 
     return { head, body };
