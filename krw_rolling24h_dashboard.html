@@ -986,7 +986,8 @@ totalChart?.setOption({
     ]
   }, true);
   }
-
+  
+  }
 
   
   function fillTopList(elId, arr){
@@ -1038,7 +1039,7 @@ totalChart?.setOption({
       "스테이블 비중이 낮아 현물 알트 쪽으로 자금이 움직이고 있다";
 
     const head = `Kimchi ${kType} (${kScore.toFixed(1)}점)`;
-    const body = `${ts} 기준, BTC ${btc.toFixed(2)}%·ETH ${eth.toFixed(2)}%로 집계됐다. ${heat}. ${crowd}. ${stable}.`;
+    const body = `${ts} 기준, BTC ${btc.toFixed(2)}%·ETH ${eth.toFixed(2)}%·XRP ${xrp.toFixed(2)}%로 집계됐다. ${heat}. ${crowd}. ${stable}.`;
 
     return { head, body };
   }
@@ -1179,11 +1180,11 @@ totalChart?.setOption({
 
     const kType = (KIMCHI_LATEST?.smart_kimchi?.type || "-");
     const kScore = num(KIMCHI_LATEST?.smart_kimchi?.score_v1);
-    const combo = num(KIMCHI_LATEST?.kimchi_premium_pct?.COMBO);
-
+    const btcPrem = num(KIMCHI_LATEST?.kimchi_premium_pct?.BTC);
+    
     document.getElementById("kimchiTypePill").textContent = `Type: ${kType}`;
     document.getElementById("kimchiScorePill").textContent = `Score: ${kScore.toFixed(1)} / 100`;
-    document.getElementById("kimchiPremPill").textContent = `COMBO: ${fmtPct(combo)}`;
+    document.getElementById("kimchiPremPill").textContent = `BTC Kimchi: ${fmtPct(btcPrem)}`;
 
     console.log("FX_LATEST", FX_LATEST);
     console.log("fxEl", document.getElementById("fxComment"));
