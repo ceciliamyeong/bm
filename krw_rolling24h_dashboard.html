@@ -652,11 +652,11 @@
               <div class="desc">GitHub Pages에서 읽는 JSON 경로</div>
             </div>
           </div>
-          <div class="wMeta">/bm/out/history/</div>
+          <div class="wMeta">/out/history/</div>
         </div>
         <div class="footnote">
-          KRW: <code>/bm/out/history/krw_24h_latest.json</code> · <code>/bm/out/history/krw_24h_snapshots.json</code><br/>
-          Kimchi: <code>/bm/out/history/kimchi_latest.json</code> · <code>/bm/out/history/kimchi_snapshots.json</code>
+          KRW: <code>/out/history/krw_24h_latest.json</code> · <code>/out/history/krw_24h_snapshots.json</code><br/>
+          Kimchi: <code>/out/history/kimchi_latest.json</code> · <code>/out/history/kimchi_snapshots.json</code>
         </div>
       </div>
     </section>
@@ -723,11 +723,11 @@
   function urls(){
     const bust = "v=" + Date.now();
     return {
-      latest: "/bm/out/history/krw_24h_latest.json?" + bust,
-      hist:   "/bm/out/history/krw_24h_snapshots.json?" + bust,
-      kimchiLatest: "/bm/out/history/kimchi_latest.json?" + bust,
-      kimchiHist:   "/bm/out/history/kimchi_snapshots.json?" + bust,
-      fxLatest: "/bm/out/history/fx_latest.json?" + bust  
+      latest: "/out/history/krw_24h_latest.json?" + bust,
+      hist:   "/out/history/krw_24h_snapshots.json?" + bust,
+      kimchiLatest: "/out/history/kimchi_latest.json?" + bust,
+      kimchiHist:   "/out/history/kimchi_snapshots.json?" + bust,
+      fxLatest: "/out/history/fx_latest.json?" + bust  
     };
   }
 
@@ -1229,7 +1229,7 @@ totalChart?.setOption({
       });
     }catch(err){
       console.error(err);
-      alert("JSON 로딩 실패: /bm/out/history/*.json 경로/배포를 확인하세요.");
+      alert("JSON 로딩 실패: /out/history/*.json 경로/배포를 확인하세요.");
     }
   })();
 </script>
