@@ -2036,5 +2036,55 @@
         "stable_dominance_pct": 15.50846681557936
       }
     }
+  },
+  {
+    "schema": "smart_kimchi_v2",
+    "timestamp_kst": "2026-02-10T08:43:36+0900",
+    "timestamp_label": "02/10 08:43 KST",
+    "prices": {
+      "upbit": {
+        "KRW-BTC": 103821000.0,
+        "KRW-ETH": 3112000.0,
+        "KRW-XRP": 2130.0,
+        "KRW-USDT": 1476.0
+      },
+      "binance": {
+        "BTCUSDT": 70400.0,
+        "ETHUSDT": 2111.57,
+        "XRPUSDT": 1.443
+      },
+      "fx": {
+        "USDKRW": 1450.0,
+        "source": "exchangerate.host"
+      }
+    },
+    "kimchi_premium_pct": {
+      "BTC": 1.706,
+      "ETH": 1.64,
+      "XRP": 1.799
+    },
+    "kimchi_delta_pp": {
+      "BTC": -0.304,
+      "ETH": -0.369,
+      "XRP": -0.066
+    },
+    "driver_share_pct": {
+      "BTC": 41.2,
+      "ETH": 49.9,
+      "XRP": 8.9
+    },
+    "diagnostics": {
+      "local_usdt_premium_hint_pct": 1.793
+    },
+    "smart_kimchi": {
+      "type": "Retail-driven",
+      "rationale": "김프↑ + 거래대금↑ + Top10 쏠림↑ → 리테일 매수 주도 가능성",
+      "score_v1": 83.6,
+      "inputs": {
+        "total_krw_24h": 3543775798991.1445,
+        "top10_share_pct": 70.41992008622103,
+        "stable_dominance_pct": 15.521289481629264
+      }
+    }
   }
 ]
