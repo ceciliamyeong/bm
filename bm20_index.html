@@ -1,677 +1,1253 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>BM20 Index — Latest</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>BM20 Index Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
 
   <style>
-  :root{
-    --bg:#ffffff;
-    --card:#ffffff;
+    :root{
+      --bg:#f8fafc;
+      --panel:#ffffff;
+      --border:#e5e7eb;
+      --text:#0f172a;
+      --muted:#64748b;
 
-    --text:#111827;
-    --muted:#6b7280;
+      --shadow:0 1px 2px rgba(15,23,42,.06);
+      --radius:14px;
 
-    --border:#e5e7eb;
-    --divider:#f1f5f9;
+      --accent:#2563eb;
+      --accent-2:#7c3aed;
 
-    --brand:#1A237E;
-    --accent:#2563eb;
+      --sidebar:#0b1220;
+      --sidebarText:#e2e8f0;
+      --sidebarMuted:#94a3b8;
 
-    --up:#2E7D32;
-    --down:#C62828;
+      --chip:#f1f5f9;
 
-    --shadow:0 4px 14px rgba(0,0,0,.04);
-  }
+      --up:#16a34a;
+      --down:#dc2626;
+    }
 
-  *{box-sizing:border-box}
-  html,body{
-    margin:0;height:100%;
-    background:var(--bg);
-    color:var(--text);
-    font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Apple Color Emoji,Segoe UI Emoji;
-  }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Arial, sans-serif;
+    }
 
-  a{color:var(--accent);text-decoration:none}
-  a:hover{text-decoration:underline}
+    .app{
+      display:grid;
+      grid-template-columns: 260px 1fr;
+      min-height:100vh;
+    }
+    @media (max-width: 980px){
+      .app{ grid-template-columns: 1fr; }
+    }
 
-  header{
-    position:sticky;top:0;background:#fff;z-index:10;
-    border-bottom:1px solid var(--border);
-  }
+    .sidebar{
+      background:var(--sidebar);
+      padding:18px 14px;
+      position:sticky;
+      top:0;
+      height:100vh;
+      overflow:auto;
+      border-right:1px solid rgba(255,255,255,.06);
+    }
+    @media (max-width: 980px){
+      .sidebar{ position:relative; height:auto; }
+    }
 
-  .wrap{max-width:1100px;margin:0 auto;padding:16px}
-  .flex{display:flex;gap:14px;align-items:center;justify-content:space-between}
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 10px 14px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      margin-bottom:14px;
+    }
+    .logo{
+      width:32px; height:32px;
+      border-radius:10px;
+      background:linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow:0 6px 18px rgba(37,99,235,.25);
+    }
+    .brand h1{
+      margin:0;
+      font-size:14px;
+      color:var(--sidebarText);
+      letter-spacing:-0.2px;
+    }
+    .brand p{
+      margin:2px 0 0;
+      font-size:12px;
+      color:var(--sidebarMuted);
+    }
 
-  .brand{display:flex;gap:10px;align-items:center}
-  .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--brand)}
-  nav{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+    .navsec{ margin:14px 0; }
+    .navtitle{
+      font-size:11px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:rgba(226,232,240,.7);
+      padding:0 10px;
+      margin:0 0 8px;
+    }
+    .nav a{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 10px;
+      border-radius:10px;
+      color:var(--sidebarText);
+      text-decoration:none;
+      font-size:13px;
+      transition: background .15s ease;
+    }
+    .nav a:hover{ background:rgba(255,255,255,.06); }
+    .nav a .tag{
+      font-size:11px;
+      color:var(--sidebarMuted);
+      background:rgba(255,255,255,.06);
+      padding:2px 8px;
+      border-radius:999px;
+      white-space:nowrap;
+    }
 
-  .card{
-    background:var(--card);
-    border:1px solid var(--border);
-    border-radius:14px;
-    padding:16px;
-    box-shadow:var(--shadow);
-  }
+    .main{ padding:18px 18px 34px; }
 
-  .section{margin-top:18px}
-  .h{font-weight:800;letter-spacing:.2px}
-  .mini{font-size:12px;color:var(--muted)}
-  .hide{display:none}
-  .list{display:grid;gap:8px}
+    .topbar{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+    .topbar .title h2{
+      margin:0;
+      font-size:20px;
+      letter-spacing:-0.3px;
+    }
+    .topbar .title p{
+      margin:6px 0 0;
+      font-size:13px;
+      color:var(--muted);
+      max-width:920px;
+      line-height:1.45;
+    }
+    .topbar .meta{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
 
-  /* stats */
-  .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-  @media (min-width:700px){.cards{grid-template-columns:repeat(6,1fr)}}
+    .chip{
+      background:var(--chip);
+      border:1px solid var(--border);
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      color:#334155;
+      white-space:nowrap;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
+    .chip b{ font-weight:800; }
+    .delta{
+      font-weight:900;
+      font-variant-numeric: tabular-nums;
+    }
+    .delta.up{ color:var(--up); }
+    .delta.down{ color:var(--down); }
 
-  .stat{
-    padding:12px;
-    border:1px solid var(--border);
-    border-radius:12px;
-    background:#fafafa;
-  }
-  .k{color:var(--muted);font-size:12px}
-  .v{font-size:22px;font-weight:900}
+    .panel{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+    }
 
-  .delta.up{color:var(--up);font-weight:900}
-  .delta.down{color:var(--down);font-weight:900}
+    .kpiGrid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+      margin-bottom:14px;
+    }
+    @media (min-width: 980px){
+      .kpiGrid{ grid-template-columns: repeat(6, 1fr); }
+    }
+    .kpi{ padding:12px 12px; min-width:0; }
+    .kpi .label{ color:var(--muted); font-size:12px; margin:0 0 6px; }
+    .kpi .value{ font-size:20px; font-weight:900; letter-spacing:-0.3px; margin:0; }
+    .kpi .note{ color:var(--muted); font-size:12px; margin-top:6px; }
 
-  .pill{
-    display:inline-flex;gap:8px;align-items:center;
-    border:1px solid var(--border);
-    border-radius:999px;
-    padding:6px 10px;
-    background:#f3f4f6;
-  }
+    .section{ margin-top:16px; }
+    .sectionHead{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      margin:0 0 10px;
+    }
+    .sectionHead h3{
+      margin:0;
+      font-size:14px;
+      letter-spacing:-0.2px;
+    }
+    .sectionHead p{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.4;
+    }
+    .sectionHead .right{
+      color:var(--muted);
+      font-size:12px;
+      white-space:nowrap;
+    }
 
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  @media (max-width:700px){.grid2{grid-template-columns:1fr}}
+    .widgets{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+    @media (min-width: 1100px){
+      .widgets{ grid-template-columns: repeat(2, 1fr); }
+    }
 
-  /* buttons / code */
-  .btn{
-    border:1px solid var(--border);
-    background:#ffffff;
-    color:var(--text);
-    border-radius:10px;
-    padding:8px 12px;
-    cursor:pointer;
-  }
-  .btn:hover{background:#f9fafb}
+    .widget{ padding:12px; min-width:0; }
+    .widgetHead{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:10px;
+    }
+    .wTitle{ display:flex; gap:10px; align-items:flex-start; }
+    .wIcon{
+      width:28px; height:28px;
+      border-radius:10px;
+      background:#eef2ff;
+      border:1px solid #e0e7ff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#3730a3;
+      font-weight:900;
+      font-size:12px;
+      flex:0 0 auto;
+    }
+    .wTitle h4{
+      margin:0;
+      font-size:13px;
+      letter-spacing:-0.2px;
+    }
+    .wTitle .desc{
+      margin-top:4px;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.35;
+    }
+    .wMeta{
+      text-align:right;
+      color:var(--muted);
+      font-size:11px;
+      white-space:nowrap;
+    }
 
-  .code{
-    white-space:pre-wrap;
-    font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
-    background:#f8fafc;
-    border:1px solid var(--border);
-    border-radius:10px;
-    padding:12px;
-    max-height:420px;
-    overflow:auto;
-  }
+    .chart{ width:100%; height:360px; }
+    #perfBar{ height:320px; }
+    #moverBar{ height:360px; }
 
-  /* charts area: 항상 1컬럼 + 메인 차트 크게 */
-  .rows{display:grid;grid-template-columns:1fr;gap:16px;margin-top:16px}
-  #charts.rows{grid-template-columns:1fr !important;}
+    .toolbar{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:8px;
+    }
+    .btn{
+      border:1px solid var(--border);
+      background:#fff;
+      color:#334155;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      cursor:pointer;
+    }
+    .btn.active{
+      border-color:#0f172a;
+      color:#0f172a;
+      font-weight:900;
+    }
 
-  .svgwrap{
-    width:100%;
-    height:360px;              /* ✅ 데스크톱 메인 차트 크게 */
-    border-radius:12px;
-    border:1px solid var(--border);
-    background:#ffffff;
-    overflow:hidden;
-  }
-  @media (max-width:700px){
-    .svgwrap{height:260px;}
-  }
-  .svgwrap svg{width:100%;height:100%;display:block}
+    .pill{
+      font-size:11px;
+      color:#334155;
+      background:var(--chip);
+      border:1px solid var(--border);
+      padding:3px 8px;
+      border-radius:999px;
+      white-space:nowrap;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+    }
+    .footnote{
+      margin-top:10px;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.45;
+    }
+    code{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 
-  /* BM preview cards */
-  .bm-wrap{max-width:1100px;margin:0 auto}
-  .bm-grid{display:grid;grid-template-columns:3fr 2fr;gap:16px}
-  @media (max-width:900px){.bm-grid{grid-template-columns:1fr}}
+    /* Universe chips */
+    .chips{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:10px;
+    }
+    .chipSym{
+      background:var(--chip);
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:12px;
+      color:#0f172a;
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      font-variant-numeric: tabular-nums;
+    }
+    .chipSym b{ font-weight:900; }
+    .chipSym span{ color:var(--muted); font-size:12px; }
 
-  .bm-card{
-    background:#ffffff;
-    border:1px solid var(--border);
-    border-radius:14px;
-    padding:18px;
-    box-shadow:var(--shadow);
-  }
-  .bm-title{font-size:18px;font-weight:900;margin-bottom:10px;color:var(--text)}
-  .bm-head{font-size:20px;font-weight:900;margin:6px 0 10px;color:var(--text)}
-  .bm-lead{font-size:14px;color:var(--muted);margin-bottom:10px}
-  .bm-kicker{color:var(--muted);font-size:12px;letter-spacing:.2px}
-  .bm-bars{margin-top:8px}
-
-  .bm-row{display:grid;grid-template-columns:56px 1fr 78px;align-items:center;gap:10px;margin:8px 0}
-  .bm-shell{
-    background:#f1f5f9;
-    height:18px;border-radius:10px;overflow:hidden;
-    border:1px solid var(--divider);
-  }
-  .bm-bar{height:100%;background:var(--up)}
-  .bm-pct{text-align:right;font-variant-numeric:tabular-nums;color:var(--text);font-weight:900}
-  .bm-ticker{font-weight:900;color:var(--text);text-align:center}
-
-  footer{
-    color:var(--muted);
-    margin:40px 0 60px;
-    border-top:1px solid var(--divider);
-    padding-top:12px;
-  }
+    /* Summary card */
+    .summaryBox{
+      padding:12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:#fbfdff;
+    }
+    .summaryHead{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .summaryHead .title{
+      font-size:13px;
+      font-weight:900;
+      letter-spacing:-0.2px;
+    }
+    .summaryText{
+      margin-top:8px;
+      font-size:13px;
+      line-height:1.55;
+      color:#0f172a;
+    }
   </style>
 </head>
 
 <body>
-  <header>
-    <div class="wrap flex">
-      <div class="brand">
-        <span class="dot"></span>
-        <div>
-          <div style="font-weight:900">BM20 Index</div>
-          <div class="mini">Blockmedia Large-Cap Crypto 20</div>
-        </div>
+<div class="app">
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo"></div>
+      <div>
+        <h1>BM20 Index</h1>
+        <p>Blockmedia Large-Cap 20</p>
       </div>
-      <nav>
-        <a href="https://ceciliamyeong.github.io/bm/">Home</a>
-        <a href="https://ceciliamyeong.github.io/bm/krw_rolling24h_dashboard.html">KRW Market </a>
-        <a href="https://ceciliamyeong.github.io/bm/what-is-bm20.html">About</a>
+    </div>
+
+    <div class="navsec">
+      <div class="navtitle">Dashboards</div>
+      <nav class="nav">
+        <a href="https://data.blockmedia.co.kr/" target="_blank" rel="noreferrer">Data Hub <span class="tag">ROOT</span></a>
+        <a href="https://data.blockmedia.co.kr/bm20_index.html" title="현재 페이지">BM20 Index <span class="tag">LIVE</span></a>
+        <a href="https://ceciliamyeong.github.io/bm/krw_rolling24h_dashboard.html" target="_blank" rel="noreferrer">KRW Market <span class="tag">KRW</span></a>
       </nav>
     </div>
-  </header>
 
-  <main class="wrap">
-    <!-- LATEST -->
-    <section id="latest" class="card">
-      <div class="flex">
-        <div>
-          <div class="h">오늘의 BM20</div>
-          <div class="mini" id="asof">—</div>
-        </div>
-        <div class="pill"><span id="deltaBadge">—</span></div>
+    <div class="navsec">
+      <div class="navtitle">BM20</div>
+      <nav class="nav">
+        <a href="#sec-overview">Overview <span class="tag">KPI</span></a>
+        <a href="#sec-series">Index Series <span class="tag">LINE</span></a>
+        <a href="#sec-movers">Top Movers <span class="tag">1D</span></a>
+        <a href="#sec-universe">Universe <span class="tag">20</span></a>
+        <a href="#sec-data">Data <span class="tag">JSON</span></a>
+      </nav>
+    </div>
+
+    <div class="navsec">
+      <div class="navtitle">Links</div>
+      <nav class="nav">
+        <a href="bm20_latest.json" target="_blank">bm20_latest.json <span class="tag">LIVE</span></a>
+        <a href="bm20_series.json" target="_blank">bm20_series.json <span class="tag">HIST</span></a>
+      </nav>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <div class="topbar">
+      <div class="title">
+        <h2>BM20 Index Dashboard</h2>
+        <p>
+          BM20은 대형 디지털 자산 20종을 바스켓으로 묶어 “시장 방향과 강도”를 한눈에 보여주는 블록미디어 지수입니다.
+          Best/Worst는 <b>1D 리턴(등락률)</b> 기준으로만 표기하며, 유니버스·가중치·Methodology는 <code>bm20_latest.json</code>의 components를 단일 기준으로 자동 연결/검증합니다.
+        </p>
+      </div>
+      <div class="meta">
+        <span class="chip" id="metaAsOf">ASOF: -</span>
+        <span class="chip" id="metaDelta">1D: -</span>
+        <span class="chip" id="metaMethod">METHOD: -</span>
+      </div>
+    </div>
+
+    <!-- KPI -->
+    <section id="sec-overview" class="kpiGrid">
+      <div class="panel kpi">
+        <p class="label">지수 레벨</p>
+        <p class="value" id="kpiLevel">-</p>
+        <div class="note" id="kpiLevelNote">-</div>
       </div>
 
-      <div class="cards section">
-        <div class="stat"><div class="k">지수 레벨</div><div class="v" id="level">—</div></div>
-        <div class="stat"><div class="k">1D</div><div class="v" id="r1d">—</div></div>
-        <div class="stat"><div class="k">7D</div><div class="v" id="r7d">—</div></div>
-        <div class="stat"><div class="k">30D</div><div class="v" id="r30d">—</div></div>
-        <div class="stat"><div class="k">1Y</div><div class="v" id="r1y">—</div></div>
-        <div class="stat"><div class="k">YTD</div><div class="v" id="rytd">—</div></div>
+      <div class="panel kpi">
+        <p class="label">1D</p>
+        <p class="value" id="kpi1d">-</p>
+        <div class="note" id="kpiBreadth">-</div>
       </div>
 
-      <div class="grid2 section">
-        <div>
-          <div class="mini">김치 프리미엄</div>
-          <div class="v" id="kimchi">—</div>
-        </div>
-        <div>
-          <div class="mini">펀딩비(선물)</div>
-          <div class="v" id="funding">—</div>
-        </div>
+      <div class="panel kpi">
+        <p class="label">7D</p>
+        <p class="value" id="kpi7d">-</p>
+        <div class="note" id="kpi7dNote">-</div>
       </div>
 
-      <div class="section list mini">
-        <div>빠른 링크:
-          <a href="bm20_series.json" target="_blank">bm20_series.json</a> ·
-          <a href="bm20_latest.json" target="_blank">bm20_latest.json</a> ·
-          <a id="newsLink" class="hide" href="#" target="_blank">bm20_news.txt</a>
-        </div>
+      <div class="panel kpi">
+        <p class="label">30D</p>
+        <p class="value" id="kpi30d">-</p>
+        <div class="note" id="kpi30dNote">-</div>
+      </div>
+
+      <div class="panel kpi">
+        <p class="label">1Y</p>
+        <p class="value" id="kpi1y">-</p>
+        <div class="note" id="kpi1yNote">-</div>
+      </div>
+
+      <div class="panel kpi" style="border-color:#bfdbfe;">
+        <p class="label" style="color:#1d4ed8;">Kimchi / Funding</p>
+        <p class="value" id="kpiKimchi">-</p>
+        <div class="note" id="kpiFunding">-</div>
       </div>
     </section>
 
-    <!-- CHARTS (✅ 한 줄 꽉 / 이미지카드 제거) -->
-    <section id="charts" class="rows section">
-      <div class="card" style="padding:14px 14px 16px">
-        <div class="flex">
-          <div class="h">BM20 시계열</div>
-          <button class="btn" id="btnZoom">범위: 1Y ▾</button>
-        </div>
-        <div class="svgwrap" id="svgHost"><svg></svg></div>
-        <div class="mini">※ series.json을 읽어 단순 라인 차트로 그립니다.</div>
-        <div class="mini" id="seriesStatus" style="margin-top:6px">—</div>
-      </div>
-    </section>
-
-    <!-- 글로벌 퍼포먼스 -->
-    <section id="perf" class="card section">
-      <div class="h">글로벌 퍼포먼스 (1D, %)</div>
-      <div id="perfBar" style="height:320px;margin-top:8px"></div>
-      <div class="mini">※ <code>out/YYYY-MM-DD/bm20_daily_data_YYYY-MM-DD.csv</code> 기준.</div>
-    </section>
-
-   <!-- BM20 INTERPRETATION -->
-<section class="card section">
-  <div class="h">BM20 오늘의 해석</div>
-  <p class="mini" style="line-height:1.8;margin-top:8px">
-    BM20 지수는 전일 대비 <b id="bmTrend">—</b> 흐름을 보이며 시장 전반의 방향성을 반영했다.
-    메이저 자산 중심의 움직임이 이어지는 가운데, 단기 레버리지 지표와 현물 프리미엄은
-    과열 신호 없이 안정적인 구간을 유지하고 있다.
-    <br><br>
-    이는 현재 시장이 추세적 랠리보다는 가격 탐색 국면에 있음을 시사하며,
-    단기 변동성보다는 종목별 차별화가 두드러지는 환경으로 해석된다.
-  </p>
-</section>
-
-    <!-- 뉴스 카드 프리뷰 -->
+    <!-- SUMMARY -->
     <section class="section">
-      <div class="bm-wrap">
-        <div class="bm-kicker">BM20 데일리 허브 · 프리뷰</div>
-        <h2 class="h">뉴스 & 퍼포먼스</h2>
+      <div class="panel widget">
+        <div class="widgetHead">
+          <div class="wTitle">
+            <div class="wIcon">N</div>
+            <div>
+              <h4>시장 한줄 요약</h4>
+              <div class="desc"><code>bm20_news_YYYY-MM-DD.txt</code>가 있으면 자동으로 가져옵니다.</div>
+            </div>
+          </div>
+          <div class="wMeta" id="newsMeta">-</div>
+        </div>
 
-        <div class="bm-grid">
-          <section class="bm-card">
-            <div class="bm-title">코인별 퍼포먼스 (1D, USD)</div>
-            <div class="bm-bars" aria-label="1일 수익률 막대"><!-- JS로 채움 --></div>
-          </section>
+        <div class="summaryBox">
+          <div class="summaryHead">
+            <div class="title" id="newsTitle">-</div>
+            <div class="pill" id="newsBadge">NEWS</div>
+          </div>
+          <div class="summaryText" id="newsBody">-</div>
+        </div>
 
-
-    <section id="about" class="card section">
-      <div class="h">What is BM20?</div>
-      <p class="mini">글로벌 암호화폐 시장을 대표하는 대형 코인 20개로 구성한 블록미디어 고유 지수입니다. 한국 3대 거래소 상장 코인은 1.3× 보정 가중치, 분기 1회 정기 리밸런싱(1·4·7·10월). 지수 기준일 2018-01-01(100).</p>
+        <div class="footnote">
+          빠른 링크:
+          <a href="bm20_series.json" target="_blank" rel="noreferrer">bm20_series.json</a> ·
+          <a href="bm20_latest.json" target="_blank" rel="noreferrer">bm20_latest.json</a> ·
+          <a id="newsLink" href="#" target="_blank" rel="noreferrer" style="display:none;">bm20_news.txt</a>
+        </div>
+      </div>
     </section>
 
-    <footer class="mini">
-      <div>© Blockmedia · Generated client-side from <code>bm20_latest.json</code> & <code>bm20_series.json</code>.</div>
-    </footer>
+    <!-- INDEX SERIES -->
+    <section class="section" id="sec-series">
+      <div class="sectionHead">
+        <div>
+          <h3>Index Series</h3>
+          <p>BM20 시계열(<code>bm20_series.json</code>)을 “Google/The Block” 스타일로 라인차트로 표시합니다.</p>
+          <div class="toolbar">
+            <button class="btn active" id="btn1y">1Y</button>
+            <button class="btn" id="btnytd">YTD</button>
+            <button class="btn" id="btnall">ALL</button>
+            <span class="pill" id="seriesStatus">series: -</span>
+          </div>
+        </div>
+        <div class="right" id="seriesMeta">-</div>
+      </div>
+
+      <div class="panel widget">
+        <div class="widgetHead">
+          <div class="wTitle">
+            <div class="wIcon">L</div>
+            <div>
+              <h4>BM20 Index (Line)</h4>
+              <div class="desc">Tooltip/Zoom · grid/axis 톤을 통일합니다.</div>
+            </div>
+          </div>
+          <div class="wMeta">Source: bm20_series.json</div>
+        </div>
+        <div id="seriesChart" class="chart"></div>
+      </div>
+    </section>
+
+    <!-- TOP MOVERS -->
+    <section class="section" id="sec-movers">
+      <div class="sectionHead">
+        <div>
+          <h3>Top Movers (1D Return)</h3>
+          <p><code>out/YYYY-MM-DD/bm20_daily_data_YYYY-MM-DD.csv</code>의 <b>price_change_pct</b>(리턴)만으로 Best/Worst를 계산합니다.</p>
+        </div>
+        <div class="right" id="moverMeta">-</div>
+      </div>
+
+      <div class="widgets">
+        <div class="panel widget">
+          <div class="widgetHead">
+            <div class="wTitle">
+              <div class="wIcon">⇧</div>
+              <div>
+                <h4>Best 3 / Worst 3</h4>
+                <div class="desc">리턴 기준. (기여도/컨트리뷰션은 사용하지 않음)</div>
+              </div>
+            </div>
+            <div class="wMeta" id="bwMeta">-</div>
+          </div>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <span class="pill">Best 3: <b id="best3">-</b></span>
+            <span class="pill">Worst 3: <b id="worst3">-</b></span>
+            <span class="pill">Breadth: <b id="breadth">-</b></span>
+          </div>
+
+          <div class="footnote" style="margin-top:10px">
+            * Breadth는 CSV 내 상승/하락 종목 수로 계산합니다.
+          </div>
+        </div>
+
+        <div class="panel widget">
+          <div class="widgetHead">
+            <div class="wTitle">
+              <div class="wIcon">B</div>
+              <div>
+                <h4>Return Bar (Top 20)</h4>
+                <div class="desc">전체 20종목을 1D 리턴으로 정렬해 바차트로 보여줍니다.</div>
+              </div>
+            </div>
+            <div class="wMeta">Renderer: ECharts</div>
+          </div>
+          <div id="perfBar" class="chart"></div>
+        </div>
+      </div>
+
+      <div class="panel widget" style="margin-top:12px;">
+        <div class="widgetHead">
+          <div class="wTitle">
+            <div class="wIcon">M</div>
+            <div>
+              <h4>Top Movers (Visual)</h4>
+              <div class="desc">가장 큰 움직임을 위/아래로 시각 강조</div>
+            </div>
+          </div>
+          <div class="wMeta">Return-only</div>
+        </div>
+        <div id="moverBar" class="chart"></div>
+      </div>
+    </section>
+
+    <!-- UNIVERSE -->
+    <section class="section" id="sec-universe">
+      <div class="sectionHead">
+        <div>
+          <h3>Universe & Methodology</h3>
+          <p>유니버스/가중치는 <code>bm20_latest.json</code>의 <b>components</b>를 단일 기준으로 표시하고, Methodology 규칙과 자동 검증합니다.</p>
+        </div>
+        <div class="right" id="uniMeta">-</div>
+      </div>
+
+      <div class="widgets">
+        <div class="panel widget">
+          <div class="widgetHead">
+            <div class="wTitle">
+              <div class="wIcon">R</div>
+              <div>
+                <h4>Methodology (Auto-check)</h4>
+                <div class="desc">BTC 30% · ETH 20% · XRP/USDT/BNB 5% · 나머지 15종 균등(35%)</div>
+              </div>
+            </div>
+            <div class="wMeta"><span class="pill" id="methodBadge">검증중…</span></div>
+          </div>
+
+          <div class="footnote" id="methodText">-</div>
+          <div class="footnote" id="methodNote" style="margin-top:6px;">-</div>
+        </div>
+
+        <div class="panel widget">
+          <div class="widgetHead">
+            <div class="wTitle">
+              <div class="wIcon">20</div>
+              <div>
+                <h4>Current Universe (components)</h4>
+                <div class="desc">가중치 내림차순 · 기준일: <span id="uniAsOf">-</span></div>
+              </div>
+            </div>
+            <div class="wMeta" id="uniStats">-</div>
+          </div>
+
+          <div class="chips" id="uniList"></div>
+          <div class="footnote">
+            * components가 바뀌면(분기 리밸런싱) 여기와 Methodology 검증이 자동으로 갱신됩니다.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DATA -->
+    <section class="section" id="sec-data">
+      <div class="panel widget">
+        <div class="widgetHead">
+          <div class="wTitle">
+            <div class="wIcon">JS</div>
+            <div>
+              <h4>Data Paths</h4>
+              <div class="desc">현재 페이지가 읽는 파일(상대경로 기준)</div>
+            </div>
+          </div>
+          <div class="wMeta">data.blockmedia.co.kr</div>
+        </div>
+
+        <div class="footnote">
+          Latest: <code>bm20_latest.json</code><br/>
+          Series: <code>bm20_series.json</code><br/>
+          Daily CSV: <code>out/YYYY-MM-DD/bm20_daily_data_YYYY-MM-DD.csv</code><br/>
+          News: <code>out/YYYY-MM-DD/bm20_news_YYYY-MM-DD.txt</code> (있으면 자동 로드)
+        </div>
+      </div>
+    </section>
+
   </main>
+</div>
 
 <script>
-// ===== 공통 유틸 =====
-const qs = (s, el=document) => el.querySelector(s);
+  // ===== Utils =====
+  const qs = (s, el=document) => el.querySelector(s);
+  const qsa = (s, el=document) => Array.from(el.querySelectorAll(s));
 
-const fmtPct = v =>
-  (v===null||v===undefined||isNaN(v)) ? "—"
-  : (v>0?"+":"") + (Math.round(v*1000)/10).toFixed(1) + "%";
+  const fmtNum = (v, digits=2) => {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return "-";
+    return new Intl.NumberFormat('en-US',{maximumFractionDigits:digits}).format(n);
+  };
 
-const fmtNum = v =>
-  (v===null||v===undefined||isNaN(v)) ? "—"
-  : new Intl.NumberFormat('en-US',{maximumFractionDigits:2}).format(v);
+  // v is ratio (0.0123 => 1.23%)
+  const fmtPctRatio = (v, digits=2) => {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return "-";
+    const sign = n > 0 ? "+" : "";
+    return sign + (n*100).toFixed(digits) + "%";
+  };
 
-const findKey = (obj, candidates=[]) => {
-  for (const k of candidates){
-    if (obj && Object.hasOwn(obj,k)) return obj[k];
-  }
-};
+  // v is percent number (1.23 => 1.23%)
+  const fmtPctNumber = (v, digits=2) => {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return "-";
+    const sign = n > 0 ? "+" : "";
+    return sign + n.toFixed(digits) + "%";
+  };
 
-async function fetchAny(urls){
-  for (const u of urls){
-    try{
-      const r = await fetch(u, {cache:'no-store'});
-      if(r.ok) return {url:u, json:await r.json()};
-    }catch(e){}
-  }
-  throw new Error('no json found');
-}
+  const bust = () => "v=" + Date.now();
 
-function setDeltaBadge(pct){
-  const el = qs('#deltaBadge');
-  if(pct==null||isNaN(pct)){
-    el.textContent='데이터 없음';
-    return;
-  }
-  el.textContent=(pct>0?'▲ ':'▼ ')+fmtPct(pct);
-  el.className='delta '+(pct>=0?'up':'down');
-}
-
-function formatFunding(f){
-  if(f==null) return '—';
-  if(typeof f==='number') return fmtPct(f);
-  if(typeof f==='string') return f;
-  if(typeof f==='object'){
-    const btc=f.btc??f.BTC??f.Btc;
-    const eth=f.eth??f.ETH??f.Eth;
-    const p=x=>(typeof x==='number')?fmtPct(x):(x??'—');
-    return `BTC ${p(btc)}, ETH ${p(eth)}`;
-  }
-  return '—';
-}
-
-// ===== fetch helpers =====
-async function fetchJsonTry(u, tag=''){
-  try{
-    const r = await fetch(u + `?v=${Date.now()}`, {cache:'no-store'});
-    if (r.ok) return await r.json();
-  }catch(e){}
-}
-async function fetchTextTry(u, tag=''){
-  try{
-    const r = await fetch(u + `?v=${Date.now()}`, {cache:'no-store'});
-    if (r.ok) return await r.text();
-  }catch(e){}
-}
-
-function ymdFrom(asof, offsetDays=0){
-  const t = asof ? new Date(asof) : new Date();
-  if (offsetDays) t.setDate(t.getDate()+offsetDays);
-  const y=t.getFullYear(), m=String(t.getMonth()+1).padStart(2,'0'), d=String(t.getDate()).padStart(2,'0');
-  return `${y}-${m}-${d}`;
-}
-
-// ===== 김치 추출: 어떤 포맷이 와도 "비율(0.0084)"로 정규화 =====
-function extractKimchi(obj){
-  if (obj == null) return null;
-
-  // number: 0.0084(비율) / 0.84(%수치) 모두 처리
-  if (typeof obj === 'number' && isFinite(obj)){
-    if (obj >= 1) return obj / 100;
-    return obj;
-  }
-
-  // string: "0.84%" / "0.84" / "0.0084"
-  if (typeof obj === 'string'){
-    const s = obj.trim();
-    const hasPct = s.includes('%');
-    const v = parseFloat(s.replace('%',''));
-    if (!isFinite(v)) return null;
-    if (hasPct) return v/100;
-    return v >= 1 ? v/100 : v;
-  }
-
-  // object: 다양한 키 커버 + 중첩 구조 흡수
-  if (typeof obj === 'object'){
-    const v = findKey(obj, [
-      'kimchi','kimchi_pct','kimchi_percent',
-      'kimchi_premium','kimchi_premium_pct','kimchiPremium',
-      'premium','premium_pct',
-      'pct','percent','rate','value'
-    ]);
-    if (v != null) return extractKimchi(v);
-
-    // 혹시 더 깊이 들어간 형태까지 1회 탐색
-    for (const k of Object.keys(obj)){
-      const out = extractKimchi(obj[k]);
-      if (out != null) return out;
+  async function fetchAnyJson(urls){
+    for (const u of urls){
+      try{
+        const r = await fetch(u + (u.includes("?") ? "&" : "?") + bust(), {cache:'no-store'});
+        if (r.ok) return {url:u, json: await r.json()};
+      }catch(e){}
     }
+    throw new Error("No JSON found");
   }
 
-  return null;
-}
+  async function fetchTextTry(url){
+    try{
+      const r = await fetch(url + "?" + bust(), {cache:'no-store'});
+      if (r.ok) return await r.text();
+    }catch(e){}
+    return null;
+  }
 
-// ===== 김치 로더: /bm/ 위치에 따라 경로 꼬임 방지 + archive/out 모두 탐색 =====
-async function getKimchiFromOut(asof){
-  const dates = [ ymdFrom(asof,0), ymdFrom(null,0), ymdFrom(asof,-1) ];
+  function ymdFrom(asof){
+    const t = asof ? new Date(asof) : new Date();
+    const y=t.getFullYear(), m=String(t.getMonth()+1).padStart(2,'0'), d=String(t.getDate()).padStart(2,'0');
+    return `${y}-${m}-${d}`;
+  }
 
-  const inBm = location.pathname.includes('/bm/');
+  function extractKimchi(obj){
+    if (obj == null) return null;
 
-  // 후보 URL 생성: 상대/절대 모두 포함 (경로 꼬임 방지)
-  const candidates = (d) => ([
-    ...(inBm ? [
-      `out/${d}/kimchi_${d}.json`,
-      `archive/${d}/kimchi_${d}.json`,
-    ] : []),
-
-    // /out/... 경로 추가
-    `/out/${d}/kimchi_${d}.json`,
-
-    // 루트에서 접근할 때 대비
-    `bm/out/${d}/kimchi_${d}.json`,
-    `bm/archive/${d}/kimchi_${d}.json`,
-
-    // 절대경로로도 한 번 더 (캐시/상대경로 이슈 방지)
-    `/bm/out/${d}/kimchi_${d}.json`,
-    `/bm/archive/${d}/kimchi_${d}.json`,
-  ]);
-
-  for (const d of dates){
-    for (const url of candidates(d)){
-      const j = await fetchJsonTry(url, `kimchi ${url}`);
-      const v = extractKimchi(j);
-      if (v != null){
-        // 디버그: 어디서 가져왔는지 hover로 확인 가능
-        const el = document.getElementById('kimchi');
-        if (el) el.setAttribute('title', `src:${url} · ratio:${v}`);
-        return v; // ✅ 항상 비율
+    if (typeof obj === 'number' && Number.isFinite(obj)){
+      if (obj >= 1) return obj / 100;
+      return obj;
+    }
+    if (typeof obj === 'string'){
+      const s = obj.trim();
+      const hasPct = s.includes('%');
+      const v = parseFloat(s.replace('%',''));
+      if (!Number.isFinite(v)) return null;
+      if (hasPct) return v/100;
+      return v >= 1 ? v/100 : v;
+    }
+    if (typeof obj === 'object'){
+      const candidates = [
+        'kimchi','kimchi_pct','kimchi_percent',
+        'kimchi_premium','kimchi_premium_pct','kimchiPremium',
+        'premium','premium_pct',
+        'pct','percent','rate','value'
+      ];
+      for (const k of candidates){
+        if (Object.hasOwn(obj,k)) return extractKimchi(obj[k]);
+      }
+      for (const k of Object.keys(obj)){
+        const out = extractKimchi(obj[k]);
+        if (out != null) return out;
       }
     }
+    return null;
   }
-  return null;
-}
 
-// ===== CSV 로더 =====
-async function loadPerfFromCSV(asof){
-  const d = ymdFrom(asof);
-  const main = `out/${d}/bm20_daily_data_${d}.csv`;
-  const csv = await fetchTextTry(main);
-  if (csv) return csv;
-  return await fetchTextTry(`bm/out/${d}/bm20_daily_data_${d}.csv`);
-}
-
-// ===== 페이지 로드 =====
-async function loadLatest(){
-  try{
-    const { json: j } = await fetchAny(['bm20_latest.json','latest.json','bm/bm20_latest.json','bm/latest.json']);
-
-    const asof = j.asOf || j.as_of || j.date || j.day || '';
-    if (asof) qs('#asof').textContent = `기준: ${asof}`;
-
-    const level = j.bm20Level ?? j.level ?? j.index ?? j.value;
-    qs('#level').textContent = fmtNum(level);
-
-    const R = j.returns || {};
-    const r1 = j.bm20ChangePct ?? R['1D'];
-    qs('#r1d').textContent = fmtPct(r1);
-    if (qs('#r7d'))  qs('#r7d').textContent  = fmtPct(R['7D']);
-    if (qs('#r30d')) qs('#r30d').textContent = fmtPct(R['30D']);
-    if (qs('#rytd')) qs('#rytd').textContent = fmtPct(R['YTD']);
-    if (qs('#r1y'))  qs('#r1y').textContent  = fmtPct(R['1Y']);
-    setDeltaBadge(r1);
-
-    // 펀딩 & 김치
-    const funding = findKey(j, ['funding_rates','funding','funding_bps','fundingRate']);
-    let kimchi = await getKimchiFromOut(asof);
-
-    // 파일 로드 실패 시 latest.json 내 키로 폴백
-    if (kimchi == null) {
-      const kLatest = findKey(j, ['kimchi_2025','kimchi_premium_pct','kimchi_premium_latest','kimchi']);
-      kimchi = extractKimchi(kLatest);
-      const el = document.getElementById('kimchi');
-      if (el && kimchi != null) el.setAttribute('title', `src:latest.json · ratio:${kimchi}`);
-    }
-
-    qs('#kimchi').textContent  = kimchi!=null ? fmtPct(kimchi) : '—';
-    qs('#funding').textContent = formatFunding(funding);
-
-    // 뉴스 링크
-    const news = j.news_file || j.news_path || j.news;
-    if (news && typeof news === 'string') {
-      const a = qs('#newsLink'); a.href = news; a.classList.remove('hide');
-    }
-
-    // (디버그 섹션을 지웠으면 아래는 없어도 됨. 있어도 오류는 안 나게 처리)
-    const dump = qs('#latestDump');
-    if (dump) dump.textContent = JSON.stringify(j, null, 2);
-
-  } catch(e) {
-    const dump = qs('#latestDump');
-    if (dump) dump.textContent = 'latest.json을 불러오지 못했습니다.';
+  function setDeltaChip(el, ratio){
+    if (!el) return;
+    const n = Number(ratio);
+    if (!Number.isFinite(n)) { el.textContent = "1D: -"; return; }
+    const s = (n>=0 ? "▲ " : "▼ ") + fmtPctRatio(n, 2);
+    el.innerHTML = `1D: <span class="delta ${n>=0?'up':'down'}">${s}</span>`;
   }
-}
 
-async function loadSeries(){
-  const host = qs('#svgHost');
-  const svg  = qs('svg', host);
-  const statusEl = qs('#seriesStatus');
+  function parseFunding(f){
+    if (f==null) return "-";
+    if (typeof f === 'number') return fmtPctRatio(f,2);
+    if (typeof f === 'string') return f;
+    if (typeof f === 'object'){
+      const btc = f.btc ?? f.BTC ?? f.Btc;
+      const eth = f.eth ?? f.ETH ?? f.Eth;
+      const p = x => (typeof x === 'number') ? fmtPctRatio(x,2) : (x ?? "-");
+      return `BTC ${p(btc)} · ETH ${p(eth)}`;
+    }
+    return "-";
+  }
 
-  try{
-    const { url, json: arr } = await fetchAny(['bm20_series.json','series.json','bm/bm20_series.json','bm/series.json']);
+  // ===== Charts =====
+  let seriesChart, perfChart, moverChart;
+  let SERIES = [];
+  let LATEST = null;
 
-    const points = arr.map(d=>({
-      t:new Date((d.date||d.day||d.asof||d.asOf||d[0]||Date.now())),
-      v:+((d.level||d.index||d.value||d.close||d.bm20Level||d[1]))
-    }))
-    .filter(x=>isFinite(x.v))
-    .sort((a,b)=>a.t-b.t);
+  function initCharts(){
+    seriesChart = echarts.init(document.getElementById("seriesChart"));
+    perfChart   = echarts.init(document.getElementById("perfBar"));
+    moverChart  = echarts.init(document.getElementById("moverBar"));
 
-    if (statusEl) statusEl.textContent = `series: ${url} · points: ${points.length}`;
+    const ro = new ResizeObserver(() => {
+      requestAnimationFrame(() => {
+        seriesChart?.resize();
+        perfChart?.resize();
+        moverChart?.resize();
+      });
+    });
+    [seriesChart, perfChart, moverChart].forEach(c => c && ro.observe(c.getDom()));
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) setTimeout(()=>[seriesChart,perfChart,moverChart].forEach(c=>c?.resize()), 50);
+    });
+  }
 
-    if (!points.length){
-      svg.innerHTML = '';
+  function sliceSeries(mode){
+    const arr = SERIES.slice().sort((a,b)=>a.t-b.t);
+    if (!arr.length) return arr;
+
+    if (mode === "YTD"){
+      const y0 = new Date(new Date().getFullYear(),0,1);
+      return arr.filter(p => p.t >= y0);
+    }
+    if (mode === "1Y"){
+      const d = new Date();
+      d.setFullYear(d.getFullYear()-1);
+      return arr.filter(p => p.t >= d);
+    }
+    return arr;
+  }
+
+  function renderSeries(mode){
+    const data = sliceSeries(mode);
+    const status = document.getElementById("seriesStatus");
+    const meta = document.getElementById("seriesMeta");
+
+    if (!data.length){
+      status.textContent = "series: -";
+      meta.textContent = "no data";
+      seriesChart?.clear();
       return;
     }
 
-    let mode=0;
-    const compute=()=>{
-      if(mode===1){
-        const y0=new Date(new Date().getFullYear(),0,1);
-        return points.filter(p=>p.t>=y0);
-      }
-      if(mode===0){
-        const d=new Date(); d.setFullYear(d.getFullYear()-1);
-        return points.filter(p=>p.t>=d);
-      }
-      return points;
-    };
+    status.textContent = `range: ${mode} · points: ${data.length}`;
+    meta.textContent = `from ${data[0].date} to ${data[data.length-1].date}`;
 
-    function draw(data){
-      svg.innerHTML='';
-      const pad=16;
-      const W=svg.clientWidth||host.clientWidth;
-      const H=svg.clientHeight||host.clientHeight;
+    const x = data.map(d => d.date);
+    const y = data.map(d => d.v);
 
-      const minX=+data[0].t, maxX=+data[data.length-1].t;
-      const minV=Math.min(...data.map(p=>p.v));
-      const maxV=Math.max(...data.map(p=>p.v));
+    // axis range with padding
+    const minV = Math.min(...y);
+    const maxV = Math.max(...y);
+    const pad = (maxV-minV) * 0.12 || 1;
+    const ymin = minV - pad;
+    const ymax = maxV + pad;
 
-      const x=t=> pad+((t-minX)/(maxX-minX||1))*(W-2*pad);
-      const y=v=> H-pad-((v-minV)/(maxV-minV||1))*(H-2*pad);
-
-      const axes=document.createElementNS('http://www.w3.org/2000/svg','path');
-      axes.setAttribute('d',`M${pad} ${pad}V${H-pad}H${W-pad}`);
-      axes.setAttribute('stroke',getComputedStyle(document.documentElement).getPropertyValue('--border') || '#e5e7eb');
-      axes.setAttribute('stroke-width','1');
-      axes.setAttribute('fill','none');
-      svg.appendChild(axes);
-
-      const path=document.createElementNS('http://www.w3.org/2000/svg','path');
-      let dd='';
-      data.forEach((p,i)=>{ dd+=(i?'L':'M')+x(+p.t)+' '+y(p.v)+' '; });
-      path.setAttribute('d',dd.trim());
-      path.setAttribute('fill','none');
-      path.setAttribute('stroke',getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#2563eb');
-      path.setAttribute('stroke-width','2');
-      svg.appendChild(path);
-
-      const last=data[data.length-1];
-      const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
-      dot.setAttribute('cx',x(+last.t));
-      dot.setAttribute('cy',y(last.v));
-      dot.setAttribute('r','4');
-      dot.setAttribute('fill','#ffffff');
-      dot.setAttribute('stroke',getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#2563eb');
-      svg.appendChild(dot);
-    }
-
-    const doDraw=()=>{ const d=compute(); if(d.length>1) draw(d); };
-    doDraw();
-
-    const btn = qs('#btnZoom');
-    if (btn){
-      btn.addEventListener('click',()=>{
-        mode=(mode+1)%3;
-        btn.textContent=['범위: 1Y ▾','범위: YTD ▾','범위: ALL ▾'][mode];
-        doDraw();
-      });
-    }
-
-  } catch(e){
-    if (statusEl) statusEl.textContent = 'series.json을 불러오지 못했습니다. (파일 경로/배포 경로 확인 필요)';
+    seriesChart.setOption({
+      animationDuration: 2400,
+      animationEasing: "quarticInOut",
+      grid: { left: 52, right: 18, top: 28, bottom: 36, containLabel: true },
+      tooltip: {
+        trigger: "axis",
+        axisPointer: { type: "line" },
+        formatter: (params) => {
+          const p = params[0];
+          const idx = p.dataIndex;
+          const v = y[idx];
+          return `<b>${x[idx]}</b><br/>BM20 ${fmtNum(v, 2)}`;
+        }
+      },
+      xAxis: {
+        type: "category",
+        data: x,
+        boundaryGap: false,
+        axisLabel: { color: "#64748b", hideOverlap:true },
+        axisLine: { lineStyle:{ color:"#e5e7eb" } },
+        axisTick: { show:false }
+      },
+      yAxis: {
+        type: "value",
+        min: ymin,
+        max: ymax,
+        axisLabel: { color:"#64748b" },
+        splitLine: { show:true, lineStyle:{ color:"#e5e7eb" } }
+      },
+      dataZoom: [
+        { type:"inside", start: 0, end: 100 },
+        { type:"slider", height: 18, bottom: 8 }
+      ],
+      series: [{
+        type: "line",
+        data: y,
+        smooth: true,
+        symbol: "circle",
+        symbolSize: 5,
+        showSymbol: false,
+        lineStyle: { width: 2 },
+        areaStyle: { opacity: 0.08 }
+      }]
+    }, true);
   }
-}
 
-// ===== 글로벌 퍼포먼스 (CSV 기반) =====
-async function loadComponentsAndRenderBars(){
-  let asof = null;
-  try{
-    const j = await (await fetch('bm20_latest.json', {cache:'no-store'})).json();
-    asof = j.asOf || j.as_of || j.date || j.day || null;
-  }catch(e){}
+  // ===== Load Latest + Universe/Methodology binding =====
+  function bindUniverseAndMethodology(j){
+    const asofTxt = (j.asOf || j.as_of || j.date || j.day || '') + '';
+    const asofEl = document.getElementById('uniAsOf');
+    if (asofEl) asofEl.textContent = asofTxt || '-';
 
-  const csv = await loadPerfFromCSV(asof);
-  if (!csv) return;
+    const comps = Array.isArray(j.components) ? j.components : [];
+    const uniList = document.getElementById('uniList');
+    const methodBadge = document.getElementById('methodBadge');
+    const methodText = document.getElementById('methodText');
+    const methodNote = document.getElementById('methodNote');
+    const uniStats = document.getElementById('uniStats');
+    const metaMethod = document.getElementById('metaMethod');
+    const uniMeta = document.getElementById('uniMeta');
 
-  const [head, ...lines] = csv.trim().split(/\r?\n/);
-  const keyIdx = Object.fromEntries(head.split(',').map((h,i)=>[h.trim(), i]));
+    if (!uniList || !methodBadge || !methodText || !uniStats) return;
 
-  const rows = lines.map(line=>{
-    const c = line.split(',').map(s=>s.trim());
-    const pctRaw = parseFloat(c[keyIdx.price_change_pct]);
-    const ret = isFinite(pctRaw) ? pctRaw / 100 : null;
-    return {
-      symbol: (c[keyIdx.symbol]||'').toUpperCase(),
-      ret_1d: ret,
-      contrib: parseFloat(c[keyIdx.contribution]||'')
-    };
-  }).filter(r=>r.symbol && r.ret_1d!=null);
+    const rows = comps
+      .map(x => ({
+        symbol: (x.symbol || '').toUpperCase(),
+        weight: Number(x.weight ?? x.weight_ratio ?? x.w ?? x.weight_base)
+      }))
+      .filter(x => x.symbol && Number.isFinite(x.weight));
 
-  rows.sort((a,b)=>b.ret_1d - a.ret_1d);
+    rows.sort((a,b)=>b.weight-a.weight);
 
-  const bestEl = document.getElementById('best3');
-  const worstEl = document.getElementById('worst3');
-  if (bestEl) bestEl.textContent = rows.slice(0,3).map(r=>r.symbol).join(' · ') || '—';
-  if (worstEl) worstEl.textContent = rows.slice(-3).reverse().map(r=>r.symbol).join(' · ') || '—';
-
-  const host = document.querySelector('.bm-bars');
-  if (host) {
-    const topN = rows.slice(0, 12);
-    const maxAbs = Math.max(...topN.map(r => Math.abs(r.ret_1d || 0))) || 1;
-
-    host.innerHTML = topN.map(r => {
-      const ratio = Math.abs(r.ret_1d) / maxAbs;
-      const pct   = r.ret_1d * 100;
-      const width = Math.max(2, Math.round(ratio * 100));
-
-      const isUp = r.ret_1d >= 0;
-      const hue = isUp ? 120 : 0;
-      const light = 65 - Math.round(ratio * 30);
-      const barColor = `hsl(${hue} 60% ${light}%)`;
-      const textColor = isUp ? '#166534' : '#991b1b';
-
-      return `
-        <div class="bm-row">
-          <div class="bm-ticker">${r.symbol}</div>
-          <div class="bm-shell">
-            <div class="bm-bar" style="width:${width}%; background:${barColor};"></div>
-          </div>
-          <div class="bm-pct" style="color:${textColor}">${pct>=0?'+':''}${pct.toFixed(2)}%</div>
-        </div>
-      `;
+    uniList.innerHTML = rows.map(r=>{
+      const w = r.weight * 100;
+      return `<span class="chipSym" title="weight=${r.weight}">
+        <b>${r.symbol}</b><span>${w.toFixed(2)}%</span>
+      </span>`;
     }).join('');
+
+    const sumW = rows.reduce((s,r)=>s+r.weight,0);
+    const n = rows.length;
+
+    // Methodology rule
+    const rule = {
+      btc: 0.30,
+      eth: 0.20,
+      majors5: 0.05, // XRP/USDT/BNB
+      restEach: 0.35/15
+    };
+
+    methodText.innerHTML =
+      `• 구성: 글로벌 대형 코인 20종(분기 리밸런싱)<br>` +
+      `• 가중치: BTC 30%, ETH 20%, XRP/USDT/BNB 각 5%, 나머지 15종 균등(총 35% → 각 ${(rule.restEach*100).toFixed(2)}%)<br>` +
+      `• Best 3 / Worst 3: <b>1D 리턴(등락률)</b> 기준<br>` +
+      `• 데이터: Coingecko(기본) · Yahoo Finance(폴백)`;
+
+    const wOf = (sym)=> rows.find(r=>r.symbol===sym)?.weight;
+    const okClose = (a,b,eps=1e-6)=> (a!=null && Math.abs(a-b) <= eps);
+
+    const excluded = new Set(['BTC','ETH','XRP','USDT','BNB']);
+    const rest = rows.filter(r=>!excluded.has(r.symbol));
+    const restOkCount = rest.filter(r=>okClose(r.weight, rule.restEach, 1e-6)).length;
+
+    const sumOk = Math.abs(sumW - 1.0) < 1e-6;
+    const allOk =
+      (n === 20) && sumOk &&
+      okClose(wOf('BTC'), rule.btc, 1e-6) &&
+      okClose(wOf('ETH'), rule.eth, 1e-6) &&
+      okClose(wOf('XRP'), rule.majors5, 1e-6) &&
+      okClose(wOf('USDT'), rule.majors5, 1e-6) &&
+      okClose(wOf('BNB'), rule.majors5, 1e-6) &&
+      (rest.length === 15 && restOkCount === 15);
+
+    methodBadge.textContent = allOk ? "Method ✅" : "Method ⚠️";
+    methodBadge.style.borderColor = allOk ? "#bbf7d0" : "#fecaca";
+    methodBadge.style.background = allOk ? "#f0fdf4" : "#fff1f2";
+    methodBadge.style.color = allOk ? "#166534" : "#991b1b";
+
+    const probs = [];
+    if (n !== 20) probs.push(`구성=${n}(20 필요)`);
+    if (!sumOk) probs.push(`합=${(sumW*100).toFixed(4)}%(100% 필요)`);
+    if (!okClose(wOf('BTC'), rule.btc, 1e-6)) probs.push(`BTC=${((wOf('BTC')||0)*100).toFixed(2)}%(30%)`);
+    if (!okClose(wOf('ETH'), rule.eth, 1e-6)) probs.push(`ETH=${((wOf('ETH')||0)*100).toFixed(2)}%(20%)`);
+    if (!okClose(wOf('XRP'), rule.majors5, 1e-6)) probs.push(`XRP=${((wOf('XRP')||0)*100).toFixed(2)}%(5%)`);
+    if (!okClose(wOf('USDT'), rule.majors5, 1e-6)) probs.push(`USDT=${((wOf('USDT')||0)*100).toFixed(2)}%(5%)`);
+    if (!okClose(wOf('BNB'), rule.majors5, 1e-6)) probs.push(`BNB=${((wOf('BNB')||0)*100).toFixed(2)}%(5%)`);
+    if (!(rest.length === 15 && restOkCount === 15)) probs.push(`나머지 15종 균등(각 ${(rule.restEach*100).toFixed(2)}%)`);
+
+    methodNote.textContent = allOk
+      ? "현재 components가 Methodology 설명과 일치합니다."
+      : ("불일치: " + probs.join(" · "));
+
+    uniStats.textContent = `Universe ${n} · Σweight ${(sumW*100).toFixed(4)}%`;
+    if (metaMethod) metaMethod.innerHTML = `METHOD: <b>${allOk ? "OK" : "CHECK"}</b>`;
+    if (uniMeta) uniMeta.textContent = `asOf ${asofTxt || "-"}`;
   }
 
-  const topN = rows.slice(0,20);
-  const dom = document.getElementById('perfBar');
-  if (!dom) return;
+  // ===== Load series =====
+  async function loadSeries(){
+    const status = document.getElementById("seriesStatus");
+    const { url, json: arr } = await fetchAnyJson(["bm20_series.json","series.json","bm/bm20_series.json","bm/series.json"]);
+    const points = (Array.isArray(arr)?arr:[]).map(d=>{
+      const date = (d.date||d.day||d.asof||d.asOf||d[0]);
+      const v = Number(d.level||d.index||d.value||d.close||d.bm20Level||d[1]);
+      const t = new Date(date || Date.now());
+      return { date: (date ? String(date).slice(0,10) : ymdFrom(null)), t, v };
+    }).filter(p => Number.isFinite(p.v) && p.t.toString() !== "Invalid Date")
+      .sort((a,b)=>a.t-b.t);
 
-  const chart = echarts.init(dom, null, {renderer:'canvas'});
-  chart.setOption({
-    grid: {left: 8, right: 16, top: 20, bottom: 8, containLabel: true},
-    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, valueFormatter: v => (v>0?'+':'')+(v*100).toFixed(2)+'%' },
-    xAxis: {
-      type: 'value',
-      axisLabel: { formatter: v => (v>0?'+':'')+(v*100).toFixed(0)+'%' },
-      splitLine:{show:true, lineStyle:{color:'#e5e7eb'}}
-    },
-    yAxis: { type: 'category', data: topN.map(r=>r.symbol), axisTick:{show:false} },
-    series: [{
-      type: 'bar',
-      data: topN.map(r=>r.ret_1d),
-      label:{show:true,position:'right',formatter:p=>(p.value>=0?'+':'')+(p.value*100).toFixed(2)+'%'}
-    }],
-    animation: true
+    SERIES = points;
+    const el = document.getElementById("seriesStatus");
+    if (el) el.textContent = `series: ${url} · points: ${points.length}`;
+  }
+
+  // ===== Load CSV =====
+  async function loadPerfCSV(asof){
+    const d = ymdFrom(asof);
+    const main = `out/${d}/bm20_daily_data_${d}.csv`;
+    const csv = await fetchTextTry(main);
+    if (csv) return {d, path: main, csv};
+    const alt = `bm/out/${d}/bm20_daily_data_${d}.csv`;
+    const csv2 = await fetchTextTry(alt);
+    if (csv2) return {d, path: alt, csv: csv2};
+    return null;
+  }
+
+  function parseCSV(csv){
+    const lines = csv.trim().split(/\r?\n/);
+    if (lines.length < 2) return [];
+    const head = lines[0].split(',').map(s=>s.trim());
+    const idx = Object.fromEntries(head.map((h,i)=>[h,i]));
+
+    const get = (cols, key) => cols[idx[key]];
+
+    const rows = lines.slice(1).map(line=>{
+      const c = line.split(',').map(s=>s.trim());
+      const sym = (get(c,'symbol')||'').toUpperCase();
+      const pct = Number(get(c,'price_change_pct'));
+      const ret = Number.isFinite(pct) ? (pct/100) : null; // ratio
+      return { symbol: sym, ret_1d: ret };
+    }).filter(r=>r.symbol && r.ret_1d!=null);
+
+    return rows;
+  }
+
+  function renderMovers(rows, asof, sourcePath){
+    const moverMeta = document.getElementById("moverMeta");
+    const bwMeta = document.getElementById("bwMeta");
+    if (moverMeta) moverMeta.textContent = `asOf ${asof || "-"} · src ${sourcePath || "-"}`;
+    if (bwMeta) bwMeta.textContent = `Return-only`;
+
+    // best/worst
+    const sorted = rows.slice().sort((a,b)=>b.ret_1d - a.ret_1d);
+    const best3 = sorted.slice(0,3);
+    const worst3 = sorted.slice(-3).reverse();
+
+    const upCount = rows.filter(r=>r.ret_1d>0).length;
+    const downCount = rows.filter(r=>r.ret_1d<0).length;
+
+    qs("#best3").textContent = best3.map(r=>`${r.symbol}(${fmtPctRatio(r.ret_1d,2)})`).join(" · ") || "-";
+    qs("#worst3").textContent = worst3.map(r=>`${r.symbol}(${fmtPctRatio(r.ret_1d,2)})`).join(" · ") || "-";
+    qs("#breadth").textContent = `${upCount} ↑ · ${downCount} ↓`;
+
+    const breadthEl = document.getElementById("breadth");
+    const kpiBreadth = document.getElementById("kpiBreadth");
+    if (kpiBreadth) kpiBreadth.textContent = `상승 ${upCount} · 하락 ${downCount}`;
+
+    // bar (all 20)
+    const topN = sorted.slice(0,20);
+    const yCats = topN.map(r=>r.symbol);
+    const vals = topN.map(r=>r.ret_1d);
+
+    perfChart.setOption({
+      grid: { left: 18, right: 18, top: 18, bottom: 12, containLabel: true },
+      tooltip: {
+        trigger: "axis",
+        axisPointer: { type: "shadow" },
+        formatter: (params) => {
+          const p = params[0];
+          const v = p.value;
+          return `<b>${p.name}</b><br/>1D ${fmtPctRatio(v,2)}`;
+        }
+      },
+      xAxis: {
+        type: "value",
+        axisLabel: { color:"#64748b", formatter: v => (v*100).toFixed(0)+"%" },
+        splitLine: { show:true, lineStyle:{ color:"#e5e7eb" } }
+      },
+      yAxis: {
+        type: "category",
+        data: yCats,
+        axisTick:{ show:false },
+        axisLabel:{ color:"#0f172a" }
+      },
+      series: [{
+        type: "bar",
+        data: vals,
+        barWidth: 14,
+        itemStyle: {
+          color: (p) => (p.value >= 0 ? "#16a34a" : "#dc2626")
+        },
+        label: {
+          show: true,
+          position: "right",
+          formatter: (p) => fmtPctRatio(p.value,2),
+          color: "#334155",
+          fontWeight: 800
+        }
+      }]
+    }, true);
+
+    // movers visual (best & worst emphasis)
+    const movers = best3.concat(worst3);
+    const moverCats = movers.map(r=>r.symbol);
+    const moverVals = movers.map(r=>r.ret_1d);
+
+    moverChart.setOption({
+      grid: { left: 18, right: 18, top: 18, bottom: 12, containLabel: true },
+      tooltip: {
+        trigger: "axis",
+        axisPointer: { type: "shadow" },
+        formatter: (params) => {
+          const p = params[0];
+          return `<b>${p.name}</b><br/>1D ${fmtPctRatio(p.value,2)}`;
+        }
+      },
+      xAxis: {
+        type: "value",
+        axisLabel: { color:"#64748b", formatter: v => (v*100).toFixed(0)+"%" },
+        splitLine: { show:true, lineStyle:{ color:"#e5e7eb" } }
+      },
+      yAxis: { type: "category", data: moverCats, axisTick:{show:false}, axisLabel:{color:"#0f172a"} },
+      series: [{
+        type: "bar",
+        data: moverVals,
+        barWidth: 18,
+        itemStyle: { color: (p)=> (p.value>=0 ? "#16a34a" : "#dc2626") },
+        label: { show:true, position:"right", formatter: p=>fmtPctRatio(p.value,2), fontWeight:900 }
+      }]
+    }, true);
+  }
+
+  // ===== News loader =====
+  async function loadNews(asof){
+    const d = ymdFrom(asof);
+    const candidates = [
+      `out/${d}/bm20_news_${d}.txt`,
+      `archive/${d}/bm20_news_${d}.txt`,
+      `bm/out/${d}/bm20_news_${d}.txt`,
+      `bm/archive/${d}/bm20_news_${d}.txt`,
+    ];
+    for (const p of candidates){
+      const txt = await fetchTextTry(p);
+      if (txt){
+        const lines = txt.trim().split(/\r?\n/);
+        const title = lines[0] || "BM20 Update";
+        const body = lines.slice(1).join("\n").trim() || lines[0] || "-";
+
+        const meta = document.getElementById("newsMeta");
+        if (meta) meta.textContent = `asOf ${d} · src ${p}`;
+
+        const a = document.getElementById("newsLink");
+        if (a){
+          a.style.display = "inline";
+          a.href = p;
+          a.textContent = `bm20_news_${d}.txt`;
+        }
+
+        document.getElementById("newsTitle").textContent = title;
+        document.getElementById("newsBody").textContent = body;
+        return true;
+      }
+    }
+    // fallback: no news
+    const meta = document.getElementById("newsMeta");
+    if (meta) meta.textContent = `asOf ${d} · news not found`;
+    return false;
+  }
+
+  // ===== Main loader =====
+  async function loadLatest(){
+    const { json: j } = await fetchAnyJson(["bm20_latest.json","latest.json","bm/bm20_latest.json","bm/latest.json"]);
+    LATEST = j;
+
+    const asof = j.asOf || j.as_of || j.date || j.day || "";
+    const level = j.bm20Level ?? j.level ?? j.index ?? j.value;
+
+    const R = j.returns || {};
+    const r1 = j.bm20ChangePct ?? R["1D"];
+    const r7 = R["7D"];
+    const r30 = R["30D"];
+    const r1y = R["1Y"];
+    const rytd = R["YTD"];
+
+    // meta chips
+    const metaAsOf = document.getElementById("metaAsOf");
+    if (metaAsOf) metaAsOf.innerHTML = `ASOF: <b>${asof || "-"}</b>`;
+    setDeltaChip(document.getElementById("metaDelta"), r1);
+
+    // KPI values
+    document.getElementById("kpiLevel").textContent = fmtNum(level, 2);
+    document.getElementById("kpiLevelNote").textContent = `base=100 · ${asof || "-"}`;
+
+    document.getElementById("kpi1d").innerHTML = `<span class="delta ${(Number(r1)>=0)?'up':'down'}">${fmtPctRatio(r1,2)}</span>`;
+    document.getElementById("kpi7d").textContent = fmtPctRatio(r7,2);
+    document.getElementById("kpi30d").textContent = fmtPctRatio(r30,2);
+    document.getElementById("kpi1y").textContent = fmtPctRatio(r1y,2);
+
+    document.getElementById("kpi7dNote").textContent = "rolling";
+    document.getElementById("kpi30dNote").textContent = "rolling";
+    document.getElementById("kpi1yNote").textContent = "rolling";
+
+    // Kimchi / Funding
+    const funding = j.funding_rates || j.funding || j.funding_bps || j.fundingRate;
+    const kLatest = j.kimchi_2025 ?? j.kimchi_premium_pct ?? j.kimchi_premium_latest ?? j.kimchi;
+    const kimchiRatio = extractKimchi(kLatest);
+
+    document.getElementById("kpiKimchi").textContent = (kimchiRatio!=null) ? fmtPctRatio(kimchiRatio,2) : "-";
+    document.getElementById("kpiFunding").textContent = `Funding: ${parseFunding(funding)}`;
+
+    // News
+    await loadNews(asof);
+
+    // Universe & Methodology
+    bindUniverseAndMethodology(j);
+
+    // Load CSV + movers
+    const perf = await loadPerfCSV(asof);
+    if (perf){
+      const rows = parseCSV(perf.csv);
+      renderMovers(rows, asof, perf.path);
+    }
+
+    // Link hook
+    const newsPath = j.news_file || j.news_path || j.news;
+    if (newsPath && typeof newsPath === "string"){
+      const a = document.getElementById("newsLink");
+      if (a){
+        a.style.display = "inline";
+        a.href = newsPath;
+      }
+    }
+  }
+
+  // ===== Controls =====
+  function setActive(btnId){
+    ["btn1y","btnytd","btnall"].forEach(id => {
+      const b = document.getElementById(id);
+      if (b) b.classList.toggle("active", id === btnId);
+    });
+  }
+
+  async function main(){
+    initCharts();
+
+    await loadSeries();
+    renderSeries("1Y");
+    setActive("btn1y");
+
+    document.getElementById("btn1y")?.addEventListener("click", ()=>{
+      renderSeries("1Y"); setActive("btn1y");
+    });
+    document.getElementById("btnytd")?.addEventListener("click", ()=>{
+      renderSeries("YTD"); setActive("btnytd");
+    });
+    document.getElementById("btnall")?.addEventListener("click", ()=>{
+      renderSeries("ALL"); setActive("btnall");
+    });
+
+    await loadLatest();
+
+    window.addEventListener("resize", ()=>{
+      seriesChart?.resize(); perfChart?.resize(); moverChart?.resize();
+    });
+  }
+
+  main().catch(err=>{
+    console.error(err);
+    alert("BM20 로딩 실패: bm20_latest.json / bm20_series.json / out/YYYY-MM-DD/*.csv 경로를 확인하세요.");
   });
-
-  window.addEventListener('resize', ()=> chart.resize());
-}
-
-// ===== 실행 =====
-loadLatest();
-loadSeries();
-loadComponentsAndRenderBars();
 </script>
 
 </body>
