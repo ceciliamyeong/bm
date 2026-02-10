@@ -4,33 +4,41 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="x-apple-disable-message-reformatting" />
-  <title>Block Media Data Brief</title>
+  <title>블록미디어 이메일, 이렇게 바뀝니다</title>
 </head>
 
-<body style="margin:0;padding:0;background:#f5f7fb;">
+<body style="margin:0;padding:0;background:#f3f6fb;">
   <!-- Preheader -->
   <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">
-    오늘 KRW 시장 온도와 쏠림 신호를 10초 만에 확인하세요.
+    오늘 시장을 읽는 데이터 3종을 메일로 요약합니다. (Treemap 중심)
   </div>
 
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f7fb;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f3f6fb;">
     <tr>
-      <td align="center" style="padding:28px 12px;">
-        <table role="presentation" width="640" cellspacing="0" cellpadding="0" border="0"
-          style="width:640px;max-width:640px;background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(17,24,39,.08);">
+      <td align="center" style="padding:26px 12px;">
 
-          <!-- Header -->
+        <!-- Outer -->
+        <table role="presentation" width="640" cellspacing="0" cellpadding="0" border="0"
+          style="width:640px;max-width:640px;background:#ffffff;border-radius:22px;overflow:hidden;
+                 box-shadow:0 18px 50px rgba(15,23,42,.10);">
+
+          <!-- Top brand bar -->
           <tr>
-            <td style="padding:18px 24px;border-bottom:1px solid #e9eef6;">
+            <td style="padding:18px 22px 14px 22px;background:#ffffff;border-bottom:1px solid #edf2fb;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
                   <td align="left" style="vertical-align:middle;">
-                    <div style="font-family:Arial,Apple SD Gothic Neo,Malgun Gothic,sans-serif;font-weight:900;letter-spacing:.5px;color:#0f172a;">
-                      BLOCK MEDIA <span style="color:#2563eb;">DATA</span>
+                    <!-- 로고 이미지 사용 시 -->
+                    <img src="LOGO_URL" width="140" alt="BLOCK MEDIA"
+                      style="display:block;border:0;outline:none;text-decoration:none;height:auto;" />
+                    <!-- 텍스트 로고로 대체하려면 위 img를 지우고 아래 div 사용
+                    <div style="font-family:Arial,Apple SD Gothic Neo,Malgun Gothic,sans-serif;font-weight:900;letter-spacing:.4px;color:#0f172a;">
+                      BLOCK <span style="color:#2563eb;">MEDIA</span>
                     </div>
+                    -->
                   </td>
-                  <td align="right" style="font-family:Arial,Apple SD Gothic Neo,Malgun Gothic,sans-serif;font-size:12px;color:#94a3b8;">
-                    2026-02-10 · 16:20 KST
+                  <td align="right" style="vertical-align:middle;font-family:Apple SD Gothic Neo,Malgun Gothic,Segoe UI,Arial,sans-serif;font-size:12px;color:#94a3b8;">
+                    <!-- 예: 2026-02-10 -->
                   </td>
                 </tr>
               </table>
@@ -39,96 +47,121 @@
 
           <!-- Hero -->
           <tr>
-            <td style="padding:24px 24px 10px 24px;font-family:Apple SD Gothic Neo,Malgun Gothic,Segoe UI,Arial,sans-serif;">
-              <div style="font-size:26px;line-height:1.25;font-weight:900;letter-spacing:-.2px;color:#0f172a;">
-                왜 다시 ‘이메일’인가요?
+            <td style="padding:26px 22px 10px 22px;font-family:Apple SD Gothic Neo,Malgun Gothic,Segoe UI,Arial,sans-serif;">
+              <div style="font-size:28px;line-height:1.25;font-weight:900;letter-spacing:-.3px;color:#0f172a;">
+                블록미디어 이메일, 이렇게 바뀝니다
               </div>
-              <div style="margin-top:10px;font-size:14px;line-height:1.75;color:#334155;">
-                대시보드를 매번 열 필요 없이, <b>오늘 시장의 핵심 신호</b>만 메일로 요약합니다.
+
+              <div style="margin-top:10px;font-size:14px;line-height:1.8;color:#334155;">
+                안녕하세요, 블록미디어입니다.<br/>
+                오늘 시장을 읽는 <b style="color:#1d4ed8;">데이터 3종</b>을 메일로 요약합니다.
+              </div>
+
+              <div style="margin-top:16px;padding:14px 16px;border:1px solid #e8eef9;border-radius:16px;background:#fbfdff;">
+                <div style="font-size:16px;font-weight:900;color:#0f172a;letter-spacing:-.1px;">
+                  “왜 다시 ‘이메일’인가요?”
+                </div>
+                <div style="margin-top:6px;font-size:13px;line-height:1.7;color:#64748b;">
+                  대시보드를 매번 열 필요 없이, <b>핵심 신호</b>만 10초 안에 훑도록 만들었습니다.
+                </div>
               </div>
             </td>
           </tr>
 
-          <!-- “Today in 10 seconds” -->
+          <!-- Row: KRW / BM20 (2-up) -->
           <tr>
-            <td style="padding:8px 24px 18px 24px;">
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
-                style="border:1px solid #e9eef6;border-radius:16px;background:#fbfdff;">
-                <tr>
-                  <td style="padding:14px 16px;font-family:Apple SD Gothic Neo,Malgun Gothic,Segoe UI,Arial,sans-serif;">
-                    <div style="font-size:14px;font-weight:900;color:#0f172a;">
-                      오늘 시장 10초 요약
-                    </div>
-                    <div style="margin-top:6px;font-size:13px;line-height:1.7;color:#475569;">
-                      • 거래대금 <b>3.54조원</b> (최근 24h)<br/>
-                      • Top10 쏠림 <b>+70.4%</b> → 알트 ‘집중’ 신호<br/>
-                      • 업비트 비중 <b>59.9%</b> (시장 구도 체크)<br/>
-                      • K-Safety(스테이블 비중) <b>15.5%</b> → 위험회피/대기자금 온도
-                    </div>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- Metric cards (2x2) -->
-          <tr>
-            <td style="padding:0 24px 16px 24px;">
+            <td style="padding:12px 22px 4px 22px;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
-                  <!-- Card 1 -->
-                  <td width="50%" valign="top" style="padding-right:10px;padding-bottom:10px;">
+                  <!-- KRW card -->
+                  <td width="50%" valign="top" style="padding-right:10px;padding-bottom:12px;">
                     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
-                      style="border:1px solid #e9eef6;border-radius:16px;background:#ffffff;">
+                      style="border:1px solid #e8eef9;border-radius:18px;overflow:hidden;background:#ffffff;
+                             box-shadow:0 10px 24px rgba(15,23,42,.06);">
                       <tr>
-                        <td style="padding:14px 14px 12px 14px;font-family:Apple SD Gothic Neo,Malgun Gothic,Segoe UI,Arial,sans-serif;">
-                          <div style="font-size:12px;color:#64748b;font-weight:800;">총 거래대금 (최근 24h)</div>
-                          <div style="margin-top:8px;font-size:24px;font-weight:900;color:#0f172a;">3.54조원</div>
-                          <div style="margin-top:6px;font-size:12px;color:#94a3b8;">현재 시각: 02/10 16:20 KST</div>
+                        <td style="padding:14px 14px 10px 14px;font-family:Apple SD Gothic Neo,Malgun Gothic,Segoe UI,Arial,sans-serif;">
+                          <div style="font-size:14px;font-weight:900;color:#0f172a;">
+                            📊 KRW 24시간 시장 데이터
+                          </div>
+                          <div style="margin-top:4px;font-size:12px;line-height:1.6;color:#64748b;">
+                            거래대금·쏠림·거래소 구도·스테이블 비중
+                          </div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:0 14px 12px 14px;">
+                          <a href="https://data.blockmedia.co.kr/" target="_blank" style="text-decoration:none;">
+                            <img src="https://example.com/email-assets/krw_24h_cards.png" alt="KRW 24h Cards"
+                              style="display:block;width:100%;height:auto;border-radius:14px;border:0;outline:none;text-decoration:none;" />
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:0 14px 14px 14px;font-family:Apple SD Gothic Neo,Malgun Gothic,Segoe UI,Arial,sans-serif;">
+                          <div style="font-size:13px;line-height:1.7;color:#334155;">
+                            ✓ 1일 거래대금 온도<br/>
+                            ✓ 알트 쏠림/분산 신호<br/>
+                            ✓ 업비트·빗썸 구도 변화
+                          </div>
+
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-top:12px;">
+                            <tr>
+                              <td bgcolor="#ffffff" style="border:1px solid #dbe7ff;border-radius:14px;">
+                                <a href="https://data.blockmedia.co.kr/" target="_blank"
+                                  style="display:inline-block;padding:10px 12px;font-family:Apple SD Gothic Neo,Malgun Gothic,Segoe UI,Arial,sans-serif;
+                                         font-size:13px;font-weight:900;color:#2563eb;text-decoration:none;border-radius:14px;">
+                                  대시보드 미리보기 →
+                                </a>
+                              </td>
+                            </tr>
+                          </table>
                         </td>
                       </tr>
                     </table>
                   </td>
 
-                  <!-- Card 2 -->
-                  <td width="50%" valign="top" style="padding-left:10px;padding-bottom:10px;">
+                  <!-- BM20 card -->
+                  <td width="50%" valign="top" style="padding-left:10px;padding-bottom:12px;">
                     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
-                      style="border:1px solid #e9eef6;border-radius:16px;background:#ffffff;">
+                      style="border:1px solid #e8eef9;border-radius:18px;overflow:hidden;background:#ffffff;
+                             box-shadow:0 10px 24px rgba(15,23,42,.06);">
                       <tr>
-                        <td style="padding:14px 14px 12px 14px;font-family:Apple SD Gothic Neo,Malgun Gothic,Segoe UI,Arial,sans-serif;">
-                          <div style="font-size:12px;color:#64748b;font-weight:800;">Top10 쏠림 (최근 24h)</div>
-                          <div style="margin-top:8px;font-size:24px;font-weight:900;color:#0f172a;">+70.4% <span style="font-size:14px;color:#64748b;">(Top10)</span></div>
-                          <div style="margin-top:6px;font-size:12px;color:#94a3b8;">Top10 2.50조원 · Rest 1.05조원</div>
+                        <td style="padding:14px 14px 10px 14px;font-family:Apple SD Gothic Neo,Malgun Gothic,Segoe UI,Arial,sans-serif;">
+                          <div style="font-size:14px;font-weight:900;color:#0f172a;">
+                            📈 BM20 인덱스
+                          </div>
+                          <div style="margin-top:4px;font-size:12px;line-height:1.6;color:#64748b;">
+                            시장 방향과 강도를 ‘한 줄’로 보는 기준점
+                          </div>
                         </td>
                       </tr>
-                    </table>
-                  </td>
-                </tr>
-
-                <tr>
-                  <!-- Card 3 -->
-                  <td width="50%" valign="top" style="padding-right:10px;">
-                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
-                      style="border:1px solid #e9eef6;border-radius:16px;background:#ffffff;">
                       <tr>
-                        <td style="padding:14px 14px 12px 14px;font-family:Apple SD Gothic Neo,Malgun Gothic,Segoe UI,Arial,sans-serif;">
-                          <div style="font-size:12px;color:#64748b;font-weight:800;">거래소 구도 (최근 24h)</div>
-                          <div style="margin-top:8px;font-size:22px;font-weight:900;color:#0f172a;">업비트 59.9%</div>
-                          <div style="margin-top:6px;font-size:12px;color:#94a3b8;">빗썸 35.3% · 코인원 4.8%</div>
+                        <td style="padding:0 14px 12px 14px;">
+                          <a href="https://data.blockmedia.co.kr/bm20_index.html" target="_blank" style="text-decoration:none;">
+                            <img src="https://example.com/email-assets/bm20_summary_cards.png" alt="BM20 Summary"
+                              style="display:block;width:100%;height:auto;border-radius:14px;border:0;outline:none;text-decoration:none;" />
+                          </a>
                         </td>
                       </tr>
-                    </table>
-                  </td>
-
-                  <!-- Card 4 (highlight) -->
-                  <td width="50%" valign="top" style="padding-left:10px;">
-                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
-                      style="border:1px solid #dbe7ff;border-radius:16px;background:#f6fbff;">
                       <tr>
-                        <td style="padding:14px 14px 12px 14px;font-family:Apple SD Gothic Neo,Malgun Gothic,Segoe UI,Arial,sans-serif;">
-                          <div style="font-size:12px;color:#2563eb;font-weight:900;">K-Safety (Stablecoin Share)</div>
-                          <div style="margin-top:8px;font-size:24px;font-weight:900;color:#0f172a;">15.5%</div>
-                          <div style="margin-top:6px;font-size:12px;color:#64748b;">합계 5500억원 · USDT 4329억 · USDC 1172억</div>
+                        <td style="padding:0 14px 14px 14px;font-family:Apple SD Gothic Neo,Malgun Gothic,Segoe UI,Arial,sans-serif;">
+                          <div style="font-size:13px;line-height:1.7;color:#334155;">
+                            ✓ 1D/7D 방향성 요약<br/>
+                            ✓ Best 3 / Worst 3<br/>
+                            ✓ 한 줄 시황 코멘트
+                          </div>
+
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-top:12px;">
+                            <tr>
+                              <td bgcolor="#ffffff" style="border:1px solid #dbe7ff;border-radius:14px;">
+                                <a href="https://data.blockmedia.co.kr/bm20_index.html" target="_blank"
+                                  style="display:inline-block;padding:10px 12px;font-family:Apple SD Gothic Neo,Malgun Gothic,Segoe UI,Arial,sans-serif;
+                                         font-size:13px;font-weight:900;color:#2563eb;text-decoration:none;border-radius:14px;">
+                                  BM20 확인하기 →
+                                </a>
+                              </td>
+                            </tr>
+                          </table>
                         </td>
                       </tr>
                     </table>
@@ -138,17 +171,34 @@
             </td>
           </tr>
 
-          <!-- Mini “What it means” -->
+          <!-- TREEMAP (KEY) full-width -->
           <tr>
-            <td style="padding:0 24px 18px 24px;">
+            <td style="padding:0 22px 10px 22px;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
-                style="border:1px solid #e9eef6;border-radius:16px;background:#ffffff;">
+                style="border:1px solid #dbe7ff;border-radius:20px;overflow:hidden;background:#f6fbff;
+                       box-shadow:0 14px 34px rgba(37,99,235,.14);">
                 <tr>
-                  <td style="padding:14px 16px;font-family:Apple SD Gothic Neo,Malgun Gothic,Segoe UI,Arial,sans-serif;">
-                    <div style="font-size:13px;font-weight:900;color:#0f172a;">오늘의 해석 (한 줄)</div>
-                    <div style="margin-top:8px;font-size:13px;line-height:1.7;color:#334155;">
-                      거래대금은 유지되는 가운데 <b>Top10 쏠림이 높아</b> 단기 테마 집중이 강합니다.
-                      K-Safety는 <b>중립~대기</b> 구간으로, 급격한 위험회피 신호는 아직 크지 않습니다.
+                  <td style="padding:16px 16px 10px 16px;font-family:Apple SD Gothic Neo,Malgun Gothic,Segoe UI,Arial,sans-serif;">
+                    <div style="font-size:15px;font-weight:900;color:#0f172a;">
+                      🧩 Top Coins Treemap <span style="margin-left:8px;font-size:11px;font-weight:900;color:#2563eb;background:#eaf2ff;border-radius:999px;padding:3px 8px;vertical-align:middle;">핵심</span>
+                    </div>
+                    <div style="margin-top:6px;font-size:13px;line-height:1.7;color:#475569;">
+                      “오늘 돈이 어디로 몰렸는지” <b>한 장으로</b> 확인합니다.
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:0 16px 14px 16px;">
+                    <a href="https://data.blockmedia.co.kr/" target="_blank" style="text-decoration:none;">
+                      <img src="https://example.com/email-assets/topcoins_treemap.png" alt="Top Coins Treemap"
+                        style="display:block;width:100%;height:auto;border-radius:16px;border:0;outline:none;text-decoration:none;" />
+                    </a>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:0 16px 16px 16px;font-family:Apple SD Gothic Neo,Malgun Gothic,Segoe UI,Arial,sans-serif;">
+                    <div style="font-size:12px;line-height:1.7;color:#64748b;">
+                      ✓ “어떤 알트에 쏠렸는지” 즉시 파악 &nbsp;|&nbsp; ✓ 테마 전환 신호를 빠르게 캐치
                     </div>
                   </td>
                 </tr>
@@ -156,14 +206,60 @@
             </td>
           </tr>
 
-          <!-- CTA -->
+          <!-- AAS (soft / optional) -->
           <tr>
-            <td align="center" style="padding:6px 24px 22px 24px;">
+            <td style="padding:0 22px 10px 22px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+                style="border:1px solid #eef2f7;border-radius:18px;overflow:hidden;background:#ffffff;">
+                <tr>
+                  <td style="padding:14px 16px 10px 16px;font-family:Apple SD Gothic Neo,Malgun Gothic,Segoe UI,Arial,sans-serif;">
+                    <div style="font-size:14px;font-weight:900;color:#0f172a;">
+                      🔎 AAS Daily Insight
+                      <span style="display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;background:#f1f5f9;color:#475569;font-size:11px;font-weight:900;vertical-align:middle;">
+                        Beta · 참고용
+                      </span>
+                    </div>
+                    <div style="margin-top:6px;font-size:12px;line-height:1.7;color:#64748b;">
+                      과열/과매도·관심도 변화를 짧게 요약합니다. (투자 조언 아님)
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:0 16px 14px 16px;">
+                    <img src="https://example.com/email-assets/aas_daily_insight_soft.png" alt="AAS Daily Insight"
+                      style="display:block;width:100%;height:auto;border-radius:14px;border:0;outline:none;text-decoration:none;opacity:.92;" />
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:0 16px 14px 16px;font-family:Apple SD Gothic Neo,Malgun Gothic,Segoe UI,Arial,sans-serif;">
+                    <div style="font-size:11px;line-height:1.6;color:#94a3b8;">
+                      * 본 섹션은 참고용 관측 정보이며, 투자 판단과 책임은 투자자 본인에게 있습니다.
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Confirmation + CTA -->
+          <tr>
+            <td style="padding:8px 22px 0 22px;font-family:Apple SD Gothic Neo,Malgun Gothic,Segoe UI,Arial,sans-serif;">
+              <div style="font-size:13px;line-height:1.75;color:#64748b;">
+                이 메일은 과거 블록미디어 이메일을 구독하신 이력이 있어 안내 차원에서 발송되었습니다.
+                계속 받아보시려면 아래 버튼에서 <b>구독 의사를 다시 한 번 확인</b>해 주세요.
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td align="center" style="padding:14px 22px 22px 22px;">
               <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:520px;">
                 <tr>
-                  <td align="center" bgcolor="#2563eb" style="border-radius:14px;">
+                  <td align="center" bgcolor="#2563eb"
+                    style="border-radius:16px;box-shadow:0 14px 30px rgba(37,99,235,.25);">
                     <a href="CTA_URL" target="_blank"
-                      style="display:block;padding:16px 18px;font-family:Apple SD Gothic Neo,Malgun Gothic,Segoe UI,Arial,sans-serif;font-size:16px;font-weight:900;color:#ffffff;text-decoration:none;border-radius:14px;">
+                      style="display:block;padding:16px 18px;font-family:Apple SD Gothic Neo,Malgun Gothic,Segoe UI,Arial,sans-serif;
+                             font-size:16px;font-weight:900;color:#ffffff;text-decoration:none;border-radius:16px;">
                       이메일로 데이터 브리핑 받아보기 →
                     </a>
                   </td>
@@ -171,15 +267,14 @@
               </table>
 
               <div style="margin-top:10px;font-family:Apple SD Gothic Neo,Malgun Gothic,Segoe UI,Arial,sans-serif;font-size:12px;line-height:1.6;color:#94a3b8;">
-                이 메일은 과거 블록미디어 이메일을 구독하신 이력이 있어 안내 차원에서 발송되었습니다.<br/>
-                구독을 원하지 않으실 경우, 별도 조치 없이 이후 발송되지 않습니다.
+                구독을 원하지 않으실 경우, 별도 조치 없이 이후 이메일이 발송되지 않습니다.
               </div>
             </td>
           </tr>
 
           <!-- Footer -->
           <tr>
-            <td style="padding:18px 24px 22px 24px;background:#fbfdff;border-top:1px solid #e9eef6;font-family:Apple SD Gothic Neo,Malgun Gothic,Segoe UI,Arial,sans-serif;">
+            <td style="padding:18px 22px 22px 22px;background:#fbfdff;border-top:1px solid #edf2fb;font-family:Apple SD Gothic Neo,Malgun Gothic,Segoe UI,Arial,sans-serif;">
               <div style="font-size:12px;line-height:1.8;color:#64748b;">
                 <a href="UNSUB_URL" target="_blank" style="color:#2563eb;text-decoration:underline;">수신거부</a>
                 &nbsp;|&nbsp;
@@ -194,10 +289,10 @@
           </tr>
 
         </table>
+        <!-- /Outer -->
+
       </td>
     </tr>
   </table>
 </body>
 </html>
-
-
