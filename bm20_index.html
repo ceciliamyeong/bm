@@ -603,35 +603,38 @@
       <div class="sectionHead">
         <div>
           <h3>Universe & Methodology</h3>
-          <p>유니버스/가중치는 <code>bm20_latest.json</code>의 <b>components</b>를 단일 기준으로 표시하고, Methodology 규칙과 자동 검증합니다.</p>
+          <p>BM20은 글로벌 대형 디지털 자산 20종으로 구성된 바스켓 지수이며, 분기별 리밸런싱을 통해 시장 구조 변화를 반영합니다.</p>
         </div>
         <div class="right" id="uniMeta">-</div>
       </div>
 
-      <div class="widgets">
-        <div class="panel widget">
-          <div class="widgetHead">
-            <div class="wTitle">
-              <div class="wIcon">R</div>
-              <div>
-                <h4>Methodology (Auto-check)</h4>
-                <div class="desc">BTC 30% · ETH 20% · XRP/USDT/BNB 5% · 나머지 15종 균등(35%)</div>
-              </div>
+      <div class="panel widget">
+        <div class="widgetHead">
+          <div class="wTitle">
+            <div class="wIcon">R</div>
+            <div>
+              <h4>Index Construction</h4>
+              <div class="desc">BM20 구성 방식 및 편입 원칙</div>
             </div>
-            <div class="wMeta"><span class="pill" id="methodBadge">검증중…</span></div>
           </div>
-
-          <div class="footnote" id="methodText">-</div>
-          <div class="footnote" id="methodNote" style="margin-top:6px;">-</div>
         </div>
+      
+        <div class="footnote">
+          BM20은 글로벌 디지털 자산 시장을 대표하는 대형 자산 20종으로 구성된 바스켓 지수입니다.<br>
+          BTC 30%, ETH 20%, XRP·USDT·BNB 각 5%를 핵심 비중으로 반영하며,<br>
+          나머지 15종은 동일 가중(총 35%)으로 편입됩니다.<br>
+          지수 구성은 분기별 리밸런싱을 통해 시장 구조 변화를 반영합니다.
+        </div>
+      </div>
+
 
         <div class="panel widget">
           <div class="widgetHead">
             <div class="wTitle">
               <div class="wIcon">20</div>
               <div>
-                <h4>Current Universe (components)</h4>
-                <div class="desc">가중치 내림차순 · 기준일: <span id="uniAsOf">-</span></div>
+                <h4>Current Universe </h4>
+                <div class="desc">편입 자산 구성 · 기준일: <span id="uniAsOf">-</span></div>
               </div>
             </div>
             <div class="wMeta" id="uniStats">-</div>
@@ -639,7 +642,7 @@
 
           <div class="chips" id="uniList"></div>
           <div class="footnote">
-            * components가 바뀌면(분기 리밸런싱) 여기와 Methodology 검증이 자동으로 갱신됩니다.
+            * 구성 자산은 리밸런싱 일정에 따라 자동 업데이트됩니다.
           </div>
         </div>
       </div>
@@ -893,96 +896,41 @@
     }, true);
   }
 
-  // ===== Load Latest + Universe/Methodology binding =====
+  // ===== Load Latest + Universe binding (public) =====
   function bindUniverseAndMethodology(j){
     const asofTxt = (j.asOf || j.as_of || j.date || j.day || '') + '';
     const asofEl = document.getElementById('uniAsOf');
     if (asofEl) asofEl.textContent = asofTxt || '-';
-
+  
     const comps = Array.isArray(j.components) ? j.components : [];
     const uniList = document.getElementById('uniList');
-    const methodBadge = document.getElementById('methodBadge');
-    const methodText = document.getElementById('methodText');
-    const methodNote = document.getElementById('methodNote');
     const uniStats = document.getElementById('uniStats');
-    const metaMethod = document.getElementById('metaMethod');
     const uniMeta = document.getElementById('uniMeta');
-
-    if (!uniList || !methodBadge || !methodText || !uniStats) return;
-
+  
+    // 공개 페이지: Universe만 표시
+    if (!uniList) return;
+  
     const rows = comps
       .map(x => ({
         symbol: (x.symbol || '').toUpperCase(),
         weight: Number(x.weight ?? x.weight_ratio ?? x.w ?? x.weight_base)
       }))
-      .filter(x => x.symbol && Number.isFinite(x.weight));
-
-    rows.sort((a,b)=>b.weight-a.weight);
-
+      .filter(x => x.symbol && Number.isFinite(x.weight))
+      .sort((a,b)=>b.weight-a.weight);
+  
+    // chips render
     uniList.innerHTML = rows.map(r=>{
       const w = r.weight * 100;
-      return `<span class="chipSym" title="weight=${r.weight}">
+      return `<span class="chipSym" title="${w.toFixed(2)}%">
         <b>${r.symbol}</b><span>${w.toFixed(2)}%</span>
       </span>`;
     }).join('');
-
-    const sumW = rows.reduce((s,r)=>s+r.weight,0);
-    const n = rows.length;
-
-    // Methodology rule
-    const rule = {
-      btc: 0.30,
-      eth: 0.20,
-      majors5: 0.05, // XRP/USDT/BNB
-      restEach: 0.35/15
-    };
-
-    methodText.innerHTML =
-      `• 구성: 글로벌 대형 코인 20종(분기 리밸런싱)<br>` +
-      `• 가중치: BTC 30%, ETH 20%, XRP/USDT/BNB 각 5%, 나머지 15종 균등(총 35% → 각 ${(rule.restEach*100).toFixed(2)}%)<br>` +
-      `• Best 3 / Worst 3: <b>1D 리턴(등락률)</b> 기준<br>` +
-      `• 데이터: Coingecko(기본) · Yahoo Finance(폴백)`;
-
-    const wOf = (sym)=> rows.find(r=>r.symbol===sym)?.weight;
-    const okClose = (a,b,eps=1e-6)=> (a!=null && Math.abs(a-b) <= eps);
-
-    const excluded = new Set(['BTC','ETH','XRP','USDT','BNB']);
-    const rest = rows.filter(r=>!excluded.has(r.symbol));
-    const restOkCount = rest.filter(r=>okClose(r.weight, rule.restEach, 1e-6)).length;
-
-    const sumOk = Math.abs(sumW - 1.0) < 1e-6;
-    const allOk =
-      (n === 20) && sumOk &&
-      okClose(wOf('BTC'), rule.btc, 1e-6) &&
-      okClose(wOf('ETH'), rule.eth, 1e-6) &&
-      okClose(wOf('XRP'), rule.majors5, 1e-6) &&
-      okClose(wOf('USDT'), rule.majors5, 1e-6) &&
-      okClose(wOf('BNB'), rule.majors5, 1e-6) &&
-      (rest.length === 15 && restOkCount === 15);
-
-    methodBadge.textContent = allOk ? "Method ✅" : "Method ⚠️";
-    methodBadge.style.borderColor = allOk ? "#bbf7d0" : "#fecaca";
-    methodBadge.style.background = allOk ? "#f0fdf4" : "#fff1f2";
-    methodBadge.style.color = allOk ? "#166534" : "#991b1b";
-
-    const probs = [];
-    if (n !== 20) probs.push(`구성=${n}(20 필요)`);
-    if (!sumOk) probs.push(`합=${(sumW*100).toFixed(4)}%(100% 필요)`);
-    if (!okClose(wOf('BTC'), rule.btc, 1e-6)) probs.push(`BTC=${((wOf('BTC')||0)*100).toFixed(2)}%(30%)`);
-    if (!okClose(wOf('ETH'), rule.eth, 1e-6)) probs.push(`ETH=${((wOf('ETH')||0)*100).toFixed(2)}%(20%)`);
-    if (!okClose(wOf('XRP'), rule.majors5, 1e-6)) probs.push(`XRP=${((wOf('XRP')||0)*100).toFixed(2)}%(5%)`);
-    if (!okClose(wOf('USDT'), rule.majors5, 1e-6)) probs.push(`USDT=${((wOf('USDT')||0)*100).toFixed(2)}%(5%)`);
-    if (!okClose(wOf('BNB'), rule.majors5, 1e-6)) probs.push(`BNB=${((wOf('BNB')||0)*100).toFixed(2)}%(5%)`);
-    if (!(rest.length === 15 && restOkCount === 15)) probs.push(`나머지 15종 균등(각 ${(rule.restEach*100).toFixed(2)}%)`);
-
-    methodNote.textContent = allOk
-      ? "현재 components가 Methodology 설명과 일치합니다."
-      : ("불일치: " + probs.join(" · "));
-
-    uniStats.textContent = `Universe ${n} · Σweight ${(sumW*100).toFixed(4)}%`;
-    if (metaMethod) metaMethod.innerHTML = `METHOD: <b>${allOk ? "OK" : "CHECK"}</b>`;
-    if (uniMeta) uniMeta.textContent = `asOf ${asofTxt || "-"}`;
+  
+    // 민감/내부수치(Σweight 소수점 등) 제거: 개수만 간단히
+    if (uniStats) uniStats.textContent = rows.length ? `Universe ${rows.length}` : '';
+    if (uniMeta) uniMeta.textContent = asofTxt ? `asOf ${asofTxt}` : '';
   }
+
 
   // ===== Load series =====
   async function loadSeries(){
