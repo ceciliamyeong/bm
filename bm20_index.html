@@ -477,7 +477,7 @@
     </section>
 
     <!-- SUMMARY -->
-    <section class="section">
+    <section class="section" id="summary">
       <div class="panel widget">
         <div class="widgetHead">
           <div class="wTitle">
@@ -1199,8 +1199,9 @@
     const kLatest = j.kimchi_2025 ?? j.kimchi_premium_pct ?? j.kimchi_premium_latest ?? j.kimchi;
     const kimchiRatio = extractKimchi(kLatest);
 
-    document.getElementById("kpiKimchi").textContent = (kimchiRatio!=null) ? fmtPctRatio(kimchiRatio,2) : "-";
-    document.getElementById("kpiFunding").textContent = `Funding: ${parseFunding(funding)}`;
+    const kimchiEl = document.getElementById("kimchiValue");
+    if (kimchiEl) kimchiEl.textContent = (kimchiRatio!=null) ? fmtPctRatio(kimchiRatio,2) : "-";
+
 
     // News
     await loadNews(asof);
