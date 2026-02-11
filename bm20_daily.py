@@ -649,6 +649,70 @@ lvl_now   = float(hist.iloc[-1]["index"])
 RET_MTD = None if not lvl_month or lvl_month==0 else (lvl_now/lvl_month - 1)*100
 RET_YTD = None if not lvl_year  or lvl_year==0  else (lvl_now/lvl_year  - 1)*100
 
+
+# ================== Latest JSON (Dashboard 핵심) ==================
+
+LATEST_JSON = Path("bm20_latest.json")
+SERIES_JSON = Path("bm20_series.json")
+
+latest_obj = {
+    "asOf": YMD,
+    "bm20Level": round(float(bm20_now), 6),
+    "bm20PrevLevel": round(float(prev_value / base_value * BASE_INDEX_START), 6),
+    "bm20PointChange": round(float(bm20_now - (prev_value / base_value * BASE_INDEX_START)), 6),
+    "bm20ChangePct": round(float((bm20_now / (prev_value / base_value * BASE_INDEX_START) - 1.0)), 8),
+
+    "returns": {
+        "1D": None if RET_1D is None else round(float(RET_1D) / 100.0, 8),
+        "7D": None if RET_7D is None else round(float(RET_7D) / 100.0, 8),
+        "30D": None if RET_30D is None else round(float(RET_30D) / 100.0, 8),
+        "MTD": None if RET_MTD is None else round(float(RET_MTD) / 100.0, 8),
+        "YTD": None if RET_YTD is None else round(float(RET_YTD) / 100.0, 8),
+    },
+
+    "breadth": {
+        "up": num_up,
+        "down": num_down
+    },
+
+    "kimchiPremiumPct": None if kimchi_pct is None else round(float(kimchi_pct), 4),
+    "funding": {
+        "binance": BIN_TEXT,
+        "bybit": BYB_TEXT
+    }
+}
+
+with open(LATEST_JSON, "w", encoding="utf-8") as f:
+    json.dump(latest_obj, f, ensure_ascii=False, indent=2)
+
+print(f"[OK] Written: {LATEST_JSON}")
+
+
+# ================== Series JSON (Index history 기반) ==================
+
+series_list = []
+
+try:
+    for _, row in hist.tail(365).iterrows():
+        series_list.append({
+            "date": row["date"],
+            "level": round(float(row["index"]), 6)
+        })
+except Exception as e:
+    print("[WARN] Failed building series:", e)
+
+series_obj = {
+    "updated": YMD,
+    "count": len(series_list),
+    "series": series_list
+}
+
+with open(SERIES_JSON, "w", encoding="utf-8") as f:
+    json.dump(series_obj, f, ensure_ascii=False, indent=2)
+
+print(f"[OK] Written: {SERIES_JSON}")
+
+
 # ================== PDF ==================
 styles = getSampleStyleSheet()
 title_style    = ParagraphStyle("Title",    fontName=KOREAN_FONT, fontSize=18, alignment=1, spaceAfter=6)
