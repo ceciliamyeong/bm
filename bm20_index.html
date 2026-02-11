@@ -1079,10 +1079,10 @@
         data: heatData,
     
         label: {
-          show: !isMobile,    // ✅ 모바일에서는 숫자 숨김
-          position: "right",
-          formatter: (p) => fmtPctRatio(p.value,2),
-          color: "#334155",
+          show: true,                 // ✅ 무조건 보이게 (일단 복구)
+          position: "inside",
+          formatter: (p) => fmtPctRatio(p.data[2], 2),  // ✅ heatmap은 data[2]
+          color: "#0f172a",
           fontWeight: 800
         },
     
