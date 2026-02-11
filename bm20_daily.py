@@ -36,8 +36,23 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
 
-# ---- HTML ----
+# ---- HTML ---
 from jinja2 import Template
+
+# ================================
+# Runtime Flags (Dashboard Mode)
+# ================================
+DASHBOARD_ONLY = os.getenv("BM20_DASHBOARD_ONLY", "0") == "1"
+DAILY_SNAPSHOT = os.getenv("BM20_DAILY_SNAPSHOT", "0") == "1"
+
+if DASHBOARD_ONLY:
+    print("[MODE] Dashboard-only mode enabled (no PNG/PDF/HTML outputs).")
+
+if DAILY_SNAPSHOT:
+    print("[MODE] Daily snapshot enabled (history will be updated).")
+else:
+    print("[MODE] Intraday run (history will NOT be updated).")
+
 
 # ================== 공통 설정 ==================
 OUT_DIR = Path(os.getenv("OUT_DIR", "out"))
