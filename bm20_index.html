@@ -829,8 +829,8 @@
       return;
     }
 
-    status.textContent = `range: ${mode} · points: ${data.length}`;
-    meta.textContent = `from ${data[0].date} to ${data[data.length-1].date}`;
+    status.textContent = `${mode}`;
+    meta.textContent = "";
 
     const x = data.map(d => d.date);
     const y = data.map(d => d.v);
@@ -839,8 +839,8 @@
     const minV = Math.min(...y);
     const maxV = Math.max(...y);
     const pad = (maxV-minV) * 0.12 || 1;
-    const ymin = minV - pad;
-    const ymax = maxV + pad;
+    const ymin = Math.floor(minV - pad);
+    const ymax = Math.ceil(maxV + pad);
 
     seriesChart.setOption({
       animationDuration: 2400,
@@ -853,7 +853,7 @@
           const p = params[0];
           const idx = p.dataIndex;
           const v = y[idx];
-          return `<b>${x[idx]}</b><br/>BM20 ${fmtNum(v, 2)}`;
+          return `<b>${x[idx]}</b><br/>BM20 ${Math.round(v).toLocaleString()}`;
         }
       },
       xAxis: {
@@ -868,7 +868,12 @@
         type: "value",
         min: ymin,
         max: ymax,
-        axisLabel: { color:"#64748b" },
+        axisLabel: {
+          color:"#64748b",
+          formatter: function (value) {
+            return Math.round(value).toLocaleString();
+          }
+        },
         splitLine: { show:true, lineStyle:{ color:"#e5e7eb" } }
       },
       dataZoom: [
