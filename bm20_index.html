@@ -356,6 +356,24 @@
       line-height:1.55;
       color:#0f172a;
     }
+    .summaryActions{
+      display:flex;
+      justify-content:flex-end;
+      margin-top:14px;
+    }
+    
+    .shareBtn{
+      background:none;
+      border:1px solid #ddd;
+      padding:6px 12px;
+      font-size:12px;
+      cursor:pointer;
+      border-radius:6px;
+    }
+    
+    .shareBtn:hover{
+      background:#f5f5f5;
+    }
   </style>
 </head>
 
@@ -465,8 +483,8 @@
           <div class="wTitle">
             <div class="wIcon">N</div>
             <div>
-              <h4>시장 한줄 요약</h4>
-              <div class="desc"><code>bm20_news_YYYY-MM-DD.txt</code>가 있으면 자동으로 가져옵니다.</div>
+              <h4>Market Summary</h4>
+              <div class="desc">BM20 일일 시장 요약</div>
             </div>
           </div>
           <div class="wMeta" id="newsMeta">-</div>
@@ -478,13 +496,9 @@
             <div class="pill" id="newsBadge">NEWS</div>
           </div>
           <div class="summaryText" id="newsBody">-</div>
-        </div>
-
-        <div class="footnote">
-          빠른 링크:
-          <a href="bm20_series.json" target="_blank" rel="noreferrer">bm20_series.json</a> ·
-          <a href="bm20_latest.json" target="_blank" rel="noreferrer">bm20_latest.json</a> ·
-          <a id="newsLink" href="#" target="_blank" rel="noreferrer" style="display:none;">bm20_news.txt</a>
+          <div class="summaryActions">
+            <button class="shareBtn" onclick="shareSection('summary')">Share</button>
+          </div>
         </div>
       </div>
     </section>
@@ -1127,7 +1141,7 @@
         const body = lines.slice(1).join("\n").trim() || lines[0] || "-";
 
         const meta = document.getElementById("newsMeta");
-        if (meta) meta.textContent = `asOf ${d} · src ${p}`;
+        if (meta) meta.textContent = `Updated ${d}`;
 
         const a = document.getElementById("newsLink");
         if (a){
@@ -1212,6 +1226,14 @@
     }
   }
 
+  function shareSection(id){
+    const url = window.location.origin + window.location.pathname + "#" + id;
+    navigator.clipboard.writeText(url);
+    alert("Link copied");
+  }
+
+
+  
   // ===== Controls =====
   function setActive(btnId){
     ["btn1y","btnytd","btnall"].forEach(id => {
