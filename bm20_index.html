@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>BM20 Index Dashboard</title>
+  <title>BM20 Index Factsheet</title>
   <script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
 
   <style>
@@ -410,13 +410,7 @@
       </nav>
     </div>
 
-    <div class="navsec">
-      <div class="navtitle">Links</div>
-      <nav class="nav">
-        <a href="bm20_latest.json" target="_blank">bm20_latest.json <span class="tag">LIVE</span></a>
-        <a href="bm20_series.json" target="_blank">bm20_series.json <span class="tag">HIST</span></a>
-      </nav>
-    </div>
+    
   </aside>
 
   <!-- MAIN -->
@@ -426,9 +420,9 @@
       <div class="title">
         <h2>BM20 Index Dashboard</h2>
         <p>
-          BM20은 주요 디지털 자산 20종을 바스켓으로 묶어
-          시장 전체의 흐름을 보여주는 블록미디어 지수입니다.
-          지수 레벨과 기간별 수익률을 통해 방향성과 강도를 확인할 수 있습니다.
+          BM20은 글로벌 디지털 자산 시장을 대표하는 대형 자산 20종으로 구성된
+          블록미디어 자체 산출 지수입니다.
+          지수 레벨과 기간별 수익률을 통해 시장의 방향성과 강도를 파악할 수 있습니다.
         </p>
       </div>
       <div class="meta">
@@ -602,8 +596,8 @@
     <section class="section" id="sec-universe">
       <div class="sectionHead">
         <div>
-          <h3>Universe & Methodology</h3>
-          <p>BM20은 글로벌 대형 디지털 자산 20종으로 구성된 바스켓 지수이며, 분기별 리밸런싱을 통해 시장 구조 변화를 반영합니다.</p>
+          <h3>Index Construction & Methodology</h3>
+          <p>지수 구성 방식 및 리밸런싱 원칙</p>
         </div>
         <div class="right" id="uniMeta">-</div>
       </div>
@@ -648,25 +642,23 @@
       </div>
     </section>
 
-    <!-- DATA -->
-    <section class="section" id="sec-data">
-      <div class="panel widget">
+    <!-- Disclaimer -->
+    <section class="section">
+      <div class="panel widget" style="background:#f8fafc;">
         <div class="widgetHead">
           <div class="wTitle">
-            <div class="wIcon">JS</div>
+            <div class="wIcon">ℹ</div>
             <div>
-              <h4>Data Paths</h4>
-              <div class="desc">현재 페이지가 읽는 파일(상대경로 기준)</div>
+              <h4>Disclaimer</h4>
+              <div class="desc">Information Purpose Only</div>
             </div>
           </div>
-          <div class="wMeta">data.blockmedia.co.kr</div>
         </div>
-
-        <div class="footnote">
-          Latest: <code>bm20_latest.json</code><br/>
-          Series: <code>bm20_series.json</code><br/>
-          Daily CSV: <code>out/YYYY-MM-DD/bm20_daily_data_YYYY-MM-DD.csv</code><br/>
-          News: <code>out/YYYY-MM-DD/bm20_news_YYYY-MM-DD.txt</code> (있으면 자동 로드)
+    
+        <div class="footnote" style="font-size:12px; color:#64748b; line-height:1.6;">
+          본 지수 및 대시보드에 제공되는 정보는 시장 동향 파악을 위한 참고 자료이며,
+          특정 디지털 자산에 대한 투자 권유 또는 재무적 조언을 구성하지 않습니다.
+          투자 결정은 각 투자자의 판단과 책임 하에 이루어져야 합니다.
         </div>
       </div>
     </section>
