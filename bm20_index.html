@@ -374,6 +374,25 @@
     .shareBtn:hover{
       background:#f5f5f5;
     }
+
+    /* ===== Top20 Heatmap Mobile Scroll ===== */
+    .heatmapWrap{
+      width:100%;
+    }
+    
+    @media (max-width: 720px){
+      .heatmapWrap{
+        overflow-x:auto;
+        -webkit-overflow-scrolling:touch;
+        border-radius:12px;
+      }
+    
+      #perfBar{
+        min-width: 980px;   /* 20개가 읽히는 폭 */
+        height: 220px;      /* 모바일 높이 압축 */
+      }
+    }
+    
   </style>
 </head>
 
@@ -588,7 +607,9 @@
       <div class="wMeta"></div>
     </div>
 
-    <div id="perfBar" class="chart"></div>
+    <div class="heatmapWrap">
+      <div id="perfBar" class="chart"></div>
+    </div>
   </div>
 </section>
 
@@ -1007,6 +1028,7 @@
     
     // heatmap data: [xIndex, yIndex(0), value]
     const heatData = vals.map((v, i) => [i, 0, v]);
+    const isMobile = window.matchMedia("(max-width: 720px)").matches;
     
     perfChart.setOption({
       grid: { left: 18, right: 18, top: 14, bottom: 46, containLabel: true },
@@ -1034,9 +1056,11 @@
       yAxis: {
         type: "category",
         data: ["1D"],
-        axisLabel: { color:"#64748b" },
-        axisTick: { show:false },
-        axisLine: { show:false }
+        axisTick:{ show:false },
+        axisLabel:{ 
+          show: !isMobile,   // ✅ 모바일에서는 숨김
+          color:"#0f172a"
+        }
       },
     
       visualMap: {
@@ -1055,9 +1079,10 @@
         data: heatData,
     
         label: {
-          show: true,
-          formatter: (p) => fmtPctRatio(p.data[2], 2),
-          color: "#0f172a",
+          show: !isMobile,    // ✅ 모바일에서는 숫자 숨김
+          position: "right",
+          formatter: (p) => fmtPctRatio(p.value,2),
+          color: "#334155",
           fontWeight: 800
         },
     
@@ -1072,6 +1097,10 @@
         }
       }]
     }, true);
+
+    if (isMobile) {
+      setTimeout(() => perfChart.resize(), 80);
+    }
 
 
     // movers visual (best & worst emphasis)
