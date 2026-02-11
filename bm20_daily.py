@@ -605,12 +605,18 @@ HIST_CSV = HIST_DIR / "bm20_index_history.csv"
 today_row = {"date": YMD, "index": round(float(bm20_now), 6)}
 if HIST_CSV.exists():
     hist = pd.read_csv(HIST_CSV, dtype={"date":str})
+    if "date" not in hist.columns or "index" not in hist.columns:
+        raise RuntimeError(f"Invalid history schema: {HIST_CSV}")
     hist = hist[hist["date"] != YMD]
     hist = pd.concat([hist, pd.DataFrame([today_row])], ignore_index=True)
 else:
     hist = pd.DataFrame([today_row])
 hist = hist.sort_values("date").reset_index(drop=True)
-hist.to_csv(HIST_CSV, index=False, encoding="utf-8")
+if DAILY_SNAPSHOT:
+    hist.to_csv(HIST_CSV, index=False, encoding="utf-8")
+    print("[OK] History updated (daily snapshot).")
+else:
+    print("[SKIP] Intraday run: history not updated.")
 
 def period_return(days: int):
     if len(hist) < 2: return None
