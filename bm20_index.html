@@ -264,7 +264,7 @@
     }
 
     .chart{ width:100%; height:360px; }
-    #perfBar{ height:320px; }
+    #perfBar{ height:160px; }
     #moverBar{ height:360px; }
 
     .toolbar{
@@ -534,69 +534,69 @@
       </div>
     </section>
 
-    <!-- TOP MOVERS -->
-    <section class="section" id="sec-movers">
-      <div class="sectionHead">
+<!-- TOP MOVERS -->
+<section class="section" id="sec-movers">
+  <div class="sectionHead">
+    <div>
+      <h3>Top Movers (1D Return)</h3>
+    </div>
+    <div class="right" id="moverMeta">-</div>
+  </div>
+
+  <!-- 1) SUMMARY 먼저 -->
+  <div class="panel widget">
+    <div class="widgetHead">
+      <div class="wTitle">
+        <div class="wIcon">⇧</div>
         <div>
-          <h3>Top Movers (1D Return)</h3>
-          
-        </div>
-        <div class="right" id="moverMeta">-</div>
-      </div>
-
-      <div class="widgets">
-        <div class="panel widget">
-          <div class="widgetHead">
-            <div class="wTitle">
-              <div class="wIcon">⇧</div>
-              <div>
-                <h4>Best 3 / Worst 3</h4>
-              
-              </div>
-            </div>
-            <div class="wMeta" id="bwMeta">-</div>
-          </div>
-
-          <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <span class="pill">Best 3: <b id="best3">-</b></span>
-            <span class="pill">Worst 3: <b id="worst3">-</b></span>
-            <span class="pill">Breadth: <b id="breadth">-</b></span>
-          </div>
-
-          <div class="footnote" style="margin-top:10px">
-            * Breadth는 CSV 내 상승/하락 종목 수로 계산합니다.
-          </div>
-        </div>
-
-        <div class="panel widget">
-          <div class="widgetHead">
-            <div class="wTitle">
-              <div class="wIcon">B</div>
-              <div>
-                <h4>Return Bar (Top 20)</h4>
-              
-              </div>
-            </div>
-            <div class="wMeta">Renderer: ECharts</div>
-          </div>
-          <div id="perfBar" class="chart"></div>
+          <h4>Best 3 / Worst 3</h4>
         </div>
       </div>
+      <div class="wMeta" id="bwMeta"></div>
+    </div>
 
-      <div class="panel widget" style="margin-top:12px;">
-        <div class="widgetHead">
-          <div class="wTitle">
-            <div class="wIcon">M</div>
-            <div>
-              <h4>Top Movers (Visual)</h4>
-              <div class="desc">가장 큰 움직임을 위/아래로 시각 강조</div>
-            </div>
-          </div>
-          <div class="wMeta">Return-only</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <span class="pill">Best 3: <b id="best3">-</b></span>
+      <span class="pill">Worst 3: <b id="worst3">-</b></span>
+      <span class="pill">Breadth: <b id="breadth">-</b></span>
+    </div>
+
+    <div class="footnote" style="margin-top:10px">
+      * Breadth는 상승/하락 종목 수로 계산합니다.
+    </div>
+  </div>
+
+  <!-- 2) TOP MOVERS VISUAL 크게 -->
+  <div class="panel widget" style="margin-top:12px;">
+    <div class="widgetHead">
+      <div class="wTitle">
+        <div class="wIcon">M</div>
+        <div>
+          <h4>Top Movers (Visual)</h4>
+          <div class="desc">가장 큰 움직임을 위/아래로 강조</div>
         </div>
-        <div id="moverBar" class="chart"></div>
       </div>
-    </section>
+      <div class="wMeta"></div>
+    </div>
+    <div id="moverBar" class="chart"></div>
+  </div>
+
+  <!-- 3) TOP20 HEATMAP (맨 마지막, full-width) -->
+  <div class="panel widget" style="margin-top:12px;">
+    <div class="widgetHead">
+      <div class="wTitle">
+        <div class="wIcon">H</div>
+        <div>
+          <h4>Top 20 Heatmap</h4>
+          <div class="desc">BM20 전체 등락률 분포</div>
+        </div>
+      </div>
+      <div class="wMeta"></div>
+    </div>
+
+    <div id="perfBar" class="chart"></div>
+  </div>
+</section>
 
     <!-- UNIVERSE -->
     <section class="section" id="sec-universe">
@@ -1054,49 +1054,85 @@
     const kpiBreadth = document.getElementById("kpiBreadth");
     if (kpiBreadth) kpiBreadth.textContent = `상승 ${upCount} · 하락 ${downCount}`;
 
-    // bar (all 20)
-    const topN = sorted.slice(0,20);
-    const yCats = topN.map(r=>r.symbol);
-    const vals = topN.map(r=>r.ret_1d);
+    // --- Top20 Heatmap (Worst → Best order) ---
 
+    // 전체를 수익률 기준으로 정렬 (Worst → Best)
+    const topN = rows
+      .slice()
+      .sort((a, b) => a.ret_1d - b.ret_1d)  // ascending
+      .slice(0, 20);
+    
+    const xCats = topN.map(r => r.symbol);
+    const vals  = topN.map(r => r.ret_1d);
+    
+    // heatmap data: [xIndex, yIndex(0), value]
+    const heatData = vals.map((v, i) => [i, 0, v]);
+    
     perfChart.setOption({
-      grid: { left: 18, right: 18, top: 18, bottom: 12, containLabel: true },
+      grid: { left: 18, right: 18, top: 14, bottom: 46, containLabel: true },
+    
       tooltip: {
-        trigger: "axis",
-        axisPointer: { type: "shadow" },
-        formatter: (params) => {
-          const p = params[0];
-          const v = p.value;
-          return `<b>${p.name}</b><br/>1D ${fmtPctRatio(v,2)}`;
+        trigger: "item",
+        formatter: (p) => {
+          const sym = xCats[p.data[0]];
+          const v = p.data[2];
+          return `<b>${sym}</b><br/>1D ${fmtPctRatio(v,2)}`;
         }
       },
+    
       xAxis: {
-        type: "value",
-        axisLabel: { color:"#64748b", formatter: v => (v*100).toFixed(0)+"%" },
-        splitLine: { show:true, lineStyle:{ color:"#e5e7eb" } }
+        type: "category",
+        data: xCats,
+        axisLabel: {
+          color:"#0f172a",
+          interval: 0
+        },
+        axisTick: { show:false },
+        axisLine: { lineStyle:{ color:"#e5e7eb" } }
       },
+    
       yAxis: {
         type: "category",
-        data: yCats,
-        axisTick:{ show:false },
-        axisLabel:{ color:"#0f172a" }
+        data: ["1D"],
+        axisLabel: { color:"#64748b" },
+        axisTick: { show:false },
+        axisLine: { show:false }
       },
+    
+      visualMap: {
+        show: false,
+        min: Math.min(...vals),
+        max: Math.max(...vals),
+        dimension: 2,
+        inRange: {
+          // Worst(음수) → 빨강, Neutral → 회색, Best(양수) → 초록
+          color: ["#dc2626", "#f1f5f9", "#16a34a"]
+        }
+      },
+    
       series: [{
-        type: "bar",
-        data: vals,
-        barWidth: 14,
-        itemStyle: {
-          color: (p) => (p.value >= 0 ? "#16a34a" : "#dc2626")
-        },
+        type: "heatmap",
+        data: heatData,
+    
         label: {
           show: true,
-          position: "right",
-          formatter: (p) => fmtPctRatio(p.value,2),
-          color: "#334155",
+          formatter: (p) => fmtPctRatio(p.data[2], 2),
+          color: "#0f172a",
           fontWeight: 800
+        },
+    
+        itemStyle: {
+          borderColor: "#ffffff",
+          borderWidth: 2,
+          borderRadius: 8
+        },
+    
+        emphasis: {
+          itemStyle: { shadowBlur: 10 }
         }
       }]
     }, true);
+
 
     // movers visual (best & worst emphasis)
     const movers = best3.concat(worst3);
