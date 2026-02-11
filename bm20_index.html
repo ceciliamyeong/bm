@@ -562,7 +562,7 @@
     </div>
 
     <div class="footnote" style="margin-top:10px">
-      * Breadth는 상승/하락 종목 수로 계산합니다.
+      
     </div>
   </div>
 
@@ -1035,8 +1035,8 @@
   function renderMovers(rows, asof, sourcePath){
     const moverMeta = document.getElementById("moverMeta");
     const bwMeta = document.getElementById("bwMeta");
-    if (moverMeta) moverMeta.textContent = `asOf ${asof || "-"} · src ${sourcePath || "-"}`;
-    if (bwMeta) bwMeta.textContent = `Return-only`;
+    if (moverMeta) moverMeta.textContent = `${asof || "-"}`;
+    if (bwMeta) bwMeta.textContent = "";
 
     // best/worst
     const sorted = rows.slice().sort((a,b)=>b.ret_1d - a.ret_1d);
