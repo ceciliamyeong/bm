@@ -1177,7 +1177,7 @@ totalChart?.setOption({
         const fngStatusEl = document.getElementById("fngStatus");
         fngStatusEl.textContent = statusMap[bLatest.sentiment?.status] || bLatest.sentiment?.status;
         fngStatusEl.style.color = fngVal <= 25 ? '#dc2626' : (fngVal >= 75 ? '#16a34a' : '#2563eb');
-    }
+      } 
 
     // 3. 기존 원화 데이터 KPI 업데이트
     const t = latest.totals || {};
