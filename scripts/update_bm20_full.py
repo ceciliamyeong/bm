@@ -37,20 +37,31 @@ def get_k_share(api_key, krw_total_24h):
 def main():
     CMC_API_KEY = os.environ.get('CMC_API_KEY')
     
-    # 1. 사용자님의 기존 코드 출력물 경로 설정
-    # 구조: root/out/history/krw_24h_latest.json
+    # 1. 경로 설정 (Pathlib을 사용하여 OS에 상관없이 절대 경로로 접근)
+    # scripts/ 폴더에 이 파일이 있다면 .parent.parent가 저장소 루트(bm/)가 됩니다.
     base_dir = Path(__file__).resolve().parent.parent
     latest_vol_path = base_dir / "out" / "history" / "krw_24h_latest.json"
     
+    # 로그 출력: 실제로 어떤 경로에서 파일을 찾고 있는지 확인용
+    print(f"--- 데이터 로드 시작 ---")
+    print(f"찾고 있는 파일 경로: {latest_vol_path}")
+    
     krw_total_24h = 0
     if latest_vol_path.exists():
-        with open(latest_vol_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            # 기존 코드의 'totals' -> 'combined_24h' 값을 가져옴
-            krw_total_24h = data.get("totals", {}).get("combined_24h", 0)
+        try:
+            with open(latest_vol_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                # 이미지에서 확인된 구조: totals -> combined_24h
+                krw_total_24h = data.get("totals", {}).get("combined_24h", 0)
+                print(f"성공: 원화 거래량 {krw_total_24h:,.0f} KRW를 읽어왔습니다.")
+        except Exception as e:
+            print(f"에러: 파일을 읽는 중 오류가 발생했습니다: {e}")
     else:
-        print(f"Warning: {latest_vol_path} 파일을 찾을 수 없습니다.")
-
+        # 파일이 없을 경우 현재 위치의 파일 목록을 보여줌 (원인 파악용)
+        print(f"경고: 파일을 찾을 수 없습니다. 현재 {base_dir} 폴더 내부 목록:")
+        print(os.listdir(base_dir))
+ 
+    
     # 2. 신규 데이터 수집 및 계산
     sentiment = get_fear_and_greed()
     k_market = get_k_share(CMC_API_KEY, krw_total_24h)
