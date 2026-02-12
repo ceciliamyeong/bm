@@ -1,0 +1,41 @@
+name: BM20 Data Pipeline
+
+on:
+  schedule:
+    # 한국 시간 오전 5시, 오후 5시 (하루 2회)
+    - cron: '0 8,20 * * *'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      # 1단계: 사용자님의 원화 수집 스크립트 실행 (파일 경로에 맞춰 수정 필요)
+      - name: Fetch KRW Volume Data
+        run: python scripts/krw_rolling_dashboard.py # 원화 수집 파일명으로 수정하세요
+
+      # 2단계: 글로벌 데이터 통합 및 히스토리 저장 스크립트 실행
+      - name: Run Integrated Update
+        env:
+          CMC_API_KEY: ${{ secrets.CMC_API_KEY }}
+        run: python scripts/update_bm20_full.py
+
+      # 3단계: 생성된 모든 JSON 파일들 커밋 및 푸시
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add out/history/*.json data/bm20_history.json
+          git commit -m "Update Dashboard & History Data" || echo "No changes"
+          git push
