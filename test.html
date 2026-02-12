@@ -185,7 +185,17 @@
   function fmtPct1(p){ return (p == null) ? "-" : (p > 0 ? "+" : "") + Number(p).toFixed(1) + "%"; }
 
   async function loadJSON(url){ const res = await fetch(url, { cache: "no-store" }); if (!res.ok) throw new Error("Failed: " + url); return await res.json(); }
-  function urls(){ const bust = "v=" + Date.now(); return { latest: "/out/history/krw_24h_latest.json?" + bust, hist: "/out/history/krw_24h_snapshots.json?" + bust, kimchiLatest: "/out/history/kimchi_latest.json?" + bust, kimchiHist: "/out/history/kimchi_snapshots.json?" + bust, fxLatest: "/out/history/fx_latest.json?" + bust, bm20History: "/data/bm20_history.json?" + bust }; }
+  function urls(){
+    const bust = "v=" + Date.now();
+    return {
+      latest: "/bm/out/history/krw_24h_latest.json?" + bust,
+      hist:   "/bm/out/history/krw_24h_snapshots.json?" + bust,
+      kimchiLatest: "/bm/out/history/kimchi_latest.json?" + bust,
+      kimchiHist:   "/bm/out/history/kimchi_snapshots.json?" + bust,
+      fxLatest: "/bm/out/history/fx_latest.json?" + bust,
+      bm20History: "/bm/data/bm20_history.json?" + bust
+    };
+  }
 
   let treemap, totalChart, shareChart, topRestChart, stableChart, kimchiPremChart, kimchiScoreChart, kShareMiniChart, fngGauge;
   let HISTORY = [], LATEST = null, KIMCHI_HIST = [], KIMCHI_LATEST = null, CURRENT_RANGE = 3, FX_LATEST = null;
