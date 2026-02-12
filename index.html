@@ -368,13 +368,6 @@
         <a href="#sec-kimchi">Smart Kimchi <span class="tag">Premium</span></a>
       </nav>
     </div>
-
-    <div class="navsec">
-      <div class="navtitle">Data</div>
-      <nav class="nav">
-        <a href="#sec-data">Paths <span class="tag">JSON</span></a>
-      </nav>
-    </div>
   </aside>
 
   <!-- MAIN -->
@@ -383,7 +376,7 @@
     <div class="topbar">
       <div class="title">
         <h2>KRW Rolling 24h Dashboard</h2>
-        <p>“최근 24시간(rolling) 거래대금”을 8시간마다 갱신해 한국 KRW 시장의 현재 판(테마/쏠림/거래소 이동)을 한 페이지에서 확인합니다.</p>
+        <p>“최근 24시간(rolling) 거래대금”을 주기적으로 갱신, 한국 KRW 시장 현황을 확인합니다.</p>
       </div>
       <div class="meta">
         <span class="chip" id="metaUpdated">UPDATED: -</span>
@@ -394,22 +387,22 @@
     <!-- KPI -->
     <section id="sec-overview" class="kpiGrid">
       <div class="panel kpi">
-        <p class="label">현재(최근 24h) 총 거래대금</p>
+        <p class="label">총 거래대금(rolling 24h)</p>
         <p class="value" id="kpiTotal">-</p>
         <div class="note" id="kpiTs">-</div>
       </div>
       <div class="panel kpi">
-        <p class="label">Top10 쏠림 (최근 24h)</p>
+        <p class="label">Top10 집중도(%) (최근 24h)</p>
         <p class="value" id="kpiTop10">-</p>
         <div class="note" id="kpiTop10Note">-</div>
       </div>
       <div class="panel kpi">
-        <p class="label">거래소 구도 (최근 24h)</p>
+        <p class="label">거래소 비중(%) (최근 24h)</p>
         <p class="value" id="kpiEx">-</p>
         <div class="note" id="kpiExNote">-</div>
       </div>
       <div class="panel kpi" style="border-color:#bfdbfe;">
-        <p class="label" style="color:#1d4ed8;">K-Safety (Stablecoin Share)</p>
+        <p class="label" style="color:#1d4ed8;">K-Safety (스테이블코인 비)</p>
         <p class="value" id="kpiStable">-</p>
         <div class="note" id="kpiStableNote">-</div>
       </div>
@@ -437,7 +430,7 @@
             <div class="wIcon">Σ</div>
             <div>
               <h4>총 거래대금 추이 (Rolling 24h)</h4>
-              <div class="desc">Step line(수준) + Δ bar(직전 대비) 조합</div>
+              <div class="desc">Step line(수준) + Δ bar(직전 대비) </div>
             </div>
           </div>
           <div class="wMeta" id="wTotalMeta">UPDATED: -</div>
@@ -445,7 +438,7 @@
         <div id="totalChart" class="chart"></div>
       </div>
 
-      <!-- share + top10 vs rest : ✅ “아래 나란히 / 덜 좁게” -->
+      <!-- share + top10 vs rest  -->
       <div class="widgets" style="margin-top:12px;">
         <div class="panel widget" id="sec-concentration">
           <div class="widgetHead">
@@ -466,8 +459,8 @@
             <div class="wTitle">
               <div class="wIcon">10</div>
               <div>
-                <h4>Top10 vs Rest (쏠림/확산)</h4>
-                <div class="desc">Top10/Rest 분해 + Top10 점유율 라인</div>
+                <h4>Top10 vs Rest (집중/확산)</h4>
+                <div class="desc">Top10/Rest + Top10 점유율 라인</div>
               </div>
             </div>
             <div class="wMeta">Source: BLOCKMEDIA</div>
@@ -531,7 +524,7 @@
       <div class="sectionHead">
         <div>
           <h3>Exchange Top5</h3>
-          <p>거래소별로 “채널 쏠림(상위 코인)”을 따로 봅니다.</p>
+          <p>거래소별로 “상위 코인”을 봅니다.</p>
         </div>
         <div class="right">Upbit · Bithumb · Coinone</div>
       </div>
@@ -642,24 +635,6 @@
       </div>
     </section>
 
-    <section class="section" id="sec-data">
-      <div class="panel widget">
-        <div class="widgetHead">
-          <div class="wTitle">
-            <div class="wIcon">JS</div>
-            <div>
-              <h4>Data Paths</h4>
-              <div class="desc">GitHub Pages에서 읽는 JSON 경로</div>
-            </div>
-          </div>
-          <div class="wMeta">/out/history/</div>
-        </div>
-        <div class="footnote">
-          KRW: <code>/out/history/krw_24h_latest.json</code> · <code>/out/history/krw_24h_snapshots.json</code><br/>
-          Kimchi: <code>/out/history/kimchi_latest.json</code> · <code>/out/history/kimchi_snapshots.json</code>
-        </div>
-      </div>
-    </section>
 
   </main>
 </div>
