@@ -127,79 +127,16 @@ def rebuild_json_from_backfill():
     """
     SSOT: backfill_current_basket.csv를 기준으로
       - ROOT/bm20_series.json (date, level)
-      - ROOT/bm20_latest.json (asOf, bm20Level, returns 등)
+      - ROOT/bm20_latest.json (asOf, bm20Level, returns 등 + kimchi)
     를 재생성해서 대시보드가 항상 '연속 지수'만 읽게 만든다.
     """
 
-    # 후보 경로: out/ 와 bm/out 둘 다 탐색
-    candidates = [
-        OUT / "backfill_current_basket.csv",
-        ROOT / "bm" / "out" / "backfill_current_basket.csv",
-    ]
-    csv_path = next((p for p in candidates if p.exists()), None)
-    if not csv_path:
-        print("[rebuild_json] skip: backfill_current_basket.csv not found")
-        return
-
-    rows = []
-    with csv_path.open("r", encoding="utf-8") as f:
-        r = csv.DictReader(f)
-        for row in r:
-            date = (row.get("date") or "").strip()
-            idx  = row.get("index") or row.get("level") or row.get("bm20Level")
-            if not date or idx is None:
-                continue
-            try:
-                level = float(idx)
-            except Exception:
-                continue
-            rows.append({"date": date[:10], "level": level})
-
-    if len(rows) < 2:
-        print("[rebuild_json] skip: not enough rows in backfill CSV")
-        return
-
-    # 날짜 정렬
-    rows.sort(key=lambda x: x["date"])
-
-    # 1) series.json 생성 (대시보드 라인차트 입력)
-    (ROOT / "bm20_series.json").write_text(
-        json.dumps(rows, ensure_ascii=False),
-        encoding="utf-8"
-    )
-
-    # 2) latest.json 생성 (KPI 입력)
-    last, prev = rows[-1], rows[-2]
-    bm20Level = last["level"]
-    bm20Prev  = prev["level"]
-    bm20ChangePct = (bm20Level / bm20Prev) - 1.0 if bm20Prev else None
-
-    latest = {
-        "asOf": last["date"],
-        "bm20Level": bm20Level,
-        "bm20PrevLevel": bm20Prev,
-        "bm20PointChange": bm20Level - bm20Prev,
-        "bm20ChangePct": bm20ChangePct,
-        "returns": {
-            "1D": bm20ChangePct
-        }
-    }
-
-    (ROOT / "bm20_latest.json").write_text(
-        json.dumps(latest, ensure_ascii=False),
-        encoding="utf-8"
-    )
-
-    print(f"[rebuild_json] wrote bm20_series.json({len(rows)} pts) + bm20_latest.json from {csv_path}")
-
-
     def _extract_kimchi_ratio(x):
-        """percent(9.5) / ratio(0.095) / '9.5%' / dict 등 웬만한 형태를 ratio(0.095)로 정규화"""
+        """percent(9.5) / ratio(0.095) / '9.5%' / dict 등을 ratio(0.095)로 정규화"""
         if x is None:
             return None
         if isinstance(x, (int, float)):
             v = float(x)
-            # 9.5 같은 퍼센트면 0.095로
             return v / 100.0 if v >= 1.0 else v
         if isinstance(x, str):
             s = x.strip()
@@ -222,7 +159,6 @@ def rebuild_json_from_backfill():
                     out = _extract_kimchi_ratio(x.get(k))
                     if out is not None:
                         return out
-            # dict가 중첩인 경우도 한 번 훑기
             for v in x.values():
                 out = _extract_kimchi_ratio(v)
                 if out is not None:
@@ -254,12 +190,11 @@ def rebuild_json_from_backfill():
             ratio = _extract_kimchi_ratio(obj)
             meta = {}
             if isinstance(obj, dict):
-                # 혹시 1450 같은 값이 여기에 들어있으면 같이 실어보내기
-                for k in ["usdkrw", "usdk", "fx", "fx_usdkrw", "krw_per_usd", "USDKRW", "usd_krw"]:
+                # 혹시 1450 같은 값(usdkrw)이 있으면 같이 실어둠 (디버깅용)
+                for k in ["usdkrw", "USDKRW", "krw_per_usd", "usd_krw", "fx_usdkrw", "fx"]:
                     if k in obj:
                         meta["usdkrw"] = obj.get(k)
                         break
-                # 원화 프리미엄 금액이 따로 있으면 같이 (있을 수도 있음)
                 for k in ["premium_krw", "kimchi_krw", "premium_won", "won_premium"]:
                     if k in obj:
                         meta["premium_krw"] = obj.get(k)
@@ -267,6 +202,78 @@ def rebuild_json_from_backfill():
 
             return ratio, meta, str(p)
         return None, {}, None
+
+    # 후보 경로: out/ 와 bm/out 둘 다 탐색
+    candidates = [
+        OUT / "backfill_current_basket.csv",
+        ROOT / "bm" / "out" / "backfill_current_basket.csv",
+    ]
+    csv_path = next((p for p in candidates if p.exists()), None)
+    if not csv_path:
+        print("[rebuild_json] skip: backfill_current_basket.csv not found")
+        return
+
+    rows = []
+    with csv_path.open("r", encoding="utf-8") as f:
+        r = csv.DictReader(f)
+        for row in r:
+            date = (row.get("date") or "").strip()
+            idx  = row.get("index") or row.get("level") or row.get("bm20Level")
+            if not date or idx is None:
+                continue
+            try:
+                level = float(idx)
+            except Exception:
+                continue
+            rows.append({"date": date[:10], "level": level})
+
+    if len(rows) < 2:
+        print("[rebuild_json] skip: not enough rows in backfill CSV")
+        return
+
+    rows.sort(key=lambda x: x["date"])
+
+    # 1) series.json 생성 (대시보드 라인차트 입력)
+    (ROOT / "bm20_series.json").write_text(
+        json.dumps(rows, ensure_ascii=False),
+        encoding="utf-8"
+    )
+
+    # 2) latest.json 생성 (KPI 입력)
+    last, prev = rows[-1], rows[-2]
+    bm20Level = last["level"]
+    bm20Prev  = prev["level"]
+    bm20ChangePct = (bm20Level / bm20Prev) - 1.0 if bm20Prev else None
+
+    # kimchi 주입 (latest에 없을 수 있으니 별도 파일에서)
+    kimchi_ratio, kimchi_meta, kimchi_src = _load_kimchi_for_date(last["date"])
+
+    latest = {
+        "asOf": last["date"],
+        "bm20Level": bm20Level,
+        "bm20PrevLevel": bm20Prev,
+        "bm20PointChange": bm20Level - bm20Prev,
+        "bm20ChangePct": bm20ChangePct,
+        "returns": {
+            "1D": bm20ChangePct
+        },
+
+        # ✅ kimchi: JS가 읽는 키들
+        "kimchi": kimchi_ratio,  # ratio (0.0x)
+        "kimchi_premium_pct": (kimchi_ratio * 100.0) if isinstance(kimchi_ratio, (int, float)) else None,
+
+        # ✅ 디버깅용(원하면 나중에 빼도 됨)
+        "kimchi_source": kimchi_src,
+        "kimchi_meta": kimchi_meta,
+    }
+
+    (ROOT / "bm20_latest.json").write_text(
+        json.dumps(latest, ensure_ascii=False),
+        encoding="utf-8"
+    )
+
+    print(f"[rebuild_json] wrote bm20_series.json({len(rows)} pts) + bm20_latest.json (+kimchi) from {csv_path}")
+
 
 # ---------------------------------------------------------------------
 
