@@ -3,7 +3,7 @@
 # 목적: CoinGecko 없이도 리포트(out/YYYY-MM-DD) 생성. 가중치는
 #   BTC 30% / ETH 20% / XRP 5% / USDT 5% / BNB 5% / 나머지 15종 = 35% 균등
 # - 가격/등락률/7일 추세: yfinance
-# - 김치 프리미엄: Upbit KRW-BTC vs (BTC-USD * USDKRW from exchangerate.host), 폴백 1350
+# - 김치 프리미엄: Upbit KRW-BTC vs (BTC-USD * USDKRW from exchangerate.host), 폴백 1450
 # - 펀딩비: Binance/Bybit (API 실패 시 전일 캐시)
 # - 산출물: TXT, CSV, PNGs(bar/trend), PDF, HTML
 # - 분기 리밸런싱 훅: 1/4/7/10월 1일 감지 구조 포함(현재 유니버스 고정이면 결과 동일)
@@ -303,15 +303,35 @@ def get_kimchi(df):
             if last: return last.get("kimchi_pct"), {**last, "is_cache": True}
             return None, {"dom":dom,"glb":"fallback0","fx":"fixed1350","btc_krw":round(btc_krw,2),"btc_usd":None,"usdkrw":1350.0,"is_cache":True}
     try:
-        fxj=_get("https://api.exchangerate.host/latest", {"base":"USD","symbols":"KRW"})
-        usdkrw=float(fxj["rates"]["KRW"]); fx="exchangerate.host"
-        if not (900<=usdkrw<=2000): raise ValueError
+        fxj = _get("https://api.exchangerate.host/latest", {"base": "USD", "symbols": "KRW"})
+        usdkrw = float(fxj["rates"]["KRW"])
+        fx = "exchangerate.host"
+        if not (900 <= usdkrw <= 2000):
+            raise ValueError
     except Exception:
-        usdkrw=1350.0; fx="fixed1350"
-    kp=((btc_krw/usdkrw)-btc_usd)/btc_usd*100
-    meta={"dom":dom,"glb":glb,"fx":fx,"btc_krw":round(btc_krw,2),"btc_usd":round(btc_usd,2),"usdkrw":round(usdkrw,2),"kimchi_pct":round(kp,6),"is_cache":False,"ts":int(time.time())}
+        try:
+            h = yf.Ticker("USDKRW=X").history(period="2d")
+            usdkrw = float(h["Close"].dropna().iloc[-1])
+            fx = "yfinance:USDKRW=X"
+            if not (900 <= usdkrw <= 2000):
+                raise ValueError
+        except Exception:
+            usdkrw = 1450.0
+            fx = "fixed1450"
+    
+    kp = ((btc_krw / usdkrw) - btc_usd) / btc_usd * 100
+    meta = {
+        "dom": dom, "glb": glb, "fx": fx,
+        "btc_krw": round(btc_krw, 2),
+        "btc_usd": round(btc_usd, 2),
+        "usdkrw": round(usdkrw, 2),
+        "kimchi_pct": round(kp, 6),
+        "is_cache": False,
+        "ts": int(time.time())
+    }
     write_json(KP_CACHE, meta)
     return kp, meta
+
 
 # ================== Funding ==================
 def _get_try(url, params=None, timeout=12, retry=5, headers=None):
