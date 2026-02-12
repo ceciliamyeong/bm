@@ -135,12 +135,11 @@
 
     <section class="section" id="sec-flows">
       <div class="sectionHead">
-        <div><h3>Flow</h3><p>총 거래대금 수준 및 직전 대비 변화를 봅니다.</p>
+        <div><h3>Flow 추이</h3>
           <div class="toolbar"><button class="btn" id="btn1d">1D</button><button class="btn active" id="btn3d">3D</button><button class="btn" id="btn7d">7D</button></div>
         </div>
       </div>
       <div class="panel widget">
-        <div class="widgetHead"><div class="wTitle"><div class="wIcon">Σ</div><div><h4>총 거래대금 추이 (Rolling 24h)</h4></div></div></div>
         <div id="totalChart" class="chart"></div>
       </div>
       <div class="widgets" style="margin-top:12px;">
@@ -169,7 +168,7 @@
 
     <footer class="footerDisclaimer">
       <div class="icon">i</div>
-      <div><p class="title">Disclaimer</p><p class="body">본 대시보드의 정보는 투자 권유가 아니며, 투자 책임은 본인에게 있습니다.</p></div>
+      <div><p class="title">Disclaimer</p><p class="body">본 대시보드의 정보는 투자 참고용이며, 최종 투자 책임은 본인에게 있습니다.</p></div>
     </footer>
   </main>
 </div>
@@ -186,11 +185,10 @@
   function fmtPct1(p){ return (p == null) ? "-" : (p > 0 ? "+" : "") + Number(p).toFixed(1) + "%"; }
 
   async function loadJSON(url){ const res = await fetch(url, { cache: "no-store" }); if (!res.ok) throw new Error("Failed: " + url); return await res.json(); }
-
   function urls(){ const bust = "v=" + Date.now(); return { latest: "/out/history/krw_24h_latest.json?" + bust, hist: "/out/history/krw_24h_snapshots.json?" + bust, kimchiLatest: "/out/history/kimchi_latest.json?" + bust, kimchiHist: "/out/history/kimchi_snapshots.json?" + bust, fxLatest: "/out/history/fx_latest.json?" + bust, bm20History: "/data/bm20_history.json?" + bust }; }
 
   let treemap, totalChart, shareChart, topRestChart, stableChart, kimchiPremChart, kimchiScoreChart, kShareMiniChart, fngGauge;
-  let HISTORY = [], LATEST = null; let KIMCHI_HIST = [], KIMCHI_LATEST = null; let CURRENT_RANGE = 3; let FX_LATEST = null;
+  let HISTORY = [], LATEST = null, KIMCHI_HIST = [], KIMCHI_LATEST = null, CURRENT_RANGE = 3, FX_LATEST = null;
 
   async function refreshData(){
     const u = urls();
@@ -201,22 +199,38 @@
 
     LATEST = latest; HISTORY = Array.isArray(history) ? history : []; KIMCHI_LATEST = kimchiLatest; KIMCHI_HIST = Array.isArray(kimchiHist) ? kimchiHist : []; FX_LATEST = fxLatest;
 
-    // 1. 신규 글로벌 지표 (K-Share & F&G)
+    // 1. K-Share & F&G Gauge (Global Metrics)
     if (bm20Hist && bm20Hist.length > 0) {
         const bLatest = bm20Hist[bm20Hist.length - 1];
+        
+        // K-Share Mini Line
         const kx = bm20Hist.slice(-15).map(h => h.timestamp);
         const ky = bm20Hist.slice(-15).map(h => h.k_market?.k_share_percent || 0);
         kShareMiniChart.setOption({ grid: { left: 5, right: 5, top: 10, bottom: 5 }, xAxis: { type: 'category', data: kx, show: false }, yAxis: { type: 'value', show: false, min: 'dataMin' }, series: [{ data: ky, type: 'line', smooth: true, symbol: 'none', lineStyle: { color: '#2563eb', width: 2 }, areaStyle: { color: 'rgba(37,99,235,0.1)' } }] });
         document.getElementById("kpiKShare").textContent = (bLatest.k_market?.k_share_percent || 0) + "%";
+        
+        // F&G Gauge (Clean version - no axis labels)
         const fngVal = bLatest.sentiment?.value || 0;
-        fngGauge.setOption({ series: [{ type: 'gauge', startAngle: 180, endAngle: 0, min: 0, max: 100, radius: '150%', center: ['50%', '90%'], axisLine: { lineStyle: { width: 8, color: [[0.25, '#dc2626'], [0.75, '#2563eb'], [1, '#16a34a']] } }, progress: { show: true, width: 8 }, pointer: { show: false }, detail: { fontSize: 18, fontWeight: '900', offsetCenter: [0, -15], formatter: '{value}', color: 'inherit' }, data: [{ value: fngVal }] }] });
+        fngGauge.setOption({
+            series: [{
+                type: 'gauge', startAngle: 180, endAngle: 0, min: 0, max: 100, radius: '150%', center: ['50%', '90%'],
+                axisLine: { lineStyle: { width: 10, color: [[0.25, '#dc2626'], [0.75, '#2563eb'], [1, '#16a34a']] } },
+                progress: { show: true, width: 10 }, 
+                pointer: { show: false },
+                axisTick: { show: false }, // 눈금 숨김
+                splitLine: { show: false }, // 큰 눈금 숨김
+                axisLabel: { show: false }, // 겹치는 숫자 완전히 숨김
+                detail: { fontSize: 20, fontWeight: '900', offsetCenter: [0, -15], formatter: '{value}', color: 'inherit' },
+                data: [{ value: fngVal }]
+            }]
+        });
         const statusMap = { "Extreme Fear": "극도의 공포", "Fear": "공포", "Neutral": "중립", "Greed": "탐욕", "Extreme Greed": "극도의 탐욕" };
         const fngStatusEl = document.getElementById("fngStatus");
         fngStatusEl.textContent = statusMap[bLatest.sentiment?.status] || bLatest.sentiment?.status;
         fngStatusEl.style.color = fngVal <= 25 ? '#dc2626' : (fngVal >= 75 ? '#16a34a' : '#2563eb');
     }
 
-    // 2. 원화 KPI 업데이트
+    // 2. KRW KPI Update
     const t = latest.totals || {}; const top = latest.top10 || {};
     document.getElementById("kpiTotal").textContent = fmtKRW(t.combined_24h);
     document.getElementById("kpiTs").textContent = `현재 시각: ${nowKST()}`;
@@ -229,31 +243,59 @@
     document.getElementById("kpiStable").textContent = `${num(st.stable_dominance_pct).toFixed(1)}%`;
     document.getElementById("kpiStableNote").textContent = `합계 ${fmtKRW(st.total_stable_vol_24h)}`;
 
-    // 3. FX & Kimchi
-    if (FX_LATEST){
-        const gap = num(FX_LATEST.usdtkrw_market) - num(FX_LATEST.usdkrw_official);
-        document.getElementById("fxComment").textContent = gap > 5 ? "환율 요인이 김프에 일부 반영되어 있습니다." : "현재 김프는 수급 요인의 영향이 큽니다.";
+    // 3. Treemap & Top10 List
+    const coins = (top.coins || []);
+    const listEl = document.getElementById("top10List");
+    if(listEl) {
+        listEl.innerHTML = coins.slice(0,10).map((c,i)=> `<li><span>${i+1}. ${c.symbol.replace("KRW-","")}</span><span>${fmtKRW(c.value)}</span></li>`).join("");
     }
+    treemap?.setOption({ series: [{ data: coins.map(c=>({name:c.symbol.replace("KRW-",""), value:num(c.value)})) }] });
+
+    // 4. FX & News
+    if (FX_LATEST){ document.getElementById("fxComment").textContent = (num(FX_LATEST.usdtkrw_market) - num(FX_LATEST.usdkrw_official)) > 5 ? "환율 요인이 지수를 지지하고 있습니다." : "환율 영향이 제한적입니다."; }
     const c = buildKimchiComment(LATEST, HISTORY, KIMCHI_LATEST);
     document.getElementById("kimchiCommentHead").textContent = c.head;
     document.getElementById("kimchiCommentBody").textContent = c.body;
 
+    // 5. Finalize Main Charts
     render(CURRENT_RANGE);
   }
 
   function render(rangeDays){
     CURRENT_RANGE = rangeDays; const hist = HISTORY.slice(-(rangeDays * 3)); const x = hist.map(h => h.timestamp_label);
-    totalChart?.setOption({ xAxis: { data: x }, series: [{ name: "Upbit", type: "bar", stack: "t", data: hist.map(h => num(h.totals?.upbit_24h)) }, { name: "Bithumb", type: "bar", stack: "t", data: hist.map(h => num(h.totals?.bithumb_24h)) }, { name: "Coinone", type: "bar", stack: "t", data: hist.map(h => num(h.totals?.coinone_24h)) }] });
+    totalChart?.setOption({ 
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+        xAxis: { data: x, axisLabel: { rotate: 20 } },
+        yAxis: { axisLabel: { formatter: v => fmtAxis(v) } },
+        series: [{ name: "Upbit", type: "bar", stack: "t", itemStyle: {color: EX_COLORS.upbit}, data: hist.map(h => num(h.totals?.upbit_24h)) }, { name: "Bithumb", type: "bar", stack: "t", itemStyle: {color: EX_COLORS.bithumb}, data: hist.map(h => num(h.totals?.bithumb_24h)) }, { name: "Coinone", type: "bar", stack: "t", itemStyle: {color: EX_COLORS.coinone}, data: hist.map(h => num(h.totals?.coinone_24h)) }] 
+    });
+    
+    // Stable Chart
+    stableChart?.setOption({
+        xAxis: { data: x },
+        series: [{ type: 'line', smooth: true, data: hist.map(h => num(h.stablecoins?.stable_dominance_pct)) }]
+    });
+
+    // Kimchi Charts
+    const kHist = KIMCHI_HIST.slice(-(rangeDays * 3));
+    kimchiPremChart?.setOption({
+        xAxis: { data: kHist.map(h => h.timestamp_label) },
+        series: [{ name: 'BTC', type: 'line', data: kHist.map(h => num(h.kimchi_premium_pct?.BTC)) }]
+    });
   }
 
-  function buildKimchiComment(l, h, kl){ return { head: `Kimchi ${kl?.smart_kimchi?.type || "-"}`, body: "실시간 데이터를 기반으로 자동 생성된 분석 코멘트입니다." }; }
+  function buildKimchiComment(l, h, kl){ return { head: `Kimchi ${kl?.smart_kimchi?.type || "-"} 점수: ${num(kl?.smart_kimchi?.score_v1)}`, body: "실시간 데이터를 기반으로 업데이트된 코멘트입니다." }; }
   function attachAutoResize(charts){ const ro = new ResizeObserver(() => charts.forEach(c => c?.resize())); charts.forEach(c => c && ro.observe(c.getDom())); }
 
   (async function init(){
     treemap = echarts.init(document.getElementById("treemap")); totalChart = echarts.init(document.getElementById("totalChart")); shareChart = echarts.init(document.getElementById("shareChart")); topRestChart = echarts.init(document.getElementById("topRestChart")); stableChart = echarts.init(document.getElementById("stableChart")); kimchiScoreChart = echarts.init(document.getElementById("kimchiScoreChart")); kimchiPremChart = echarts.init(document.getElementById("kimchiPremChart")); kShareMiniChart = echarts.init(document.getElementById("kShareMiniChart")); fngGauge = echarts.init(document.getElementById("fngGauge"));
     attachAutoResize([treemap, totalChart, shareChart, topRestChart, stableChart, kimchiScoreChart, kimchiPremChart, kShareMiniChart, fngGauge]);
+    
+    document.getElementById("btn1d")?.addEventListener("click", ()=> render(1));
+    document.getElementById("btn3d")?.addEventListener("click", ()=> render(3));
+    document.getElementById("btn7d")?.addEventListener("click", ()=> render(7));
+
     await refreshData(); setInterval(refreshData, 60000);
-    window.addEventListener("resize", () => [treemap, totalChart, shareChart, topRestChart, stableChart, kimchiScoreChart, kimchiPremChart, kShareMiniChart, fngGauge].forEach(c => c?.resize()));
   })();
 </script>
 </body>
