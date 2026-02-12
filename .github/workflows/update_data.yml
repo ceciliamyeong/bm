@@ -23,7 +23,7 @@ jobs:
 
       # 1단계: 사용자님의 원화 수집 스크립트 실행 (파일 경로에 맞춰 수정 필요)
       - name: Fetch KRW Volume Data
-        run: python scripts/krw_rolling_dashboard.py # 원화 수집 파일명으로 수정하세요
+        run: python scripts/krw_rolling24h_8h.py # 원화 수집 파일명으로 수정하세요
 
       # 2단계: 글로벌 데이터 통합 및 히스토리 저장 스크립트 실행
       - name: Run Integrated Update
