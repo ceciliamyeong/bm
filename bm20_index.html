@@ -375,131 +375,56 @@
       background:#f5f5f5;
     }
 
-      /* =========================
-         BM20 Responsive Pack (FINAL)
-         - Bigger fonts
-         - KPI checkerboard (responsive)
-         - Heatmap: card-only horizontal scroll
-         - Mobile sidebar hamburger
-         ========================= */
-
-      /* Base typography */
-      html, body{ overflow-x:hidden; }
-      body{ font-size:17px; }
-      
-      .topbar .title h2{ font-size: clamp(24px, 2.4vw, 30px); }
-      .topbar .title p{
-        font-size: clamp(15px, 1.6vw, 17px);
-        line-height: 1.7;
-      }
-      .nav a{ font-size: clamp(14px, 1.3vw, 16px); }
-      .sectionHead h3{ font-size: clamp(15px, 1.4vw, 17px); }
-      .wTitle h4{ font-size: clamp(14px, 1.3vw, 16px); }
-      .wTitle .desc, .footnote{ font-size: 14px; line-height: 1.65; }
-      
-      /* KPI: compact + responsive grid */
-      .kpi{
-        padding:14px 14px;
-        border-radius:12px;
-      }
-      .kpi .label{
-        font-size:12px;
-        letter-spacing:.06em;
-        text-transform:uppercase;
-        color:var(--muted);
-        margin:0 0 8px;
-      }
-      .kpi .value{
-        font-size: clamp(24px, 2.6vw, 34px);
-        font-weight:900;
-        letter-spacing:-0.2px;
-      }
-      .kpi .note{
-        font-size:13px;
-        color:var(--muted);
-        margin-top:8px;
-      }
-      
-      /* KPI grid: phone(1~2col) / tablet(3col) / desktop(existing 6col rule stays) */
-      .kpiGrid{
-        display:grid;
-        grid-template-columns: 1fr;
-        gap:12px;
-        margin-bottom:14px;
-      }
-      
-      @media (min-width: 420px){
-        .kpiGrid{ grid-template-columns: repeat(2, 1fr); }
-        .kpiGrid .kpi:first-child{ grid-column: span 2; }
-      }
-      
-      @media (min-width: 740px){
-        .kpiGrid{ grid-template-columns: repeat(3, 1fr); }
-        .kpiGrid .kpi:first-child{ grid-column: span 3; }
-      }
-      
-      /* Widgets: 좁은 화면은 1열, 넓을 때만 2열 */
-      .widgets{ grid-template-columns: 1fr; }
-      @media (min-width: 1100px){
-        .widgets{ grid-template-columns: repeat(2, 1fr); }
-      }
-      
-      /* Heatmap: card-only horizontal scroll */
+    /* ===== Top20 Heatmap Mobile Scroll ===== */
+    .heatmapWrap{
+      width:100%;
+    }
+    
+    @media (max-width: 720px){
       .heatmapWrap{
-        width:100%;
         overflow-x:auto;
-        overflow-y:hidden;
         -webkit-overflow-scrolling:touch;
         border-radius:12px;
       }
+    
       #perfBar{
-        width:100%;
-        min-width:980px;
+        min-width: 980px;   /* 20개가 읽히는 폭 */
+        height: 220px;      /* 모바일 높이 압축 */
       }
-      
-      /* Mobile sidebar hamburger */
-      .menuBtn{
-        display:none;
-        border:1px solid var(--border);
-        background:#fff;
-        color:#334155;
-        padding:10px 12px;
-        border-radius:10px;
-        cursor:pointer;
-      }
-      
-      @media (max-width: 1100px){
-        .menuBtn{ display:inline-flex; align-items:center; justify-content:center; }
-        .sidebar{ display:none; }
-      
-        .app.nav-open .sidebar{
-          display:block;
-          position:fixed;
-          left:0; top:0;
-          width:86vw;
-          max-width:320px;
-          height:100vh;
-          z-index:50;
-          border-right:1px solid rgba(0,0,0,.08);
-        }
-      
-        .app.nav-open::before{
-          content:"";
-          position:fixed;
-          inset:0;
-          background:rgba(0,0,0,.45);
-          z-index:40;
-        }
-      
-        .main{ padding:14px 14px 28px; }
-      }
-      
-      @media (max-width: 420px){
-        body{ font-size:18px; }
-        .kpi .value{ font-size:28px; }
-      }
-      
-        
+    }
+
+
+    /* ===== Responsive width 100% + no awkward shrink ===== */
+    html, body { width:100%; max-width:100%; overflow-x:hidden; }
+    
+    .app { width:100%; max-width:100%; }
+    
+    /* grid에서 자식이 넘치며 가로 스크롤 만드는 걸 막는 핵심 */
+    .main, .panel, .widget, .kpi { min-width:0; }
+    
+    /* topbar가 줄어들 때 title/meta가 자연스럽게 줄바꿈/정렬 */
+    .topbar .title { flex: 1 1 360px; min-width:0; }
+    .topbar .meta  { flex: 0 1 auto; }
+    @media (max-width: 980px){
+      .main{ padding:14px 14px 28px; }      /* 좁을 때 여백만 살짝 줄여서 100% 체감 */
+      .topbar .meta{ justify-content:flex-start; }
+    }
+    
+    /* ===== Top20 Heatmap: keep horizontal scroll INSIDE card only ===== */
+    .heatmapWrap{
+      width:100%;
+      max-width:100%;
+      overflow-x:auto;
+      overflow-y:hidden;
+      -webkit-overflow-scrolling:touch;
+    }
+    
+    /* 히트맵은 넓이를 유지해야 글자 안 겹침 → 그래서 min-width 유지 */
+    #perfBar{
+      width:100%;
+      min-width:980px;
+    }
+
     
   </style>
 </head>
@@ -544,7 +469,6 @@
   <main class="main">
 
     <div class="topbar">
-      <button class="menuBtn" id="menuBtn" aria-label="Menu" aria-expanded="false">☰</button>
       <div class="title">
         <h2>BM20 Index Dashboard</h2>
         <p>
@@ -1390,42 +1314,6 @@
     console.error(err);
     alert("BM20 로딩 실패: bm20_latest.json / bm20_series.json / out/YYYY-MM-DD/*.csv 경로를 확인하세요.");
   });
-
-  // ===== Mobile nav toggle =====
-(function(){
-  const appEl = document.querySelector('.app');
-  const menuBtn = document.getElementById('menuBtn');
-
-  if (!appEl || !menuBtn) return;
-  
-  function closeNav(){
-    appEl?.classList.remove('nav-open');
-    if (menuBtn) menuBtn.setAttribute('aria-expanded', 'false');
-  }
-  
-  menuBtn?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const willOpen = !appEl.classList.contains('nav-open');
-    appEl.classList.toggle('nav-open', willOpen);
-    menuBtn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-  });
-  
-  // 딤 영역(배경) 클릭하면 닫힘
-  document.addEventListener('click', (e) => {
-    if (!appEl.classList.contains('nav-open')) return;
-  
-    const sidebar = document.querySelector('.sidebar');
-    const clickedInsideSidebar = sidebar && sidebar.contains(e.target);
-    const clickedMenuBtn = menuBtn && menuBtn.contains(e.target);
-  
-    if (!clickedInsideSidebar && !clickedMenuBtn) closeNav();
-  });
-  
-  // 메뉴 클릭 후 자동 닫기(모바일 UX)
-  document.querySelectorAll('.sidebar a').forEach(a=>{
-    a.addEventListener('click', closeNav);
-  });
-})();
 </script>
 
 </body>
