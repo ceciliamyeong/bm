@@ -5,9 +5,10 @@
 # - Creates .nojekyll to avoid Jekyll processing
 # - Robust when out/ has no dated folder (falls back to root files)
 
-import os, re, shutil, html
+import os, re, shutil, html, csv, json
 from pathlib import Path
 import datetime as dt
+
 
 ROOT  = Path(__file__).resolve().parents[1]
 OUT   = ROOT / "out"
@@ -122,36 +123,151 @@ def update_index(latest_dir: Path):
     print("[update] index.html latest block (with news) updated")
 
 # --- publish latest (fixed assets) -----------------------------------
-def publish_latest(latest_dir: Path):
+def rebuild_json_from_backfill():
     """
-    Always create at repo ROOT:
-      - latest.html
-      - bm20_bar_latest.png
-      - bm20_trend_latest.png
+    SSOT: backfill_current_basket.csv를 기준으로
+      - ROOT/bm20_series.json (date, level)
+      - ROOT/bm20_latest.json (asOf, bm20Level, returns 등)
+    를 재생성해서 대시보드가 항상 '연속 지수'만 읽게 만든다.
     """
-    ymd = latest_dir.name
-    html_src = latest_dir / f"bm20_daily_{ymd}.html"
-    bar_src  = latest_dir / f"bm20_bar_{ymd}.png"
-    trd_src  = latest_dir / f"bm20_btc_eth_line_{ymd}.png"
 
-    if not html_src.exists():
-        print("[publish_latest] skip: html not found", html_src)
+    # 후보 경로: out/ 와 bm/out 둘 다 탐색
+    candidates = [
+        OUT / "backfill_current_basket.csv",
+        ROOT / "bm" / "out" / "backfill_current_basket.csv",
+    ]
+    csv_path = next((p for p in candidates if p.exists()), None)
+    if not csv_path:
+        print("[rebuild_json] skip: backfill_current_basket.csv not found")
         return
-    if not bar_src.exists() or not trd_src.exists():
-        print("[publish_latest] skip: image(s) not found", bar_src, trd_src)
+
+    rows = []
+    with csv_path.open("r", encoding="utf-8") as f:
+        r = csv.DictReader(f)
+        for row in r:
+            date = (row.get("date") or "").strip()
+            idx  = row.get("index") or row.get("level") or row.get("bm20Level")
+            if not date or idx is None:
+                continue
+            try:
+                level = float(idx)
+            except Exception:
+                continue
+            rows.append({"date": date[:10], "level": level})
+
+    if len(rows) < 2:
+        print("[rebuild_json] skip: not enough rows in backfill CSV")
         return
 
-    # latest.html: 이미지 경로를 고정 파일명으로 치환
-    html_txt = html_src.read_text(encoding="utf-8")
-    html_txt = html_txt.replace(f"bm20_bar_{ymd}.png",   "bm20_bar_latest.png")
-    html_txt = html_txt.replace(f"bm20_btc_eth_line_{ymd}.png", "bm20_btc_eth_line.png")
-    (ROOT / "latest.html").write_text(html_txt, encoding="utf-8")
+    # 날짜 정렬
+    rows.sort(key=lambda x: x["date"])
 
-    # 최신 이미지 고정 파일명으로 루트에 복사
-    shutil.copyfile(bar_src, ROOT / "bm20_bar_latest.png")
-    shutil.copyfile(trd_src, ROOT / "bm20_btc_eth_line.png")
+    # 1) series.json 생성 (대시보드 라인차트 입력)
+    (ROOT / "bm20_series.json").write_text(
+        json.dumps(rows, ensure_ascii=False),
+        encoding="utf-8"
+    )
 
-    print(f"[publish_latest] wrote {(ROOT / 'latest.html').as_posix()} with images at repo root")
+    # 2) latest.json 생성 (KPI 입력)
+    last, prev = rows[-1], rows[-2]
+    bm20Level = last["level"]
+    bm20Prev  = prev["level"]
+    bm20ChangePct = (bm20Level / bm20Prev) - 1.0 if bm20Prev else None
+
+    latest = {
+        "asOf": last["date"],
+        "bm20Level": bm20Level,
+        "bm20PrevLevel": bm20Prev,
+        "bm20PointChange": bm20Level - bm20Prev,
+        "bm20ChangePct": bm20ChangePct,
+        "returns": {
+            "1D": bm20ChangePct
+        }
+    }
+
+    (ROOT / "bm20_latest.json").write_text(
+        json.dumps(latest, ensure_ascii=False),
+        encoding="utf-8"
+    )
+
+    print(f"[rebuild_json] wrote bm20_series.json({len(rows)} pts) + bm20_latest.json from {csv_path}")
+
+
+    def _extract_kimchi_ratio(x):
+        """percent(9.5) / ratio(0.095) / '9.5%' / dict 등 웬만한 형태를 ratio(0.095)로 정규화"""
+        if x is None:
+            return None
+        if isinstance(x, (int, float)):
+            v = float(x)
+            # 9.5 같은 퍼센트면 0.095로
+            return v / 100.0 if v >= 1.0 else v
+        if isinstance(x, str):
+            s = x.strip()
+            has_pct = "%" in s
+            s = s.replace("%", "")
+            try:
+                v = float(s)
+            except Exception:
+                return None
+            if has_pct:
+                return v / 100.0
+            return v / 100.0 if v >= 1.0 else v
+        if isinstance(x, dict):
+            keys = [
+                "kimchi_pct", "kimchi", "kimchi_premium_pct", "kimchi_premium",
+                "premium_pct", "premium", "pct", "percent", "rate", "value"
+            ]
+            for k in keys:
+                if k in x:
+                    out = _extract_kimchi_ratio(x.get(k))
+                    if out is not None:
+                        return out
+            # dict가 중첩인 경우도 한 번 훑기
+            for v in x.values():
+                out = _extract_kimchi_ratio(v)
+                if out is not None:
+                    return out
+        return None
+
+    def _load_kimchi_for_date(ymd: str):
+        """
+        kimchi json 후보들을 찾아 kimchi_ratio(0.0x)와 부가정보(usdkrw 등)를 반환
+        """
+        candidates = [
+            OUT / "latest" / "cache" / "kimchi_last.json",
+            ROOT / "bm" / "out" / "latest" / "cache" / "kimchi_last.json",
+
+            OUT / "latest" / ymd / f"kimchi_{ymd}.json",
+            ROOT / "bm" / "out" / "latest" / ymd / f"kimchi_{ymd}.json",
+
+            OUT / ymd / f"kimchi_{ymd}.json",
+            ROOT / "bm" / "out" / ymd / f"kimchi_{ymd}.json",
+        ]
+        for p in candidates:
+            if not p.exists():
+                continue
+            try:
+                obj = json.loads(p.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+
+            ratio = _extract_kimchi_ratio(obj)
+            meta = {}
+            if isinstance(obj, dict):
+                # 혹시 1450 같은 값이 여기에 들어있으면 같이 실어보내기
+                for k in ["usdkrw", "usdk", "fx", "fx_usdkrw", "krw_per_usd", "USDKRW", "usd_krw"]:
+                    if k in obj:
+                        meta["usdkrw"] = obj.get(k)
+                        break
+                # 원화 프리미엄 금액이 따로 있으면 같이 (있을 수도 있음)
+                for k in ["premium_krw", "kimchi_krw", "premium_won", "won_premium"]:
+                    if k in obj:
+                        meta["premium_krw"] = obj.get(k)
+                        break
+
+            return ratio, meta, str(p)
+        return None, {}, None
+
 # ---------------------------------------------------------------------
 
 def main():
@@ -159,6 +275,9 @@ def main():
     dst = copy_dir(latest)
     update_index(dst)
     publish_latest(dst)  # ★ 최신 고정 링크/이미지 (루트) 생성
+
+    rebuild_json_from_backfill()  # ★ 연속성 SSOT → 루트 JSON 재생성
+    
     (ROOT / ".nojekyll").write_text("", encoding="utf-8")
     print("[done] site updated")
 
