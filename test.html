@@ -449,6 +449,16 @@
         <p class="value" id="kpiStable">-</p>
         <div class="note" id="kpiStableNote">-</div>
       </div>
+      <div class="panel kpi" style="border-color:#e2e8f0; background:#f8fafc;">
+        <p class="label" style="color:var(--muted);">Global Market Context</p>
+        <p class="value">
+          <span id="kpiKShare">-</span> 
+          <span style="font-size:13px; color:var(--muted); font-weight:normal;">Share</span>
+        </p>
+        <div class="note" id="kpiSentiment">
+          F&G Index: <span id="fngStatus" style="font-weight:800;">-</span>
+        </div>
+      </div>
     </section>
 
     <!-- TOTAL (big) -->
@@ -759,7 +769,8 @@
       hist:   "/out/history/krw_24h_snapshots.json?" + bust,
       kimchiLatest: "/out/history/kimchi_latest.json?" + bust,
       kimchiHist:   "/out/history/kimchi_snapshots.json?" + bust,
-      fxLatest: "/out/history/fx_latest.json?" + bust  
+      fxLatest: "/out/history/fx_latest.json?" + bust,
+      bm20History: "/data/bm20_history.json?" + bust
     };
   }
 
@@ -1103,13 +1114,14 @@ totalChart?.setOption({
   async function refreshData(){
     const u = urls();
 
-    const [latest, history, kimchiLatest, kimchiHist, fxLatest] = 
+    const [latest, history, kimchiLatest, kimchiHist, fxLatest, bm20Hist] = 
       await Promise.all([
       loadJSON(u.latest),
       loadJSON(u.hist),
       loadJSON(u.kimchiLatest),
       loadJSON(u.kimchiHist),
       loadJSON(u.fxLatest), 
+      loadJSON(u.bm20History)
     ]);
 
     LATEST = latest;
@@ -1134,6 +1146,25 @@ totalChart?.setOption({
       document.getElementById("fxComment").textContent = fxText;
     }
 
+
+    if (bm20Hist && bm20Hist.length > 0) {
+        const bLatest = bm20Hist[bm20Hist.length - 1]; // 가장 최신 데이터
+        
+        // K-Share 점유율 표시 (3.18%)
+        const kShare = bLatest.k_market?.k_share_percent || 0;
+        document.getElementById("kpiKShare").textContent = kShare + "%";
+        
+        // 심리 지수 표시 (5, Extreme Fear)
+        const fng = bLatest.sentiment || {};
+        const fngEl = document.getElementById("fngStatus");
+        fngEl.textContent = `${fng.value || '-'} (${fng.status || '-'})`;
+        
+        // 심리 상태에 따른 색상 강조 (선택 사항)
+        if (fng.value <= 25) fngEl.style.color = "#dc2626"; // Extreme Fear
+        else if (fng.value >= 75) fngEl.style.color = "#16a34a"; // Extreme Greed
+        else fngEl.style.color = "var(--text)";
+    }
+    
 
     // KPI
     const t = latest.totals || {};
