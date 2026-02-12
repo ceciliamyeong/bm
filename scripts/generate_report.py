@@ -287,21 +287,51 @@ def rebuild_json_from_backfill():
     # kimchi 주입 (latest에 없을 수 있으니 별도 파일에서)
     kimchi_ratio, kimchi_meta, kimchi_src = _load_kimchi_for_date(last["date"])
 
+    # ---- returns 계산 (backfill rows 기준) ----
+    def _level_on_or_before(target_ymd: str):
+        for r in reversed(rows):
+            if r["date"] <= target_ymd:
+                return float(r["level"])
+        return None
+
+    def _ret_from(target_ymd: str, cur_level: float):
+        base = _level_on_or_before(target_ymd)
+        if base is None or base == 0:
+            return None
+        return (cur_level / base) - 1.0   # ratio
+
+    asof = last["date"]
+    cur_level = float(last["level"])
+
+    asof_dt = dt.datetime.strptime(asof, "%Y-%m-%d")
+    ymd_7d  = (asof_dt - dt.timedelta(days=7)).strftime("%Y-%m-%d")
+    ymd_30d = (asof_dt - dt.timedelta(days=30)).strftime("%Y-%m-%d")
+    ymd_1y  = (asof_dt - dt.timedelta(days=365)).strftime("%Y-%m-%d")
+    ymd_ytd = asof_dt.replace(month=1, day=1).strftime("%Y-%m-%d")
+
+    returns = {
+        "1D": bm20ChangePct,
+        "7D": _ret_from(ymd_7d,  cur_level),
+        "30D": _ret_from(ymd_30d, cur_level),
+        "1Y": _ret_from(ymd_1y,  cur_level),
+        "YTD": _ret_from(ymd_ytd, cur_level),
+    }
+
     latest = {
         "asOf": last["date"],
         "bm20Level": bm20Level,
         "bm20PrevLevel": bm20Prev,
         "bm20PointChange": bm20Level - bm20Prev,
         "bm20ChangePct": bm20ChangePct,
-        "returns": {
-            "1D": bm20ChangePct
-        },
+
+        # ✅ 여기서 returns 전체 넣는다
+        "returns": returns,
 
         # ✅ kimchi: JS가 읽는 키들
         "kimchi": kimchi_ratio,  # ratio (0.0x)
         "kimchi_premium_pct": (kimchi_ratio * 100.0) if isinstance(kimchi_ratio, (int, float)) else None,
 
-        # ✅ 디버깅용(원하면 나중에 빼도 됨)
+        # ✅ 디버깅용
         "kimchi_source": kimchi_src,
         "kimchi_meta": kimchi_meta,
     }
