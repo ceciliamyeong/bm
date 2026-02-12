@@ -334,6 +334,49 @@
       color:var(--muted);
     }
     code{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+    .footerDisclaimer{
+      margin-top:24px;
+      background:#ffffff;
+      border:1px solid #e5e7eb;
+      border-radius:16px;
+      padding:16px;
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+    }
+    
+    .footerDisclaimer .icon{
+      width:34px;
+      height:34px;
+      border-radius:12px;
+      background:#eef2ff;
+      border:1px solid #e0e7ff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+    }
+    
+    .footerDisclaimer .title{
+      margin:0;
+      font-size:14px;
+      font-weight:700;
+    }
+    
+    .footerDisclaimer .sub{
+      margin:4px 0 0;
+      font-size:12px;
+      color:#64748b;
+    }
+    
+    .footerDisclaimer .body{
+      margin:10px 0 0;
+      font-size:13px;
+      line-height:1.55;
+      color:#475569;
+    }
+
   </style>
 </head>
 
@@ -635,6 +678,20 @@
       </div>
     </section>
 
+    <footer class="footerDisclaimer" role="note" aria-label="disclaimer">
+  <div class="icon">i</div>
+  <div>
+    <div class="head">
+      <p class="title">Disclaimer</p>
+      <p class="sub">Information Purpose Only</p>
+    </div>
+    <p class="body">
+      본 지수 및 대시보드에 제공되는 정보는 시장 동향 파악을 위한 참고 자료이며,
+      특정 디지털 자산에 대한 투자 권유 또는 재무적 조언을 구성하지 않습니다.
+      투자 결정은 각 투자자의 판단과 책임 하에 이루어져야 합니다.
+    </p>
+  </div>
+</footer>
 
   </main>
 </div>
