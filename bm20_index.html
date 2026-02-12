@@ -392,6 +392,89 @@
         height: 220px;      /* 모바일 높이 압축 */
       }
     }
+
+   /* ===== Mobile Sidebar Toggle (Hamburger) ===== */
+    .menuBtn{
+      display:none;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      padding:8px 10px;
+      border-radius:10px;
+      cursor:pointer;
+    }
+    
+    @media (max-width: 980px){
+      .menuBtn{ display:inline-flex; align-items:center; justify-content:center; }
+    
+      /* 기본은 사이드바 숨김 */
+      .sidebar{ display:none; }
+    
+      /* 열렸을 때 */
+      .app.nav-open .sidebar{
+        display:block;
+        position:fixed;
+        left:0; top:0;
+        width:86vw;
+        max-width:320px;
+        height:100vh;
+        z-index:50;
+        border-right:1px solid rgba(255,255,255,.08);
+      }
+    
+      /* 배경 딤(바깥 클릭으로 닫히게) */
+      .app.nav-open::before{
+        content:"";
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,.55);
+        z-index:40;
+      }
+    }
+
+
+
+    /* =========================
+       MOBILE RESPONSIVE UPGRADE
+       ========================= */
+    @media (max-width: 720px){
+    
+      body{
+        font-size:17px;
+      }
+    
+      .topbar .title h2{
+        font-size:22px;
+      }
+    
+      .topbar .title p{
+        font-size:14px;
+        line-height:1.6;
+      }
+    
+      .kpi .value{
+        font-size:24px;
+      }
+    
+      .kpi,
+      .widget{
+        padding:16px;
+      }
+    
+      .nav a{
+        font-size:15px;
+        padding:12px;
+      }
+    
+      .chart{
+        height:280px;
+      }
+    
+      #moverBar{
+        height:300px;
+      }
+    }
+
     
   </style>
 </head>
@@ -436,6 +519,7 @@
   <main class="main">
 
     <div class="topbar">
+      <button class="menuBtn" id="menuBtn" aria-label="Menu" aria-expanded="false">☰</button>
       <div class="title">
         <h2>BM20 Index Dashboard</h2>
         <p>
@@ -1281,6 +1365,39 @@
     console.error(err);
     alert("BM20 로딩 실패: bm20_latest.json / bm20_series.json / out/YYYY-MM-DD/*.csv 경로를 확인하세요.");
   });
+
+  // ===== Mobile nav toggle =====
+  const appEl = document.querySelector('.app');
+  const menuBtn = document.getElementById('menuBtn');
+  
+  function closeNav(){
+    appEl?.classList.remove('nav-open');
+    if (menuBtn) menuBtn.setAttribute('aria-expanded', 'false');
+  }
+  
+  menuBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const willOpen = !appEl.classList.contains('nav-open');
+    appEl.classList.toggle('nav-open', willOpen);
+    menuBtn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+  });
+  
+  // 딤 영역(배경) 클릭하면 닫힘
+  document.addEventListener('click', (e) => {
+    if (!appEl.classList.contains('nav-open')) return;
+  
+    const sidebar = document.querySelector('.sidebar');
+    const clickedInsideSidebar = sidebar && sidebar.contains(e.target);
+    const clickedMenuBtn = menuBtn && menuBtn.contains(e.target);
+  
+    if (!clickedInsideSidebar && !clickedMenuBtn) closeNav();
+  });
+  
+  // 메뉴 클릭 후 자동 닫기(모바일 UX)
+  document.querySelectorAll('.sidebar a').forEach(a=>{
+    a.addEventListener('click', ()=> closeNav());
+  });
+
 </script>
 
 </body>
