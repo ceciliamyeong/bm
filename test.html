@@ -449,15 +449,17 @@
         <p class="value" id="kpiStable">-</p>
         <div class="note" id="kpiStableNote">-</div>
       </div>
-      <div class="panel kpi" style="border-color:#e2e8f0; background:#f8fafc;">
-        <p class="label" style="color:var(--muted);">Global Market Context</p>
-        <p class="value">
-          <span id="kpiKShare">-</span> 
-          <span style="font-size:13px; color:var(--muted); font-weight:normal;">Share</span>
-        </p>
-        <div class="note" id="kpiSentiment">
-          F&G Index: <span id="fngStatus" style="font-weight:800;">-</span>
-        </div>
+      
+      <div class="panel kpi" style="border-color:#e2e8f0; background:#f0f9ff;">
+        <p class="label" style="color:#0369a1; font-weight:700;">한국 시장 점유율 (Global)</p>
+        <p class="value" id="kpiKShare" style="font-size:24px; font-weight:900;">-</p>
+        <div class="note">전 세계 거래량 대비 비중</div>
+      </div>
+      
+      <div class="panel kpi" style="border-color:#e2e8f0; background:#fffafb;">
+        <p class="label" style="color:#be123c; font-weight:700;">글로벌 시장 심리</p>
+        <p class="value" id="fngStatus" style="font-size:20px; font-weight:900;">-</p>
+        <div class="note" id="fngValueNote">지수: -</div>
       </div>
     </section>
 
@@ -1147,22 +1149,35 @@ totalChart?.setOption({
     }
 
 
+    // 신규 데이터 화면 주입 부분
     if (bm20Hist && bm20Hist.length > 0) {
-        const bLatest = bm20Hist[bm20Hist.length - 1]; // 가장 최신 데이터
-        
-        // K-Share 점유율 표시 (3.18%)
-        const kShare = bLatest.k_market?.k_share_percent || 0;
-        document.getElementById("kpiKShare").textContent = kShare + "%";
-        
-        // 심리 지수 표시 (5, Extreme Fear)
-        const fng = bLatest.sentiment || {};
-        const fngEl = document.getElementById("fngStatus");
-        fngEl.textContent = `${fng.value || '-'} (${fng.status || '-'})`;
-        
-        // 심리 상태에 따른 색상 강조 (선택 사항)
-        if (fng.value <= 25) fngEl.style.color = "#dc2626"; // Extreme Fear
-        else if (fng.value >= 75) fngEl.style.color = "#16a34a"; // Extreme Greed
-        else fngEl.style.color = "var(--text)";
+    const bLatest = bm20Hist[bm20Hist.length - 1];
+    
+    // 1. 한국 점유율 카드 업데이트
+    const kShare = bLatest.k_market?.k_share_percent || 0;
+    document.getElementById("kpiKShare").textContent = kShare + "%";
+    
+    // 2. 공포 탐욕 지수 카드 업데이트 (한글화 포함)
+    const fng = bLatest.sentiment || {};
+    const fngEl = document.getElementById("fngStatus");
+    const fngNote = document.getElementById("fngValueNote");
+    
+    const statusMap = {
+        "Extreme Fear": "극도의 공포",
+        "Fear": "공포",
+        "Neutral": "중립",
+        "Greed": "탐욕",
+        "Extreme Greed": "극도의 탐욕"
+    };
+    
+    const korStatus = statusMap[fng.status] || fng.status || "-";
+    fngEl.textContent = korStatus;
+    fngNote.textContent = `심리 점수: ${fng.value || '-'} / 100`;
+    
+    // 상태별 텍스트 색상 변경
+    if (fng.value <= 25) fngEl.style.color = "#dc2626";
+    else if (fng.value >= 75) fngEl.style.color = "#16a34a";
+    else fngEl.style.color = "#2563eb";
     }
     
 
