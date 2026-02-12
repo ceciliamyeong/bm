@@ -337,7 +337,7 @@ def rebuild_json_from_backfill():
     }
 
     (ROOT / "bm20_latest.json").write_text(
-        json.dumps(latest, ensure_ascii=False),
+        json.dumps(latest, ensure_ascii=False, indent=2),
         encoding="utf-8"
     )
 
