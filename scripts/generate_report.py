@@ -281,7 +281,6 @@ def main():
     latest = ensure_latest_dir()
     dst = copy_dir(latest)
     update_index(dst)
-    publish_latest(dst)  # ★ 최신 고정 링크/이미지 (루트) 생성
 
     rebuild_json_from_backfill()  # ★ 연속성 SSOT → 루트 JSON 재생성
     
