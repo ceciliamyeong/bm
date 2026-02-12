@@ -106,25 +106,41 @@ jobs:
       # 3) 커밋 & 푸시
       - name: Commit & Push (rebased & autostash)
         run: |
-          set -e
-      
+          set -euo pipefail
+
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      
-          # 0) 원격 갱신 가져오기
+          
+          # 0) 혹시 모를 중복 실행/경합 대비: 원격 최신 확보
           git fetch origin main
-      
-          # 1) 생성물 모두 스테이징/커밋 (없으면 넘어감)
+          
+          # 1) 생성된 변경사항을 먼저 스태시(추적안된 파일 포함)
+          git stash push -u -m "bm20-autostash" || true
+          
+          # 2) 원격 main으로 깔끔하게 리베이스 동기화
+          git pull --rebase origin main
+          
+          # 3) 스태시 복원 (충돌 나면 '생성물은 내 결과를 우선'으로 처리)
+          git stash pop || true
+          
+          # 충돌이 났다면(지금 네 케이스) 생성물(out/, cache/, history/)은 워크플로 산출물을 우선 채택
+          # => 충돌 마커 제거 목적: 해당 폴더는 결과물이라 "현재 워크스페이스"를 살리는 게 맞음
+          git checkout --theirs out 2>/dev/null || true
+          git checkout --theirs cache 2>/dev/null || true
+          git checkout --theirs history 2>/dev/null || true
+          
+          # 4) 커밋/푸시
+          DATE=$(TZ=Asia/Seoul date +%F)
           git add -A
+          
           if ! git diff --cached --quiet; then
-            git commit -m "chore: auto daily report for $(date -u +%Y-%m-%d)"
+            git commit -m "chore: auto daily report for ${DATE}"
           fi
-      
-          # 2) 로컬 변경(혹시 남아있으면) 자동 스태시하면서 리베이스 풀
-          git pull --rebase --autostash origin main
-      
-          # 3) 푸시 (경합 시 1회 리트라이)
-          git push origin HEAD:main || { 
-            git pull --rebase --autostash origin main
+          
+          # push 경합 시 1회 재시도
+          git push origin HEAD:main || {
+            git fetch origin main
+            git pull --rebase origin main
             git push origin HEAD:main
           }
+
