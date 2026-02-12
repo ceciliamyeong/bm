@@ -123,6 +123,45 @@ def update_index(latest_dir: Path):
     print("[update] index.html latest block (with news) updated")
 
 # --- publish latest (fixed assets) -----------------------------------
+
+def publish_latest(dst_daily_dir: Path):
+    """
+    고정 latest 파일 생성 (대시보드 안정용)
+    """
+    ymd = dst_daily_dir.name
+
+    html_src  = dst_daily_dir / f"bm20_daily_{ymd}.html"
+    bar_src   = dst_daily_dir / f"bm20_bar_{ymd}.png"
+    trd_src   = dst_daily_dir / f"bm20_trend_{ymd}.png"
+    csv_src   = dst_daily_dir / f"bm20_daily_data_{ymd}.csv"
+    news_src  = dst_daily_dir / f"bm20_news_{ymd}.txt"
+    kimchi_src= dst_daily_dir / f"kimchi_{ymd}.json"
+
+    if html_src.exists():
+        html_txt = html_src.read_text(encoding="utf-8")
+        html_txt = html_txt.replace(f"bm20_bar_{ymd}.png", "bm20_bar_latest.png")
+        html_txt = html_txt.replace(f"bm20_trend_{ymd}.png", "bm20_trend_latest.png")
+        (ROOT / "latest.html").write_text(html_txt, encoding="utf-8")
+
+    if bar_src.exists():
+        shutil.copyfile(bar_src, ROOT / "bm20_bar_latest.png")
+
+    if trd_src.exists():
+        shutil.copyfile(trd_src, ROOT / "bm20_trend_latest.png")
+
+    if csv_src.exists():
+        shutil.copyfile(csv_src, ROOT / "bm20_daily_data_latest.csv")
+
+    if news_src.exists():
+        shutil.copyfile(news_src, ROOT / "bm20_news_latest.txt")
+
+    if kimchi_src.exists():
+        shutil.copyfile(kimchi_src, ROOT / "kimchi_latest.json")
+
+    print(f"[publish_latest] latest alias files created for {ymd}")
+
+
+
 def rebuild_json_from_backfill():
     """
     SSOT: backfill_current_basket.csv를 기준으로
@@ -282,6 +321,7 @@ def main():
     dst = copy_dir(latest)
     update_index(dst)
 
+    publish_latest(dst)        # 🔥 이 줄 다시 살린다
     rebuild_json_from_backfill()  # ★ 연속성 SSOT → 루트 JSON 재생성
     
     (ROOT / ".nojekyll").write_text("", encoding="utf-8")
