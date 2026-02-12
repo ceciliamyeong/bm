@@ -6,30 +6,45 @@ from pathlib import Path
 
 EXCHANGE_RATE = 1450
 
-def get_fear_and_greed():
-    try:
-        url = "https://api.alternative.me/fng/?limit=1"
-        res = requests.get(url, timeout=10).json()
-        return {"value": int(res['data'][0]['value']), "status": res['data'][0]['value_classification']}
-    except:
-        return {"value": 5, "status": "Extreme Fear"} # 현재 데이터에 찍힌 값
-
 def get_k_share(api_key, krw_total_24h):
     my_vol_usd = krw_total_24h / EXCHANGE_RATE
-    if not api_key: return {"global_vol_usd": 0, "krw_vol_usd": my_vol_usd, "k_share_percent": 0}
+    
+    if not api_key:
+        return {"global_vol_usd": 0, "krw_vol_usd": my_vol_usd, "k_share_percent": 0}
+
     try:
         url = "https://pro-api.coinmarketcap.com/v1/global-metrics/quotes/latest"
         headers = {'X-CMC_PRO_API_KEY': api_key}
-        res = requests.get(url, headers=headers, timeout=10).json()
-        global_vol_usd = res['data']['quote']['usd']['total_volume_24h']
+        response = requests.get(url, headers=headers, timeout=10)
+        res = response.json()
+        
+        # 데이터 추출 경로를 더 유연하게 설정 (무료 플랜 대응)
+        # 보통 data -> quote -> usd 순서지만, 혹시 모를 상황 대비
+        try:
+            quote_data = res.get('data', {}).get('quote', {}).get('USD', {}) # 대문자 USD 시도
+            if not quote_data:
+                quote_data = res.get('data', {}).get('quote', {}).get('usd', {}) # 소문자 usd 시도
+                
+            global_vol_usd = quote_data.get('total_volume_24h', 0)
+        except:
+            global_vol_usd = 0
+
+        # 만약 여전히 0이라면 다른 경로(시가총액 등)에서 추출 시도
+        if global_vol_usd == 0:
+            print("[DEBUG] CMC 응답 구조:", res) # 구조 확인을 위한 로그 출력
+            
         k_share = (my_vol_usd / global_vol_usd) * 100 if global_vol_usd > 0 else 0
+        
         return {
             "global_vol_usd": round(global_vol_usd, 2),
             "krw_vol_usd": round(my_vol_usd, 2),
             "k_share_percent": round(k_share, 2)
         }
-    except:
+    except Exception as e:
+        print(f"[ERROR] {e}")
         return {"global_vol_usd": 0, "krw_vol_usd": my_vol_usd, "k_share_percent": 0}
+
+
 
 def main():
     CMC_API_KEY = os.environ.get('CMC_API_KEY')
