@@ -289,7 +289,8 @@ def get_kimchi(df):
     except Exception:
         last = read_json(KP_CACHE)
         if last: return last.get("kimchi_pct"), {**last, "is_cache": True}
-        return None, {"dom":"fallback0","glb":"yf","fx":"fixed1350","btc_krw":None,"btc_usd":None,"usdkrw":1350.0,"is_cache":True}
+        return None, {"dom":"fallback0","glb":"yf","fx":"fixed1450","btc_krw":None,"btc_usd":None,"usdkrw":1450.0,"is_cache":True}
+
     try:
         btc_usd=float(df.loc[df["id"]=="bitcoin","current_price"].iloc[0]); glb="yf"
     except Exception:
@@ -301,7 +302,8 @@ def get_kimchi(df):
         except Exception:
             last = read_json(KP_CACHE)
             if last: return last.get("kimchi_pct"), {**last, "is_cache": True}
-            return None, {"dom":dom,"glb":"fallback0","fx":"fixed1350","btc_krw":round(btc_krw,2),"btc_usd":None,"usdkrw":1350.0,"is_cache":True}
+            return None, {"dom":dom,"glb":"fallback0","fx":"fixed1450","btc_krw":round(btc_krw,2),"btc_usd":None,"usdkrw":1450.0,"is_cache":True}
+            
     try:
         fxj = _get("https://api.exchangerate.host/latest", {"base": "USD", "symbols": "KRW"})
         usdkrw = float(fxj["rates"]["KRW"])
