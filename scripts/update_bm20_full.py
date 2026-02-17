@@ -1,9 +1,10 @@
 import requests
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 import xml.etree.ElementTree as ET
+
 
 # ---- 환율: 실시간 우선 + 실패 시 fallback ----
 def get_usdkrw_live():
@@ -62,12 +63,17 @@ def get_fear_and_greed():
 
 
 def get_k_share(api_key, krw_total_24h, usdkrw):
-    """한국 시장 점유율 계산 (한국 전체 현물 / 글로벌 현물(집계) )"""
+    """한국 시장 점유율 계산 (한국 전체 현물 / 글로벌 '조정된' 현물 거래량 우선)"""
     my_vol_usd = krw_total_24h / usdkrw if usdkrw > 0 else 0
 
     if not api_key:
         print("[DEBUG] CMC_API_KEY missing")
-        return {"global_vol_usd": 0, "krw_vol_usd": my_vol_usd, "k_share_percent": 0}
+        return {
+            "global_vol_usd": 0,
+            "krw_vol_usd": round(my_vol_usd, 2),
+            "k_share_percent": 0,
+            "global_volume_field": None
+        }
 
     try:
         url = "https://pro-api.coinmarketcap.com/v1/global-metrics/quotes/latest"
@@ -78,17 +84,39 @@ def get_k_share(api_key, krw_total_24h, usdkrw):
         data_root = res.get('data', {}).get('quote', {})
         usd_data = data_root.get('USD') or data_root.get('usd') or {}
 
-        global_vol_usd = usd_data.get('total_volume_24h', 0)
+        # ✅ 조정값 우선 선택 (없으면 fallback)
+        candidates = [
+            ("total_volume_24h_adjusted", usd_data.get("total_volume_24h_adjusted")),
+            ("total_volume_24h", usd_data.get("total_volume_24h")),
+            ("total_volume_24h_reported", usd_data.get("total_volume_24h_reported")),
+        ]
+
+        global_vol_usd = 0
+        picked_field = None
+        for name, val in candidates:
+            if val is not None and float(val) > 0:
+                global_vol_usd = float(val)
+                picked_field = name
+                break
+
         k_share = (my_vol_usd / global_vol_usd) * 100 if global_vol_usd > 0 else 0
 
         return {
             "global_vol_usd": round(global_vol_usd, 2),
             "krw_vol_usd": round(my_vol_usd, 2),
-            "k_share_percent": round(k_share, 2)
+            "k_share_percent": round(k_share, 2),
+            "global_volume_field": picked_field
         }
+
     except Exception as e:
         print(f"[DEBUG] CMC API parsing error: {e}")
-        return {"global_vol_usd": 0, "krw_vol_usd": my_vol_usd, "k_share_percent": 0}
+        return {
+            "global_vol_usd": 0,
+            "krw_vol_usd": round(my_vol_usd, 2),
+            "k_share_percent": 0,
+            "global_volume_field": None
+        }
+
 
 
 # ---- XRP: 한국 3거래소 XRP/KRW 24h 거래대금(KRW) ----
@@ -136,7 +164,7 @@ def get_cmc_global_xrp_usd_24h(api_key):
 
 
 def get_xrp_share(api_key, usdkrw):
-    """K-XRP Spot Share (24H): (Upbit+Bithumb+Coinone XRP/KRW 24h) / (CMC XRP global 24h)"""
+    """K-XRP Spot Share (24H)"""
     errors = []
 
     try:
@@ -169,7 +197,9 @@ def get_xrp_share(api_key, usdkrw):
     share = (korea_usd / global_usd) * 100 if global_usd > 0 else 0.0
 
     return {
+        "as_of": None,  # main에서 채움
         "symbol": "XRP",
+        "usdkrw": usdkrw,
         "korea": {
             "upbit_krw_24h": round(upbit_krw, 2),
             "bithumb_krw_24h": round(bithumb_krw, 2),
@@ -187,6 +217,23 @@ def get_xrp_share(api_key, usdkrw):
             "Global: CMC XRP volume_24h (USD)",
         ]
     }
+
+
+def append_json_list(path: Path, item: dict):
+    """list json 파일에 append (없으면 생성)."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    lst = []
+    if path.exists():
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                lst = json.load(f)
+                if not isinstance(lst, list):
+                    lst = []
+        except Exception:
+            lst = []
+    lst.append(item)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(lst, f, indent=2, ensure_ascii=False)
 
 
 def main():
@@ -212,50 +259,32 @@ def main():
     sentiment = get_fear_and_greed()
     k_market = get_k_share(CMC_API_KEY, krw_total_24h, usdkrw)
 
-    # ✅ XRP 점유율 추가
+    # ✅ XRP (BM20 히스토리에 넣지 않고 global로 분리)
     xrp_market = get_xrp_share(CMC_API_KEY, usdkrw)
 
     now_iso = datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
+    xrp_market["as_of"] = now_iso
 
+    # ---- BM20 히스토리: XRP 제외하고 기존대로 누적 ----
     new_entry = {
         "timestamp": now_iso,
         "sentiment": sentiment,
         "k_market": k_market,
-        "xrp_market": xrp_market,
         "usdkrw": usdkrw,
         "fx_source": fx_source
     }
+    append_json_list(Path("data/bm20_history.json"), new_entry)
 
-    # 1) 히스토리 누적 저장(기존 유지)
-    history_file = Path("data/bm20_history.json")
-    history_file.parent.mkdir(parents=True, exist_ok=True)
+    # ---- XRP 저장: out/global ----
+    latest_path = Path("out/global/k_xrp_share_24h_latest.json")
+    latest_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(latest_path, "w", encoding="utf-8") as f:
+        json.dump({**xrp_market, "fx_source": fx_source}, f, indent=2, ensure_ascii=False)
 
-    history_list = []
-    if history_file.exists():
-        with open(history_file, 'r', encoding='utf-8') as f:
-            try:
-                history_list = json.load(f)
-                if not isinstance(history_list, list):
-                    history_list = []
-            except:
-                history_list = []
+    append_json_list(Path("out/global/k_xrp_share_24h_history.json"), {**xrp_market, "fx_source": fx_source})
 
-    history_list.append(new_entry)
-    with open(history_file, 'w', encoding='utf-8') as f:
-        json.dump(history_list, f, indent=4, ensure_ascii=False)
-
-    # 2) ✅ “읽기 편한 위치” 최신 스냅샷도 저장
-    out_latest = Path("out/history/k_xrp_share_24h_latest.json")
-    out_latest.parent.mkdir(parents=True, exist_ok=True)
-    with open(out_latest, 'w', encoding='utf-8') as f:
-        json.dump({
-            "as_of": now_iso,
-            "usdkrw": usdkrw,
-            "fx_source": fx_source,
-            **xrp_market
-        }, f, indent=2, ensure_ascii=False)
-
-    print(f"[FINAL] 업데이트 완료 - K-Share: {k_market['k_share_percent']}% | K-XRP Share(24H): {xrp_market['k_xrp_share_pct_24h']}%")
+    print(f"[FINAL] BM20 업데이트 완료 - K-Share: {k_market['k_share_percent']}%")
+    print(f"[FINAL] XRP 저장 완료(out/global) - K-XRP Share(24H): {xrp_market['k_xrp_share_pct_24h']}%")
     print(f"[INFO] USDKRW={usdkrw} ({fx_source})")
 
 
