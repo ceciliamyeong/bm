@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 # ===== 입력 파일 (네가 업로드한 JBBitcoin JSON 경로) =====
-JB_FILE = Path("jpbitcoin (3).json")   # 필요하면 파일명만 수정
+JB_FILE = Path("data/source/jpbitcoin (3).json")
 
 # ===== 출력 파일 =====
 OUT_GLOBAL = Path("out/global/global_btc_liquidity_monthly.json")
