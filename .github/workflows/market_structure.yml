@@ -1,9 +1,8 @@
-name: Build Market Structure Data
+name: Build Market Structure
 
 on:
   workflow_dispatch:
   schedule:
-    # 매일 23:20 UTC (KST 08:20) — 필요하면 변경
     - cron: "20 23 * * *"
 
 permissions:
@@ -31,27 +30,22 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests
 
-      # ✅ JB 월별 BTC 데이터 빌드 (out/global/*.json 생성)
-      - name: Build JB Monthly BTC JSON
+      # ✅ XRP + K-Share 생성
+      - name: Build K-XRP Share (24H)
+        env:
+          CMC_API_KEY: ${{ secrets.CMC_API_KEY }}
         run: |
-          python scripts/build_jb_btc_monthly.py
+          python scripts/update_bm20_full.py
 
-      # (선택) ✅ XRP 24h share도 같이 만들고 싶으면, 너희 스크립트 경로로 교체
-      # - name: Build K-XRP Share (24H)
-      #   env:
-      #     CMC_API_KEY: ${{ secrets.CMC_API_KEY }}
-      #   run: |
-      #     python scripts/build_k_xrp_share_24h.py
-
-      # 변경사항 커밋/푸시 (Pages가 repo branch를 소스로 쓰는 구조일 때)
       - name: Commit and push generated files
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git add out/global/*.json || true
+          git add out/history/*.json || true
+          git add data/*.json || true
 
-          # 변경 없으면 종료
           git diff --cached --quiet && echo "No changes to commit" && exit 0
 
           git commit -m "Update market structure data"
