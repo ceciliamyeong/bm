@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Market Structure | Blockmedia Data</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", sans-serif; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 16px; }
+    .top { display:flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .title { font-size: 20px; font-weight: 700; }
+    .sub { color:#666; font-size: 12px; }
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 12px; margin-top: 12px; }
+    .card { border: 1px solid #eee; border-radius: 12px; padding: 12px; background: #fff; }
+    .kpi { display:flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+    .kpi .v { font-size: 22px; font-weight: 800; }
+    .kpi .l { font-size: 12px; color:#666; }
+    .span-12 { grid-column: span 12; }
+    .span-6 { grid-column: span 6; }
+    @media (max-width: 900px){ .span-6 { grid-column: span 12; } }
+    .muted { color:#777; font-size: 12px; margin-top: 6px; }
+    canvas { width: 100%; height: 320px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="title">Market Structure</div>
+      <div class="sub" id="asof">Loading…</div>
+    </div>
+
+    <div class="grid">
+      <!-- KPI -->
+      <div class="card span-12">
+        <div class="kpi">
+          <div class="v" id="kpi-xrp">—</div>
+          <div class="l">K-XRP Spot Share (24H)</div>
+          <div class="v" id="kpi-usdkrw" style="margin-left:16px;">—</div>
+          <div class="l">USDKRW</div>
+          <div class="v" id="kpi-xrp-errors" style="margin-left:16px;">—</div>
+          <div class="l">Errors</div>
+        </div>
+        <div class="muted">
+          * Korea = Upbit+Bithumb+Coinone XRP/KRW spot traded value(24h) → USD 환산 / Global = CMC XRP volume_24h(USD)
+        </div>
+      </div>
+
+      <!-- Chart 1: XRP 24H Share history -->
+      <div class="card span-12">
+        <div style="font-weight:700; margin-bottom:8px;">K-XRP Spot Share (24H) — History</div>
+        <canvas id="chart-xrp"></canvas>
+        <div class="muted" id="note-xrp"></div>
+      </div>
+
+      <!-- Chart 2: BTC monthly share (placeholder until data ready) -->
+      <div class="card span-6">
+        <div style="font-weight:700; margin-bottom:8px;">K-BTC Spot Share (Monthly)</div>
+        <canvas id="chart-btc-share"></canvas>
+        <div class="muted" id="note-btc-share">* 준비 중: out/global/k_btc_share_monthly.json 생성되면 자동 표시</div>
+      </div>
+
+      <!-- Chart 3: Global BTC liquidity (placeholder until data ready) -->
+      <div class="card span-6">
+        <div style="font-weight:700; margin-bottom:8px;">Global BTC Liquidity (Monthly)</div>
+        <canvas id="chart-btc-liq"></canvas>
+        <div class="muted" id="note-btc-liq">* 준비 중: out/global/global_btc_liquidity_monthly.json 생성되면 자동 표시</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+async function fetchJSON(url) {
+  const r = await fetch(url, { cache: "no-store" });
+  if (!r.ok) throw new Error(`HTTP ${r.status} for ${url}`);
+  return await r.json();
+}
+
+function fmtPct(x, digits=2){
+  if (x === null || x === undefined || Number.isNaN(Number(x))) return "—";
+  return `${Number(x).toFixed(digits)}%`;
+}
+function fmtNum(x, digits=2){
+  if (x === null || x === undefined || Number.isNaN(Number(x))) return "—";
+  return Number(x).toFixed(digits);
+}
+
+let chartXRP, chartBTCShare, chartBTCLiq;
+
+function makeLineChart(ctx, labels, data, yLabel){
+  return new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: yLabel,
+        data,
+        tension: 0.2,
+        pointRadius: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { maxTicksLimit: 8 } },
+        y: { ticks: { maxTicksLimit: 6 } }
+      }
+    }
+  });
+}
+
+async function renderXRP(){
+  // latest KPI
+  try {
+    const latest = await fetchJSON("/out/global/k_xrp_share_24h_latest.json");
+    document.getElementById("asof").textContent = `As of: ${latest.as_of || "—"}  |  FX: ${latest.fx_source || "—"}`;
+    document.getElementById("kpi-xrp").textContent = fmtPct(latest.k_xrp_share_pct_24h, 4);
+    document.getElementById("kpi-usdkrw").textContent = fmtNum(latest.usdkrw, 2);
+    document.getElementById("kpi-xrp-errors").textContent = (latest.errors && latest.errors.length) ? String(latest.errors.length) : "0";
+    document.getElementById("note-xrp").textContent = (latest.errors && latest.errors.length) ? `최근 실행 에러: ${latest.errors.join(" | ")}` : "";
+  } catch(e){
+    document.getElementById("asof").textContent = "As of: —";
+    document.getElementById("note-xrp").textContent = "* k_xrp_share_24h_latest.json을 아직 못 읽었습니다.";
+  }
+
+  // history line
+  try {
+    const hist = await fetchJSON("/out/global/k_xrp_share_24h_history.json");
+    const labels = hist.map(x => (x.as_of || "").slice(0, 19).replace("T", " "));
+    const series = hist.map(x => Number(x.k_xrp_share_pct_24h || 0));
+
+    const ctx = document.getElementById("chart-xrp").getContext("2d");
+    if (chartXRP) chartXRP.destroy();
+    chartXRP = makeLineChart(ctx, labels, series, "K-XRP Share (%)");
+  } catch(e){
+    document.getElementById("note-xrp").textContent = "* k_xrp_share_24h_history.json을 아직 못 읽었습니다. (히스토리 파일 생성 후 자동 표시)";
+  }
+}
+
+async function renderBTCMonthly(){
+  // placeholder: file 존재 시 자동 렌더
+  try {
+    const btcShare = await fetchJSON("/out/global/k_btc_share_monthly.json");
+    const labels = btcShare.map(x => x.month || x.date || "");
+    const series = btcShare.map(x => Number(x.share_pct || x.k_share_pct || x.k_btc_share_pct || 0));
+    const ctx = document.getElementById("chart-btc-share").getContext("2d");
+    if (chartBTCShare) chartBTCShare.destroy();
+    chartBTCShare = makeLineChart(ctx, labels, series, "K-BTC Monthly Share (%)");
+    document.getElementById("note-btc-share").textContent = "";
+  } catch(e){
+    // keep placeholder note
+  }
+
+  try {
+    const liq = await fetchJSON("/out/global/global_btc_liquidity_monthly.json");
+    const labels = liq.map(x => x.month || x.date || "");
+    const series = liq.map(x => Number(x.global_btc_volume || x.volume_btc || 0));
+    const ctx = document.getElementById("chart-btc-liq").getContext("2d");
+    if (chartBTCLiq) chartBTCLiq.destroy();
+    chartBTCLiq = makeLineChart(ctx, labels, series, "Global BTC Volume (BTC)");
+    document.getElementById("note-btc-liq").textContent = "";
+  } catch(e){
+    // keep placeholder note
+  }
+}
+
+(async function(){
+  await renderXRP();
+  await renderBTCMonthly();
+})();
+</script>
+</body>
+</html>
