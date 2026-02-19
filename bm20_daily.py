@@ -775,6 +775,23 @@ lvl_now   = float(hist.iloc[-1]["index"])
 RET_MTD = None if not lvl_month or lvl_month==0 else (lvl_now/lvl_month - 1)*100
 RET_YTD = None if not lvl_year  or lvl_year==0  else (lvl_now/lvl_year  - 1)*100
 
+def _to_ratio(x):
+    """Accept percent(12.3), ratio(0.123), string '12.3%' and normalize to ratio(0.123)."""
+    if x is None:
+        return None
+    try:
+        if isinstance(x, str):
+            s = x.strip().replace("%", "")
+            v = float(s)
+            # 문자열이 %였다고 가정
+            return v / 100.0
+        v = float(x)
+        # 2 이상이면 %일 확률이 매우 높음 (예: 82.8 = 82.8%)
+        return v / 100.0 if abs(v) >= 2.0 else v
+    except Exception:
+        return None
+
+
 
 # ================== Latest JSON (Dashboard 핵심) ==================
 
@@ -785,24 +802,33 @@ SERIES_JSON = Path("bm20_series.json")
 if "breadth" not in locals():
     breadth = {"up": None, "down": None}
 
+# 1D는 "레벨로부터" 확정 계산 (가장 안전)
+bm20ChangePct = None
+if bm20_prev_level not in (None, 0):
+    bm20ChangePct = (float(bm20_now) / float(bm20_prev_level)) - 1.0
+
 latest_obj = {
     "asOf": YMD,
     "bm20Level": round(float(bm20_now), 6),
     "bm20PrevLevel": (round(float(bm20_prev_level), 6) if bm20_prev_level is not None else None),
     "bm20PointChange": (round(float(bm20_now - bm20_prev_level), 6) if bm20_prev_level is not None else None),
-    # ✅ ratio (e.g., -0.0123) — bm20_index.html expects ratios
-    "bm20ChangePct": (float(port_ret_1d) if bm20_prev_level is not None else None),
-    
+
+    # ✅ ratio로 고정
+    "bm20ChangePct": bm20ChangePct,
+
     "returns": {
-        "1D": (float(port_ret_1d) if bm20_prev_level is not None else None),
-        "7D": (None if RET_7D is None else float(RET_7D) / 100.0),
-        "30D": (None if RET_30D is None else float(RET_30D) / 100.0),
-        "MTD": (None if RET_MTD is None else float(RET_MTD) / 100.0),
-        "YTD": (None if RET_YTD is None else float(RET_YTD) / 100.0),
+        # ✅ 1D도 ratio로 고정 (레벨 기반이 SSOT)
+        "1D": bm20ChangePct,
+        # ✅ 나머지는 들어오는 값이 %든 ratio든 자동으로 ratio로 정규화
+        "7D": _to_ratio(RET_7D),
+        "30D": _to_ratio(RET_30D),
+        "MTD": _to_ratio(RET_MTD),
+        "YTD": _to_ratio(RET_YTD),
     },
+
     "breadth": breadth,
-    
-    # kimchi: keep both camel + snake for compatibility
+
+    # ✅ 김치프리미엄은 "퍼센트 숫자"로 유지하는 게 네 UI에 맞음
     "kimchiPremiumPct": kimchi_pct,
     "kimchi_premium_pct": kimchi_pct,
 }
