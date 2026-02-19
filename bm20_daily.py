@@ -12,6 +12,7 @@
 # 환경: OUT_DIR(옵션), TZ=Asia/Seoul(권장)
 
 import os, json, time
+import datetime as dt
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import requests
