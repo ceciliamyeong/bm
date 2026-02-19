@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BM20 & Kimchi Premium (30D)</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
+  <style>
+    :root{
+      --bg:#f8fafc;
+      --panel:#ffffff;
+      --border:#e5e7eb;
+      --text:#0f172a;
+      --muted:#64748b;
+      --shadow:0 1px 2px rgba(15,23,42,.06);
+      --radius:14px;
+      --chip:#f1f5f9;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Arial, sans-serif;
+    }
+    .wrap{
+      max-width:1120px;
+      margin:0 auto;
+      padding:18px 16px 40px;
+    }
+    .topbar{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:12px;
+    }
+    h1{
+      margin:0;
+      font-size:18px;
+      letter-spacing:-0.3px;
+    }
+    .sub{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.45;
+    }
+    .meta{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+    .chip{
+      background:var(--chip);
+      border:1px solid var(--border);
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      color:#334155;
+      white-space:nowrap;
+    }
+    .panel{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+    }
+    .kpis{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:12px;
+      margin-bottom:12px;
+    }
+    @media (min-width: 900px){
+      .kpis{ grid-template-columns:1fr 1fr; }
+    }
+    .kpi{
+      padding:12px 12px;
+      min-width:0;
+    }
+    .kpi .label{ color:var(--muted); font-size:12px; margin:0 0 6px; }
+    .kpi .value{ font-size:22px; font-weight:900; letter-spacing:-0.3px; margin:0; }
+    .kpi .note{ color:var(--muted); font-size:12px; margin-top:6px; }
+    .grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:12px;
+    }
+    @media (min-width: 900px){
+      .grid{ grid-template-columns:1fr 1fr; }
+    }
+    .widget{
+      padding:12px;
+      min-width:0;
+    }
+    .widgetHead{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .wTitle h2{
+      margin:0;
+      font-size:14px;
+      letter-spacing:-0.2px;
+    }
+    .wTitle .desc{
+      margin-top:4px;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.35;
+    }
+    .wMeta{
+      text-align:right;
+      color:var(--muted);
+      font-size:11px;
+      white-space:nowrap;
+    }
+    .chart{ width:100%; height:320px; }
+    footer{
+      margin-top:14px;
+      color:var(--muted);
+      font-size:12px;
+    }
+    code{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <h1>BM20 Index & Kimchi Premium</h1>
+        <p class="sub">최근 30일(30D) 기준으로 BM20 지수와 김치프리미엄(BTC)을 메인에서 바로 봅니다.</p>
+      </div>
+      <div class="meta">
+        <span class="chip" id="metaUpdated">UPDATED: -</span>
+        <span class="chip">RANGE: 30D</span>
+      </div>
+    </div>
+
+    <section class="kpis">
+      <div class="panel kpi">
+        <p class="label">BM20 (latest)</p>
+        <p class="value" id="kpiBm20">-</p>
+        <div class="note" id="kpiBm20Note">-</div>
+      </div>
+
+      <div class="panel kpi">
+        <p class="label">Kimchi Premium (BTC, latest)</p>
+        <p class="value" id="kpiKimchi">-</p>
+        <div class="note" id="kpiKimchiNote">-</div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="panel widget">
+        <div class="widgetHead">
+          <div class="wTitle">
+            <h2>BM20 Index (30D)</h2>
+            <div class="desc">지수 레벨 추이</div>
+          </div>
+          <div class="wMeta">Source: BLOCKMEDIA</div>
+        </div>
+        <div id="bm20Chart" class="chart"></div>
+      </div>
+
+      <div class="panel widget">
+        <div class="widgetHead">
+          <div class="wTitle">
+            <h2>Kimchi Premium % (BTC, 30D)</h2>
+            <div class="desc">국내(Upbit KRW) vs 글로벌(USD) 환산 기준</div>
+          </div>
+          <div class="wMeta">Source: BLOCKMEDIA</div>
+        </div>
+        <div id="kimchiChart" class="chart"></div>
+      </div>
+    </section>
+
+    <footer>
+      데이터 경로: <code>/data/bm20_history.json</code>, <code>/out/history/kimchi_snapshots.json</code>
+    </footer>
+  </div>
+
+<script>
+  function num(x){
+    const n = Number(x);
+    return Number.isFinite(n) ? n : null;
+  }
+  function fmtPct(v){
+    const n = num(v);
+    if(n === null) return "-";
+    const sign = n > 0 ? "+" : "";
+    return sign + n.toFixed(2) + "%";
+  }
+  function bust(){ return "v=" + Date.now(); }
+
+  async function loadJSON(url){
+    const res = await fetch(url, { cache:"no-store" });
+    if(!res.ok) throw new Error("Failed: " + url + " (" + res.status + ")");
+    return await res.json();
+  }
+
+  // ---- BM20 history: 스키마가 바뀌어도 최대한 찾도록 후보 키들을 순서대로 확인
+  function getBm20Level(d){
+    // ✅ 여기서 “너희 bm20_history.json의 진짜 키”를 알면 하나로 고정하면 됨.
+    const candidates = [
+      d?.bm20?.index,
+      d?.bm20?.level,
+      d?.bm20_index,
+      d?.bm20_level,
+      d?.index?.bm20,
+      d?.index?.value,
+      d?.index_value,
+      d?.level,
+      d?.value
+    ];
+    for(const c of candidates){
+      const n = num(c);
+      if(n !== null) return n;
+    }
+    return null;
+  }
+
+  function getTs(d){
+    const t = d?.ts || d?.time || d?.datetime || d?.date || d?.timestamp;
+    const dt = t ? new Date(t) : null;
+    return (dt && !isNaN(dt.getTime())) ? dt : null;
+  }
+  function fmtX(dt){
+    const mm = String(dt.getMonth()+1).padStart(2,"0");
+    const dd = String(dt.getDate()).padStart(2,"0");
+    return `${mm}/${dd}`;
+  }
+
+  function sliceLastNDays(arr, nDays){
+    // 데이터가 일 1포인트가 아닐 수 있으니 “마지막 30일 구간”으로 자름
+    if(!Array.isArray(arr) || !arr.length) return [];
+    const end = getTs(arr[arr.length-1])?.getTime();
+    if(!end) return arr.slice(-Math.min(arr.length, 60));
+    const start = end - (nDays * 24 * 60 * 60 * 1000);
+    const out = arr.filter(d=>{
+      const t = getTs(d)?.getTime();
+      return t && t >= start && t <= end;
+    });
+    return out.length >= 2 ? out : arr.slice(-Math.min(arr.length, 60));
+  }
+
+  function pctChange(a, b){
+    // a -> b
+    if(!Number.isFinite(a) || !Number.isFinite(b) || a === 0) return null;
+    return ((b - a) / a) * 100;
+  }
+
+  let bm20Chart, kimchiChart;
+
+  async function refresh(){
+    const bm20Url = "/data/bm20_history.json?" + bust();                 // :contentReference[oaicite:2]{index=2}
+    const kimchiUrl = "/out/history/kimchi_snapshots.json?" + bust();   // :contentReference[oaicite:3]{index=3}
+
+    const [bm20Raw, kimchiRaw] = await Promise.all([
+      loadJSON(bm20Url),
+      loadJSON(kimchiUrl)
+    ]);
+
+    const bm20Hist = Array.isArray(bm20Raw) ? bm20Raw : [];
+    const kimchiHist = Array.isArray(kimchiRaw) ? kimchiRaw : [];
+
+    const b30 = sliceLastNDays(bm20Hist, 30);
+    const k30 = sliceLastNDays(kimchiHist, 30);
+
+    // ---- KPI: UPDATED
+    const updated = new Date();
+    document.getElementById("metaUpdated").textContent =
+      "UPDATED: " + updated.toLocaleString("ko-KR", { hour12:false });
+
+    // ---- KPI: BM20 latest + 30D change
+    const bFirst = getBm20Level(b30[0]);
+    const bLast = getBm20Level(b30[b30.length-1]);
+    document.getElementById("kpiBm20").textContent =
+      (bLast !== null) ? bLast.toLocaleString("ko-KR", { maximumFractionDigits: 2 }) : "-";
+    const bChg = (bFirst !== null && bLast !== null) ? pctChange(bFirst, bLast) : null;
+    document.getElementById("kpiBm20Note").textContent =
+      (bChg !== null) ? `30D change: ${fmtPct(bChg)}` : "30D change: -";
+
+    // ---- KPI: Kimchi (BTC) latest + 30D range
+    const kLast = k30[k30.length-1];
+    const btcLast = num(kLast?.kimchi_premium_pct?.BTC); // :contentReference[oaicite:4]{index=4}
+    document.getElementById("kpiKimchi").textContent = fmtPct(btcLast);
+
+    // 30D min/max
+    const btcSeries = k30.map(d=>num(d?.kimchi_premium_pct?.BTC)).filter(v=>v!==null);
+    if(btcSeries.length){
+      const lo = Math.min(...btcSeries);
+      const hi = Math.max(...btcSeries);
+      document.getElementById("kpiKimchiNote").textContent =
+        `30D range: ${lo.toFixed(2)}% ~ ${hi.toFixed(2)}%`;
+    }else{
+      document.getElementById("kpiKimchiNote").textContent = "30D range: -";
+    }
+
+    // ---- Chart: BM20
+    const bx = b30.map(d=>{
+      const dt = getTs(d);
+      return dt ? fmtX(dt) : "-";
+    });
+    const by = b30.map(d=>getBm20Level(d));
+
+    bm20Chart.setOption({
+      grid:{ left:52, right:18, top:26, bottom:40, containLabel:true },
+      tooltip:{ trigger:"axis" },
+      xAxis:{
+        type:"category",
+        data:bx,
+        boundaryGap:false,
+        axisTick:{ show:false }
+      },
+      yAxis:{
+        type:"value",
+        axisTick:{ show:false },
+        splitLine:{ lineStyle:{ color:"rgba(2,6,23,.06)" } }
+      },
+      series:[{
+        name:"BM20",
+        type:"line",
+        smooth:true,
+        symbolSize:6,
+        showSymbol:false,
+        data:by,
+        connectNulls:true,
+        areaStyle:{ opacity:0.10 },
+        lineStyle:{ width:3 }
+      }]
+    }, true);
+
+    // ---- Chart: Kimchi (BTC)
+    const kx = k30.map(d=>d?.timestamp_label || (getTs(d) ? fmtX(getTs(d)) : "-"));
+    const ky = k30.map(d=>num(d?.kimchi_premium_pct?.BTC));
+
+    kimchiChart.setOption({
+      grid:{ left:52, right:18, top:26, bottom:40, containLabel:true },
+      tooltip:{ trigger:"axis" },
+      xAxis:{
+        type:"category",
+        data:kx,
+        boundaryGap:false,
+        axisTick:{ show:false }
+      },
+      yAxis:{
+        type:"value",
+        axisLabel:{ formatter:(v)=>Number(v).toFixed(1) + "%" },
+        splitLine:{ lineStyle:{ color:"rgba(2,6,23,.06)" } }
+      },
+      series:[{
+        name:"BTC Kimchi %",
+        type:"line",
+        smooth:true,
+        symbolSize:6,
+        showSymbol:false,
+        data:ky,
+        connectNulls:true,
+        areaStyle:{ opacity:0.10 },
+        lineStyle:{ width:3 }
+      }]
+    }, true);
+  }
+
+  (function init(){
+    bm20Chart = echarts.init(document.getElementById("bm20Chart"));
+    kimchiChart = echarts.init(document.getElementById("kimchiChart"));
+
+    const ro = new ResizeObserver(()=>{ bm20Chart.resize(); kimchiChart.resize(); });
+    ro.observe(document.getElementById("bm20Chart"));
+    ro.observe(document.getElementById("kimchiChart"));
+
+    refresh();
+    setInterval(refresh, 60*1000);
+  })();
+</script>
+</body>
+</html>
