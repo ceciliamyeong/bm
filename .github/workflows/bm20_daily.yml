@@ -88,51 +88,7 @@ jobs:
             cp -f out/$DATE/kimchi_*.json out/$ASOF/ 2>/dev/null || true
           fi
 
-      # 2) 항상 실행: 김치 주입 (api/latest.json 생성) — bm20_latest.json을 덮어쓰지 않음
-      - name: Enrich latest (kimchi only, merge without overwrite)
-        shell: bash
-        run: |
-          set -e
-          python augment_latest.py || true
-
-          # ✅ Keep bm20_latest.json (index/returns) as SSOT, merge kimchi fields from api/latest.json if present
-          python - <<'PY'
-          import json
-          def load(p):
-              try:
-                  with open(p,'r',encoding='utf-8') as f:
-                      return json.load(f)
-              except Exception:
-                  return None
-          base = load('bm20_latest.json') or {}
-          api  = load('api/latest.json') or {}
-
-          # kimchi key variants → normalize
-          cand_keys = ['kimchi_premium_pct','kimchiPremiumPct','kimchi','kimchiPremium']
-          val = None
-          for k in cand_keys:
-              if k in api and api[k] is not None:
-                  val = api[k]
-                  break
-          if val is not None:
-              try:
-                  v = float(val)
-                  base['kimchi_premium_pct'] = (v*100.0 if v < 1 else v)  # pct
-              except Exception:
-                  pass
-
-          # optionally carry meta
-          if isinstance(api.get('kimchi_meta'), dict):
-              base['kimchi_meta'] = api['kimchi_meta']
-          if api.get('kimchi_source'):
-              base['kimchi_source'] = api['kimchi_source']
-
-          with open('bm20_latest.json','w',encoding='utf-8') as f:
-              json.dump(base,f,ensure_ascii=False,indent=2)
-          print('[OK] merged kimchi into bm20_latest.json (no overwrite)')
-          PY
-
-      # 3) intraday: 대시보드 고정 엔드포인트 갱신 (bm/ 밑에 유지)
+  
 # 3) intraday: 대시보드 고정 엔드포인트 갱신 (bm/ 밑에 유지)
       - name: Publish fixed endpoints to bm/
         shell: bash
@@ -176,7 +132,7 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add bm/ api/ || true
+          git add bm/ || true
           if [ "${{ env.DAILY_SNAPSHOT }}" = "1" ]; then
             git add out/ || true
           fi
