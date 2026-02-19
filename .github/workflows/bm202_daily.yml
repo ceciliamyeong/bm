@@ -59,55 +59,63 @@ jobs:
           RETRY_SLEEP_SECONDS: "45"
         run: |
           chmod +x scripts/run_bm20.sh
-          scripts/run_bm20.sh      
+          scripts/run_bm20.sh
 
-      # 디버그용
-      - name: Debug — show out tree
-        shell: bash
-        run: |
-          echo "PWD=$(pwd)"
-          ls -la
-          echo "---- out ----"
-          ls -la out || true
-          echo "---- out recursive ----"
-          find out -maxdepth 2 -type d -print || true
-
-      # 2) out → archive 복사 + latest.html 생성(스크립트 내부에서 처리)
+      # 2) out → archive 복사 + archive html 생성(스크립트 내부에서 처리)
       - name: Generate site (latest + archive)
         shell: bash
         run: |
           python scripts/generate_report.py
           echo "" > .nojekyll
 
-      # 2.5) latest 보강 — 아카이브/파일 없으면 '경고 출력 후 스킵'
+      # 2.5) latest 보강 — 특정 날짜 지정 가능 + 최신 archive 자동 선택 + 파일명/치환 정상화
       - name: Publish latest (fixed assets)
         shell: bash
         run: |
           set -euo pipefail
-          DATE=$(TZ=Asia/Seoul date +%F)
-          SRC="archive/$DATE"
 
+          # (1) 날짜 결정: 입력값 우선, 없으면 archive 최신 폴더
+          TARGET_DATE="${{ inputs.target_date }}"
+          if [ -n "${TARGET_DATE}" ]; then
+            DATE="${TARGET_DATE}"
+          else
+            DATE=$(ls -1 archive 2>/dev/null | grep -E "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" | sort | tail -n 1)
+          fi
+
+          if [ -z "${DATE:-}" ]; then
+            echo "[WARN] No archive date found. Skip publish."
+            exit 0
+          fi
+
+          SRC="archive/$DATE"
+          echo "[DEBUG] Using archive date: $DATE"
           echo "[DEBUG] Checking $SRC"
+
           if [ ! -d "$SRC" ]; then
             echo "[WARN] $SRC not found. Skip publish."
             exit 0
           fi
 
-          for f in "bm20_daily_${DATE}.html" "bm20_bar_${DATE}.png" "bm20_btc_eth_line_latest.png_${DATE}.png"; do
+          # (2) 필요한 파일 존재 확인 (※ 파일명 오타/구조 오류 수정)
+          # - 날짜가 붙는 원본: bm20_btc_eth_line_${DATE}.png
+          for f in "bm20_daily_${DATE}.html" "bm20_bar_${DATE}.png" "bm20_btc_eth_line_${DATE}.png"; do
             if [ ! -f "$SRC/$f" ]; then
               echo "[WARN] $SRC/$f not found. Skip publish."
               exit 0
             fi
           done
 
-          # 캐시버스터 대응: ?v=타임스탬프까지 매칭하여 latest.*로 교체
+          # (3) HTML 안의 이미지 참조를 latest 파일로 치환 (캐시버스터 ?v=도 허용)
+          # - bar -> bm20_bar_latest.png
+          # - btc/eth line -> bm20_btc_eth_line_latest.png
           sed -E \
-            -e "s#bm20_bar_${DATE}\.png(\?v=[0-9]+)?#bm20_btc_eth_line_latest.png#g" \
-            -e "s#bm20_trend_${DATE}\.png(\?v=[0-9]+)?#bm20_btc_eth_line_latest.png#g" \
+            -e "s#bm20_bar_${DATE}\.png(\?v=[0-9]+)?#bm20_bar_latest.png#g" \
+            -e "s#bm20_btc_eth_line_${DATE}\.png(\?v=[0-9]+)?#bm20_btc_eth_line_latest.png#g" \
             "$SRC/bm20_daily_${DATE}.html" > latest.html
 
-          cp "$SRC/bm20_bar_${DATE}.png"   bm20_bar_latest.png
-          cp "$SRC/m20_btc_eth_line_${DATE}.png" bm20_btc_eth_line_latest.png
+          # (4) 고정 파일로 복사
+          cp -f "$SRC/bm20_bar_${DATE}.png"          bm20_bar_latest.png
+          cp -f "$SRC/bm20_btc_eth_line_${DATE}.png" bm20_btc_eth_line_latest.png
 
       # 3) 커밋 & 푸시
       - name: Commit & Push (rebased & autostash)
@@ -116,34 +124,32 @@ jobs:
 
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          
+
           # 0) 혹시 모를 중복 실행/경합 대비: 원격 최신 확보
           git fetch origin main
-          
+
           # 1) 생성된 변경사항을 먼저 스태시(추적안된 파일 포함)
           git stash push -u -m "bm20-autostash" || true
-          
+
           # 2) 원격 main으로 깔끔하게 리베이스 동기화
           git pull --rebase origin main
-          
-          # 3) 스태시 복원 (충돌 나면 '생성물은 내 결과를 우선'으로 처리)
+
+          # 3) 스태시 복원
           git stash pop || true
-          
-          # 충돌이 났다면(지금 네 케이스) 생성물(out/, cache/, history/)은 워크플로 산출물을 우선 채택
-          # => 충돌 마커 제거 목적: 해당 폴더는 결과물이라 "현재 워크스페이스"를 살리는 게 맞음
+
+          # 충돌이 났다면 생성물(out/, cache/, history/)은 워크플로 산출물을 우선 채택
           git checkout --theirs out 2>/dev/null || true
           git checkout --theirs cache 2>/dev/null || true
           git checkout --theirs history 2>/dev/null || true
-          
-          # 4) 커밋/푸시
+
+          # 4) 커밋/푸시 (커밋 메시지는 실행 시각 기준 날짜로 유지)
           DATE=$(TZ=Asia/Seoul date +%F)
           git add -A
-          
+
           if ! git diff --cached --quiet; then
             git commit -m "chore: auto daily report for ${DATE}"
           fi
-          
-          # push 경합 시 1회 재시도
+
           git push origin HEAD:main || {
             git fetch origin main
             git pull --rebase origin main
