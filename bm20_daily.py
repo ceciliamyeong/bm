@@ -781,6 +781,10 @@ RET_YTD = None if not lvl_year  or lvl_year==0  else (lvl_now/lvl_year  - 1)*100
 LATEST_JSON = Path("bm20_latest.json")
 SERIES_JSON = Path("bm20_series.json")
 
+# --- ensure breadth always exists (intraday safe) ---
+if "breadth" not in locals():
+    breadth = {"up": None, "down": None}
+
 latest_obj = {
     "asOf": YMD,
     "bm20Level": round(float(bm20_now), 6),
@@ -788,6 +792,7 @@ latest_obj = {
     "bm20PointChange": (round(float(bm20_now - bm20_prev_level), 6) if bm20_prev_level is not None else None),
     # ✅ ratio (e.g., -0.0123) — bm20_index.html expects ratios
     "bm20ChangePct": (float(port_ret_1d) if bm20_prev_level is not None else None),
+    
     "returns": {
         "1D": (float(port_ret_1d) if bm20_prev_level is not None else None),
         "7D": (None if RET_7D is None else float(RET_7D) / 100.0),
@@ -796,10 +801,12 @@ latest_obj = {
         "YTD": (None if RET_YTD is None else float(RET_YTD) / 100.0),
     },
     "breadth": breadth,
+    
     # kimchi: keep both camel + snake for compatibility
     "kimchiPremiumPct": kimchi_pct,
     "kimchi_premium_pct": kimchi_pct,
 }
+
 # series.json
 # series: SSOT 우선(rows_ssot), 없으면 history CSV를 사용
 if 'rows_ssot' in globals() and rows_ssot:
