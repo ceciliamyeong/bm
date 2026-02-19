@@ -36,6 +36,11 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
 
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent
+OUT = ROOT / "out"
+
 # ---- HTML ---
 from jinja2 import Template
 
