@@ -1,0 +1,53 @@
+name: BTC USD backfill (Yahoo)
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: "Start date (YYYY-MM-DD). Default: 2018-01-01"
+        required: false
+        default: "2018-01-01"
+
+concurrency:
+  group: btc-backfill-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies (yfinance)
+        run: |
+          python -m pip install --upgrade pip
+          pip install yfinance pandas
+
+      - name: Build btc_usd_series.json (Yahoo)
+        env:
+          START_DATE: ${{ inputs.start_date }}
+        run: |
+          python tools/build_btc_usd_series_yahoo.py
+
+      - name: Commit & Push
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add btc_usd_series.json || true
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: backfill btc_usd_series.json"
+            git push origin HEAD:main
+          else
+            echo "No changes to commit."
+          fi
