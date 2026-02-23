@@ -1,0 +1,243 @@
+name: BM20 Daily_latest
+
+on:
+  schedule:
+    - cron: "40 19 * * *"   # 04:40 KST (UTC 19:40)
+    - cron: "40 7  * * *"   # 16:40 KST (UTC 07:40)
+  workflow_dispatch:
+    inputs:
+      target_date:
+        description: "Publish from this archive date (YYYY-MM-DD). Leave empty to use latest available."
+        required: false
+        default: ""
+
+concurrency:
+  group: bm20-daily-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write  # index.html / archive / latest.html 커밋용
+
+    env:
+      TZ: Asia/Seoul
+      COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install Korean fonts (Nanum + Noto CJK)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-nanum fonts-noto-cjk fontconfig
+          sudo fc-cache -f -v
+
+      # 1) 리포트 생성 (out/YYYY-MM-DD)
+      - name: Run BM20 generator (with retries)
+        shell: bash
+        env:
+          OUT_DIR: out
+          TZ: Asia/Seoul
+          BM20_KRW_BONUS: "1.0"
+          COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
+          MAX_ATTEMPTS: "3"
+          RETRY_SLEEP_SECONDS: "45"
+        run: |
+          chmod +x scripts/run_bm20.sh
+          scripts/run_bm20.sh
+
+      # 1.5) daily CSV로 오늘 ret 계산 → out/backfill_current_basket.csv에 append
+      #      (BM20 연속지수 SSOT를 오늘 산출물로 확실히 전진시켜서, 이후 generate_report.py 리빌드가 최신을 보게 함)
+      - name: Update backfill SSOT from daily CSV
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # out/YYYY-MM-DD 폴더에서 가장 최신 날짜 선택
+          DATE=$(ls -1 out 2>/dev/null | grep -E "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" | sort | tail -n 1 || true)
+          if [ -z "${DATE:-}" ]; then
+            echo "[WARN] No out/YYYY-MM-DD folder found. Skip backfill update."
+            exit 0
+          fi
+
+          CSV="out/${DATE}/bm20_daily_data_${DATE}.csv"
+          BACKFILL="out/backfill_current_basket.csv"
+
+          echo "[INFO] DATE=$DATE"
+          echo "[INFO] CSV=$CSV"
+          echo "[INFO] BACKFILL=$BACKFILL"
+
+          if [ ! -f "$CSV" ]; then
+            echo "[WARN] Missing $CSV. Skip backfill update."
+            exit 0
+          fi
+
+          if [ ! -f "$BACKFILL" ]; then
+            echo "[WARN] Missing $BACKFILL. Cannot compute index. Skip."
+            exit 0
+          fi
+
+          export DATE CSV BACKFILL
+          python - << 'PY'
+          import csv
+          import os
+          from pathlib import Path
+
+          date = os.environ["DATE"]
+          csv_path = Path(os.environ["CSV"])
+          backfill_path = Path(os.environ["BACKFILL"])
+
+          # 1) 오늘 포트폴리오 1D 수익률 = Σ(weight_ratio * price_change_pct/100)
+          rows = list(csv.DictReader(csv_path.open(encoding="utf-8")))
+          if not rows:
+              print("[backfill] daily CSV empty; skip")
+              raise SystemExit(0)
+
+          ret = 0.0
+          for r in rows:
+              w = r.get("weight_ratio")
+              pct = r.get("price_change_pct")
+              if w in (None, "") or pct in (None, ""):
+                  continue
+              ret += float(w) * (float(pct) / 100.0)
+
+          # 2) backfill 마지막 index 읽기 (포맷: date,index,ret)
+          lines = backfill_path.read_text(encoding="utf-8").strip().splitlines()
+          if len(lines) < 2:
+              print("[backfill] backfill has no data rows; skip")
+              raise SystemExit(0)
+
+          header = lines[0].strip()
+          last_parts = lines[-1].strip().split(",")
+          if len(last_parts) < 2:
+              print("[backfill] malformed last row; skip")
+              raise SystemExit(0)
+
+          last_date = last_parts[0]
+          last_index = float(last_parts[1])
+
+          # 3) 같은 날짜면 덮어쓰기(마지막 줄 교체), 더 최신이면 append
+          new_index = last_index * (1.0 + ret)
+          new_line = f"{date},{new_index},{ret}"
+
+          if date == last_date:
+              lines[-1] = new_line
+              action = "overwrite"
+          else:
+              # 날짜 역행 방지(안전)
+              if date < last_date:
+                  print(f"[backfill] date {date} < last_date {last_date}; skip to avoid disorder")
+                  raise SystemExit(0)
+              lines.append(new_line)
+              action = "append"
+
+          backfill_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+          print(f"[backfill] {action} OK: {new_line}")
+          PY
+
+      # 2) out → archive 복사 + archive html 생성(스크립트 내부에서 처리)
+      - name: Generate site (latest + archive)
+        shell: bash
+        run: |
+          python scripts/generate_report.py
+          echo "" > .nojekyll
+
+      # 2.5) latest 보강 — 특정 날짜 지정 가능 + 최신 archive 자동 선택 + 파일명/치환 정상화
+      - name: Publish latest (fixed assets)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # (1) 날짜 결정: 입력값 우선, 없으면 archive 최신 폴더
+          TARGET_DATE="${{ inputs.target_date }}"
+          if [ -n "${TARGET_DATE}" ]; then
+            DATE="${TARGET_DATE}"
+          else
+            DATE=$(ls -1 archive 2>/dev/null | grep -E "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" | sort | tail -n 1)
+          fi
+
+          if [ -z "${DATE:-}" ]; then
+            echo "[WARN] No archive date found. Skip publish."
+            exit 0
+          fi
+
+          SRC="archive/$DATE"
+          echo "[DEBUG] Using archive date: $DATE"
+          echo "[DEBUG] Checking $SRC"
+
+          if [ ! -d "$SRC" ]; then
+            echo "[WARN] $SRC not found. Skip publish."
+            exit 0
+          fi
+
+          # (2) 필요한 파일 존재 확인 (※ 파일명 오타/구조 오류 수정)
+          # - 날짜가 붙는 원본: bm20_trend_${DATE}.png
+          for f in "bm20_daily_${DATE}.html" "bm20_bar_${DATE}.png" "bm20_trend_${DATE}.png"; do
+            if [ ! -f "$SRC/$f" ]; then
+              echo "[WARN] $SRC/$f not found. Skip publish."
+              exit 0
+            fi
+          done
+
+          # (3) HTML 안의 이미지 참조를 latest 파일로 치환 (캐시버스터 ?v=도 허용)
+          # - bar -> bm20_bar_latest.png
+          # - trend -> bm20_trend_latest.png
+          sed -E             -e "s#bm20_bar_${DATE}\.png(\?v=[0-9]+)?#bm20_bar_latest.png#g"             -e "s#bm20_trend_${DATE}\.png(\?v=[0-9]+)?#bm20_trend_latest.png#g"             "$SRC/bm20_daily_${DATE}.html" > latest.html
+
+          # (4) 고정 파일로 복사
+          cp -f "$SRC/bm20_bar_${DATE}.png"   bm20_bar_latest.png
+          cp -f "$SRC/bm20_trend_${DATE}.png" bm20_trend_latest.png
+
+      # 3) 커밋 & 푸시
+      - name: Commit & Push (rebased & autostash)
+        run: |
+          set -euo pipefail
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # 0) 혹시 모를 중복 실행/경합 대비: 원격 최신 확보
+          git fetch origin main
+
+          # 1) 생성된 변경사항을 먼저 스태시(추적안된 파일 포함)
+          git stash push -u -m "bm20-autostash" || true
+
+          # 2) 원격 main으로 깔끔하게 리베이스 동기화
+          git pull --rebase origin main
+
+          # 3) 스태시 복원
+          git stash pop || true
+
+          # 충돌이 났다면 생성물(out/, cache/, history/)은 워크플로 산출물을 우선 채택
+          git checkout --theirs out 2>/dev/null || true
+          git checkout --theirs cache 2>/dev/null || true
+          git checkout --theirs history 2>/dev/null || true
+
+          # 4) 커밋/푸시 (커밋 메시지는 실행 시각 기준 날짜로 유지)
+          DATE=$(TZ=Asia/Seoul date +%F)
+          git add -A
+
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: auto daily report for ${DATE}"
+          fi
+
+          git push origin HEAD:main || {
+            git fetch origin main
+            git pull --rebase origin main
+            git push origin HEAD:main
+          }
