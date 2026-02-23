@@ -47,6 +47,7 @@ jobs:
           sudo apt-get install -y fonts-nanum fonts-noto-cjk fontconfig
           sudo fc-cache -f -v
 
+
       # 1) 리포트 생성 (out/YYYY-MM-DD)
       - name: Run BM20 generator (with retries)
         shell: bash
