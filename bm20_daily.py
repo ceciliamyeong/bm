@@ -387,6 +387,32 @@ def fp(v, dash_text="중"):
 # 1) Prices
 df = fetch_yf_prices(BM20_IDS)
 
+# ===== Realtime overlay (safe) =====
+try:
+    import requests
+
+    url = "https://api.coingecko.com/api/v3/simple/price"
+    params = {
+        "ids": ",".join(BM20_IDS),
+        "vs_currencies": "usd"
+    }
+
+    r = requests.get(url, params=params, timeout=10)
+    if r.status_code == 200:
+        realtime = r.json()
+        for cid in BM20_IDS:
+            if cid in realtime and "usd" in realtime[cid]:
+                mask = df["id"] == cid
+                df.loc[mask, "current_price"] = float(realtime[cid]["usd"])
+
+        # price_change_pct 다시 계산
+        df["price_change_pct"] = (
+            (df["current_price"] / df["previous_price"] - 1.0) * 100.0
+        )
+
+except Exception as e:
+    print("Realtime overlay failed, fallback to daily close:", e)
+
 # 2) Weights (고정 5종 + 균등 15종) + 분기 리밸런싱 훅
 FIXED_WEIGHTS = {
     "bitcoin": 0.30,
@@ -552,8 +578,8 @@ denom_ok = True
 for _, row in df.iterrows():
     cid = row["id"]
     w = float(weights_map.get(cid, 0.0))
-    p0 = float(row.get("prev_price") or 0.0)
-    p1 = float(row.get("price") or 0.0)
+    p0 = float(row.get("previous_price") or 0.0)
+    p1 = float(row.get("current_price") or 0.0)
     if w == 0:
         continue
     if p0 <= 0 or p1 <= 0:
@@ -1006,3 +1032,13 @@ html = html_tpl.render(
     ts=TS
 )
 with open(html_path, "w", encoding="utf-8") as f: f.write(html)
+
+# ===== meta 파일 생성 (업데이트 증빙) =====
+meta = {
+    "generated_at": datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S"),
+    "generated_at_epoch": int(time.time()),
+    "mode": "intraday" if not DAILY_SNAPSHOT else "daily_snapshot",
+}
+
+with open(ROOT / "bm20_meta_latest.json", "w", encoding="utf-8") as f:
+    json.dump(meta, f, ensure_ascii=False, indent=2)
