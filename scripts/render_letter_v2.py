@@ -96,6 +96,18 @@ def build_placeholders() -> dict[str,str]:
     krw = load_json(KRW_JSON)
     df = load_daily_df()
 
+    BTC_JSON = ROOT / "out/history/btc_usd_series.json"
+    btc_series = json.loads(BTC_JSON.read_text(encoding="utf-8"))
+
+    last = btc_series[-1]["price"]
+    prev = btc_series[-2]["price"]
+
+    btc_usd = float(last)
+    btc_1d = (btc_usd / float(prev) - 1) * 100
+
+    btc_price_txt = f"{btc_usd:,.0f}"
+    btc_1d_txt = f"{btc_1d:+.2f}%"
+    
     best3, worst3, breadth, up, down = compute_best_worst_breadth(df, n=3)
 
     # BM20
@@ -144,6 +156,8 @@ def build_placeholders() -> dict[str,str]:
 
     ph = {
         "{{BM20_LEVEL}}": fmt_level(level) if level is not None else "—",
+        "{{BTC_USD}}": btc_price_txt,
+        "{{BTC_1D}}": btc_1d_txt,
         "{{BM20_ASOF}}": str(asof),
         "{{BM20_1D}}": bm20_1d,
         "{{BM20_BREADTH}}": breadth,
