@@ -150,6 +150,12 @@ jobs:
           print(f"[backfill] {action} OK: {new_line}")
           PY
 
+      - name: Fetch Blockmedia BTC titles (coins/btc)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/fetch_blockmedia_coin_titles.py
+
       # 2) out → archive 복사 + archive html 생성(스크립트 내부에서 처리)
       - name: Generate site (latest + archive)
         shell: bash
