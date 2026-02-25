@@ -1267,33 +1267,60 @@
     document.getElementById("kpi30dNote").textContent = "rolling";
     document.getElementById("kpi1yNote").textContent = "rolling";
 
-    // Kimchi / Funding
+   // Kimchi / Funding
     const funding = j.funding_rates || j.funding || j.funding_bps || j.fundingRate;
-    const kLatest = j.kimchi_2025 ?? j.kimchi_premium_pct ?? j.kimchi_premium_latest ?? j.kimchi;
-    const kimchiRatio = extractKimchi(kLatest);
-
-    const kimchiEl = document.getElementById("kimchiValue");
-    if (kimchiEl) kimchiEl.textContent = (kimchiRatio!=null) ? fmtPctRatio(kimchiRatio,2) : "-";
-    // Universe & Methodology
-    bindUniverseAndMethodology(j);
-
-    // Load CSV + movers
-    const perf = await loadPerfCSV(asof);
-    if (perf){
-      const rows = parseCSV(perf.csv);
-      renderMovers(rows, asof, perf.path);
+    
+    let kimchiRatio = null;
+    
+    // 1️⃣ 단일 percent 필드 (0.7571 = 0.7571%)
+    if (j.kimchi_pct != null && Number.isFinite(Number(j.kimchi_pct))) {
+      kimchiRatio = Number(j.kimchi_pct) / 100;
     }
-
-    // Link hook
-    const newsPath = j.news_file || j.news_path || j.news;
-    if (newsPath && typeof newsPath === "string"){
-      const a = document.getElementById("newsLink");
-      if (a){
-        a.style.display = "inline";
-        a.href = newsPath;
+    
+    // 2️⃣ v2 구조 (BTC:-0.767 형태 = -0.767%)
+    else if (j.kimchi_premium_pct != null) {
+      const v = (typeof j.kimchi_premium_pct === "object")
+        ? j.kimchi_premium_pct.BTC
+        : j.kimchi_premium_pct;
+    
+      if (Number.isFinite(Number(v))) {
+        kimchiRatio = Number(v) / 100;
       }
     }
-  }
+    
+    // 3️⃣ 기타 fallback (이미 ratio일 가능성)
+    else {
+      const kLatest = j.kimchi_2025 ?? j.kimchi_premium_latest ?? j.kimchi;
+      kimchiRatio = extractKimchi(kLatest);
+    }
+    
+    const kimchiEl = document.getElementById("kimchiValue");
+    if (kimchiEl) {
+      kimchiEl.textContent = (kimchiRatio != null)
+        ? fmtPctRatio(kimchiRatio, 2)
+        : "-";
+    }
+    
+    // Universe & Methodology
+    bindUniverseAndMethodology(j);
+    
+        // Load CSV + movers
+        const perf = await loadPerfCSV(asof);
+        if (perf){
+          const rows = parseCSV(perf.csv);
+          renderMovers(rows, asof, perf.path);
+        }
+    
+        // Link hook
+        const newsPath = j.news_file || j.news_path || j.news;
+        if (newsPath && typeof newsPath === "string"){
+          const a = document.getElementById("newsLink");
+          if (a){
+            a.style.display = "inline";
+            a.href = newsPath;
+          }
+        }
+      }
 
 
   
