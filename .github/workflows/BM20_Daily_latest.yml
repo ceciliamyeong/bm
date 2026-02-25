@@ -150,11 +150,6 @@ jobs:
           print(f"[backfill] {action} OK: {new_line}")
           PY
 
-      - name: Fetch Blockmedia BTC titles (coins/btc)
-        shell: bash
-        run: |
-          set -euo pipefail
-          python scripts/fetch_blockmedia_coin_titles.py
 
       # 2) out → archive 복사 + archive html 생성(스크립트 내부에서 처리)
       - name: Generate site (latest + archive)
@@ -162,6 +157,12 @@ jobs:
         run: |
           python scripts/generate_report.py
           echo "" > .nojekyll
+
+      # 2.7) Render newsletter (letter.html)
+      - name: Render newsletter
+        shell: bash
+        run: |
+          python scripts/render_letter.py
 
       # 2.5) latest 보강 — 특정 날짜 지정 가능 + 최신 archive 자동 선택 + 파일명/치환 정상화
       - name: Publish latest (fixed assets)
