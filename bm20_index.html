@@ -1026,7 +1026,7 @@
     if (el) el.textContent = `series: ${url} · points: ${points.length}`;
     // ---- BTC series (USD) optional ----
     try{
-      const btcRes = await fetchAnyJson(["btc_usd_series.json","bm/btc_usd_series.json","btc_series.json","bm/btc_series.json"]);
+      const btcRes = await fetchAnyJson(["out/history/btc_usd_series.json","bm/out/history/btc_usd_series.json","btc_usd_series.json"]);
       const bArr = btcRes && btcRes.json;
       BTC_SERIES = (Array.isArray(bArr)?bArr:[]).map(d=>{
         const date = (d.date||d.day||d.asof||d.asOf||d[0]);
