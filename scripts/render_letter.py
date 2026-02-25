@@ -11,7 +11,7 @@ Recommended repo layout (paths are repo-root relative):
 - out/history/btc_usd_series.json              (BTC USD series; last 2 points used for 1D)
 
 Output:
-- letter_rendered.html (repo root)
+- letter.html (repo root)
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ BM20_JSON = ROOT / "bm20_latest.json"
 DAILY_CSV = ROOT / "bm20_daily_data_latest.csv"
 KRW_JSON = ROOT / "out/history/krw_24h_latest.json"
 BTC_JSON = ROOT / "out/history/btc_usd_series.json"
-OUT = ROOT / "letter_rendered.html"
+OUT = ROOT / "letter.html"
 
 
 # ---------- formatting ----------
