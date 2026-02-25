@@ -1,0 +1,54 @@
+name: Newsletter Render
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 매일 00:15 UTC = 한국시간 09:15 KST
+    - cron: "15 0 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: newsletter-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas
+
+      # ✅ 여기서 너희 BM20 daily 파이프라인이 out/history/* 와 bm20_latest.json 등을 갱신해야 함
+      # 이미 기존 workflow에서 bm20_daily.py를 돌리고 있다면 이 step은 빼고,
+      # 그 workflow 끝에 "Render newsletter" step만 추가하면 됨.
+      # - name: Run BM20 daily (if needed)
+      #   run: |
+      #     python3 bm20_daily.py
+
+      - name: Render newsletter HTML
+        run: |
+          python3 scripts/render_letter.py
+
+      - name: Commit rendered newsletter
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add letter_rendered.html
+          git commit -m "chore: update letter_rendered.html" || echo "No changes to commit"
+          git pull --rebase
+          git push
