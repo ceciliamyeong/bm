@@ -118,6 +118,13 @@ jobs:
           cp -f "$SRC/bm20_bar_${DATE}.png"          bm20_bar_latest.png
           cp -f "$SRC/bm20_btc_eth_line_${DATE}.png" bm20_btc_eth_line_latest.png
 
+     # 2.6) 뉴스레터 HTML 렌더링 (메일용: JS 없이 사전 치환)
+      - name: Render newsletter (letter_rendered.html)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/render_letter.py     
+
       # 3) 커밋 & 푸시
       - name: Commit & Push (rebased & autostash)
         run: |
