@@ -1,0 +1,74 @@
+name: Render Letter (test)
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 테스트용: 매일 09:20 KST (00:20 UTC)
+    - cron: "20 0 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: render-letter-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Seoul
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas
+
+      - name: Sanity check inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f letter_newsletter_template.html
+          test -f bm20_latest.json
+          test -f bm20_daily_data_latest.csv
+          test -f out/history/krw_24h_latest.json
+          test -f out/history/btc_usd_series.json
+          echo "[OK] inputs exist"
+
+      - name: Render letter.html
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/render_letter.py
+          test -f letter.html
+          echo "[OK] rendered letter.html"
+
+      - name: Commit & Push
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add letter.html
+          if ! git diff --cached --quiet; then
+            DATE=$(TZ=Asia/Seoul date +%F)
+            git commit -m "chore: render letter.html (${DATE})"
+          else
+            echo "No changes to commit"
+          fi
+
+          git pull --rebase origin main
+          git push origin HEAD:main
