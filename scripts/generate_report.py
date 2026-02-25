@@ -162,12 +162,55 @@ def rebuild_json_from_backfill():
     """
 
     def _extract_kimchi_ratio(x):
-        """percent(9.5) / ratio(0.095) / '9.5%' / dict 등을 ratio(0.095)로 정규화"""
+        """
+        percent(9.5) / ratio(0.095) / '9.5%' / dict 등을 ratio(0.095)로 정규화.
+        규칙:
+          - dict에 kimchi_pct가 있으면: 그 값은 '이미 % 단위' → /100
+          - dict에 kimchi_premium_pct가 있으면: 이름상 % → /100 (단, 값이 1 미만이어도 %로 간주)
+          - dict에 kimchi(또는 premium)가 있으면: 보통 ratio로 저장 → 그대로 (단, 1 이상이면 %로 보고 /100)
+          - 문자열에 %가 있으면: % → /100
+          - 숫자 단독이면: 1 이상이면 %로 간주(/100), 1 미만이면 ratio로 간주(그대로)
+        """
         if x is None:
             return None
+    
+        # dict: key semantics first
+        if isinstance(x, dict):
+            # 1) kimchi_pct는 "퍼센트 값"으로 확정 (0.5441 = 0.5441%)
+            if "kimchi_pct" in x and x["kimchi_pct"] is not None:
+                try:
+                    return float(x["kimchi_pct"]) / 100.0
+                except Exception:
+                    return None
+    
+            # 2) kimchi_premium_pct도 이름상 percent로 확정
+            if "kimchi_premium_pct" in x and x["kimchi_premium_pct"] is not None:
+                try:
+                    return float(x["kimchi_premium_pct"]) / 100.0
+                except Exception:
+                    return None
+    
+            # 3) kimchi / premium는 ratio로 들어오는 경우가 많음
+            for k in ["kimchi", "kimchi_premium", "premium", "rate", "value"]:
+                if k in x and x[k] is not None:
+                    out = _extract_kimchi_ratio(x[k])
+                    if out is not None:
+                        return out
+    
+            # fallback scan
+            for v in x.values():
+                out = _extract_kimchi_ratio(v)
+                if out is not None:
+                    return out
+            return None
+    
+        # number
         if isinstance(x, (int, float)):
             v = float(x)
+            # 단독 숫자는 기존 규칙 유지
             return v / 100.0 if v >= 1.0 else v
+    
+        # string
         if isinstance(x, str):
             s = x.strip()
             has_pct = "%" in s
@@ -179,20 +222,7 @@ def rebuild_json_from_backfill():
             if has_pct:
                 return v / 100.0
             return v / 100.0 if v >= 1.0 else v
-        if isinstance(x, dict):
-            keys = [
-                "kimchi_pct", "kimchi", "kimchi_premium_pct", "kimchi_premium",
-                "premium_pct", "premium", "pct", "percent", "rate", "value"
-            ]
-            for k in keys:
-                if k in x:
-                    out = _extract_kimchi_ratio(x.get(k))
-                    if out is not None:
-                        return out
-            for v in x.values():
-                out = _extract_kimchi_ratio(v)
-                if out is not None:
-                    return out
+    
         return None
 
     def _load_kimchi_for_date(ymd: str):
