@@ -917,7 +917,7 @@
 
   function fmtAxis(v){
     if (!Number.isFinite(v)) return "";
-    return (v / AXIS_UNIT).toFixed(2);   // 5.23 이런 식으로
+    return (v / AXIS_UNIT).toFixed(1);   // 5.23 이런 식으로
   }
 
   // ===== Responsive layout helpers (mobile-tight axes to avoid narrow plots) =====
@@ -1643,19 +1643,19 @@ totalChart?.setOption(applyMobileTight({
     const kScore = num(kl.smart_kimchi?.score_v1);
 
     const heat =
-      total >= 4e12 ? "거래대금이 4조원대를 유지하고 있으며 과열 가능성이 있다" :
-      total >= 2e12 ? "유동성이 2조원대에서 유지되고 있으며 리스크온/리스크오프가 교차하는 상황이다" :
+      total >= 4e12 ? "거래대금이 4조원대를 유지하고 있으며 과열 가능성이 있습니다" :
+      total >= 2e12 ? "유동성이 2조원대에서 유지되고 있으며 리스크온/리스크오프가 교차하는 상황입니다" :
       "거래대금이 낮아지며 방향성이 약해진 구간";
 
     const crowd =
-      topShare >= 70 ? "상위 10종목 쏠림이 강한 시장으로 테마 장세 성격이 짙다" :
-      topShare >= 60 ? "쏠림이 유지되고 있지만 그 강도는 둔화하고 있다" :
-      "쏠림이 약해지며 종목 확산이 진행된다";
+      topShare >= 70 ? "종목별로는 상위 10종목 쏠림이 강한 시장으로 테마 장세 성격이 짙습니다" :
+      topShare >= 60 ? "종목별로는 상위 10종목 쏠림이 유지되고 있지만 그 강도는 둔화하고 있습니다" :
+      "종목별 쏠림이 약해지며 종목 확산이 진행되고 있습니다";
 
     const stable =
-      stableDom >= 10 ? "스테이블 비중이 높은 수준으로 시장 관망세가 짙어지고 있다" :
-      stableDom >= 5 ? "스테이블 비중은 중립으로 대기자금과 투자자금이 공존하고 있다" :
-      "스테이블 비중이 낮아 현물 알트 쪽으로 자금이 움직이고 있다";
+      stableDom >= 10 ? "거래소 내 스테이블 비중은 높은 수준으로 시장 관망세가 짙어지고 있습니다" :
+      stableDom >= 5 ? "거래소 내 스테이블 비중은 중립으로 대기자금과 투자자금이 공존하고 있습니다" :
+      "현재 거래소 내 스테이블 비중이 낮으며 현물 알트 쪽으로 자금이 움직이고 있습니다";
 
     const head = `Kimchi ${kType} (${kScore.toFixed(1)}점)`;
     const body = `${ts} 기준, BTC ${btc.toFixed(2)}%·ETH ${eth.toFixed(2)}%·XRP ${xrp.toFixed(2)}%로 집계됐다. ${heat}. ${crowd}. ${stable}.`;
