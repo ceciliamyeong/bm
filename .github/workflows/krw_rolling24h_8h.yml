@@ -1,4 +1,4 @@
-name: KRW Rolling 24H + Global Spot Share (8H) [CMC-only]
+name: KRW Rolling 24H + K-BTC Spot Share (8H)
 
 on:
   schedule:
@@ -57,5 +57,5 @@ jobs:
             exit 0
           fi
 
-          git commit -m "Update KRW rolling24h + Global SPOT Share (CMC) (8h) [$(date -u)]"
+          git commit -m "Update KRW rolling24h + K-BTC Spot Share (8h) [$(date -u)]"
           git push
