@@ -1,0 +1,5 @@
+      - name: Build K-BTC Spot Share (24H)
+        env:
+          CMC_API_KEY: ${{ secrets.CMC_API_KEY }}
+        run: |
+          python3 scripts/k_btc_share.py || echo "K-BTC share failed but continuing"
