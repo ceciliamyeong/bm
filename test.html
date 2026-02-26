@@ -497,7 +497,7 @@
     @media (min-width: 980px){
       .widgetsWide{ grid-template-columns: 1fr 1fr; }
     }
-    #kshareChart, #fngChart{ height:280px; }
+    #kshareChart, #xrpKShareChart, #kshareCompareChart, #fngChart { height:280px; }
     /* ===== FNG meta pill ===== */
     .pill.isFear{ border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.08); color:#b91c1c; }
     .pill.isNeutral{ border-color: rgba(148,163,184,.35); background: rgba(148,163,184,.10); color:#334155; }
@@ -1060,7 +1060,8 @@
     };
   }
 
-  let treemap, totalChart, shareChart, topRestChart, stableChart, kimchiPremChart, kimchiScoreChart, xrpKShareChart, kshareChart, fngChart;
+  let treemap, totalChart, shareChart, topRestChart, stableChart, kimchiPremChart, kimchiScoreChart;
+  let xrpKShareChart, kshareCompareChart, kshareChart, fngChart;
   let HISTORY = [], LATEST = null;
   let BM20_HIST = [];
   let XRP_HIST = [];
@@ -1094,12 +1095,6 @@
     return (dt && !isNaN(dt.getTime())) ? dt : null;
   }
 
-
-  function parseDateAny(d){
-    const t = d?.ts || d?.time || d?.datetime || d?.date || d?.timestamp;
-    const dt = t ? new Date(t) : null;
-    return (dt && !isNaN(dt.getTime())) ? dt : null;
-  }
 
   function fmtMDHM(dt){
     const mm = String(dt.getMonth()+1).padStart(2,"0");
@@ -1956,7 +1951,11 @@ totalChart?.setOption({
       kimchiScoreChart = echarts.init(document.getElementById("kimchiScoreChart"));
       kimchiPremChart  = echarts.init(document.getElementById("kimchiPremChart"));
       
-      const allCharts = [treemap, totalChart, shareChart, topRestChart, stableChart, kshareChart, fngChart, kimchiScoreChart, kimchiPremChart].filter(Boolean);
+      const allCharts = [
+        treemap, totalChart, shareChart, topRestChart, stableChart,
+        kshareChart, xrpKShareChart, kshareCompareChart, fngChart,
+        kimchiScoreChart, kimchiPremChart
+      ].filter(Boolean);
       attachAutoResize(allCharts);
 
 
