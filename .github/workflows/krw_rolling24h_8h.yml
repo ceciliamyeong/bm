@@ -31,11 +31,11 @@ jobs:
         env:
           ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
 
-      - name: Build Global Spot Share (KRW vs Global SPOT) [CMC]
+      - name: Build K-BTC Spot Share (24H)
         env:
           CMC_API_KEY: ${{ secrets.CMC_API_KEY }}
         run: |
-          python3 scripts/global_spot_share.py || echo "Global spot share failed but continuing"
+          python3 scripts/k_btc_share.py || echo "K-BTC share failed but continuing"
 
       - name: Run smart kimchi script
         run: |
@@ -50,7 +50,7 @@ jobs:
           git add out/history/krw_24h_*.json || true
           git add out/history/kimchi_*.json || true
           git add out/history/fx_latest.json || true
-          git add out/global/k_spot_share_24h_*.json || true
+          git add out/global/k_btc_share_24h_*.json || true
 
           if git diff --cached --quiet; then
             echo "No changes to commit."
