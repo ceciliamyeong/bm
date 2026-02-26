@@ -912,8 +912,13 @@
     coinone:"#7c3aed", // 보라
   };
   
-  const AXIS_UNIT = 1e8;        // ✅ 억원 = 100,000,000원
-  const AXIS_UNIT_LABEL = "억원";
+  const AXIS_UNIT = 1e12;      // 
+  const AXIS_UNIT_LABEL = "조원";
+
+  function fmtAxis(v){
+    if (!Number.isFinite(v)) return "";
+    return (v / 1e12).toFixed(2);   // 5.23 이런 식으로
+  }
 
   // ===== Responsive layout helpers (mobile-tight axes to avoid narrow plots) =====
   function isMobile(){
@@ -1364,10 +1369,11 @@ totalChart?.setOption(applyMobileTight({
   
     yAxis: {
       type: "value",
-      name: `(${AXIS_UNIT_LABEL})`, // (억원)
-      nameGap: 10,
-      axisLabel: { color: "#6b7280", margin: 14, formatter: (v) => fmtAxis(v) }
-    },
+      name: "(조원)",
+      axisLabel: {
+        formatter: (v) => (v / 1e12).toFixed(2)
+      }
+    }
   
     series: [
       {
@@ -1467,13 +1473,12 @@ totalChart?.setOption(applyMobileTight({
     yAxis: [
       {
         type: "value",
-        name: `(${AXIS_UNIT_LABEL})`,     // (억원)
-        nameGap: 10,
+        name: "(조원)",
         axisLabel: {
-          formatter: (v) => fmtAxis(v)    // ✅ 억원 단위 축 표시
+          formatter: (v) => (v / 1e12).toFixed(1)
         }
       },
-      { type:"value", min:0, max:100, splitLine:{ show:false } }
+      { type:"value", min:0, max:100 }
     ],
 
     series: [
@@ -1642,18 +1647,18 @@ totalChart?.setOption(applyMobileTight({
     const kScore = num(kl.smart_kimchi?.score_v1);
 
     const heat =
-      total >= 4e12 ? "거래대금이 4조원대까지 올라 시장환경이 과열 쪽으로 기운다" :
+      total >= 4e12 ? "거래대금이 4조원대를 유지하고 있으며 과열 가능성이 있다" :
       total >= 2e12 ? "유동성이 2조원대에서 유지되고 있으며 리스크온/리스크오프가 교차하는 상황이다" :
       "거래대금이 낮아지며 방향성이 약해진 구간";
 
     const crowd =
-      topShare >= 70 ? "상위 10종목 쏠림이 강해 테마 장세 성격이 짙다" :
-      topShare >= 60 ? "쏠림이 유지되지만 확산 여지도 남는다" :
+      topShare >= 70 ? "상위 10종목 쏠림이 강한 시장으로 테마 장세 성격이 짙다" :
+      topShare >= 60 ? "쏠림이 유지되고 있지만 그 강도는 둔화하고 있다" :
       "쏠림이 약해지며 종목 확산이 진행된다";
 
     const stable =
-      stableDom >= 10 ? "스테이블 비중이 높아 대기성 유동성이 두껍다" :
-      stableDom >= 5 ? "스테이블 비중은 중간 수준" :
+      stableDom >= 10 ? "스테이블 비중이 높은 수준으로 시장 관망세가 짙어지고 있다" :
+      stableDom >= 5 ? "스테이블 비중은 중립으로 대기자금과 투자자금이 공존하고 있다" :
       "스테이블 비중이 낮아 현물 알트 쪽으로 자금이 움직이고 있다";
 
     const head = `Kimchi ${kType} (${kScore.toFixed(1)}점)`;
@@ -1714,10 +1719,10 @@ totalChart?.setOption(applyMobileTight({
     
       const fxText =
         gap > 15
-          ? `시장 환율(${market.toFixed(1)}원)이 공식 환율(${official.toFixed(1)}원)보다 크게 높아, 환전 제약이 김프를 지지하는 구조입니다.`
+          ? `시장 환율(${market.toFixed(1)}원)이 공식 환율(${official.toFixed(1)}원)보다 크게 높은 수준으로 시장 대기자금 유입으로 김프가 형성되고 있다.`
           : gap > 5
-            ? `시장 환율이 공식 환율 대비 소폭 높은 수준으로, 김프에 환율 요인이 일부 반영돼 있습니다.`
-            : `시장·공식 환율 괴리가 크지 않아, 현재 김프는 수급 요인의 영향이 더 큽니다.`;
+            ? `국내 거래소 환율이 공식 환율 대비 소폭 높은 수준이나 그 강도는 둔화하고 있습니다.`
+            : `시장·공식 환율 괴리가 크지 않은 상황으로, 현재 김프는 개별 코인의 수급 요인에 따라 영향을 받고 있습니다.`;
     
       document.getElementById("fxComment").textContent = fxText;
     }
@@ -1863,10 +1868,10 @@ totalChart?.setOption(applyMobileTight({
     
       const fxText =
         gap > 15
-          ? `시장 환율(${market.toFixed(1)}원)이 공식 환율(${official.toFixed(1)}원)보다 크게 높아, 환전 제약이 김프를 지지하는 구조입니다.`
+          ? `시장 환율(${market.toFixed(1)}원)이 공식 환율(${official.toFixed(1)}원)보다 높은 수준으로 환율 변동에 따라 가격 변동이 커지고 있습니다.`
           : gap > 5
             ? `시장 환율이 공식 환율 대비 소폭 높은 수준으로, 김프에 환율 요인이 일부 반영돼 있습니다.`
-            : `시장·공식 환율 괴리가 크지 않아, 현재 김프는 수급 요인의 영향이 더 큽니다.`;
+            : `시장·공식 환율 괴리가 크지 않아, 현재 김프는 개별 코인의 수급에 따라 영향을 받고 있습니다.`;
     
       fxEl.textContent = fxText;
     }
