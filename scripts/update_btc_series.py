@@ -1,29 +1,41 @@
 from pathlib import Path
 import json
-from datetime import datetime
 
 ROOT = Path(__file__).resolve().parent.parent
 BTC_SERIES = ROOT / "out/history/btc_usd_series.json"
 BM20_JSON = ROOT / "bm20_latest.json"
 
+def read_json(path: Path, default):
+    if not path.exists():
+        return default
+    return json.loads(path.read_text(encoding="utf-8"))
+
 def update():
-    series = json.loads(BTC_SERIES.read_text(encoding="utf-8"))
-    bm20 = json.loads(BM20_JSON.read_text(encoding="utf-8"))
+    series = read_json(BTC_SERIES, default=[])
+    bm20 = read_json(BM20_JSON, default={})
 
-    asof = bm20["asof"]
-    btc_price = bm20["btc_price_usd"]  # ← bm20에서 BTC 가격 가져오는 구조라면
+    asof = bm20.get("asof")
+    if not asof:
+        raise KeyError("bm20_latest.json missing 'asof'")
 
-    # 중복 방지
-    if series and series[-1]["date"] == asof:
+    btc_price = (
+        bm20.get("btc_price_usd")
+        or bm20.get("btc_usd")
+        or bm20.get("btc_price")
+        or bm20.get("btcPriceUsd")
+    )
+    if btc_price is None:
+        raise KeyError("bm20_latest.json missing BTC price (btc_price_usd/btc_usd/btc_price/btcPriceUsd)")
+
+    btc_price = float(btc_price)
+
+    if series and series[-1].get("date") == asof:
         print("BTC already updated.")
         return
 
-    series.append({
-        "date": asof,
-        "price": btc_price
-    })
-
-    BTC_SERIES.write_text(json.dumps(series, indent=2), encoding="utf-8")
+    series.append({"date": asof, "price": btc_price})
+    BTC_SERIES.parent.mkdir(parents=True, exist_ok=True)
+    BTC_SERIES.write_text(json.dumps(series, ensure_ascii=False, indent=2), encoding="utf-8")
     print("BTC series updated.")
 
 if __name__ == "__main__":
