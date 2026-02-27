@@ -10,6 +10,10 @@ Inputs (repo root default):
 - out/history/krw_24h_latest.json  (KRW 24h volumes + timestamp)
 - out/history/btc_usd_series.json  (BTC USD series; last two points used for 1D)
 
+Optional (for MorningBrew-style news modules):
+- out/latest/news_one_liner.txt    (first line used)
+- out/latest/top_news_latest.json  (["...", "...", "..."] or {"items":[...]} )
+
 Output (repo root):
 - letter.html   (rendered)
 """
@@ -18,6 +22,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -28,11 +33,126 @@ DAILY_CSV = ROOT / "bm20_daily_data_latest.csv"
 KRW_JSON = ROOT / "out/history/krw_24h_latest.json"
 BTC_JSON = ROOT / "out/history/btc_usd_series.json"
 
-OUT = ROOT / "letter.html"
-
-# --- 상단 Path 정의 근처에 추가 ---
+# News modules (optional)
 NEWS_ONELINER_TXT = ROOT / "out/latest/news_one_liner.txt"
 TOP_NEWS_JSON = ROOT / "out/latest/top_news_latest.json"
+
+OUT = ROOT / "letter.html"
+
+# ------------------ formatting helpers ------------------
+
+GREEN = "#16a34a"
+RED = "#dc2626"
+INK = "#0f172a"
+
+
+def fmt_level(x: float) -> str:
+    return f"{float(x):,.2f}"
+
+
+def fmt_num(x: float, digits: int = 2) -> str:
+    return f"{float(x):,.{digits}f}"
+
+
+def fmt_share_pct(x: float) -> str:
+    x = float(x)
+    if x <= 1.5:
+        x *= 100.0
+    return f"{x:.1f}%"
+
+
+def fmt_krw_big(x: float) -> str:
+    """KRW to compact '조원/억원' string."""
+    x = float(x)
+    jo = 1_0000_0000_0000  # 1조
+    eok = 1_0000_0000      # 1억
+    if x >= jo:
+        return f"{x/jo:.2f}조원"
+    if x >= eok:
+        return f"{x/eok:.1f}억원"
+    return f"{x:,.0f}원"
+
+
+def pct_to_display(x: float, digits: int = 2) -> float:
+    """Accept ratio(<=1.5) or pct; return pct number."""
+    x = float(x)
+    if abs(x) <= 1.5:
+        x *= 100.0
+    return x
+
+
+def colored_change_html(pct_value: float, digits: int = 2, wrap_parens: bool = False) -> str:
+    """
+    Returns HTML span like: ▲ +1.23% (green) or ▼ -1.23% (red) or 0.00% (ink)
+    """
+    v = float(pct_value)
+    if v > 0:
+        arrow, color = "▲", GREEN
+    elif v < 0:
+        arrow, color = "▼", RED
+    else:
+        arrow, color = "", INK
+
+    s = f"{v:+.{digits}f}%"
+    text = f"{arrow} {s}".strip()
+    if wrap_parens:
+        text = f"({text})"
+    return f'<span style="color:{color};font-weight:900;">{text}</span>'
+
+
+def tone_bg(pct_value: float) -> str:
+    """Very subtle background tone (email-safe)."""
+    v = float(pct_value)
+    if v > 0:
+        return "#f0fdf4"  # green-50
+    if v < 0:
+        return "#fef2f2"  # red-50
+    return "#ffffff"
+
+
+# ------------------ load helpers ------------------
+
+def load_json(p: Path) -> dict:
+    if not p.exists():
+        raise FileNotFoundError(f"Missing {p}")
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
+def load_daily_df() -> pd.DataFrame:
+    if not DAILY_CSV.exists():
+        raise FileNotFoundError(f"Missing {DAILY_CSV}")
+    df = pd.read_csv(DAILY_CSV)
+
+    if "symbol" not in df.columns:
+        for c in ["ticker", "asset"]:
+            if c in df.columns:
+                df = df.rename(columns={c: "symbol"})
+                break
+
+    if "price_change_pct" not in df.columns:
+        for c in ["change_pct", "pct_change", "return_1d_pct"]:
+            if c in df.columns:
+                df = df.rename(columns={c: "price_change_pct"})
+                break
+
+    df["price_change_pct"] = pd.to_numeric(df["price_change_pct"], errors="coerce")
+    return df
+
+
+def compute_best_worst_breadth(df: pd.DataFrame, n: int = 3):
+    best = df.sort_values("price_change_pct", ascending=False).head(n)
+    worst = df.sort_values("price_change_pct", ascending=True).head(n)
+
+    best_txt = "<br/>".join([f"{r.symbol} {r.price_change_pct:+.2f}%" for r in best.itertuples()])
+    worst_txt = "<br/>".join([f"{r.symbol} {r.price_change_pct:+.2f}%" for r in worst.itertuples()])
+
+    up = int((df["price_change_pct"] > 0).sum())
+    down = int((df["price_change_pct"] < 0).sum())
+    breadth = f"상승 {up} · 하락 {down}"
+    return best_txt, worst_txt, breadth, up, down
+
+
+# ------------------ optional news loaders ------------------
 
 def load_text_first_line(p: Path) -> str:
     if not p.exists():
@@ -41,6 +161,7 @@ def load_text_first_line(p: Path) -> str:
     if not s:
         return "—"
     return s.splitlines()[0].strip() or "—"
+
 
 def load_top_news_3(p: Path) -> tuple[str, str, str]:
     """
@@ -63,122 +184,6 @@ def load_top_news_3(p: Path) -> tuple[str, str, str]:
         items.append("—")
     return (items[0], items[1], items[2])
 
-# --- build_placeholders() 안에서, return dict 만들기 직전에 추가 ---
-news_one_liner = load_text_first_line(NEWS_ONELINER_TXT)
-top1, top2, top3 = load_top_news_3(TOP_NEWS_JSON)
-
-# --- build_placeholders()의 return dict에 추가 ---
-return {
-    # ... (기존 BM20/BTC/Kimchi/KRW) :contentReference[oaicite:2]{index=2}
-
-    # News modules
-    "{{NEWS_ONE_LINER}}": news_one_liner,
-    "{{TOP_NEWS_1}}": top1,
-    "{{TOP_NEWS_2}}": top2,
-    "{{TOP_NEWS_3}}": top3,
-}
-
-# ------------------ formatting helpers ------------------
-
-GREEN = "#16a34a"
-RED = "#dc2626"
-INK = "#0f172a"
-
-def fmt_level(x: float) -> str:
-    return f"{float(x):,.2f}"
-
-def fmt_num(x: float, digits: int = 2) -> str:
-    return f"{float(x):,.{digits}f}"
-
-def fmt_share_pct(x: float) -> str:
-    x = float(x)
-    if x <= 1.5:
-        x *= 100.0
-    return f"{x:.1f}%"
-
-def fmt_krw_big(x: float) -> str:
-    """KRW to compact '조원/억원' string."""
-    x = float(x)
-    jo = 1_0000_0000_0000  # 1조
-    eok = 1_0000_0000      # 1억
-    if x >= jo:
-        return f"{x/jo:.2f}조원"
-    if x >= eok:
-        return f"{x/eok:.1f}억원"
-    return f"{x:,.0f}원"
-
-def pct_to_display(x: float, digits: int = 2) -> float:
-    """Accept ratio(<=1.5) or pct; return pct number."""
-    x = float(x)
-    if abs(x) <= 1.5:
-        x *= 100.0
-    return x
-
-def colored_change_html(pct_value: float, digits: int = 2, wrap_parens: bool = False) -> str:
-    """
-    Returns HTML span like: ▲ +1.23% (green) or ▼ -1.23% (red) or 0.00% (ink)
-    """
-    v = float(pct_value)
-    if v > 0:
-        arrow, color = "▲", GREEN
-    elif v < 0:
-        arrow, color = "▼", RED
-    else:
-        arrow, color = "", INK
-
-    s = f"{v:+.{digits}f}%"
-    text = f"{arrow} {s}".strip()
-    if wrap_parens:
-        text = f"({text})"
-    return f'<span style="color:{color};font-weight:900;">{text}</span>'
-
-def tone_bg(pct_value: float) -> str:
-    """
-    Very subtle background tone (email-safe). You can choose to use it in template via placeholders.
-    """
-    v = float(pct_value)
-    if v > 0:
-        return "#f0fdf4"  # green-50
-    if v < 0:
-        return "#fef2f2"  # red-50
-    return "#ffffff"
-
-# ------------------ load helpers ------------------
-
-def load_json(p: Path) -> dict:
-    if not p.exists():
-        raise FileNotFoundError(f"Missing {p}")
-    return json.loads(p.read_text(encoding="utf-8"))
-
-def load_daily_df() -> pd.DataFrame:
-    if not DAILY_CSV.exists():
-        raise FileNotFoundError(f"Missing {DAILY_CSV}")
-    df = pd.read_csv(DAILY_CSV)
-
-    if "symbol" not in df.columns:
-        for c in ["ticker", "asset"]:
-            if c in df.columns:
-                df = df.rename(columns={c: "symbol"})
-                break
-
-    if "price_change_pct" not in df.columns:
-        for c in ["change_pct", "pct_change", "return_1d_pct"]:
-            if c in df.columns:
-                df = df.rename(columns={c: "price_change_pct"})
-                break
-
-    df["price_change_pct"] = pd.to_numeric(df["price_change_pct"], errors="coerce")
-    return df
-
-def compute_best_worst_breadth(df: pd.DataFrame, n=3):
-    best = df.sort_values("price_change_pct", ascending=False).head(n)
-    worst = df.sort_values("price_change_pct", ascending=True).head(n)
-    best_txt = "<br/>".join([f"{r.symbol} {r.price_change_pct:+.2f}%" for r in best.itertuples()])
-    worst_txt = "<br/>".join([f"{r.symbol} {r.price_change_pct:+.2f}%" for r in worst.itertuples()])
-    up = int((df["price_change_pct"] > 0).sum())
-    down = int((df["price_change_pct"] < 0).sum())
-    breadth = f"상승 {up} · 하락 {down}"
-    return best_txt, worst_txt, breadth, up, down
 
 # ------------------ placeholders ------------------
 
@@ -221,7 +226,7 @@ def build_placeholders() -> dict[str, str]:
 
     best3, worst3, breadth, up, down = compute_best_worst_breadth(df, n=3)
 
-    # Comment with synced color chip
+    # Comment chip
     if bm20_1d_pct is None:
         comment = f"한 줄 코멘트: BM20 보합, 상승 {up} · 하락 {down}"
         comment_chip = f'<span style="font-weight:900;color:{INK};">보합</span>'
@@ -255,6 +260,10 @@ def build_placeholders() -> dict[str, str]:
     bith_share = (float(bith_v) / float(combined) * 100.0) if (combined and bith_v is not None) else None
     coin_share = (float(coin_v) / float(combined) * 100.0) if (combined and coin_v is not None) else None
 
+    # News modules (optional)
+    news_one_liner = load_text_first_line(NEWS_ONELINER_TXT)
+    top1, top2, top3 = load_top_news_3(TOP_NEWS_JSON)
+
     return {
         # BM20
         "{{BM20_LEVEL}}": fmt_level(level) if level is not None else "—",
@@ -283,7 +292,14 @@ def build_placeholders() -> dict[str, str]:
         "{{UPBIT_SHARE_24H}}": fmt_share_pct(upbit_share) if upbit_share is not None else "—",
         "{{BITHUMB_SHARE_24H}}": fmt_share_pct(bith_share) if bith_share is not None else "—",
         "{{COINONE_SHARE_24H}}": fmt_share_pct(coin_share) if coin_share is not None else "—",
+
+        # News modules
+        "{{NEWS_ONE_LINER}}": news_one_liner,
+        "{{TOP_NEWS_1}}": top1,
+        "{{TOP_NEWS_2}}": top2,
+        "{{TOP_NEWS_3}}": top3,
     }
+
 
 def render():
     if not TEMPLATE.exists():
@@ -294,6 +310,7 @@ def render():
         html = html.replace(k, v)
     OUT.write_text(html, encoding="utf-8")
     print(f"OK: wrote {OUT}")
+
 
 if __name__ == "__main__":
     render()
