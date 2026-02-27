@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Blockmedia Daily</title>
+</head>
+<body style="margin:0;padding:0;background:#f5f7fb;font-family:Arial,Helvetica,sans-serif;">
+
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:720px;margin:0 auto;background:#ffffff;padding:24px;">
+
+<tr>
+<td style="font-size:26px;font-weight:800;padding-bottom:16px;">
+블록미디어 데일리 브리핑
+</td>
+</tr>
+
+<tr>
+<td style="font-size:18px;font-weight:700;padding:16px 0;">
+📊 BM20 인덱스
+</td>
+</tr>
+
+<tr>
+<td style="padding-bottom:10px;">
+지수 레벨: <strong>{{BM20_LEVEL}}</strong><br/>
+1D 변화: {{BM20_1D}}<br/>
+기준일: {{BM20_ASOF}}
+</td>
+</tr>
+
+<tr>
+<td style="font-size:18px;font-weight:700;padding:16px 0;">
+₿ 비트코인
+</td>
+</tr>
+
+<tr>
+<td style="padding-bottom:10px;">
+BTC 가격: <strong>{{BTC_USD}}</strong><br/>
+전일 대비: {{BTC_1D}}
+</td>
+</tr>
+
+<tr>
+<td style="font-size:18px;font-weight:700;padding:16px 0;">
+💰 KRW 시장
+</td>
+</tr>
+
+<tr>
+<td style="padding-bottom:10px;">
+총 거래대금(24h): {{KRW_TOTAL_24H}}<br/>
+업비트 점유율: {{UPBIT_SHARE_24H}}<br/>
+빗썸 점유율: {{BITHUMB_SHARE_24H}}<br/>
+코인원 점유율: {{COINONE_SHARE_24H}}
+</td>
+</tr>
+
+<tr>
+<td style="font-size:18px;font-weight:700;padding:16px 0;">
+🔥 트리맵 (1D 수익률)
+</td>
+</tr>
+
+<tr>
+<td style="padding-bottom:20px;">
+<img src="https://data.blockmedia.co.kr/assets/topcoins_treemap_latest.png"
+     style="width:100%;max-width:680px;height:auto;border-radius:12px;display:block;"
+     alt="BM20 Treemap"/>
+</td>
+</tr>
+
+<tr>
+<td style="font-size:18px;font-weight:700;padding:16px 0;">
+📰 오늘의 한 줄
+</td>
+</tr>
+
+<tr>
+<td style="padding-bottom:10px;">
+{{NEWS_ONE_LINER}}
+</td>
+</tr>
+
+<tr>
+<td style="font-size:18px;font-weight:700;padding:16px 0;">
+📰 중요 뉴스 3
+</td>
+</tr>
+
+<tr>
+<td>
+1. {{TOP_NEWS_1}}<br/><br/>
+2. {{TOP_NEWS_2}}<br/><br/>
+3. {{TOP_NEWS_3}}
+</td>
+</tr>
+
+</table>
+</body>
+</html>
