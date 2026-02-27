@@ -36,6 +36,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install pandas
 
+      # ✅ 최신 main 기준으로 작업 시작 (커밋 전에 pull/rebase)
+      - name: Sync with main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout main
+          git pull --rebase origin main
+
       - name: Sanity check inputs
         shell: bash
         run: |
@@ -63,12 +72,11 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           git add letter.html
+
           if ! git diff --cached --quiet; then
             DATE=$(TZ=Asia/Seoul date +%F)
             git commit -m "chore: render letter.html (${DATE})"
+            git push origin main
           else
             echo "No changes to commit"
           fi
-
-          git pull --rebase origin main
-          git push origin HEAD:main
