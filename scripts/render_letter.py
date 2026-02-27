@@ -1,67 +1,52 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from pathlib import Path
 import json
+from pathlib import Path
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent
 
-BTC_SERIES = ROOT / "out/history/btc_usd_series.json"
-BM20_JSON  = ROOT / "bm20_latest.json"
-DAILY_CSV  = ROOT / "bm20_daily_data_latest.csv"
+TEMPLATE = ROOT / "letter_newsletter_template.html"
+BM20_JSON = ROOT / "bm20_latest.json"
+DAILY_CSV = ROOT / "bm20_daily_data_latest.csv"
+KRW_JSON = ROOT / "out/history/krw_24h_latest.json"
+BTC_JSON = ROOT / "out/history/btc_usd_series.json"
+OUT = ROOT / "letter.html"
 
-def pick_date(bm20: dict) -> str:
-    for k in ("asOf", "asof", "date", "timestamp"):
-        v = bm20.get(k)
-        if v:
-            return str(v)[:10]  # "YYYY-MM-DD"만
-    raise KeyError("bm20_latest.json missing date key (expected asOf/asof/date/timestamp)")
+GREEN = "#16a34a"
+RED = "#dc2626"
+INK = "#0f172a"
 
-def pick_btc_price_usd() -> float:
-    if not DAILY_CSV.exists():
-        raise FileNotFoundError(f"Missing {DAILY_CSV}")
-    df = pd.read_csv(DAILY_CSV)
+def colored_change_html(v):
+    v = float(v)
+    if v > 0:
+        return f'<span style="color:{GREEN};font-weight:900;">▲ {v:+.2f}%</span>'
+    if v < 0:
+        return f'<span style="color:{RED};font-weight:900;">▼ {v:+.2f}%</span>'
+    return f'<span style="color:{INK};font-weight:900;">{v:+.2f}%</span>'
 
-    # 컬럼 표준화
-    if "symbol" not in df.columns:
-        for c in ("ticker", "asset"):
-            if c in df.columns:
-                df = df.rename(columns={c: "symbol"})
-                break
-    if "current_price" not in df.columns:
-        for c in ("price", "price_usd", "close"):
-            if c in df.columns:
-                df = df.rename(columns={c: "current_price"})
-                break
-
-    row = df[df["symbol"].astype(str).str.upper() == "BTC"].head(1)
-    if row.empty:
-        raise ValueError("BTC row not found in bm20_daily_data_latest.csv")
-    return float(row.iloc[0]["current_price"])
-
-def load_series() -> list:
-    if not BTC_SERIES.exists():
-        BTC_SERIES.parent.mkdir(parents=True, exist_ok=True)
-        return []
-    s = json.loads(BTC_SERIES.read_text(encoding="utf-8") or "[]")
-    return s if isinstance(s, list) else []
-
-def update():
+def build():
     bm20 = json.loads(BM20_JSON.read_text(encoding="utf-8"))
-    asof = pick_date(bm20)
-    btc_price = pick_btc_price_usd()
+    krw = json.loads(KRW_JSON.read_text(encoding="utf-8"))
+    df = pd.read_csv(DAILY_CSV)
+    series = json.loads(BTC_JSON.read_text(encoding="utf-8"))
 
-    series = load_series()
+    btc_last = float(series[-1]["price"])
+    btc_prev = float(series[-2]["price"])
+    btc_1d = (btc_last / btc_prev - 1) * 100
 
-    # 중복 방지
-    if series and str(series[-1].get("date")) == asof:
-        print("BTC already updated.")
-        return
+    r1d = bm20["returns"]["1D"] * 100
+    level = bm20["bm20Level"]
 
-    series.append({"date": asof, "price": btc_price})
-    BTC_SERIES.write_text(json.dumps(series, indent=2), encoding="utf-8")
-    print("BTC series updated:", asof, btc_price)
+    html = TEMPLATE.read_text(encoding="utf-8")
+    html = html.replace("{{BTC_USD}}", f"{btc_last:,.0f}")
+    html = html.replace("{{BTC_1D}}", colored_change_html(btc_1d))
+    html = html.replace("{{BM20_LEVEL}}", f"{level:,.2f}")
+    html = html.replace("{{BM20_1D}}", colored_change_html(r1d))
+
+    OUT.write_text(html, encoding="utf-8")
+    print("Letter rendered:", OUT)
 
 if __name__ == "__main__":
-    update()
+    build()
