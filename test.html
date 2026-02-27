@@ -1819,7 +1819,7 @@ totalChart?.setOption({
   async function refreshData(){
     const u = urls();
 
-    const [latest, history, kimchiLatest, kimchiHist, fxLatest, bm20Hist, xrpHist] = 
+    const [latest, history, kimchiLatest, kimchiHist, fxLatest, bm20Hist, bm20Latest, xrpHist] = 
       await Promise.all([
       loadJSON(u.latest),
       loadJSON(u.hist),
@@ -1847,33 +1847,38 @@ totalChart?.setOption({
       const level = Number(BM20_LATEST.bm20Level);
       const chgPt = Number(BM20_LATEST.bm20PointChange);
       const chgPctRaw = Number(BM20_LATEST.returns?.["1D"]);
+
     
       const chgPct = Number.isFinite(chgPctRaw) ? chgPctRaw * 100 : null;
       const chgPtSafe = Number.isFinite(chgPt) ? chgPt : 0;
     
-      const levelEl = document.getElementById("kpiBM20");
+      // ===== 지수 레벨 =====
+      const levelEl = document.getElementById("kpiBm20Level");
       if (levelEl) {
         levelEl.textContent = Number.isFinite(level)
           ? level.toLocaleString("ko-KR", { maximumFractionDigits: 2 })
           : "-";
       }
-    
-      const noteEl = document.getElementById("kpiBM20Note");
+
+      // ===== 전일 대비 =====
+      const noteEl = document.getElementById("kpiBm20Chg");
       if (noteEl) {
         if (Number.isFinite(chgPct)) {
           const sign = chgPct > 0 ? "+" : "";
           noteEl.textContent =
-            `전일대비: ${sign}${chgPtSafe.toFixed(2)} (${sign}${chgPct.toFixed(2)}%)`;
+            `전일 대비: ${sign}${chgPtSafe.toFixed(2)} (${sign}${chgPct.toFixed(2)}%)`;
         } else {
-          noteEl.textContent = "전일대비: -";
+          noteEl.textContent = "전일 대비: -";
         }
       }
-    
+      
+      // ===== 날짜 =====
       const asOfEl = document.getElementById("bm20AsOfPill");
       if (asOfEl && BM20_LATEST.asOf) {
         asOfEl.textContent = BM20_LATEST.asOf;
       }
     }
+      
 
     if (FX_LATEST){
       const official = FX_LATEST.usdkrw_official;
@@ -1954,85 +1959,7 @@ totalChart?.setOption({
       drawSparkline(document.getElementById("xrpKshareSpark"), xSeries);
     }
     
-    // ===== BM20 KPI: 지수 레벨 + 전일대비(%) =====
-    if (Array.isArray(BM20_HIST) && BM20_HIST.length >= 2) {
-      const bLatest = BM20_HIST[BM20_HIST.length - 1];
-      const bPrev   = BM20_HIST[BM20_HIST.length - 2];
     
-      // ✅ BM20 레벨 키는 데이터 구조에 따라 다를 수 있어 3개 후보로 대응
-      const lvlNow =
-        Number(bLatest?.index_level) ||
-        Number(bLatest?.index?.level) ||
-        Number(bLatest?.bm20?.level) ||
-        null;
-    
-      const lvlPrev =
-        Number(bPrev?.index_level) ||
-        Number(bPrev?.index?.level) ||
-        Number(bPrev?.bm20?.level) ||
-        null;
-    
-      const lvlEl = document.getElementById("kpiBm20Level");
-      if (lvlEl) lvlEl.textContent = Number.isFinite(lvlNow) ? lvlNow.toFixed(2) : "-";
-    
-      // 전일 대비 변화율: json에 미리 있으면 그걸 우선 사용하고, 없으면 계산
-      const precomputed =
-        Number(bLatest?.returns?.d1_pct) ||
-        Number(bLatest?.returns_1d_pct) ||
-        Number(bLatest?.bm20?.returns_1d_pct);
-    
-      let chgPct = null;
-      if (Number.isFinite(precomputed)) chgPct = precomputed;
-      else if (Number.isFinite(lvlNow) && Number.isFinite(lvlPrev) && lvlPrev !== 0) {
-        chgPct = (lvlNow / lvlPrev - 1) * 100;
-      }
-    
-      const chgEl = document.getElementById("kpiBm20Chg");
-      if (chgEl) {
-        if (Number.isFinite(chgPct)) {
-          const s = chgPct >= 0 ? "+" : "";
-          chgEl.textContent = `전일 대비: ${s}${chgPct.toFixed(2)}%`;
-        } else {
-          chgEl.textContent = "전일 대비: -";
-        }
-      }
-    
-      // as of pill
-      const asOf = bLatest?.timestamp || bLatest?.ts || bLatest?.time || bLatest?.datetime || bLatest?.date;
-      const pill = document.getElementById("bm20AsOfPill");
-      if (pill) {
-        const dt = asOf ? new Date(asOf) : null;
-        pill.textContent = (dt && !isNaN(dt.getTime())) ? fmtMDHM(dt) : "-";
-      }
-    
-      // Best3/Worst3: 데이터 있을 때만 표시 (없으면 안내문)
-      const bwEl = document.getElementById("kpiBm20BW");
-      if (bwEl) {
-        const comps = Array.isArray(bLatest?.components) ? bLatest.components : null;
-    
-        if (comps && comps.length) {
-          const arr = comps
-            .map(x => ({
-              sym: x.symbol || x.ticker || x.code,
-              r: Number(x.return_1d_pct ?? x.ret_1d_pct ?? x.r1d_pct ?? x.return_1d)
-            }))
-            .filter(x => x.sym && Number.isFinite(x.r));
-    
-          if (arr.length >= 3) {
-            arr.sort((a,b)=>b.r-a.r);
-            const best = arr.slice(0,3).map(x => `${x.sym}(${(x.r>=0?"+":"")}${x.r.toFixed(2)}%)`);
-            const worst = arr.slice(-3).reverse().map(x => `${x.sym}(${(x.r>=0?"+":"")}${x.r.toFixed(2)}%)`);
-            bwEl.textContent = `Best3: ${best.join(" · ")} | Worst3: ${worst.join(" · ")}`;
-          } else {
-            bwEl.textContent = "Best3/Worst3: -";
-          }
-        } else {
-          bwEl.textContent = "Best3/Worst3: (bm20_history에 components/1D 수익률이 있으면 자동 표기)";
-        }
-      }
-    }
-    
-
     // KPI
     const t = latest.totals || {};
     const top = latest.top10 || {};
