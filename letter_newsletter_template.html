@@ -5,138 +5,138 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Blockmedia Daily Letter</title>
 </head>
-<body style="margin:0;padding:0;background:#f4f7fb;font-family:Arial,Helvetica,sans-serif;">
+<body style="margin:0;padding:0;background-color:#f3f4f6;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,helvetica,sans-serif;-webkit-font-smoothing:antialiased;">
 
-<table width="100%" cellpadding="0" cellspacing="0" style="max-width:720px;margin:0 auto;padding:24px 12px;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:640px;margin:0 auto;background-color:#f3f4f6;">
+  <tr>
+    <td style="padding:40px 20px 20px 20px;">
+      
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td>
+            <div style="font-size:12px; color:#4b5563; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">
+              Blockmedia Daily Letter • {{BM20_ASOF}}
+            </div>
+            <div style="font-size:26px; font-weight:800; color:#111827; letter-spacing:-0.5px; line-height:1.3;">
+              오늘의 시장 온도, 1분 요약 리포트
+            </div>
+          </td>
+        </tr>
+      </table>
 
-<!-- ================= HEADER ================= -->
-<tr>
-<td style="padding-bottom:18px;">
-  <div style="font-size:13px;color:#475569;font-weight:800;letter-spacing:0.4px;">
-    BLOCKMEDIA DAILY LETTER · {{BM20_ASOF}}
-  </div>
-  <div style="font-size:32px;font-weight:900;color:#0f172a;margin-top:6px;">
-    오늘의 시장 온도, 1분 요약
-  </div>
-</td>
-</tr>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:30px;">
+        <tr>
+          <td colspan="2" style="padding-bottom:12px;">
+             <div style="font-size:14px; font-weight:700; color:#374151;">📊 실시간 시장 지표</div>
+          </td>
+        </tr>
+        <tr>
+          <td width="50%" valign="top" style="padding-right:6px;">
+            <div style="background-color:#ffffff; border:1px solid #e5e7eb; border-radius:12px; padding:20px; height:150px;">
+              <div style="font-size:12px; font-weight:600; color:#6b7280; margin-bottom:12px;">KRW 24h Snapshot</div>
+              <div style="font-size:20px; font-weight:800; color:#111827; margin-bottom:4px;">{{KRW_TOTAL_24H}}</div>
+              <div style="font-size:13px; color:#d97706; font-weight:600;">김프 {{KIMCHI_PREM}}</div>
+              <div style="margin-top:16px; border-top:1px solid #f3f4f6; padding-top:12px;">
+                <div style="font-size:11px; color:#6b7280; line-height:1.5;">
+                  U {{UPBIT_SHARE_24H}} / B {{BITHUMB_SHARE_24H}}
+                </div>
+              </div>
+            </div>
+          </td>
+          <td width="50%" valign="top" style="padding-left:6px;">
+            <div style="background-color:#ffffff; border:1px solid #e5e7eb; border-radius:12px; padding:20px; height:150px;">
+              <div style="font-size:12px; font-weight:600; color:#6b7280; margin-bottom:12px;">BM20 Index</div>
+              <div style="font-size:20px; font-weight:800; color:#111827; margin-bottom:4px;">{{BM20_LEVEL}}</div>
+              <div style="font-size:13px; color:#059669; font-weight:600;">1D {{BM20_1D}}</div>
+              <div style="margin-top:16px; border-top:1px solid #f3f4f6; padding-top:12px;">
+                 <div style="font-size:11px; color:#6b7280;">BTC ${{BTC_USD}} ({{BTC_1D}})</div>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </table>
 
-<!-- ================= KRW + BM20 CARDS ================= -->
-<tr>
-<td style="padding-bottom:20px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:20px;">
+        <tr>
+          <td>
+            <div style="background-color:#ffffff; border:1px solid #e5e7eb; border-left:4px solid #111827; border-radius:8px; padding:20px;">
+              <div style="font-size:12px; font-weight:700; color:#4b5563; margin-bottom:8px;">📌 오늘의 헤드라인</div>
+              <div style="font-size:16px; line-height:1.6; color:#111827; font-weight:700;">
+                "{{NEWS_ONE_LINER}}"
+              </div>
+            </div>
+          </td>
+        </tr>
+      </table>
 
-<table width="100%" cellpadding="0" cellspacing="0">
-<tr>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:20px;">
+        <tr>
+          <td>
+            <div style="background-color:#ffffff; border:1px solid #e5e7eb; border-radius:12px; padding:20px;">
+              <div style="font-size:14px; font-weight:700; color:#374151; margin-bottom:15px;">
+                🔥 BM20 구성 트리맵 (1D)
+              </div>
+              <img src="https://data.blockmedia.co.kr/assets/topcoins_treemap_latest.png"
+                   style="width:100%; border-radius:8px; display:block; border:1px solid #f3f4f6;" />
+            </div>
+          </td>
+        </tr>
+      </table>
 
-<!-- KRW CARD -->
-<td width="50%" valign="top" style="padding-right:8px;">
-  <div style="background:#0b1a33;border-radius:18px;padding:16px;box-shadow:0 10px 28px rgba(2,6,23,0.18);color:#ffffff;">
-    <div style="font-size:13px;font-weight:900;color:#c7d2fe;">📊 KRW 24h Snapshot</div>
-    <div style="font-size:22px;font-weight:900;margin-top:10px;">{{KRW_TOTAL_24H}}</div>
-    <div style="font-size:13px;margin-top:8px;">김치 {{KIMCHI_PREM}}</div>
-    <div style="font-size:12px;color:#9fb5d6;margin-top:4px;">USDKRW {{USDKRW}}</div>
-    <div style="font-size:12px;color:#9fb5d6;margin-top:10px;">
-      업비트 {{UPBIT_SHARE_24H}} · 빗썸 {{BITHUMB_SHARE_24H}} · 코인원 {{COINONE_SHARE_24H}}
-    </div>
-  </div>
-</td>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:30px;">
+        <tr>
+          <td style="padding-bottom:15px;">
+            <div style="font-size:16px; font-weight:800; color:#111827;">📰 이건 꼭 봐야해! 뉴스 셋</div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td width="33.33%" valign="top" style="padding-right:6px;">
+                  <div style="background-color:#ffffff; border:1px solid #e5e7eb; border-radius:10px; padding:16px; min-height:110px;">
+                    <span style="font-size:11px; font-weight:800; color:#4b5563; border-bottom:2px solid #111827; padding-bottom:2px;">01</span>
+                    <div style="font-size:13px; font-weight:600; color:#374151; margin-top:10px; line-height:1.5;">
+                      {{TOP_NEWS_1}}
+                    </div>
+                  </div>
+                </td>
+                <td width="33.33%" valign="top" style="padding:0 3px;">
+                  <div style="background-color:#ffffff; border:1px solid #e5e7eb; border-radius:10px; padding:16px; min-height:110px;">
+                    <span style="font-size:11px; font-weight:800; color:#4b5563; border-bottom:2px solid #111827; padding-bottom:2px;">02</span>
+                    <div style="font-size:13px; font-weight:600; color:#374151; margin-top:10px; line-height:1.5;">
+                      {{TOP_NEWS_2}}
+                    </div>
+                  </div>
+                </td>
+                <td width="33.33%" valign="top" style="padding-left:6px;">
+                  <div style="background-color:#ffffff; border:1px solid #e5e7eb; border-radius:10px; padding:16px; min-height:110px;">
+                    <span style="font-size:11px; font-weight:800; color:#4b5563; border-bottom:2px solid #111827; padding-bottom:2px;">03</span>
+                    <div style="font-size:13px; font-weight:600; color:#374151; margin-top:10px; line-height:1.5;">
+                      {{TOP_NEWS_3}}
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
 
-<!-- BM20 CARD -->
-<td width="50%" valign="top" style="padding-left:8px;">
-  <div style="background:#0b1a33;border-radius:18px;padding:16px;box-shadow:0 10px 28px rgba(2,6,23,0.18);color:#ffffff;">
-    <div style="font-size:13px;font-weight:900;color:#c7d2fe;">📈 BM20 Index</div>
-    <div style="font-size:26px;font-weight:900;margin-top:10px;">{{BM20_LEVEL}}</div>
-    <div style="font-size:14px;margin-top:6px;">1D {{BM20_1D}}</div>
-    <div style="font-size:13px;margin-top:10px;">
-      BTC {{BTC_USD}} {{BTC_1D}}
-    </div>
-    <div style="font-size:12px;color:#9fb5d6;margin-top:8px;">
-      {{BM20_BREADTH}}
-    </div>
-  </div>
-</td>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:40px; padding-bottom:40px;">
+        <tr>
+          <td align="center" style="border-top:1px solid #d1d5db; padding-top:20px;">
+            <div style="font-size:12px; color:#6b7280; line-height:1.6;">
+              본 메일은 블록미디어 데일리 뉴스레터입니다.<br/>
+              © Blockmedia. All rights reserved.
+            </div>
+          </td>
+        </tr>
+      </table>
 
-</tr>
+    </td>
+  </tr>
 </table>
 
-</td>
-</tr>
-
-<!-- ================= TREEMAP ================= -->
-<tr>
-<td style="padding-bottom:20px;">
-  <div style="background:#ffffff;border-radius:18px;padding:16px;box-shadow:0 8px 22px rgba(2,6,23,0.08);">
-    <div style="font-size:14px;font-weight:900;color:#0f172a;margin-bottom:10px;">
-      🔥 BM20 구성 트리맵 (1D)
-    </div>
-    <img src="https://data.blockmedia.co.kr/assets/topcoins_treemap_latest.png"
-         style="width:100%;border-radius:14px;" />
-  </div>
-</td>
-</tr>
-
-<!-- ================= 오늘의 한 줄 (기존 중요뉴스3 자리) ================= -->
-<tr>
-<td style="padding-bottom:20px;">
-  <div style="background:#ffffff;border-radius:18px;padding:18px;box-shadow:0 8px 22px rgba(2,6,23,0.08);">
-    <div style="font-size:15px;font-weight:900;color:#0f172a;margin-bottom:8px;">
-      🧠 오늘의 한 줄
-    </div>
-    <div style="font-size:16px;line-height:1.7;color:#334155;font-weight:700;">
-      {{NEWS_ONE_LINER}}
-    </div>
-  </div>
-</td>
-</tr>
-
-<!-- ================= 이건 꼭 봐야해! 뉴스 셋! (기존 AAS 자리) ================= -->
-<tr>
-<td style="padding-bottom:10px;">
-  <div style="font-size:16px;font-weight:900;color:#0f172a;margin-bottom:10px;">
-    🚨 이건 꼭 봐야해! 뉴스 셋!
-  </div>
-</td>
-</tr>
-
-<tr>
-<td>
-
-<table width="100%" cellpadding="0" cellspacing="0">
-<tr>
-
-<td width="33%" valign="top" style="padding-right:8px;">
-  <div style="background:#ffffff;border-radius:16px;padding:14px;box-shadow:0 6px 18px rgba(2,6,23,0.06);">
-    <div style="font-size:12px;font-weight:900;color:#64748b;">01</div>
-    <div style="font-size:14px;font-weight:800;color:#0f172a;margin-top:6px;line-height:1.6;">
-      {{TOP_NEWS_1}}
-    </div>
-  </div>
-</td>
-
-<td width="33%" valign="top" style="padding:0 4px;">
-  <div style="background:#ffffff;border-radius:16px;padding:14px;box-shadow:0 6px 18px rgba(2,6,23,0.06);">
-    <div style="font-size:12px;font-weight:900;color:#64748b;">02</div>
-    <div style="font-size:14px;font-weight:800;color:#0f172a;margin-top:6px;line-height:1.6;">
-      {{TOP_NEWS_2}}
-    </div>
-  </div>
-</td>
-
-<td width="33%" valign="top" style="padding-left:8px;">
-  <div style="background:#ffffff;border-radius:16px;padding:14px;box-shadow:0 6px 18px rgba(2,6,23,0.06);">
-    <div style="font-size:12px;font-weight:900;color:#64748b;">03</div>
-    <div style="font-size:14px;font-weight:800;color:#0f172a;margin-top:6px;line-height:1.6;">
-      {{TOP_NEWS_3}}
-    </div>
-  </div>
-</td>
-
-</tr>
-</table>
-
-</td>
-</tr>
-
-</table>
 </body>
 </html>
