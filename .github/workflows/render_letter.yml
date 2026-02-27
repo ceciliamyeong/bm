@@ -1,4 +1,4 @@
-name: Render Letter (test)
+name: Render Letter
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: render-letter-${{ github.ref }}
+  group: render-letter-main
   cancel-in-progress: true
 
 jobs:
@@ -20,9 +20,10 @@ jobs:
       TZ: Asia/Seoul
 
     steps:
-      - name: Checkout
+      - name: Checkout (main)
         uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
 
       - name: Setup Python
@@ -36,13 +37,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install pandas
 
-      # ✅ 최신 main 기준으로 작업 시작 (커밋 전에 pull/rebase)
+      # ✅ 최신 main 기준으로 시작 (커밋 전에 pull/rebase)
       - name: Sync with main
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin main
-          git checkout main
           git pull --rebase origin main
 
       - name: Sanity check inputs
@@ -53,17 +52,17 @@ jobs:
           test -f bm20_latest.json
           test -f bm20_daily_data_latest.csv
           test -f out/history/krw_24h_latest.json
-          test -f out/history/btc_usd_series.json
-          echo "[OK] inputs exist"
+          test -f out/history/btc_usd_series.json || echo "[WARN] btc_usd_series.json missing (will be created/updated)"
+          echo "[OK] inputs checked"
 
-          
       - name: Update BTC series
         shell: bash
         run: |
           set -euo pipefail
           python3 scripts/update_btc_series.py
           test -f out/history/btc_usd_series.json
-          
+          echo "[OK] btc_usd_series.json ready"
+          tail -n 5 out/history/btc_usd_series.json || true
 
       - name: Render letter.html
         shell: bash
@@ -72,6 +71,7 @@ jobs:
           python3 scripts/render_letter.py
           test -f letter.html
           echo "[OK] rendered letter.html"
+          ls -la letter.html
 
       - name: Commit & Push
         shell: bash
@@ -81,10 +81,11 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           git add letter.html out/history/btc_usd_series.json
+          git status --porcelain
 
           if ! git diff --cached --quiet; then
             DATE=$(TZ=Asia/Seoul date +%F)
-            git commit -m "chore: render letter.html (${DATE})"
+            git commit -m "chore: render letter + btc series (${DATE})"
             git push origin main
           else
             echo "No changes to commit"
