@@ -944,8 +944,8 @@
     coinone:"#7c3aed", // 보라
   };
   
-  const AXIS_UNIT = 1e8;        // ✅ 억원 = 100,000,000원
-  const AXIS_UNIT_LABEL = "억원";
+  const AXIS_UNIT = 1e12;       // 조원
+  const AXIS_UNIT_LABEL = "조원";
 
   function fmtAxis(v){
   if (!Number.isFinite(v)) return "";
@@ -1521,9 +1521,13 @@ totalChart?.setOption({
   
     yAxis: {
       type: "value",
-      name: `(${AXIS_UNIT_LABEL})`, // (억원)
-      nameGap: 10,
-      axisLabel: { color: "#6b7280", margin: 14, formatter: (v) => fmtAxis(v) }
+      name: "(조원)",               // 👈 명확하게 조원 표시
+      nameGap: 8,                   // 👈 약간 줄여서 여백 감소
+      axisLabel: {
+        color: "#6b7280",
+        margin: 10,                 // 👈 모바일 대비 조금 줄임
+        formatter: (v) => (v / 1e12).toFixed(1)  // 👈 바로 조원 계산
+      }
     },
   
     series: [
