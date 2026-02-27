@@ -14,18 +14,26 @@ def update():
     series = read_json(BTC_SERIES, default=[])
     bm20 = read_json(BM20_JSON, default={})
 
-    asof = bm20.get("asof")
-    if not asof:
-        raise KeyError("bm20_latest.json missing 'asof'")
+    # 🔵 asof 여러 키 fallback
+    asof = (
+        bm20.get("asof")
+        or bm20.get("date")
+        or bm20.get("timestamp")
+    )
 
+    if not asof:
+        raise KeyError("bm20_latest.json missing date key (expected asof/date/timestamp)")
+
+    # 🔵 BTC 가격도 fallback
     btc_price = (
         bm20.get("btc_price_usd")
         or bm20.get("btc_usd")
         or bm20.get("btc_price")
         or bm20.get("btcPriceUsd")
     )
+
     if btc_price is None:
-        raise KeyError("bm20_latest.json missing BTC price (btc_price_usd/btc_usd/btc_price/btcPriceUsd)")
+        raise KeyError("bm20_latest.json missing BTC price key")
 
     btc_price = float(btc_price)
 
@@ -33,9 +41,14 @@ def update():
         print("BTC already updated.")
         return
 
-    series.append({"date": asof, "price": btc_price})
+    series.append({
+        "date": asof,
+        "price": btc_price
+    })
+
     BTC_SERIES.parent.mkdir(parents=True, exist_ok=True)
     BTC_SERIES.write_text(json.dumps(series, ensure_ascii=False, indent=2), encoding="utf-8")
+
     print("BTC series updated.")
 
 if __name__ == "__main__":
