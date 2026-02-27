@@ -56,6 +56,15 @@ jobs:
           test -f out/history/btc_usd_series.json
           echo "[OK] inputs exist"
 
+          
+      - name: Update BTC series
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/update_btc_series.py
+          test -f out/history/btc_usd_series.json
+          
+
       - name: Render letter.html
         shell: bash
         run: |
@@ -71,7 +80,7 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add letter.html
+          git add letter.html out/history/btc_usd_series.json
 
           if ! git diff --cached --quiet; then
             DATE=$(TZ=Asia/Seoul date +%F)
