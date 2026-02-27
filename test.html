@@ -1165,7 +1165,8 @@
           smooth:true,
           symbol:"circle",
           symbolSize:6,
-          showSymbol:false,
+          showSymbol: xs.length <= 30,
+          itemStyle:{ borderWidth:2, borderColor:"#fff" },
           data:kSeries,
           lineStyle:{ width:3 },
           emphasis:{ focus:"series", scale:true },
@@ -1236,7 +1237,8 @@
             smooth:true,
             symbol:"circle",
             symbolSize:6,
-            showSymbol:false,
+            showSymbol: xrx.length <= 30,
+            itemStyle:{ borderWidth:2, borderColor:"#fff" },
             data:xrpSeries,
             connectNulls:true,
             lineStyle:{ width:3 },
@@ -1318,9 +1320,44 @@
               splitLine:{ lineStyle:{ color:"rgba(2,6,23,.06)" } }
             },
             series:[
-              { name:"한국 점유율", type:"line", smooth:true, showSymbol:false, data:kC, connectNulls:true, lineStyle:{ width:3 }, areaStyle:{ opacity:0.06 } },
-              { name:"XRP 점유율", type:"line", smooth:true, showSymbol:false, data:xC, connectNulls:true, lineStyle:{ width:3 }, areaStyle:{ opacity:0.06 } },
-              { name:"괴리(XRP-한국)", type:"line", smooth:true, showSymbol:false, data:diff, connectNulls:true, lineStyle:{ width:2, type:"dashed" } }
+              {
+                name:"한국 점유율",
+                type:"line",
+                smooth:true,
+                showSymbol: cx.length <= 30,
+                symbol:"circle",
+                symbolSize:6,
+                itemStyle:{ borderWidth:2, borderColor:"#fff" },
+                data:kC,
+                connectNulls:true,
+                lineStyle:{ width:3 },
+                areaStyle:{ opacity:0.06 }
+              },
+              {
+                name:"XRP 점유율",
+                type:"line",
+                smooth:true,
+                showSymbol: cx.length <= 30,
+                symbol:"circle",
+                symbolSize:6,
+                itemStyle:{ borderWidth:2, borderColor:"#fff" },
+                data:xC,
+                connectNulls:true,
+                lineStyle:{ width:3 },
+                areaStyle:{ opacity:0.06 }
+              },
+              {
+                name:"괴리(XRP-한국)",
+                type:"line",
+                smooth:true,
+                showSymbol: cx.length <= 30,
+                symbol:"circle",
+                symbolSize:5,
+                itemStyle:{ borderWidth:2, borderColor:"#fff" },
+                data:diff,
+                connectNulls:true,
+                lineStyle:{ width:2, type:"dashed" }
+               }
             ]
           }, true);
         }
