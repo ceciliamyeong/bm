@@ -37,13 +37,11 @@ jobs:
 
           copy_if_exists () { [ -f "$1" ] && cp "$1" "$SITE_SRC/$2" && echo "✓ $1 -> $SITE_SRC/$2" || echo "… missing: $1"; }
 
-          copy_if_exists "$LAST_DIR/latest.json"            latest.json
-          copy_if_exists "$LAST_DIR/bm20_latest.json"       latest.json
-          copy_if_exists "$LAST_DIR/series.json"            series.json
-          copy_if_exists "$LAST_DIR/bm20_series.json"       series.json
-          copy_if_exists "$LAST_DIR/bm20_index_history.json" series.json
-          copy_if_exists "$LAST_DIR/contrib_top.json"       contrib_top.json
-          copy_if_exists "$LAST_DIR/bm20_contrib_top.json"  contrib_top.json
+          copy_if_exists "$LAST_DIR/bm20_latest.json" bm20_latest.json
+          copy_if_exists "$LAST_DIR/bm20_series.json" bm20_series.json
+          copy_if_exists "$LAST_DIR/bm20_index_history.json" bm20_index_history.json
+          copy_if_exists "$LAST_DIR/bm20_contrib_top.json" bm20_contrib_top.json
+          
 
           for f in bm20_bar_latest.png bm20_trend_latest.png; do
             [ -f "$LAST_DIR/$f" ] && cp "$LAST_DIR/$f" "$SITE_SRC/$f" && echo "✓ $LAST_DIR/$f -> $SITE_SRC/$f"
