@@ -1,9 +1,10 @@
-name: Render Letter 
+name: Render Letter (daily)
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "20 0 * * *"  # 09:20 KST
+    # 매일 09:20 KST (00:20 UTC)
+    - cron: "20 0 * * *"
 
 permissions:
   contents: write
@@ -34,7 +35,7 @@ jobs:
       - name: Install deps
         run: |
           python -m pip install --upgrade pip
-          pip install pandas
+          pip install pandas plotly kaleido
 
       - name: Sanity check inputs
         shell: bash
@@ -46,7 +47,7 @@ jobs:
           test -f out/history/krw_24h_latest.json
           echo "[OK] inputs exist"
 
-      - name: Update BTC series
+      - name: Update BTC series (from CSV)
         shell: bash
         run: |
           set -euo pipefail
@@ -54,14 +55,13 @@ jobs:
           test -f out/history/btc_usd_series.json
           echo "[OK] btc series updated"
 
-      - name: Update treemap image (optional)
+      - name: Render Treemap PNG (from CSV)
         shell: bash
         run: |
           set -euo pipefail
-          # 최신 트리맵 png가 외부에 이미 존재한다는 가정(있으면 넣고, 없으면 이 step은 주석 처리)
-          # curl -fsSL "https://data.blockmedia.co.kr/assets/topcoins_treemap_latest.png" -o "assets/topcoins_treemap_latest.png"
-          # test -f assets/topcoins_treemap_latest.png
-          echo "[SKIP] treemap download step (enable when URL ready)"
+          python3 scripts/render_treemap_png.py
+          test -f assets/topcoins_treemap_latest.png
+          echo "[OK] treemap png ready"
 
       - name: Render letter.html
         shell: bash
@@ -78,12 +78,12 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add letter.html out/history/btc_usd_series.json assets/topcoins_treemap_latest.png || true
+          git add letter.html out/history/btc_usd_series.json assets/topcoins_treemap_latest.png
 
           if ! git diff --cached --quiet; then
             DATE=$(TZ=Asia/Seoul date +%F)
-            git commit -m "chore: render letter.html (${DATE})"
-            git push origin main
+            git commit -m "chore: render letter + btc + treemap (${DATE})"
+            git push origin HEAD:main
           else
             echo "No changes to commit"
           fi
