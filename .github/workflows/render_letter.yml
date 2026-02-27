@@ -1,10 +1,9 @@
-name: Render Letter
+name: Render Letter 
 
 on:
   workflow_dispatch:
   schedule:
-    # 테스트용: 매일 09:20 KST (00:20 UTC)
-    - cron: "20 0 * * *"
+    - cron: "20 0 * * *"  # 09:20 KST
 
 permissions:
   contents: write
@@ -20,7 +19,7 @@ jobs:
       TZ: Asia/Seoul
 
     steps:
-      - name: Checkout (main)
+      - name: Checkout main
         uses: actions/checkout@v4
         with:
           ref: main
@@ -37,13 +36,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install pandas
 
-      # ✅ 최신 main 기준으로 시작 (커밋 전에 pull/rebase)
-      - name: Sync with main
-        shell: bash
-        run: |
-          set -euo pipefail
-          git pull --rebase origin main
-
       - name: Sanity check inputs
         shell: bash
         run: |
@@ -52,8 +44,7 @@ jobs:
           test -f bm20_latest.json
           test -f bm20_daily_data_latest.csv
           test -f out/history/krw_24h_latest.json
-          test -f out/history/btc_usd_series.json || echo "[WARN] btc_usd_series.json missing (will be created/updated)"
-          echo "[OK] inputs checked"
+          echo "[OK] inputs exist"
 
       - name: Update BTC series
         shell: bash
@@ -61,8 +52,16 @@ jobs:
           set -euo pipefail
           python3 scripts/update_btc_series.py
           test -f out/history/btc_usd_series.json
-          echo "[OK] btc_usd_series.json ready"
-          tail -n 5 out/history/btc_usd_series.json || true
+          echo "[OK] btc series updated"
+
+      - name: Update treemap image (optional)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # 최신 트리맵 png가 외부에 이미 존재한다는 가정(있으면 넣고, 없으면 이 step은 주석 처리)
+          # curl -fsSL "https://data.blockmedia.co.kr/assets/topcoins_treemap_latest.png" -o "assets/topcoins_treemap_latest.png"
+          # test -f assets/topcoins_treemap_latest.png
+          echo "[SKIP] treemap download step (enable when URL ready)"
 
       - name: Render letter.html
         shell: bash
@@ -71,7 +70,6 @@ jobs:
           python3 scripts/render_letter.py
           test -f letter.html
           echo "[OK] rendered letter.html"
-          ls -la letter.html
 
       - name: Commit & Push
         shell: bash
@@ -80,12 +78,11 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add letter.html out/history/btc_usd_series.json
-          git status --porcelain
+          git add letter.html out/history/btc_usd_series.json assets/topcoins_treemap_latest.png || true
 
           if ! git diff --cached --quiet; then
             DATE=$(TZ=Asia/Seoul date +%F)
-            git commit -m "chore: render letter + btc series (${DATE})"
+            git commit -m "chore: render letter.html (${DATE})"
             git push origin main
           else
             echo "No changes to commit"
