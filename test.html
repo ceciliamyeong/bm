@@ -1085,7 +1085,8 @@
       kimchiLatest: "/out/history/kimchi_latest.json?" + bust,
       kimchiHist:   "/out/history/kimchi_snapshots.json?" + bust,
       fxLatest: "/out/history/fx_latest.json?" + bust,
-      bm20History: "/data/bm20_history.json?" + bust
+      bm20History: "/data/bm20_history.json?" + bust,
+      bm20Latest: "/bm20_latest.json?" + bust
     };
   }
 
@@ -1826,6 +1827,7 @@ totalChart?.setOption({
       loadJSON(u.kimchiHist),
       loadJSON(u.fxLatest), 
       loadJSON(u.bm20History),
+      loadJSON(u.bm20Latest),
       loadJSON(u.xrpHist)
     ]);
 
@@ -1837,6 +1839,41 @@ totalChart?.setOption({
     XRP_HIST = Array.isArray(xrpHist) ? xrpHist : [];
 
     FX_LATEST = fxLatest;
+
+    const BM20_LATEST = bm20Latest || null;
+
+    if (BM20_LATEST) {
+    
+      const level = Number(BM20_LATEST.bm20Level);
+      const chgPt = Number(BM20_LATEST.bm20PointChange);
+      const chgPctRaw = Number(BM20_LATEST.returns?.["1D"]);
+    
+      const chgPct = Number.isFinite(chgPctRaw) ? chgPctRaw * 100 : null;
+      const chgPtSafe = Number.isFinite(chgPt) ? chgPt : 0;
+    
+      const levelEl = document.getElementById("kpiBM20");
+      if (levelEl) {
+        levelEl.textContent = Number.isFinite(level)
+          ? level.toLocaleString("ko-KR", { maximumFractionDigits: 2 })
+          : "-";
+      }
+    
+      const noteEl = document.getElementById("kpiBM20Note");
+      if (noteEl) {
+        if (Number.isFinite(chgPct)) {
+          const sign = chgPct > 0 ? "+" : "";
+          noteEl.textContent =
+            `전일대비: ${sign}${chgPtSafe.toFixed(2)} (${sign}${chgPct.toFixed(2)}%)`;
+        } else {
+          noteEl.textContent = "전일대비: -";
+        }
+      }
+    
+      const asOfEl = document.getElementById("bm20AsOfPill");
+      if (asOfEl && BM20_LATEST.asOf) {
+        asOfEl.textContent = BM20_LATEST.asOf;
+      }
+    }
 
     if (FX_LATEST){
       const official = FX_LATEST.usdkrw_official;
