@@ -30,6 +30,54 @@ BTC_JSON = ROOT / "out/history/btc_usd_series.json"
 
 OUT = ROOT / "letter.html"
 
+# --- 상단 Path 정의 근처에 추가 ---
+NEWS_ONELINER_TXT = ROOT / "out/latest/news_one_liner.txt"
+TOP_NEWS_JSON = ROOT / "out/latest/top_news_latest.json"
+
+def load_text_first_line(p: Path) -> str:
+    if not p.exists():
+        return "—"
+    s = p.read_text(encoding="utf-8").strip()
+    if not s:
+        return "—"
+    return s.splitlines()[0].strip() or "—"
+
+def load_top_news_3(p: Path) -> tuple[str, str, str]:
+    """
+    Expect JSON like:
+      ["(1) ...", "(2) ...", "(3) ..."]
+    or:
+      {"items": ["...", "...", "..."]}
+    """
+    if not p.exists():
+        return ("—", "—", "—")
+
+    obj = json.loads(p.read_text(encoding="utf-8"))
+    if isinstance(obj, dict):
+        items = obj.get("items", []) or []
+    else:
+        items = obj or []
+
+    items = [str(x).strip() for x in items if str(x).strip()]
+    while len(items) < 3:
+        items.append("—")
+    return (items[0], items[1], items[2])
+
+# --- build_placeholders() 안에서, return dict 만들기 직전에 추가 ---
+news_one_liner = load_text_first_line(NEWS_ONELINER_TXT)
+top1, top2, top3 = load_top_news_3(TOP_NEWS_JSON)
+
+# --- build_placeholders()의 return dict에 추가 ---
+return {
+    # ... (기존 BM20/BTC/Kimchi/KRW) :contentReference[oaicite:2]{index=2}
+
+    # News modules
+    "{{NEWS_ONE_LINER}}": news_one_liner,
+    "{{TOP_NEWS_1}}": top1,
+    "{{TOP_NEWS_2}}": top2,
+    "{{TOP_NEWS_3}}": top3,
+}
+
 # ------------------ formatting helpers ------------------
 
 GREEN = "#16a34a"
