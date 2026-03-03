@@ -136,11 +136,7 @@
   };
   const bust = () => "v=" + Date.now();
 
-// GitHub Pages/baseurl 안전 처리: 현재 HTML 위치를 기준으로 상대경로를 절대 URL로 변환
-const BASE_URL = new URL('.', window.location.href);
-
-let seriesChart, perfChart, moverChart, btcKospiChart, bm20KospiChart, btcNasdaqChart, bm20NasdaqChart;
-, perfChart, moverChart, btcKospiChart, bm20KospiChart, btcNasdaqChart, bm20NasdaqChart;
+  let seriesChart, perfChart, moverChart, btcKospiChart, bm20KospiChart, btcNasdaqChart, bm20NasdaqChart;
   let SERIES = [], BTC_SERIES = [], NASDAQ_SERIES = [], KOSPI_SERIES = [];
 
   function initCharts(){
@@ -153,11 +149,9 @@ let seriesChart, perfChart, moverChart, btcKospiChart, bm20KospiChart, btcNasdaq
     bm20KospiChart = echarts.init(qs("#bm20KospiChart"));
   }
 
-  async function fetchJson(path) {
+  async function fetchJson(url) {
     try {
-      const u = new URL(path, BASE_URL);
-      u.searchParams.set("v", Date.now().toString());
-      const r = await fetch(u.toString());
+      const r = await fetch(url + "?" + bust());
       return r.ok ? await r.json() : null;
     } catch(e) { return null; }
   }
@@ -429,8 +423,7 @@ let seriesChart, perfChart, moverChart, btcKospiChart, bm20KospiChart, btcNasdaq
     const csvTxt = await (async () => {
         const paths = [`bm20_daily_data_latest.csv`, `out/${date}/bm20_daily_data_${date}.csv`];
         for(const p of paths) {
-            const u = new URL(p, BASE_URL); u.searchParams.set("v", Date.now().toString());
-            const r = await fetch(u.toString());
+            const r = await fetch(p + "?" + bust());
             if(r.ok) return await r.text();
         }
         return null;
