@@ -160,6 +160,22 @@ def update_market_indices():
             print(f"[ERROR] {name} 수집 중 오류 발생: {e}")
 
 
+# ================== JSON 저장 로직 수정 (파일 하단부) ==================
+# bm20_latest.json 생성 부분 근처를 찾아 아래와 같이 round 처리하세요.
+latest_obj = {
+    "asOf": YMD,
+    "bm20Level": int(round(float(bm20_now))), # 소수점 제거 (정수화)
+    # ... 나머지 동일 ...
+}
+
+# bm20_series.json 생성 부분 (정수로 변환)
+series_list = []
+for _, row in hist.tail(365).iterrows():
+    series_list.append({
+        "date": row["date"],
+        "level": int(round(float(row["index"]))) # 소수점 제거
+    })
+
 
 # ================== Universe & Mapping ==================
 BEST_COUNT, WORST_COUNT = 3, 3
