@@ -1424,7 +1424,127 @@
 
 
   
-  // ===== Controls =====
+    // ===== Main loader =====
+  async function loadLatest(){
+    try {
+      const { json: j } = await fetchAnyJson(["bm20_latest.json","latest.json","bm/bm20_latest.json","bm/latest.json"]);
+      LATEST = j;
+
+      const asof = j.asOf || j.as_of || j.date || j.day || "";
+      const level = j.bm20Level ?? j.level ?? j.index ?? j.value;
+
+      const R = j.returns || {};
+      const r1 = j.bm20ChangePct ?? R["1D"];
+      const r7 = R["7D"];
+      const r30 = R["30D"];
+      const r1y = R["1Y"];
+
+      // 상단 메타 정보 업데이트
+      const metaAsOf = document.getElementById("metaAsOf");
+      if (metaAsOf) metaAsOf.innerHTML = `ASOF: <b>${asof || "-"}</b>`;
+      setDeltaChip(document.getElementById("metaDelta"), r1);
+      
+      const methodEl = document.getElementById("metaMethod");
+      if (methodEl) methodEl.textContent = "METHOD: Fixed Weights";
+
+      // KPI 카드 업데이트
+      document.getElementById("kpiLevel").textContent = fmtNum(level, 2);
+      document.getElementById("kpiLevelNote").textContent = `base=100 · ${asof || "-"}`;
+
+      document.getElementById("kpi1d").innerHTML = `<span class="delta ${(Number(r1)>=0)?'up':'down'}">${fmtPctRatio(r1,2)}</span>`;
+      document.getElementById("kpi7d").textContent = fmtPctRatio(r7,2);
+      document.getElementById("kpi30d").textContent = fmtPctRatio(r30,2);
+      document.getElementById("kpi1y").textContent = fmtPctRatio(r1y,2);
+
+      // 김치 프리미엄 처리
+      let kimchiRatio = null;
+      if (j.kimchi_pct != null) {
+        kimchiRatio = Number(j.kimchi_pct) / 100;
+      } else if (j.kimchi_premium_pct != null) {
+        const v = (typeof j.kimchi_premium_pct === "object") ? j.kimchi_premium_pct.BTC : j.kimchi_premium_pct;
+        kimchiRatio = Number(v) / 100;
+      }
+      
+      const kimchiEl = document.getElementById("kimchiValue");
+      if (kimchiEl) {
+        kimchiEl.textContent = (kimchiRatio != null) ? fmtPctRatio(kimchiRatio, 2) : "-";
+      }
+      
+      // 유니버스 리스트 바인딩
+      bindUniverseAndMethodology(j);
+      
+      // CSV 기반 데이터(무버/히트맵) 로드
+      const perf = await loadPerfCSV(asof);
+      if (perf){
+        const rows = parseCSV(perf.csv);
+        renderMovers(rows, asof, perf.path);
+      }
+    } catch(e){ 
+      console.error("Latest data load failed:", e); 
+    }
+  }
+
+  // ===== Main loader =====
+  async function loadLatest(){
+    try {
+      const { json: j } = await fetchAnyJson(["bm20_latest.json","latest.json","bm/bm20_latest.json","bm/latest.json"]);
+      LATEST = j;
+
+      const asof = j.asOf || j.as_of || j.date || j.day || "";
+      const level = j.bm20Level ?? j.level ?? j.index ?? j.value;
+
+      const R = j.returns || {};
+      const r1 = j.bm20ChangePct ?? R["1D"];
+      const r7 = R["7D"];
+      const r30 = R["30D"];
+      const r1y = R["1Y"];
+
+      // 상단 메타 정보 업데이트
+      const metaAsOf = document.getElementById("metaAsOf");
+      if (metaAsOf) metaAsOf.innerHTML = `ASOF: <b>${asof || "-"}</b>`;
+      setDeltaChip(document.getElementById("metaDelta"), r1);
+      
+      const methodEl = document.getElementById("metaMethod");
+      if (methodEl) methodEl.textContent = "METHOD: Fixed Weights";
+
+      // KPI 카드 업데이트
+      document.getElementById("kpiLevel").textContent = fmtNum(level, 2);
+      document.getElementById("kpiLevelNote").textContent = `base=100 · ${asof || "-"}`;
+
+      document.getElementById("kpi1d").innerHTML = `<span class="delta ${(Number(r1)>=0)?'up':'down'}">${fmtPctRatio(r1,2)}</span>`;
+      document.getElementById("kpi7d").textContent = fmtPctRatio(r7,2);
+      document.getElementById("kpi30d").textContent = fmtPctRatio(r30,2);
+      document.getElementById("kpi1y").textContent = fmtPctRatio(r1y,2);
+
+      // 김치 프리미엄 처리
+      let kimchiRatio = null;
+      if (j.kimchi_pct != null) {
+        kimchiRatio = Number(j.kimchi_pct) / 100;
+      } else if (j.kimchi_premium_pct != null) {
+        const v = (typeof j.kimchi_premium_pct === "object") ? j.kimchi_premium_pct.BTC : j.kimchi_premium_pct;
+        kimchiRatio = Number(v) / 100;
+      }
+      
+      const kimchiEl = document.getElementById("kimchiValue");
+      if (kimchiEl) {
+        kimchiEl.textContent = (kimchiRatio != null) ? fmtPctRatio(kimchiRatio, 2) : "-";
+      }
+      
+      // 유니버스 리스트 바인딩
+      bindUniverseAndMethodology(j);
+      
+      // CSV 기반 데이터(무버/히트맵) 로드
+      const perf = await loadPerfCSV(asof);
+      if (perf){
+        const rows = parseCSV(perf.csv);
+        renderMovers(rows, asof, perf.path);
+      }
+    } catch(e){ 
+      console.error("Latest data load failed:", e); 
+    }
+  }
+
+  // ===== Controls & Main =====
   function setActive(btnId){
     ["btn1y","btnytd","btnall"].forEach(id => {
       const b = document.getElementById(id);
@@ -1432,21 +1552,21 @@
     });
   }
 
-  // 메인 실행 함수
   async function main(){
     // 1. 차트 초기화
     initCharts();
 
-    // 2. 데이터 로드 (BM20, BTC, NASDAQ 순서대로)
+    // 2. 데이터 순차 로드
     await loadSeries();
-    await loadNasdaqData(); 
+    await loadNasdaqData();
+    await loadLatest();
     
     // 3. 차트 렌더링
     renderSeries("1Y");
-    renderComparisonCharts(); 
+    renderComparisonCharts();
     setActive("btn1y");
 
-    // 4. 버튼 이벤트 리스너 등록
+    // 4. 필터 버튼 이벤트 등록
     document.getElementById("btn1y")?.addEventListener("click", ()=>{
       renderSeries("1Y"); setActive("btn1y");
     });
@@ -1457,32 +1577,16 @@
       renderSeries("ALL"); setActive("btnall");
     });
 
-    // 5. 최신 지표 및 뉴스 데이터 로드
-    await loadLatest();
-
-    // 6. 브라우저 크기 조절 시 모든 차트 리사이즈 대응
-    const ro = new ResizeObserver(() => {
-      requestAnimationFrame(() => {
-        const allCharts = [seriesChart, perfChart, moverChart, btcNasdaqChart, bm20NasdaqChart];
-        allCharts.forEach(c => c?.resize());
-      });
+    // 5. 창 크기 변경 대응 (ResizeObserver는 initCharts에서 이미 등록됨)
+    window.addEventListener("resize", () => {
+      const allCharts = [seriesChart, perfChart, moverChart, btcNasdaqChart, bm20NasdaqChart];
+      allCharts.forEach(c => c?.resize());
     });
-    
-    // 모든 차트 컨테이너 감시 시작
-    [
-      document.getElementById("seriesChart"),
-      document.getElementById("perfBar"),
-      document.getElementById("moverBar"),
-      document.getElementById("btcNasdaqChart"),
-      document.getElementById("bm20NasdaqChart")
-    ].forEach(el => el && ro.observe(el));
   }
 
-  // 오류 처리 및 실행
-  main().catch(err=>{
-    console.error("데이터 로딩 오류:", err);
-    // 사용자에게 경고창을 띄우고 싶지 않다면 아래 줄을 주석 처리하세요.
-    // alert("데이터 로딩 중 문제가 발생했습니다. 콘솔(F12)을 확인하세요.");
+  // 실행
+  main().catch(err => {
+    console.error("Main execution failed:", err);
   });
 </script>
 
