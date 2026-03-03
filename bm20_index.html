@@ -1432,29 +1432,21 @@
     });
   }
 
+  // 메인 실행 함수
   async function main(){
+    // 1. 차트 초기화
     initCharts();
 
+    // 2. 데이터 로드 (BM20, BTC, NASDAQ 순서대로)
     await loadSeries();
-    await loadNasdaqData(); // 1. 나스닥 데이터 로드 추가
+    await loadNasdaqData(); 
     
+    // 3. 차트 렌더링
     renderSeries("1Y");
-    renderComparisonCharts(); // 2. 비교 차트 그리기 추가
+    renderComparisonCharts(); 
     setActive("btn1y");
 
-    // ... 기존 버튼 리스너 코드들 ...
-
-    await loadLatest();
-
-    // 3. 리사이즈 감지에 신규 차트 추가
-    const ro = new ResizeObserver(() => {
-      requestAnimationFrame(() => {
-        [seriesChart, perfChart, moverChart, btcNasdaqChart, bm20NasdaqChart].forEach(c => c?.resize());
-      });
-    });
-    [seriesChart, perfChart, moverChart, btcNasdaqChart, bm20NasdaqChart].forEach(c => c && ro.observe(c.getDom()));
-  }
-
+    // 4. 버튼 이벤트 리스너 등록
     document.getElementById("btn1y")?.addEventListener("click", ()=>{
       renderSeries("1Y"); setActive("btn1y");
     });
@@ -1465,16 +1457,32 @@
       renderSeries("ALL"); setActive("btnall");
     });
 
+    // 5. 최신 지표 및 뉴스 데이터 로드
     await loadLatest();
 
-    window.addEventListener("resize", ()=>{
-      bm20Chart?.resize(); seriesChart?.resize(); perfChart?.resize(); moverChart?.resize();
+    // 6. 브라우저 크기 조절 시 모든 차트 리사이즈 대응
+    const ro = new ResizeObserver(() => {
+      requestAnimationFrame(() => {
+        const allCharts = [seriesChart, perfChart, moverChart, btcNasdaqChart, bm20NasdaqChart];
+        allCharts.forEach(c => c?.resize());
+      });
     });
+    
+    // 모든 차트 컨테이너 감시 시작
+    [
+      document.getElementById("seriesChart"),
+      document.getElementById("perfBar"),
+      document.getElementById("moverBar"),
+      document.getElementById("btcNasdaqChart"),
+      document.getElementById("bm20NasdaqChart")
+    ].forEach(el => el && ro.observe(el));
   }
 
+  // 오류 처리 및 실행
   main().catch(err=>{
-    console.error(err);
-    alert("BM20 로딩 실패: bm20_latest.json / bm20_series.json / out/YYYY-MM-DD/*.csv 경로를 확인하세요.");
+    console.error("데이터 로딩 오류:", err);
+    // 사용자에게 경고창을 띄우고 싶지 않다면 아래 줄을 주석 처리하세요.
+    // alert("데이터 로딩 중 문제가 발생했습니다. 콘솔(F12)을 확인하세요.");
   });
 </script>
 
