@@ -68,10 +68,11 @@
     </div>
 
     <section id="sec-overview" class="kpiGrid">
-      <div class="panel kpi"><p class="label">지수 레벨</p><p class="value" id="kpiLevel">-</p><div class="note" id="kpiLevelNote">-</div></div>
-      <div class="panel kpi"><p class="label">1D 변동</p><p class="value" id="kpi1d">-</p><div class="note" id="kpiBreadth">-</div></div>
-      <div class="panel kpi"><p class="label">7D 수익률</p><p class="value" id="kpi7d">-</p></div>
-      <div class="panel kpi"><p class="label">30D 수익률</p><p class="value" id="kpi30d">-</p></div>
+      <div class="panel kpi"><p class="label">BM20 1D</p><p class="value" id="kpiBm20_1d">-</p><div class="note" id="kpiBm20_lvl">-</div></div>
+      <div class="panel kpi"><p class="label">BTC 1D</p><p class="value" id="kpiBtc_1d">-</p><div class="note" id="kpiBtc_px">-</div></div>
+      <div class="panel kpi"><p class="label">NASDAQ 1D</p><p class="value" id="kpiNdq_1d">-</p></div>
+      <div class="panel kpi"><p class="label">KOSPI 1D</p><p class="value" id="kpiKsp_1d">-</p></div>
+      <div class="panel kpi"><p class="label">USD/KRW</p><p class="value" id="kpiUsdkRw">-</p></div>
       <div class="panel kpi"><p class="label">Kimchi Premium</p><p class="value" id="kimchiValue">-</p></div>
     </section>
 
@@ -168,6 +169,24 @@
     if(ndq) NASDAQ_SERIES = ndq.map(d => ({ date: d.date, v: d.price }));
     const ksp = await fetchJson("kospi_series.json");
     if(ksp) KOSPI_SERIES = ksp.map(d => ({ date: d.date, v: d.price }));
+  }
+
+  function lastTwoFromMap(dates, map){
+    // dates는 오름차순이라고 가정. 뒤에서부터 유효값 2개 찾기
+    let a = null, b = null; // b=마지막, a=그 전
+    for(let i = dates.length - 1; i >= 0; i--){
+      const v = map.get(dates[i]);
+      if(Number.isFinite(Number(v))){
+        if(b === null) b = Number(v);
+        else { a = Number(v); return [a, b]; }
+      }
+    }
+    return [null, null];
+  }
+  
+  function pctChange(a, b){
+    if(!Number.isFinite(a) || !Number.isFinite(b) || a === 0) return null;
+    return (b / a) - 1;
   }
 
   function renderSeries(mode){
@@ -405,13 +424,43 @@
     const latest = await fetchJson("bm20_latest.json");
     if(!latest) return;
     
-    // KPI & Universe
-    qs("#kpiLevel").textContent = fmtNum(latest.bm20Level, 0);
-    qs("#kpi1d").innerHTML = `<span class="delta ${latest.bm20ChangePct>=0?'up':'down'}">${fmtPctRatio(latest.bm20ChangePct)}</span>`;
-    qs("#kpi7d").textContent = fmtPctRatio(latest.returns?.["7D"]);
-    qs("#kpi30d").textContent = fmtPctRatio(latest.returns?.["30D"]);
-    qs("#kimchiValue").textContent = (latest.kimchiPremiumPct || 0).toFixed(2) + "%";
+    // ===== KPI (새 구성) =====
     qs("#metaAsOf").textContent = "ASOF: " + latest.asOf;
+    
+    // BM20 1D (latest에 이미 있음)
+    qs("#kpiBm20_1d").innerHTML =
+      `<span class="delta ${latest.bm20ChangePct>=0?'up':'down'}">${fmtPctRatio(latest.bm20ChangePct)}</span>`;
+    qs("#kpiBm20_lvl").textContent = "Level: " + fmtNum(latest.bm20Level, 0);
+    
+    // USD/KRW (kimchi_meta.usdkrw)
+    qs("#kpiUsdkRw").textContent =
+      (latest.kimchi_meta?.usdkrw != null) ? fmtNum(latest.kimchi_meta.usdkrw, 2) : "-";
+    
+    // Kimchi Premium (kimchi_premium_pct)
+    qs("#kimchiValue").textContent =
+      (latest.kimchi_premium_pct != null) ? Number(latest.kimchi_premium_pct).toFixed(2) + "%" : "-";
+
+    // BTC 1D
+    {
+      const [a,b] = lastTwoValid(BTC_SERIES);
+      const r = pctChange(a,b);
+      qs("#kpiBtc_1d").textContent = (r == null) ? "-" : fmtPctRatio(r);
+      qs("#kpiBtc_px").textContent = (b == null) ? "-" : ("$" + fmtNum(b, 0));
+    }
+    
+    // NASDAQ 1D
+    {
+      const [a,b] = lastTwoValid(NASDAQ_SERIES);
+      const r = pctChange(a,b);
+      qs("#kpiNdq_1d").textContent = (r == null) ? "-" : fmtPctRatio(r);
+    }
+    
+    // KOSPI 1D
+    {
+      const [a,b] = lastTwoValid(KOSPI_SERIES);
+      const r = pctChange(a,b);
+      qs("#kpiKsp_1d").textContent = (r == null) ? "-" : fmtPctRatio(r);
+    }
     
     if(latest.components) {
       qs("#uniList").innerHTML = latest.components.sort((a,b)=>b.weight-a.weight)
