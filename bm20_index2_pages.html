@@ -70,8 +70,8 @@
     <section id="sec-overview" class="kpiGrid">
       <div class="panel kpi"><p class="label">BM20 1D</p><p class="value" id="kpiBm20_1d">-</p><div class="note" id="kpiBm20_lvl">-</div></div>
       <div class="panel kpi"><p class="label">BTC 1D</p><p class="value" id="kpiBtc_1d">-</p><div class="note" id="kpiBtc_px">-</div></div>
-      <div class="panel kpi"><p class="label">NASDAQ 1D</p><p class="value" id="kpiNdq_1d">-</p></div>
-      <div class="panel kpi"><p class="label">KOSPI 1D</p><p class="value" id="kpiKsp_1d">-</p></div>
+      <div class="panel kpi"><p class="label">NASDAQ 1D</p><p class="value" id="kpiNdq_1d">-</p><div class="note" id="kpiNdq_px">-</div></div>
+      <div class="panel kpi"><p class="label">KOSPI 1D</p><p class="value" id="kpiKsp_1d">-</p><div class="note" id="kpiKsp_px">-</div></div>
       <div class="panel kpi"><p class="label">USD/KRW</p><p class="value" id="kpiUsdkRw">-</p></div>
       <div class="panel kpi"><p class="label">Kimchi Premium</p><p class="value" id="kimchiValue">-</p></div>
     </section>
@@ -150,6 +150,14 @@
     return [a, b];
   }
 
+  function lastValidPoint(arr){
+    for(let i = arr.length - 1; i >= 0; i--){
+      const v = Number(arr[i]?.v);
+      if(Number.isFinite(v)) return { date: arr[i].date, v };
+    }
+    return { date: null, v: null };
+  }
+
   function pctChange(a, b){
     a = Number(a); b = Number(b);
     if(!Number.isFinite(a) || !Number.isFinite(b) || a === 0) return null;
@@ -213,7 +221,12 @@
           return res;
         }
       },
-      legend: { bottom: 10 },
+      toolbox: { right: 10, feature: { dataZoom: { yAxisIndex: 'none' }, restore: {}, saveAsImage: {} } },
+      dataZoom: [
+        { type: 'inside', xAxisIndex: 0 },
+        { type: 'slider', xAxisIndex: 0, height: 18, bottom: 25 }
+      ],
+      legend: { bottom: 0 },
       xAxis: { type: 'category', data: dates },
       yAxis: [
         { type: 'value', name: 'BM20', axisLabel: { formatter: v => Math.round(v).toLocaleString() } },
@@ -450,16 +463,22 @@
       const [a,b] = lastTwoValid(NASDAQ_SERIES);
       const r = pctChange(a,b);
       qs("#kpiNdq_1d").textContent = (r == null) ? "-" : fmtPctRatio(r);
+
+      const last = lastValidPoint(NASDAQ_SERIES);
+      qs("#kpiNdq_px").textContent = (last.v == null) ? "-" : `${fmtNum(last.v, 0)} (asof ${last.date})`;
     }
 
-    // KOSPI 1D
+// KOSPI 1D
     {
       const [a,b] = lastTwoValid(KOSPI_SERIES);
       const r = pctChange(a,b);
       qs("#kpiKsp_1d").textContent = (r == null) ? "-" : fmtPctRatio(r);
+
+      const last = lastValidPoint(KOSPI_SERIES);
+      qs("#kpiKsp_px").textContent = (last.v == null) ? "-" : `${fmtNum(last.v, 0)} (asof ${last.date})`;
     }
 
-    // USD/KRW (kimchi_meta.usdkrw)
+// USD/KRW (kimchi_meta.usdkrw)
     qs("#kpiUsdkRw").textContent =
       (latest.kimchi_meta?.usdkrw != null) ? fmtNum(latest.kimchi_meta.usdkrw, 2) : "-";
 
@@ -520,3 +539,4 @@
 </script>
 </body>
 </html>
+
