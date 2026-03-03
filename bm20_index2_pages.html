@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>BM20 Index Factsheet</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
+
+  <style>
+    :root{
+      --bg:#f8fafc; --panel:#ffffff; --border:#e5e7eb; --text:#0f172a; --muted:#64748b;
+      --shadow:0 1px 2px rgba(15,23,42,.06); --radius:14px;
+      --accent:#2563eb; --accent-2:#7c3aed;
+      --sidebar:#0b1220; --sidebarText:#e2e8f0; --sidebarMuted:#94a3b8;
+      --chip:#f1f5f9; --up:#16a34a; --down:#dc2626;
+    }
+    *{ box-sizing:border-box; }
+    body{ margin:0; background:var(--bg); color:var(--text); font-family: system-ui, -apple-system, sans-serif; overflow-x:hidden; }
+    .app{ display:grid; grid-template-columns: 260px 1fr; min-height:100vh; }
+    @media (max-width: 980px){ .app{ grid-template-columns: 1fr; } }
+    .sidebar{ background:var(--sidebar); padding:18px 14px; position:sticky; top:0; height:100vh; overflow:auto; border-right:1px solid rgba(255,255,255,.06); }
+    @media (max-width: 980px){ .sidebar{ position:relative; height:auto; } }
+    .brand{ display:flex; align-items:center; gap:10px; padding:10px 10px 14px; border-bottom:1px solid rgba(255,255,255,.08); margin-bottom:14px; }
+    .logo{ width:32px; height:32px; border-radius:10px; background:linear-gradient(135deg, var(--accent), var(--accent-2)); }
+    .brand h1{ margin:0; font-size:14px; color:var(--sidebarText); }
+    .nav a{ display:flex; align-items:center; justify-content:space-between; padding:10px; border-radius:10px; color:var(--sidebarText); text-decoration:none; font-size:13px; }
+    .nav a:hover{ background:rgba(255,255,255,.06); }
+    .tag{ font-size:11px; color:var(--sidebarMuted); background:rgba(255,255,255,.06); padding:2px 8px; border-radius:999px; }
+    .main{ padding:18px 18px 34px; }
+    .topbar{ display:flex; align-items:flex-end; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-bottom:14px; }
+    .panel{ background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); margin-bottom:12px; overflow:hidden; }
+    .kpiGrid{ display:grid; gap:12px; margin-bottom:14px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+    .kpi{ padding:12px; }
+    .kpi .label{ color:var(--muted); font-size:12px; margin:0; }
+    .kpi .value{ font-size:20px; font-weight:900; margin:4px 0; }
+    .widgets{ display:grid; grid-template-columns: 1fr; gap:12px; }
+    @media (min-width: 1100px){ .widgets{ grid-template-columns: 1fr 1fr; } }
+    .widget{ padding:12px; }
+    .widgetHead{ padding:0 0 10px; border-bottom:1px solid var(--border); margin-bottom:10px; }
+    .chart{ width:100%; height:340px; }
+    .btn{ border:1px solid var(--border); background:#fff; padding:6px 10px; border-radius:999px; font-size:12px; cursor:pointer; }
+    .btn.active{ border-color:#0f172a; font-weight:900; }
+    .pill{ font-size:11px; background:var(--chip); padding:3px 8px; border-radius:999px; display:inline-flex; align-items:center; gap:6px; }
+    .delta.up{ color:var(--up); } .delta.down{ color:var(--down); }
+    .chips{ display:flex; flex-wrap:wrap; gap:8px; padding:12px; }
+    .chipSym{ background:var(--chip); border:1px solid var(--border); border-radius:999px; padding:6px 10px; font-size:12px; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="logo"></div><div><h1>BM20 Index</h1></div></div>
+    <nav class="nav">
+      <a href="#sec-overview">Overview <span class="tag">KPI</span></a>
+      <a href="#sec-series">Index Series <span class="tag">LINE</span></a>
+      <a href="#sec-comparison">Correlation <span class="tag">INDEX</span></a>
+      <a href="#sec-universe">Universe <span class="tag">20</span></a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="title"><h2>BM20 Index Dashboard</h2></div>
+      <div class="meta">
+        <span class="chip" id="metaAsOf">ASOF: -</span>
+        <span class="chip" id="metaDelta">1D: -</span>
+      </div>
+    </div>
+
+    <section id="sec-overview" class="kpiGrid">
+      <div class="panel kpi"><p class="label">지수 레벨</p><p class="value" id="kpiLevel">-</p><div class="note" id="kpiLevelNote">-</div></div>
+      <div class="panel kpi"><p class="label">1D 변동</p><p class="value" id="kpi1d">-</p><div class="note" id="kpiBreadth">-</div></div>
+      <div class="panel kpi"><p class="label">7D 수익률</p><p class="value" id="kpi7d">-</p></div>
+      <div class="panel kpi"><p class="label">30D 수익률</p><p class="value" id="kpi30d">-</p></div>
+      <div class="panel kpi"><p class="label">Kimchi Premium</p><p class="value" id="kimchiValue">-</p></div>
+    </section>
+
+    <section class="section" id="sec-series">
+      <div class="sectionHead">
+        <h3>Index Series (BM20 vs BTC)</h3>
+        <div class="toolbar" style="margin-top:10px;">
+          <button class="btn active" id="btn1y">1Y</button>
+          <button class="btn" id="btnytd">YTD</button>
+          <button class="btn" id="btnall">ALL</button>
+          <span class="pill" id="seriesStatus">-</span>
+        </div>
+      </div>
+      <div class="panel"><div id="seriesChart" class="chart"></div></div>
+    </section>
+
+    <section class="section" id="sec-comparison">
+      <div class="sectionHead"><h3>Market Correlation</h3></div>
+      <div class="widgets">
+        <div class="panel widget"><div class="widgetHead"><h4>BTC vs NASDAQ</h4></div><div id="btcNasdaqChart" class="chart"></div></div>
+        <div class="panel widget"><div class="widgetHead"><h4>BM20 vs NASDAQ</h4></div><div id="bm20NasdaqChart" class="chart"></div></div>
+        <div class="panel widget"><div class="widgetHead"><h4>BTC vs KOSPI</h4></div><div id="btcKospiChart" class="chart"></div></div>
+        <div class="panel widget"><div class="widgetHead"><h4>BM20 vs KOSPI</h4></div><div id="bm20KospiChart" class="chart"></div></div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-movers">
+      <div class="sectionHead"><h3>Top Movers & Heatmap</h3></div>
+      <div class="widgets">
+        <div class="panel widget">
+            <div class="widgetHead"><h4>Best / Worst 3</h4></div>
+            <div style="padding:10px; font-size:13px; line-height:1.8;">
+                <div>🟢 Best 3: <b id="best3">-</b></div>
+                <div>🔴 Worst 3: <b id="worst3">-</b></div>
+                <div>📊 Breadth: <b id="breadth">-</b></div>
+            </div>
+            <div id="moverBar" class="chart" style="height:250px;"></div>
+        </div>
+        <div class="panel widget">
+            <div class="widgetHead"><h4>Top 20 Performance Heatmap</h4></div>
+            <div id="perfBar" class="chart"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-universe">
+      <div class="sectionHead"><h3>Current Universe</h3></div>
+      <div class="panel"><div class="chips" id="uniList"></div></div>
+    </section>
+  </main>
+</div>
+
+<script>
+  const qs = s => document.querySelector(s);
+  const fmtNum = (v, d = 0) => {
+    const n = Number(v); if (!Number.isFinite(n)) return "-";
+    return new Intl.NumberFormat('en-US',{maximumFractionDigits:d}).format(n);
+  };
+  const fmtPctRatio = (v, d = 2) => {
+    const n = Number(v); if (!Number.isFinite(n)) return "-";
+    return (n >= 0 ? "+" : "") + (n * 100).toFixed(d) + "%";
+  };
+  const bust = () => "v=" + Date.now();
+
+// GitHub Pages/baseurl 안전 처리: 현재 HTML 위치를 기준으로 상대경로를 절대 URL로 변환
+const BASE_URL = new URL('.', window.location.href);
+
+let seriesChart, perfChart, moverChart, btcKospiChart, bm20KospiChart, btcNasdaqChart, bm20NasdaqChart;
+, perfChart, moverChart, btcKospiChart, bm20KospiChart, btcNasdaqChart, bm20NasdaqChart;
+  let SERIES = [], BTC_SERIES = [], NASDAQ_SERIES = [], KOSPI_SERIES = [];
+
+  function initCharts(){
+    seriesChart = echarts.init(qs("#seriesChart"));
+    perfChart = echarts.init(qs("#perfBar"));
+    moverChart = echarts.init(qs("#moverBar"));
+    btcNasdaqChart = echarts.init(qs("#btcNasdaqChart"));
+    bm20NasdaqChart = echarts.init(qs("#bm20NasdaqChart"));
+    btcKospiChart = echarts.init(qs("#btcKospiChart"));
+    bm20KospiChart = echarts.init(qs("#bm20KospiChart"));
+  }
+
+  async function fetchJson(path) {
+    try {
+      const u = new URL(path, BASE_URL);
+      u.searchParams.set("v", Date.now().toString());
+      const r = await fetch(u.toString());
+      return r.ok ? await r.json() : null;
+    } catch(e) { return null; }
+  }
+
+  async function loadData(){
+    const res = await fetchJson("bm20_series.json");
+    if(res) {
+        const arr = Array.isArray(res) ? res : (res.series || []);
+        SERIES = arr.map(d => ({ date: d.date, v: d.level, t: new Date(d.date) }));
+    }
+    const btc = await fetchJson("btc_usd_series.json");
+    if(btc) BTC_SERIES = btc.map(d => ({ date: d.date, v: d.price }));
+    const ndq = await fetchJson("nasdaq_series.json");
+    if(ndq) NASDAQ_SERIES = ndq.map(d => ({ date: d.date, v: d.price }));
+    const ksp = await fetchJson("kospi_series.json");
+    if(ksp) KOSPI_SERIES = ksp.map(d => ({ date: d.date, v: d.price }));
+  }
+
+  function renderSeries(mode){
+    const now = new Date();
+    let data = SERIES;
+    if(mode === "1Y") data = SERIES.filter(d => d.t > new Date(now.setFullYear(now.getFullYear()-1)));
+    else if(mode === "YTD") data = SERIES.filter(d => d.t > new Date(new Date().getFullYear(), 0, 1));
+    
+    const dates = data.map(d => d.date);
+    const btcMap = new Map(BTC_SERIES.map(d => [d.date, d.v]));
+    
+    seriesChart.setOption({
+      tooltip: { 
+        trigger: 'axis',
+        formatter: (p) => {
+          let res = `<b>${p[0].name}</b>`;
+          p.forEach(x => {
+            const val = Math.round(x.value).toLocaleString();
+            res += `<br/>${x.marker} ${x.seriesName}: ${x.seriesName === 'BTC' ? '$' + val : val}`;
+          });
+          return res;
+        }
+      },
+      legend: { bottom: 10 },
+      xAxis: { type: 'category', data: dates },
+      yAxis: [
+        { type: 'value', name: 'BM20', axisLabel: { formatter: v => Math.round(v).toLocaleString() } },
+        { type: 'value', name: 'BTC', position: 'right', scale: true, axisLabel: { formatter: v => '$' + Math.round(v).toLocaleString() } }
+      ],
+      series: [
+        { name: 'BM20', type: 'line', data: data.map(d => Math.round(d.v)), smooth: true, showSymbol: false, itemStyle:{color:'#2563eb'} },
+        { name: 'BTC', type: 'line', data: dates.map(d => btcMap.get(d)), yAxisIndex: 1, smooth: true, showSymbol: false, itemStyle:{color:'#f59e0b'} }
+      ]
+    }, true);
+    qs("#seriesStatus").textContent = `points: ${data.length}`;
+  }
+
+  function renderComparison(){
+  // --- maps ---
+  const btcMap = new Map(BTC_SERIES.map(d => [d.date, d.v]));
+  const ndqMap = new Map(NASDAQ_SERIES.map(d => [d.date, d.v]));
+  const kspMap = new Map(KOSPI_SERIES.map(d => [d.date, d.v]));
+  const bm20Map = new Map(SERIES.map(d => [d.date, d.v]));
+
+  // --- helpers ---
+  const isNum = (x) => typeof x === "number" && Number.isFinite(x);
+
+  // BM20 날짜와 대상(나스닥/코스피) 날짜의 "교집합"만 사용 (정렬/결측 문제 원천 차단)
+  function alignedDatesWith(refMap){
+    return SERIES
+      .map(d => d.date)
+      .filter(dt => refMap.has(dt) && isNum(refMap.get(dt)) && bm20Map.has(dt) && isNum(bm20Map.get(dt)));
+  }
+
+  // 특정 날짜 배열에 대해, map에서 값을 뽑아오되 결측은 null (0 금지)
+  function seriesFromMap(dates, map, round = true){
+    return dates.map(dt => {
+      const v = map.get(dt);
+      if(!isNum(v)) return null;
+      return round ? Math.round(v) : v;
+    });
+  }
+
+  const common = {
+    tooltip: {
+      trigger: 'axis',
+      formatter: (params) => {
+        let res = `<b>${params[0].name}</b>`;
+        params.forEach(p => {
+          const v = (p.value == null) ? "-" : Math.round(p.value).toLocaleString();
+          res += `<br/>${p.marker} ${p.seriesName}: ${v}`;
+        });
+        return res;
+      }
+    },
+    dataZoom: [{ type: 'inside', start: 85, end: 100 }],
+    grid: { top: 40, bottom: 40, left: 60, right: 60 },
+    xAxis: { type: 'category', axisLabel: { hideOverlap: true } }
+  };
+
+  const yAxisConfig = [
+    { type: 'value', axisLabel: { formatter: v => Math.round(v).toLocaleString() } },
+    { type: 'value', position: 'right', scale: true, axisLabel: { formatter: v => Math.round(v).toLocaleString() } }
+  ];
+
+  // ===== BTC vs NASDAQ =====
+  {
+    const dates = alignedDatesWith(ndqMap);
+    btcNasdaqChart.setOption({
+      ...common,
+      xAxis: { ...common.xAxis, data: dates },
+      yAxis: yAxisConfig,
+      series: [
+        {
+          name: 'BTC',
+          type: 'line',
+          data: seriesFromMap(dates, btcMap, true),
+          showSymbol: false,
+          connectNulls: true,
+          itemStyle:{color:'#f59e0b'}
+        },
+        {
+          name: 'NASDAQ',
+          type: 'line',
+          data: seriesFromMap(dates, ndqMap, true),
+          yAxisIndex: 1,
+          showSymbol: false,
+          connectNulls: true,
+          itemStyle:{color:'#3b82f6'}
+        }
+      ]
+    }, true);
+  }
+
+  // ===== BM20 vs NASDAQ =====
+  {
+    const dates = alignedDatesWith(ndqMap);
+    bm20NasdaqChart.setOption({
+      ...common,
+      xAxis: { ...common.xAxis, data: dates },
+      yAxis: yAxisConfig,
+      series: [
+        {
+          name: 'BM20',
+          type: 'line',
+          data: seriesFromMap(dates, bm20Map, true),
+          showSymbol: false,
+          connectNulls: true,
+          itemStyle:{color:'#7c3aed'}
+        },
+        {
+          name: 'NASDAQ',
+          type: 'line',
+          data: seriesFromMap(dates, ndqMap, true),
+          yAxisIndex: 1,
+          showSymbol: false,
+          connectNulls: true,
+          itemStyle:{color:'#3b82f6'}
+        }
+      ]
+    }, true);
+  }
+
+  // ===== BTC vs KOSPI =====
+  {
+    const dates = alignedDatesWith(kspMap);
+    btcKospiChart.setOption({
+      ...common,
+      xAxis: { ...common.xAxis, data: dates },
+      yAxis: yAxisConfig,
+      series: [
+        {
+          name: 'BTC',
+          type: 'line',
+          data: seriesFromMap(dates, btcMap, true),
+          showSymbol: false,
+          connectNulls: true,
+          itemStyle:{color:'#f59e0b'}
+        },
+        {
+          name: 'KOSPI',
+          type: 'line',
+          data: seriesFromMap(dates, kspMap, true),
+          yAxisIndex: 1,
+          showSymbol: false,
+          connectNulls: true,
+          itemStyle:{color:'#10b981'}
+        }
+      ]
+    }, true);
+  }
+
+  // ===== BM20 vs KOSPI =====
+  {
+    const dates = alignedDatesWith(kspMap);
+    bm20KospiChart.setOption({
+      ...common,
+      xAxis: { ...common.xAxis, data: dates },
+      yAxis: yAxisConfig,
+      series: [
+        {
+          name: 'BM20',
+          type: 'line',
+          data: seriesFromMap(dates, bm20Map, true),
+          showSymbol: false,
+          connectNulls: true,
+          itemStyle:{color:'#7c3aed'}
+        },
+        {
+          name: 'KOSPI',
+          type: 'line',
+          data: seriesFromMap(dates, kspMap, true),
+          yAxisIndex: 1,
+          showSymbol: false,
+          connectNulls: true,
+          itemStyle:{color:'#10b981'}
+        }
+      ]
+    }, true);
+  }
+}
+  
+  // ===== 복구된 무버 렌더링 로직 =====
+  function renderMovers(rows) {
+    if(!rows || rows.length === 0) return;
+    const sorted = [...rows].sort((a,b) => b.chg - a.chg);
+    
+    qs("#best3").textContent = sorted.slice(0, 3).map(r => `${r.sym}(${fmtPctRatio(r.chg)})`).join(" · ");
+    qs("#worst3").textContent = sorted.slice(-3).reverse().map(r => `${r.sym}(${fmtPctRatio(r.chg)})`).join(" · ");
+    const up = rows.filter(r => r.chg > 0).length, down = rows.filter(r => r.chg < 0).length;
+    qs("#breadth").textContent = `${up} ↑ · ${down} ↓`;
+
+    // 바 차트 (Top 6)
+    const top6 = sorted.slice(0,3).concat(sorted.slice(-3).reverse());
+    moverChart.setOption({
+        tooltip: { trigger:'axis' },
+        grid: { left:40, right:20, top:20, bottom:30 },
+        xAxis: { type:'category', data: top6.map(r=>r.sym) },
+        yAxis: { type:'value', axisLabel:{ formatter: v => (v*100).toFixed(0)+'%' } },
+        series: [{ type:'bar', data: top6.map(r=>r.chg), itemStyle:{ color: p => p.value >= 0 ? '#16a34a' : '#dc2626' } }]
+    });
+
+    // 히트맵 (Top 20)
+    const top20 = sorted.slice(0,20);
+    perfChart.setOption({
+        tooltip: { formatter: p => `<b>${top20[p.dataIndex].sym}</b>: ${fmtPctRatio(top20[p.dataIndex].chg)}` },
+        xAxis: { type:'category', data: top20.map(r=>r.sym), axisLabel:{ interval:0, rotate:30, fontSize:10 } },
+        yAxis: { type:'category', data:['1D'], show:false },
+        visualMap: { show: false, min: -0.05, max: 0.05, inRange: { color: ['#dc2626', '#f1f5f9', '#16a34a'] } },
+        series: [{ type: 'heatmap', data: top20.map((r, i) => [i, 0, r.chg]), label: { show: true, fontSize: 9, formatter: p => (p.value[2] * 100).toFixed(1) } }]
+    });
+  }
+
+  async function loadLatestAndMovers(){
+    const latest = await fetchJson("bm20_latest.json");
+    if(!latest) return;
+    
+    // KPI & Universe
+    qs("#kpiLevel").textContent = fmtNum(latest.bm20Level, 0);
+    qs("#kpi1d").innerHTML = `<span class="delta ${latest.bm20ChangePct>=0?'up':'down'}">${fmtPctRatio(latest.bm20ChangePct)}</span>`;
+    qs("#kpi7d").textContent = fmtPctRatio(latest.returns?.["7D"]);
+    qs("#kpi30d").textContent = fmtPctRatio(latest.returns?.["30D"]);
+    qs("#kimchiValue").textContent = (latest.kimchiPremiumPct || 0).toFixed(2) + "%";
+    qs("#metaAsOf").textContent = "ASOF: " + latest.asOf;
+    
+    if(latest.components) {
+      qs("#uniList").innerHTML = latest.components.sort((a,b)=>b.weight-a.weight)
+        .map(c=>`<div class="chipSym"><b>${c.symbol}</b> <span>${(c.weight*100).toFixed(1)}%</span></div>`).join("");
+    }
+
+    // CSV 로드 (Movers용)
+    const date = latest.asOf;
+    const csvTxt = await (async () => {
+        const paths = [`bm20_daily_data_latest.csv`, `out/${date}/bm20_daily_data_${date}.csv`];
+        for(const p of paths) {
+            const u = new URL(p, BASE_URL); u.searchParams.set("v", Date.now().toString());
+            const r = await fetch(u.toString());
+            if(r.ok) return await r.text();
+        }
+        return null;
+    })();
+
+    if(csvTxt) {
+        const lines = csvTxt.trim().split('\n');
+        const headers = lines[0].split(',').map(s=>s.trim());
+        const sIdx = headers.indexOf('symbol'), cIdx = headers.indexOf('price_change_pct');
+        const rows = lines.slice(1).map(l => {
+            const c = l.split(',');
+            return { sym: c[sIdx], chg: Number(c[cIdx])/100 };
+        }).filter(r => r.sym && !isNaN(r.chg));
+        renderMovers(rows);
+    }
+  }
+
+  async function main(){
+    initCharts();
+    await loadData();
+    await loadLatestAndMovers();
+    
+    renderSeries("1Y");
+    renderComparison();
+
+    qs("#btn1y").onclick = () => { renderSeries("1Y"); updateBtn("#btn1y"); };
+    qs("#btnytd").onclick = () => { renderSeries("YTD"); updateBtn("#btnytd"); };
+    qs("#btnall").onclick = () => { renderSeries("ALL"); updateBtn("#btnall"); };
+
+    function updateBtn(id) {
+      document.querySelectorAll(".btn").forEach(b => b.classList.remove("active"));
+      qs(id).classList.add("active");
+    }
+
+    window.onresize = () => [seriesChart, perfChart, moverChart, btcNasdaqChart, bm20NasdaqChart, btcKospiChart, bm20KospiChart].forEach(c => c?.resize());
+  }
+
+  main().catch(console.error);
+</script>
+</body>
+</html>
