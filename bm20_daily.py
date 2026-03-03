@@ -126,38 +126,29 @@ def read_json(path: Path):
 
 # ================== Market Indices Helper (BTC, NASDAQ, KOSPI) ==================
 def update_market_indices():
-    """비트코인, 나스닥, 코스피 데이터를 가져와 각각 JSON으로 저장합니다."""
-    indices = {
-        "btc_usd": "BTC-USD",
-        "nasdaq": "^IXIC",
-        "kospi": "^KS11"
-    }
+    import yfinance as yf
+    # 티커 리스트
+    indices = {"btc_usd": "BTC-USD", "nasdaq": "^IXIC", "kospi": "^KS11"}
+    
     
     print("\n--- 시장 지수 및 비트코인 데이터 업데이트 시작 ---")
     for name, symbol in indices.items():
         try:
-            print(f"[{name.upper()}] 수집 중...")
-            # 2018년부터 현재까지 데이터 다운로드
+            # 3월 3일 데이터를 포함하기 위해 종료일을 넉넉히 잡거나 생략합니다.
             data = yf.download(symbol, start="2018-01-01", progress=False)
-            
-            if data.empty:
-                print(f"[WARN] {name} 데이터를 가져오지 못했습니다.")
-                continue
-
-            # 데이터 정리
             df = data['Close'].reset_index()
             df.columns = ['date', 'price']
             df['date'] = df['date'].dt.strftime('%Y-%m-%d')
             
-            output_list = df.to_dict(orient='records')
-            file_name = f"{name}_series.json" # btc_usd_series.json, nasdaq_series.json 등
+            # 여기서 미리 정수로 반올림하여 저장합니다. (소수점 제거 핵심)
+            df['price'] = df['price'].round(0).astype(int)
             
-            with open(file_name, "w", encoding="utf-8") as f:
+            output_list = df.to_dict(orient='records')
+            with open(f"{name}_series.json", "w", encoding="utf-8") as f:
                 json.dump(output_list, f, ensure_ascii=False, indent=2)
-                
-            print(f"[OK] {file_name} 저장 완료 ({len(output_list)}건)")
+            print(f"[OK] {name}_series.json updated to latest.")
         except Exception as e:
-            print(f"[ERROR] {name} 수집 중 오류 발생: {e}")
+            print(f"[ERR] {name} update failed: {e}")
 
 
 
