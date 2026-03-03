@@ -124,6 +124,37 @@ def read_json(path: Path):
     except Exception:
         return None
 
+# ================== NASDAQ Helper ==================
+def update_nasdaq_data():
+    """나스닥 종합지수(^IXIC) 데이터를 가져와서 nasdaq_series.json으로 저장합니다."""
+    print("\n--- 나스닥 데이터 업데이트 시작 ---")
+    try:
+        # BM20 기준일인 2018-01-01부터 데이터를 가져옵니다.
+        nasdaq = yf.download("^IXIC", start="2018-01-01", progress=False)
+        
+        if nasdaq.empty:
+            print("[WARN] 나스닥 데이터를 가져오지 못했습니다.")
+            return
+
+        # 데이터 정리 (날짜와 종가)
+        nasdaq_df = nasdaq['Close'].reset_index()
+        nasdaq_df.columns = ['date', 'price']
+        nasdaq_df['date'] = nasdaq_df['date'].dt.strftime('%Y-%m-%d')
+        
+        # 리스트 형식으로 변환
+        nasdaq_list = nasdaq_df.to_dict(orient='records')
+        
+        # 파일 저장 (절대값 축 차트용)
+        with open("nasdaq_series.json", "w", encoding="utf-8") as f:
+            json.dump(nasdaq_list, f, ensure_ascii=False, indent=2)
+            
+        print(f"[OK] nasdaq_series.json 저장 완료 ({len(nasdaq_list)}건)")
+    except Exception as e:
+        print(f"[ERROR] 나스닥 수집 중 오류 발생: {e}")
+
+
+
+
 # ================== Universe & Mapping ==================
 BEST_COUNT, WORST_COUNT = 3, 3
 
@@ -1006,3 +1037,8 @@ html = html_tpl.render(
     ts=TS
 )
 with open(html_path, "w", encoding="utf-8") as f: f.write(html)
+
+# 마지막 단계: 나스닥 데이터 업데이트 실행
+update_nasdaq_data()
+
+print(f"\n[SUCCESS] 모든 업데이트가 완료되었습니다. ({YMD})")
