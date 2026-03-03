@@ -90,8 +90,26 @@
     <section class="section" id="sec-comparison">
       <div class="sectionHead"><h3>Market Correlation (vs NASDAQ)</h3></div>
       <div class="widgets">
-        <div class="panel widget"><h4>BTC vs NASDAQ</h4><div id="btcNasdaqChart" class="chart"></div></div>
-        <div class="panel widget"><h4>BM20 vs NASDAQ</h4><div id="bm20NasdaqChart" class="chart"></div></div>
+        <div class="panel widget">
+          <div class="widgetHead"><h4>BTC vs NASDAQ</h4></div>
+          <div id="btcNasdaqChart" class="chart"></div>
+        </div>
+        <div class="panel widget">
+          <div class="widgetHead"><h4>BM20 vs NASDAQ</h4></div>
+          <div id="bm20NasdaqChart" class="chart"></div>
+        </div>
+      </div>
+    
+      <div class="sectionHead" style="margin-top:40px;"><h3>KOSPI Correlation</h3></div>
+      <div class="widgets">
+        <div class="panel widget">
+          <div class="widgetHead"><h4>BTC vs KOSPI</h4></div>
+          <div id="btcKospiChart" class="chart"></div>
+        </div>
+        <div class="panel widget">
+          <div class="widgetHead"><h4>BM20 vs KOSPI</h4></div>
+          <div id="bm20KospiChart" class="chart"></div>
+        </div>
       </div>
     </section>
 
@@ -109,8 +127,8 @@
 </div>
 
 <script>
-  let seriesChart, perfChart, moverChart, btcNasdaqChart, bm20NasdaqChart;
-  let SERIES = [], BTC_SERIES = [], NASDAQ_SERIES = [];
+  let seriesChart, perfChart, moverChart, btcKospiChart, bm20KospiChart, btcNasdaqChart, bm20NasdaqChart;
+  let SERIES = [], BTC_SERIES = [], NASDAQ_SERIES = [], KOSPI_SERIES = [];
 
   const fmtNum = (v, d=2) => Number.isFinite(v) ? v.toLocaleString(undefined,{maximumFractionDigits:d}) : "-";
   const fmtPctRatio = (v, d=2) => {
@@ -134,6 +152,8 @@
     moverChart = echarts.init(qs("#moverBar"));
     btcNasdaqChart = echarts.init(qs("#btcNasdaqChart"));
     bm20NasdaqChart = echarts.init(qs("#bm20NasdaqChart"));
+    btcKospiChart = echarts.init(qs("#btcKospiChart"));
+    bm20KospiChart = echarts.init(qs("#bm20KospiChart"));
   }
 
   async function loadSeries(){
@@ -151,6 +171,13 @@
       const { json } = await fetchAnyJson(["nasdaq_series.json"]);
       NASDAQ_SERIES = json.map(d => ({ date: d.date, v: d.price }));
     } catch (e) { console.warn("NASDAQ data missing"); }
+  }
+
+  async function loadKospiData() {
+    try {
+      const { json } = await fetchAnyJson(["kospi_series.json"]);
+      KOSPI_SERIES = json.map(d => ({ date: d.date, v: d.price }));
+    } catch (e) { console.warn("KOSPI data missing"); }
   }
 
   function renderSeries(mode){
@@ -203,6 +230,40 @@
     });
   }
 
+  function renderKospiCharts() {
+    if (!KOSPI_SERIES.length) return;
+    const dates = SERIES.map(d => d.date);
+    const kospiMap = new Map(KOSPI_SERIES.map(d => [d.date, d.v]));
+    const btcMap = new Map(BTC_SERIES.map(d => [d.date, d.v]));
+
+    const common = {
+      tooltip: { trigger: 'axis' },
+      xAxis: { type: 'category', data: dates, axisLabel: { hideOverlap: true, color: "#94a3b8" } },
+      dataZoom: [{ type: 'inside', start: 70 }],
+      grid: { top: 40, bottom: 40, left: 60, right: 60 }
+    };
+
+    // BTC vs KOSPI
+    btcKospiChart.setOption({
+      ...common,
+      yAxis: [{ type: 'value', name: 'BTC', scale: true }, { type: 'value', name: 'KOSPI', position: 'right', scale: true }],
+      series: [
+        { name: 'BTC', type: 'line', data: dates.map(d => btcMap.get(d)), showSymbol: false, itemStyle:{color:'#f59e0b'} },
+        { name: 'KOSPI', type: 'line', data: dates.map(d => kospiMap.get(d)), yAxisIndex: 1, showSymbol: false, itemStyle:{color:'#10b981'} }
+      ]
+    });
+
+    // BM20 vs KOSPI
+    bm20KospiChart.setOption({
+      ...common,
+      yAxis: [{ type: 'value', name: 'BM20', scale: true }, { type: 'value', name: 'KOSPI', position: 'right', scale: true }],
+      series: [
+        { name: 'BM20', type: 'line', data: SERIES.map(d => d.v), showSymbol: false, itemStyle:{color:'#7c3aed'} },
+        { name: 'KOSPI', type: 'line', data: dates.map(d => kospiMap.get(d)), yAxisIndex: 1, showSymbol: false, itemStyle:{color:'#10b981'} }
+      ]
+    });
+  }
+
   async function loadLatest(){
     const { json: j } = await fetchAnyJson(["bm20_latest.json"]);
     qs("#kpiLevel").textContent = fmtNum(j.bm20Level);
@@ -222,16 +283,18 @@
     initCharts();
     await loadSeries();
     await loadNasdaqData();
+    await loadKospiData(); // 4. 코스피 로드 호출
     await loadLatest();
     
     renderSeries("1Y");
     renderComparisonCharts();
+    renderKospiCharts(); // 5. 코스피 렌더링 호출
 
     qs("#btn1y").onclick = () => renderSeries("1Y");
     qs("#btnytd").onclick = () => renderSeries("YTD");
     qs("#btnall").onclick = () => renderSeries("ALL");
 
-    window.onresize = () => [seriesChart, perfChart, moverChart, btcNasdaqChart, bm20NasdaqChart].forEach(c => c?.resize());
+    window.onresize = () => [seriesChart, perfChart, moverChart, btcNasdaqChart, bm20NasdaqChart, btcKospiChart, bm20KospiChart].forEach(c => c?.resize());
   }
 
   main().catch(console.error);
