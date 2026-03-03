@@ -130,10 +130,10 @@
   let seriesChart, perfChart, moverChart, btcKospiChart, bm20KospiChart, btcNasdaqChart, bm20NasdaqChart;
   let SERIES = [], BTC_SERIES = [], NASDAQ_SERIES = [], KOSPI_SERIES = [];
 
-  const fmtNum = (v, d=2) => Number.isFinite(v) ? v.toLocaleString(undefined,{maximumFractionDigits:d}) : "-";
-  const fmtPctRatio = (v, d=2) => {
-    const n = Number(v); if(!Number.isFinite(n)) return "-";
-    return (n > 0 ? "+" : "") + (n * 100).toFixed(d) + "%";
+  const fmtNum = (v, d = 0) => {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return "-";
+    return new Intl.NumberFormat('en-US',{maximumFractionDigits:d}).format(n);
   };
 
   async function fetchAnyJson(urls){
@@ -189,12 +189,42 @@
     const btcMap = new Map(BTC_SERIES.map(d => [d.date, d.v]));
     
     seriesChart.setOption({
-      tooltip: { trigger: 'axis' },
-      xAxis: { type: 'category', data: dates },
-      yAxis: [{ type: 'value', name: 'BM20' }, { type: 'value', name: 'BTC', position: 'right' }],
+      tooltip: { 
+        trigger: 'axis',
+        // 툴팁에서 소수점 반올림 및 천단위 콤마 표시
+        formatter: (params) => {
+          let res = `<b>${params[0].name}</b>`;
+          params.forEach(p => {
+            const val = Math.round(p.value).toLocaleString();
+            res += `<br/>${p.marker} ${p.seriesName}: ${p.seriesName === 'BTC' ? '$' + val : val}`;
+          });
+          return res;
+        }
+      },
+      xAxis: { type: 'category', data: dates, axisLabel: { hideOverlap: true } },
+      yAxis: [
+        { 
+          type: 'value', 
+          name: 'BM20',
+          // 왼쪽 축(지수) 소수점 제거
+          axisLabel: { formatter: (v) => Math.round(v).toLocaleString() } 
+        }, 
+        { 
+          type: 'value', 
+          name: 'BTC', 
+          position: 'right', 
+          scale: true,
+          // 오른쪽 축(비트코인) 소수점 제거 및 $ 표시
+          axisLabel: { formatter: (v) => '$' + Math.round(v).toLocaleString() }
+        }
+      ],
       series: [
-        { name: 'BM20', type: 'line', data: filtered.map(d => d.v), smooth: true, showSymbol: false },
-        { name: 'BTC', type: 'line', data: dates.map(d => btcMap.get(d)), yAxisIndex: 1, smooth: true, showSymbol: false }
+        { name: 'BM20', type: 'line', data: filtered.map(d => Math.round(d.v)), smooth: true, showSymbol: false },
+        { name: 'BTC', type: 'line', data: dates.map(d => {
+            const val = btcMap.get(d);
+            return val ? Math.round(val) : null;
+          }), yAxisIndex: 1, smooth: true, showSymbol: false 
+        }
       ]
     });
   }
