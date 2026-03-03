@@ -124,33 +124,37 @@ def read_json(path: Path):
     except Exception:
         return None
 
-# ================== NASDAQ Helper ==================
-def update_nasdaq_data():
-    """나스닥 종합지수(^IXIC) 데이터를 가져와서 nasdaq_series.json으로 저장합니다."""
-    print("\n--- 나스닥 데이터 업데이트 시작 ---")
-    try:
-        # BM20 기준일인 2018-01-01부터 데이터를 가져옵니다.
-        nasdaq = yf.download("^IXIC", start="2018-01-01", progress=False)
-        
-        if nasdaq.empty:
-            print("[WARN] 나스닥 데이터를 가져오지 못했습니다.")
-            return
-
-        # 데이터 정리 (날짜와 종가)
-        nasdaq_df = nasdaq['Close'].reset_index()
-        nasdaq_df.columns = ['date', 'price']
-        nasdaq_df['date'] = nasdaq_df['date'].dt.strftime('%Y-%m-%d')
-        
-        # 리스트 형식으로 변환
-        nasdaq_list = nasdaq_df.to_dict(orient='records')
-        
-        # 파일 저장 (절대값 축 차트용)
-        with open("nasdaq_series.json", "w", encoding="utf-8") as f:
-            json.dump(nasdaq_list, f, ensure_ascii=False, indent=2)
+# ================== Market Indices Helper (NASDAQ & KOSPI) ==================
+def update_market_indices():
+    """나스닥(^IXIC)과 코스피(^KS11) 데이터를 가져와 각각 JSON으로 저장합니다."""
+    indices = {
+        "nasdaq": "^IXIC",
+        "kospi": "^KS11"
+    }
+    
+    print("\n--- 시장 지수 데이터 업데이트 시작 ---")
+    for name, symbol in indices.items():
+        try:
+            print(f"[{name.upper()}] 수집 중...")
+            data = yf.download(symbol, start="2018-01-01", progress=False)
             
-        print(f"[OK] nasdaq_series.json 저장 완료 ({len(nasdaq_list)}건)")
-    except Exception as e:
-        print(f"[ERROR] 나스닥 수집 중 오류 발생: {e}")
+            if data.empty:
+                print(f"[WARN] {name} 데이터를 가져오지 못했습니다.")
+                continue
+
+            df = data['Close'].reset_index()
+            df.columns = ['date', 'price']
+            df['date'] = df['date'].dt.strftime('%Y-%m-%d')
+            
+            output_list = df.to_dict(orient='records')
+            file_name = f"{name}_series.json"
+            
+            with open(file_name, "w", encoding="utf-8") as f:
+                json.dump(output_list, f, ensure_ascii=False, indent=2)
+                
+            print(f"[OK] {file_name} 저장 완료 ({len(output_list)}건)")
+        except Exception as e:
+            print(f"[ERROR] {name} 수집 중 오류 발생: {e}")
 
 
 
