@@ -54,6 +54,7 @@ jobs:
           OUT_DIR: out
           TZ: Asia/Seoul
           BM20_KRW_BONUS: "1.0"
+          BM20_DAILY_SNAPSHOT: "1"  # <--- 이 줄을 반드시 추가해야 기록이 업데이트됩니다!
           COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
           MAX_ATTEMPTS: "3"
           RETRY_SLEEP_SECONDS: "45"
