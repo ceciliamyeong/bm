@@ -212,26 +212,61 @@
     const kspMap = new Map(KOSPI_SERIES.map(d => [d.date, d.v]));
 
     const common = {
-      tooltip: { trigger: 'axis' },
-      xAxis: { type: 'category', data: dates, axisLabel:{ hideOverlap:true } },
-      dataZoom: [{ type: 'inside', start: 80 }],
+      tooltip: { 
+        trigger: 'axis',
+        formatter: (params) => {
+          let res = `<b>${params[0].name}</b>`;
+          params.forEach(p => {
+            res += `<br/>${p.marker} ${p.seriesName}: ${Math.round(p.value).toLocaleString()}`;
+          });
+          return res;
+        }
+      },
+      xAxis: { type: 'category', data: dates, axisLabel: { hideOverlap: true } },
+      dataZoom: [{ type: 'inside', start: 85, end: 100 }],
       grid: { top: 40, bottom: 40, left: 60, right: 60 }
     };
 
-    btcNasdaqChart.setOption({ ...common, yAxis:[{type:'value',scale:true},{type:'value',position:'right',scale:true}],
-      series: [{name:'BTC',type:'line',data:dates.map(d=>btcMap.get(d)),showSymbol:false,itemStyle:{color:'#f59e0b'}},
-               {name:'NASDAQ',type:'line',data:dates.map(d=>ndqMap.get(d)),yAxisIndex:1,showSymbol:false,itemStyle:{color:'#3b82f6'}}] });
-    bm20NasdaqChart.setOption({ ...common, yAxis:[{type:'value',scale:true},{type:'value',position:'right',scale:true}],
-      series: [{name:'BM20',type:'line',data:SERIES.map(d=>d.v),showSymbol:false,itemStyle:{color:'#7c3aed'}},
-               {name:'NASDAQ',type:'line',data:dates.map(d=>ndqMap.get(d)),yAxisIndex:1,showSymbol:false,itemStyle:{color:'#3b82f6'}}] });
-    btcKospiChart.setOption({ ...common, yAxis:[{type:'value',scale:true},{type:'value',position:'right',scale:true}],
-      series: [{name:'BTC',type:'line',data:dates.map(d=>btcMap.get(d)),showSymbol:false,itemStyle:{color:'#f59e0b'}},
-               {name:'KOSPI',type:'line',data:dates.map(d=>kspMap.get(d)),yAxisIndex:1,showSymbol:false,itemStyle:{color:'#10b981'}}] });
-    bm20KospiChart.setOption({ ...common, yAxis:[{type:'value',scale:true},{type:'value',position:'right',scale:true}],
-      series: [{name:'BM20',type:'line',data:SERIES.map(d=>d.v),showSymbol:false,itemStyle:{color:'#7c3aed'}},
-               {name:'KOSPI',type:'line',data:dates.map(d=>kspMap.get(d)),yAxisIndex:1,showSymbol:false,itemStyle:{color:'#10b981'}}] });
-  }
+    const yAxisConfig = [
+      { type: 'value', axisLabel: { formatter: v => Math.round(v).toLocaleString() } },
+      { type: 'value', position: 'right', scale: true, axisLabel: { formatter: v => Math.round(v).toLocaleString() } }
+    ];
 
+    // 나스닥 차트 2개 정수화 적용
+    btcNasdaqChart.setOption({
+      ...common, yAxis: yAxisConfig,
+      series: [
+        { name: 'BTC', type: 'line', data: dates.map(d => Math.round(btcMap.get(d) || 0)), showSymbol: false, itemStyle:{color:'#f59e0b'} },
+        { name: 'NASDAQ', type: 'line', data: dates.map(d => Math.round(ndqMap.get(d) || 0)), yAxisIndex: 1, showSymbol: false, itemStyle:{color:'#3b82f6'} }
+      ]
+    });
+
+    bm20NasdaqChart.setOption({
+      ...common, yAxis: yAxisConfig,
+      series: [
+        { name: 'BM20', type: 'line', data: SERIES.map(d => Math.round(d.v)), showSymbol: false, itemStyle:{color:'#7c3aed'} },
+        { name: 'NASDAQ', type: 'line', data: dates.map(d => Math.round(ndqMap.get(d) || 0)), yAxisIndex: 1, showSymbol: false, itemStyle:{color:'#3b82f6'} }
+      ]
+    });
+
+    // 코스피 차트 2개 정수화 적용
+    btcKospiChart.setOption({
+      ...common, yAxis: yAxisConfig,
+      series: [
+        { name: 'BTC', type: 'line', data: dates.map(d => Math.round(btcMap.get(d) || 0)), showSymbol: false, itemStyle:{color:'#f59e0b'} },
+        { name: 'KOSPI', type: 'line', data: dates.map(d => Math.round(kspMap.get(d) || 0)), yAxisIndex: 1, showSymbol: false, itemStyle:{color:'#10b981'} }
+      ]
+    });
+
+    bm20KospiChart.setOption({
+      ...common, yAxis: yAxisConfig,
+      series: [
+        { name: 'BM20', type: 'line', data: SERIES.map(d => Math.round(d.v)), showSymbol: false, itemStyle:{color:'#7c3aed'} },
+        { name: 'KOSPI', type: 'line', data: dates.map(d => Math.round(kspMap.get(d) || 0)), yAxisIndex: 1, showSymbol: false, itemStyle:{color:'#10b981'} }
+      ]
+    });
+  }
+  
   // ===== 복구된 무버 렌더링 로직 =====
   function renderMovers(rows) {
     if(!rows || rows.length === 0) return;
