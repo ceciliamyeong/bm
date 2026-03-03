@@ -126,22 +126,47 @@
 </div>
 
 <script>
+  // ===== 변수 설정 =====
+  let seriesChart, perfChart, moverChart, btcNasdaqChart, bm20NasdaqChart, btcKospiChart, bm20KospiChart;
+  let SERIES = [], BTC_SERIES = [], NASDAQ_SERIES = [], KOSPI_SERIES = [];
+  let LATEST = null;
+
   const qs = s => document.querySelector(s);
-  // 지수 소수점 제거 (d=0)
+
+  // 지수 정수화 및 포맷팅
   const fmtNum = (v, d = 0) => {
     const n = Number(v);
     if (!Number.isFinite(n)) return "-";
-    return new Intl.NumberFormat('en-US',{maximumFractionDigits:d}).format(n);
+    return new Intl.NumberFormat('en-US', { maximumFractionDigits: d }).format(n);
   };
+
   const fmtPctRatio = (v, d = 2) => {
     const n = Number(v); if (!Number.isFinite(n)) return "-";
     return (n >= 0 ? "+" : "") + (n * 100).toFixed(d) + "%";
   };
 
-  let seriesChart, perfChart, moverChart, btcKospiChart, bm20KospiChart, btcNasdaqChart, bm20NasdaqChart;
-  let SERIES = [], BTC_SERIES = [], NASDAQ_SERIES = [], KOSPI_SERIES = [];
+  const bust = () => "v=" + Date.now();
 
-  function initCharts(){
+  // ===== 데이터 로더 =====
+  async function fetchAnyJson(urls) {
+    for (const u of urls) {
+      try {
+        const r = await fetch(u + "?" + bust());
+        if (r.ok) return { json: await r.json(), url: u };
+      } catch (e) {}
+    }
+    return null;
+  }
+
+  async function fetchTextTry(url) {
+    try {
+      const r = await fetch(url + "?" + bust());
+      if (r.ok) return await r.text();
+    } catch (e) {}
+    return null;
+  }
+
+  function initCharts() {
     seriesChart = echarts.init(qs("#seriesChart"));
     perfChart = echarts.init(qs("#perfBar"));
     moverChart = echarts.init(qs("#moverBar"));
@@ -151,36 +176,28 @@
     bm20KospiChart = echarts.init(qs("#bm20KospiChart"));
   }
 
-  async function fetchAnyJson(urls){
-    for (const u of urls){
-      try {
-        const r = await fetch(u + "?v=" + Date.now());
-        if (r.ok) return { json: await r.json() };
-      } catch(e){}
-    }
-    return null;
-  }
-
-  async function loadData(){
-    // BM20 & BTC
+  async function loadData() {
+    // 1. BM20 & BTC 로드
     const res = await fetchAnyJson(["bm20_series.json"]);
-    if(res) SERIES = (Array.isArray(res.json) ? res.json : res.json.series).map(d => ({ date: d.date, v: d.level, t: new Date(d.date) }));
-    
+    if (res) {
+      const arr = Array.isArray(res.json) ? res.json : (res.json.series || []);
+      SERIES = arr.map(d => ({ date: d.date, v: d.level, t: new Date(d.date) }));
+    }
     const btc = await fetchAnyJson(["btc_usd_series.json"]);
-    if(btc) BTC_SERIES = btc.json.map(d => ({ date: d.date, v: d.price }));
+    if (btc) BTC_SERIES = btc.json.map(d => ({ date: d.date, v: d.price }));
 
-    // NASDAQ & KOSPI
+    // 2. 나스닥 & 코스피 로드
     const ndq = await fetchAnyJson(["nasdaq_series.json"]);
-    if(ndq) NASDAQ_SERIES = ndq.json.map(d => ({ date: d.date, v: d.price }));
-
+    if (ndq) NASDAQ_SERIES = ndq.json.map(d => ({ date: d.date, v: d.price }));
     const ksp = await fetchAnyJson(["kospi_series.json"]);
-    if(ksp) KOSPI_SERIES = ksp.json.map(d => ({ date: d.date, v: d.price }));
+    if (ksp) KOSPI_SERIES = ksp.json.map(d => ({ date: d.date, v: d.price }));
   }
 
-  function renderSeries(mode){
+  // ===== 렌더링 함수 =====
+  function renderSeries(mode) {
     const now = new Date();
     let data = SERIES;
-    if(mode === "1Y") data = SERIES.filter(d => d.t > new Date(now.setFullYear(now.getFullYear()-1)));
+    if (mode === "1Y") data = SERIES.filter(d => d.t > new Date(now.setFullYear(now.getFullYear() - 1)));
     
     const dates = data.map(d => d.date);
     const btcMap = new Map(BTC_SERIES.map(d => [d.date, d.v]));
@@ -204,147 +221,119 @@
         { type: 'value', name: 'BTC', position: 'right', scale: true, axisLabel: { formatter: v => '$' + Math.round(v).toLocaleString() } }
       ],
       series: [
-        { name: 'BM20', type: 'line', data: data.map(d => Math.round(d.v)), smooth: true, showSymbol: false, itemStyle:{color:'#2563eb'} },
-        { name: 'BTC', type: 'line', data: dates.map(d => btcMap.get(d)), yAxisIndex: 1, smooth: true, showSymbol: false, itemStyle:{color:'#f59e0b'} }
+        { name: 'BM20', type: 'line', data: data.map(d => Math.round(d.v)), smooth: true, showSymbol: false, itemStyle: { color: '#2563eb' } },
+        { name: 'BTC', type: 'line', data: dates.map(d => btcMap.get(d)), yAxisIndex: 1, smooth: true, showSymbol: false, itemStyle: { color: '#f59e0b' } }
       ]
     }, true);
   }
 
-  function renderComparison(){
+  function renderComparison() {
     const dates = SERIES.map(d => d.date);
     const btcMap = new Map(BTC_SERIES.map(d => [d.date, d.v]));
     const ndqMap = new Map(NASDAQ_SERIES.map(d => [d.date, d.v]));
     const kspMap = new Map(KOSPI_SERIES.map(d => [d.date, d.v]));
 
     const common = {
-      tooltip: { trigger: 'axis' },
-      xAxis: { type: 'category', data: dates, axisLabel:{ hideOverlap:true } },
+      tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
+      xAxis: { type: 'category', data: dates, axisLabel: { hideOverlap: true } },
       dataZoom: [{ type: 'inside', start: 80 }],
       grid: { top: 40, bottom: 40, left: 60, right: 60 }
     };
 
-    // NASDAQ
-    btcNasdaqChart.setOption({ ...common, yAxis:[{type:'value',scale:true},{type:'value',position:'right',scale:true}],
-      series: [{name:'BTC',type:'line',data:dates.map(d=>btcMap.get(d)),showSymbol:false,itemStyle:{color:'#f59e0b'}},
-               {name:'NASDAQ',type:'line',data:dates.map(d=>ndqMap.get(d)),yAxisIndex:1,showSymbol:false,itemStyle:{color:'#3b82f6'}}] });
-    bm20NasdaqChart.setOption({ ...common, yAxis:[{type:'value',scale:true},{type:'value',position:'right',scale:true}],
-      series: [{name:'BM20',type:'line',data:SERIES.map(d=>d.v),showSymbol:false,itemStyle:{color:'#7c3aed'}},
-               {name:'NASDAQ',type:'line',data:dates.map(d=>ndqMap.get(d)),yAxisIndex:1,showSymbol:false,itemStyle:{color:'#3b82f6'}}] });
+    if (NASDAQ_SERIES.length) {
+      btcNasdaqChart.setOption({ ...common, yAxis: [{ type: 'value', scale: true }, { type: 'value', position: 'right', scale: true }],
+        series: [{ name: 'BTC', type: 'line', data: dates.map(d => btcMap.get(d)), showSymbol: false, itemStyle: { color: '#f59e0b' } },
+                 { name: 'NASDAQ', type: 'line', data: dates.map(d => ndqMap.get(d)), yAxisIndex: 1, showSymbol: false, itemStyle: { color: '#3b82f6' } }] });
+      bm20NasdaqChart.setOption({ ...common, yAxis: [{ type: 'value', scale: true }, { type: 'value', position: 'right', scale: true }],
+        series: [{ name: 'BM20', type: 'line', data: SERIES.map(d => d.v), showSymbol: false, itemStyle: { color: '#7c3aed' } },
+                 { name: 'NASDAQ', type: 'line', data: dates.map(d => ndqMap.get(d)), yAxisIndex: 1, showSymbol: false, itemStyle: { color: '#3b82f6' } }] });
+    }
 
-    // KOSPI
-    btcKospiChart.setOption({ ...common, yAxis:[{type:'value',scale:true},{type:'value',position:'right',scale:true}],
-      series: [{name:'BTC',type:'line',data:dates.map(d=>btcMap.get(d)),showSymbol:false,itemStyle:{color:'#f59e0b'}},
-               {name:'KOSPI',type:'line',data:dates.map(d=>kspMap.get(d)),yAxisIndex:1,showSymbol:false,itemStyle:{color:'#10b981'}}] });
-    bm20KospiChart.setOption({ ...common, yAxis:[{type:'value',scale:true},{type:'value',position:'right',scale:true}],
-      series: [{name:'BM20',type:'line',data:SERIES.map(d=>d.v),showSymbol:false,itemStyle:{color:'#7c3aed'}},
-               {name:'KOSPI',type:'line',data:dates.map(d=>kspMap.get(d)),yAxisIndex:1,showSymbol:false,itemStyle:{color:'#10b981'}}] });
+    if (KOSPI_SERIES.length) {
+      btcKospiChart.setOption({ ...common, yAxis: [{ type: 'value', scale: true }, { type: 'value', position: 'right', scale: true }],
+        series: [{ name: 'BTC', type: 'line', data: dates.map(d => btcMap.get(d)), showSymbol: false, itemStyle: { color: '#f59e0b' } },
+                 { name: 'KOSPI', type: 'line', data: dates.map(d => kspMap.get(d)), yAxisIndex: 1, showSymbol: false, itemStyle: { color: '#10b981' } }] });
+      bm20KospiChart.setOption({ ...common, yAxis: [{ type: 'value', scale: true }, { type: 'value', position: 'right', scale: true }],
+        series: [{ name: 'BM20', type: 'line', data: SERIES.map(d => d.v), showSymbol: false, itemStyle: { color: '#7c3aed' } },
+                 { name: 'KOSPI', type: 'line', data: dates.map(d => kspMap.get(d)), yAxisIndex: 1, showSymbol: false, itemStyle: { color: '#10b981' } }] });
+    }
   }
 
-  async function loadMovers(){
-    const latest = await fetchAnyJson(["bm20_latest.json"]);
-    if(!latest) return;
-    const j = latest.json;
+  // 탑 무버 및 히트맵 렌더링 (구버전 로직 복구)
+  function renderMovers(rows) {
+    const sorted = [...rows].sort((a, b) => b.ret_1d - a.ret_1d);
+    qs("#best3").textContent = sorted.slice(0, 3).map(r => `${r.symbol}(${fmtPctRatio(r.ret_1d)})`).join(" · ");
+    qs("#worst3").textContent = sorted.slice(-3).reverse().map(r => `${r.symbol}(${fmtPctRatio(r.ret_1d)})`).join(" · ");
+    qs("#breadth").textContent = `${rows.filter(r => r.ret_1d > 0).length} ↑ · ${rows.filter(r => r.ret_1d < 0).length} ↓`;
+
+    // Mover Bar
+    const top6 = sorted.slice(0, 3).concat(sorted.slice(-3).reverse());
+    moverChart.setOption({
+      tooltip: { trigger: 'axis' },
+      grid: { left: 40, right: 20, top: 20, bottom: 30 },
+      xAxis: { type: 'category', data: top6.map(r => r.symbol) },
+      yAxis: { type: 'value', axisLabel: { formatter: v => (v * 100).toFixed(0) + '%' } },
+      series: [{ type: 'bar', data: top6.map(r => r.ret_1d), itemStyle: { color: p => p.value >= 0 ? '#16a34a' : '#dc2626' } }]
+    });
+
+    // Heatmap
+    const top20 = sorted.slice(0, 20);
+    perfChart.setOption({
+      tooltip: { formatter: p => `<b>${top20[p.dataIndex].symbol}</b>: ${fmtPctRatio(top20[p.dataIndex].ret_1d)}` },
+      xAxis: { type: 'category', data: top20.map(r => r.symbol), axisLabel: { interval: 0, rotate: 30, fontSize: 10 } },
+      yAxis: { type: 'category', data: ['1D'], show: false },
+      visualMap: { show: false, min: -0.05, max: 0.05, inRange: { color: ['#dc2626', '#f1f5f9', '#16a34a'] } },
+      series: [{ type: 'heatmap', data: top20.map((r, i) => [i, 0, r.ret_1d]), label: { show: true, fontSize: 9, formatter: p => (p.value[2] * 100).toFixed(1) } }]
+    });
+  }
+
+  async function loadLatest() {
+    const res = await fetchAnyJson(["bm20_latest.json"]);
+    if (!res) return;
+    const j = res.json;
     
-    // KPI Update
+    // KPI 데이터 업데이트
     qs("#kpiLevel").textContent = fmtNum(j.bm20Level, 0);
-    qs("#kpi1d").innerHTML = `<span class="delta ${j.bm20ChangePct>=0?'up':'down'}">${fmtPctRatio(j.bm20ChangePct)}</span>`;
+    qs("#kpi1d").innerHTML = `<span class="delta ${j.bm20ChangePct >= 0 ? 'up' : 'down'}">${fmtPctRatio(j.bm20ChangePct)}</span>`;
     qs("#kpi7d").textContent = fmtPctRatio(j.returns?.["7D"]);
     qs("#kpi30d").textContent = fmtPctRatio(j.returns?.["30D"]);
     qs("#kpi1y").textContent = fmtPctRatio(j.returns?.["1Y"]);
-    qs("#kimchiValue").textContent = (j.kimchiPremiumPct || 0).toFixed(2) + "%";
-    qs("#metaAsOf").textContent = "ASOF: " + j.asOf;
-    
-    // Universe List
-    if(j.components) {
-      qs("#uniList").innerHTML = j.components.sort((a,b)=>b.weight-a.weight)
-        .map(c=>`<div class="chipSym"><b>${c.symbol}</b> <span>${(c.weight*100).toFixed(1)}%</span></div>`).join("");
+    qs("#kimchiValue").textContent = (j.kimchi_pct || j.kimchi_premium_pct || 0).toFixed(2) + "%";
+    qs("#metaAsOf").textContent = "ASOF: " + (j.asOf || j.date || "-");
+
+    // Universe 리스트 업데이트
+    if (j.components) {
+      qs("#uniList").innerHTML = j.components.sort((a, b) => b.weight - a.weight)
+        .map(c => `<div class="chipSym"><b>${c.symbol}</b> <span>${(c.weight * 100).toFixed(1)}%</span></div>`).join("");
     }
 
-    // CSV for Movers
+    // CSV 로드 및 무버 렌더링
     const date = j.asOf;
-    const csvData = await fetchAnyJson([`bm20_daily_data_latest.csv`, `out/${date}/bm20_daily_data_${date}.csv`]);
-    if(!csvData) {
-        // Fallback for Movers if CSV fails
-        return;
-    }
-    
-    // Simple CSV parser
-    const rows = [];
-    const lines = (await (await fetch(csvData.url)).text()).trim().split('\n');
-    const headers = lines[0].split(',');
-    const sIdx = headers.indexOf('symbol'), cIdx = headers.indexOf('price_change_pct');
-    
-    for(let i=1; i<lines.length; i++){
-        const cols = lines[i].split(',');
-        rows.append({ symbol: cols[sIdx], chg: Number(cols[cIdx])/100 });
-    }
-    renderMovers(rows);
-  }
+    let csvTxt = await fetchTextTry(`bm20_daily_data_latest.csv`);
+    if(!csvTxt) csvTxt = await fetchTextTry(`out/${date}/bm20_daily_data_${date}.csv`);
 
-  // 이 부분은 유저가 제공한 파일의 loadLatest 로직에 따라 CSV 파싱을 수정함
-  async function renderMoversFromLatest(){
-    const latest = await fetchAnyJson(["bm20_latest.json"]);
-    if(!latest) return;
-    const date = latest.json.asOf;
-    
-    // CSV 로드 시도
-    let csvTxt = null;
-    const paths = [`bm20_daily_data_latest.csv`, `out/${date}/bm20_daily_data_${date}.csv`];
-    for(const p of paths) {
-        const r = await fetch(p + "?v=" + Date.now());
-        if(r.ok) { csvTxt = await r.text(); break; }
-    }
-    
-    if(!csvTxt) return;
-    
-    const lines = csvTxt.trim().split('\n');
-    const headers = lines[0].split(',').map(s=>s.trim());
-    const sIdx = headers.indexOf('symbol'), cIdx = headers.indexOf('price_change_pct');
-    
-    const rows = lines.slice(1).map(l => {
+    if (csvTxt) {
+      const lines = csvTxt.trim().split('\n');
+      const headers = lines[0].split(',').map(s => s.trim());
+      const sIdx = headers.indexOf('symbol'), cIdx = headers.indexOf('price_change_pct');
+      const rows = lines.slice(1).map(l => {
         const c = l.split(',');
-        return { symbol: c[sIdx], chg: Number(c[cIdx])/100 };
-    }).filter(r => r.symbol && !isNaN(r.chg));
-
-    const sorted = [...rows].sort((a,b)=>b.chg-a.chg);
-    qs("#best3").textContent = sorted.slice(0,3).map(r=>`${r.symbol}(${fmtPctRatio(r.chg)})`).join(" · ");
-    qs("#worst3").textContent = sorted.slice(-3).reverse().map(r=>`${r.symbol}(${fmtPctRatio(r.chg)})`).join(" · ");
-    qs("#breadth").textContent = `${rows.filter(r=>r.chg>0).length} ↑ · ${rows.filter(r=>r.chg<0).length} ↓`;
-
-    // Bar Chart
-    const top6 = sorted.slice(0,3).concat(sorted.slice(-3).reverse());
-    moverChart.setOption({
-        tooltip:{ trigger:'axis' },
-        xAxis: { type:'category', data: top6.map(r=>r.symbol) },
-        yAxis: { type:'value', axisLabel:{ formatter: v=> (v*100).toFixed(0)+'%' } },
-        series: [{ type:'bar', data: top6.map(r=>r.chg), itemStyle:{ color: p=> p.value >= 0 ? '#16a34a' : '#dc2626' } }]
-    });
-
-    // Heatmap (Top 20)
-    const top20 = sorted.slice(0,20);
-    perfChart.setOption({
-        tooltip: { formatter: p => `<b>${top20[p.dataIndex].symbol}</b>: ${fmtPctRatio(top20[p.dataIndex].chg)}` },
-        xAxis: { type:'category', data: top20.map(r=>r.symbol), axisLabel:{ interval:0, rotate:30 } },
-        yAxis: { type:'category', data:['1D'], show:false },
-        visualMap: { show:false, min:-0.05, max:0.05, inRange:{ color:['#dc2626','#f1f5f9','#16a34a'] } },
-        series: [{ type:'heatmap', data: top20.map((r,i)=>[i,0,r.chg]), label:{ show:true, formatter: p=> (p.value[2]*100).toFixed(1) } }]
-    });
+        return { symbol: c[sIdx], ret_1d: Number(c[cIdx]) / 100 };
+      }).filter(r => r.symbol && !isNaN(r.ret_1d));
+      renderMovers(rows);
+    }
   }
 
-  async function main(){
+  // ===== 실행부 =====
+  async function main() {
     initCharts();
     await loadData();
+    await loadLatest(); // 무버 렌더링이 이 안에 포함됨
     
-    // KPI & Universe
-    const latest = await fetchAnyJson(["bm20_latest.json"]);
-    if(latest) updateKPI(latest.json);
-    
-    // Charts
     renderSeries("1Y");
     renderComparison();
-    renderMoversFromLatest();
 
-    // Events
+    // 버튼 이벤트
     qs("#btn1y").onclick = () => { renderSeries("1Y"); updateBtn("#btn1y"); };
     qs("#btnytd").onclick = () => { renderSeries("YTD"); updateBtn("#btnytd"); };
     qs("#btnall").onclick = () => { renderSeries("ALL"); updateBtn("#btnall"); };
@@ -354,7 +343,9 @@
       qs(id).classList.add("active");
     }
 
-    window.onresize = () => [seriesChart, perfChart, moverChart, btcNasdaqChart, bm20NasdaqChart, btcKospiChart, bm20KospiChart].forEach(c => c?.resize());
+    window.onresize = () => {
+      [seriesChart, perfChart, moverChart, btcNasdaqChart, bm20NasdaqChart, btcKospiChart, bm20KospiChart].forEach(c => c?.resize());
+    };
   }
 
   main().catch(console.error);
