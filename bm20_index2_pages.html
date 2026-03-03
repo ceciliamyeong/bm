@@ -137,6 +137,20 @@
   };
   const bust = () => "v=" + Date.now();
 
+  function lastTwoValid(arr){
+    // [{date, v}] 형태에서 뒤에서부터 유효값 2개
+    let b = null, a = null;
+    for(let i = arr.length - 1; i >= 0; i--){
+      const v = Number(arr[i]?.v);
+      if(Number.isFinite(v)){
+        if(b === null) b = v;
+        else { a = v; break; }
+      }
+    }
+    return [a, b];
+  }
+
+
   let seriesChart, perfChart, moverChart, btcKospiChart, bm20KospiChart, btcNasdaqChart, bm20NasdaqChart;
   let SERIES = [], BTC_SERIES = [], NASDAQ_SERIES = [], KOSPI_SERIES = [];
 
@@ -169,24 +183,6 @@
     if(ndq) NASDAQ_SERIES = ndq.map(d => ({ date: d.date, v: d.price }));
     const ksp = await fetchJson("kospi_series.json");
     if(ksp) KOSPI_SERIES = ksp.map(d => ({ date: d.date, v: d.price }));
-  }
-
-  function lastTwoFromMap(dates, map){
-    // dates는 오름차순이라고 가정. 뒤에서부터 유효값 2개 찾기
-    let a = null, b = null; // b=마지막, a=그 전
-    for(let i = dates.length - 1; i >= 0; i--){
-      const v = map.get(dates[i]);
-      if(Number.isFinite(Number(v))){
-        if(b === null) b = Number(v);
-        else { a = Number(v); return [a, b]; }
-      }
-    }
-    return [null, null];
-  }
-  
-  function pctChange(a, b){
-    if(!Number.isFinite(a) || !Number.isFinite(b) || a === 0) return null;
-    return (b / a) - 1;
   }
 
   function renderSeries(mode){
@@ -424,43 +420,46 @@
     const latest = await fetchJson("bm20_latest.json");
     if(!latest) return;
     
+    
     // ===== KPI (새 구성) =====
     qs("#metaAsOf").textContent = "ASOF: " + latest.asOf;
-    
+    qs("#metaDelta").textContent = "1D: " + fmtPctRatio(latest.bm20ChangePct);
+
     // BM20 1D (latest에 이미 있음)
     qs("#kpiBm20_1d").innerHTML =
       `<span class="delta ${latest.bm20ChangePct>=0?'up':'down'}">${fmtPctRatio(latest.bm20ChangePct)}</span>`;
     qs("#kpiBm20_lvl").textContent = "Level: " + fmtNum(latest.bm20Level, 0);
-    
-    // USD/KRW (kimchi_meta.usdkrw)
-    qs("#kpiUsdkRw").textContent =
-      (latest.kimchi_meta?.usdkrw != null) ? fmtNum(latest.kimchi_meta.usdkrw, 2) : "-";
-    
-    // Kimchi Premium (kimchi_premium_pct)
-    qs("#kimchiValue").textContent =
-      (latest.kimchi_premium_pct != null) ? Number(latest.kimchi_premium_pct).toFixed(2) + "%" : "-";
 
-    // BTC 1D
+    // BTC 1D (시계열에서 계산)
     {
       const [a,b] = lastTwoValid(BTC_SERIES);
       const r = pctChange(a,b);
       qs("#kpiBtc_1d").textContent = (r == null) ? "-" : fmtPctRatio(r);
       qs("#kpiBtc_px").textContent = (b == null) ? "-" : ("$" + fmtNum(b, 0));
     }
-    
+
     // NASDAQ 1D
     {
       const [a,b] = lastTwoValid(NASDAQ_SERIES);
       const r = pctChange(a,b);
       qs("#kpiNdq_1d").textContent = (r == null) ? "-" : fmtPctRatio(r);
     }
-    
+
     // KOSPI 1D
     {
       const [a,b] = lastTwoValid(KOSPI_SERIES);
       const r = pctChange(a,b);
       qs("#kpiKsp_1d").textContent = (r == null) ? "-" : fmtPctRatio(r);
     }
+
+    // USD/KRW (kimchi_meta.usdkrw)
+    qs("#kpiUsdkRw").textContent =
+      (latest.kimchi_meta?.usdkrw != null) ? fmtNum(latest.kimchi_meta.usdkrw, 2) : "-";
+
+    // Kimchi Premium (kimchi_premium_pct)
+    qs("#kimchiValue").textContent =
+      (latest.kimchi_premium_pct != null) ? Number(latest.kimchi_premium_pct).toFixed(2) + "%" : "-";
+
     
     if(latest.components) {
       qs("#uniList").innerHTML = latest.components.sort((a,b)=>b.weight-a.weight)
