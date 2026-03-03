@@ -150,6 +150,13 @@
     return [a, b];
   }
 
+  function pctChange(a, b){
+    a = Number(a); b = Number(b);
+    if(!Number.isFinite(a) || !Number.isFinite(b) || a === 0) return null;
+    return (b / a) - 1;
+  }
+
+
 
   let seriesChart, perfChart, moverChart, btcKospiChart, bm20KospiChart, btcNasdaqChart, bm20NasdaqChart;
   let SERIES = [], BTC_SERIES = [], NASDAQ_SERIES = [], KOSPI_SERIES = [];
