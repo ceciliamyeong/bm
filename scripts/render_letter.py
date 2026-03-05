@@ -409,14 +409,14 @@ def build_placeholders() -> dict[str, str]:
     # 3. 한국 글로벌 점유율 (bm20_history.json의 k_market 대응)
     kr_share_global = "—"
     if hist_obj:
-    try:
-        latest_entry = hist_obj[-1] if isinstance(hist_obj, list) else hist_obj.get("latest", hist_obj)
-        # 이미지 11행의 'k_share_percent' 사용
-        v_global = latest_entry.get("k_market", {}).get("k_share_percent")
-        if v_global is not None:
-            kr_share_global = fmt_share_pct(float(v_global))
-    except Exception:
-        pass
+        try:
+            latest_entry = hist_obj[-1] if isinstance(hist_obj, list) else hist_obj.get("latest", hist_obj)
+            # 이미지 11행의 'k_share_percent' 사용
+            v_global = latest_entry.get("k_market", {}).get("k_share_percent")
+            if v_global is not None:
+                kr_share_global = fmt_share_pct(float(v_global))
+        except Exception:
+            pass
 
     # 4. K-Safety (기존 KRW 데이터에서 추출)
     k_safety = "—"
