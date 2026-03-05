@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="x-apple-disable-message-reformatting" />
+  <meta name="format-detection" content="telephone=no,address=no,email=no,date=no" />
+  <title>[블록미디어] 오늘 시장 온도 & 자금 흐름</title>
+  <style>
+    .container{width:680px;max-width:680px}
+    .pad{padding-left:28px;padding-right:28px}
+    .card{background:#ffffff;border:1px solid #e8eef9;border-radius:18px;overflow:hidden;margin-bottom:16px;}
+    .h1{font-size:32px;line-height:1.2;font-weight:900;letter-spacing:-.5px;color:#0f172a}
+    .lead{font-size:15px;line-height:1.75;color:#475569}
+    .btn{display:inline-block;width:100%;max-width:520px;text-align:center;background:linear-gradient(180deg,#3b82f6,#2563eb);
+         color:#ffffff !important;text-decoration:none;font-weight:900;font-size:17px;padding:16px 18px;border-radius:16px;box-shadow:0 14px 34px rgba(37,99,235,.22)}
+    .btn2{display:inline-block;width:100%;max-width:520px;text-align:center;background:#ffffff;
+         color:#2563eb !important;text-decoration:none;font-weight:900;font-size:16px;padding:14px 18px;border-radius:16px;border:1px solid #dbe7ff}
+    @media (max-width: 720px){
+      .container{width:100% !important;max-width:100% !important}
+      .pad{padding-left:16px !important;padding-right:16px !important}
+      .col{display:block !important;width:100% !important;padding:0 !important;margin-bottom:10px;}
+      .h1{font-size:26px !important;}
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background:#f4f6fb;font-family:Apple SD Gothic Neo,Malgun Gothic,sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f6fb;">
+    <tr>
+      <td align="center" style="padding:26px 12px;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" class="container" style="border-radius:24px;overflow:hidden;background:#ffffff;box-shadow:0 18px 55px rgba(15,23,42,.10);">
+          
+          <tr>
+            <td class="pad" style="padding:32px 28px 20px 28px;">
+              <div style="font-size:13px;font-weight:900;color:#3b82f6;margin-bottom:10px;">BLOCKMEDIA DAILY LETTER</div>
+              <div class="h1">블록미디어 이메일,<br/>데이터로 다시 시작합니다</div>
+              <div style="margin-top:14px" class="lead">
+                오늘 시장의 핵심 지표를 10초 만에 확인하세요.<br/>
+                상세 데이터는 <b style="color:#1d4ed8;">실시간 대시보드</b>에서 확인 가능합니다.
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="pad">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" class="card">
+                <tr>
+                  <td style="padding:20px;">
+                    <div style="font-size:15px;font-weight:900;color:#0f172a;margin-bottom:12px;">🌡 오늘 시장 온도</div>
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                      <tr>
+                        <td class="col" width="32%" style="padding-right:8px;">
+                          <div style="border:1px solid #eef2fb;border-radius:14px;background:#fbfdff;padding:12px;">
+                            <div style="font-size:11px;color:#64748b;">BM20 Index</div>
+                            <div style="margin-top:4px;font-size:18px;font-weight:900;">{{BM20_1D}}</div>
+                            <div style="font-size:12px;color:#94a3b8;">Level {{BM20_LEVEL}}</div>
+                          </div>
+                        </td>
+                        <td class="col" width="32%" style="padding-right:8px;">
+                          <div style="border:1px solid #eef2fb;border-radius:14px;background:#fbfdff;padding:12px;">
+                            <div style="font-size:11px;color:#64748b;">BTC 가격</div>
+                            <div style="margin-top:4px;font-size:18px;font-weight:900;">{{BTC_1D}}</div>
+                            <div style="font-size:12px;color:#94a3b8;">${{BTC_USD}}</div>
+                          </div>
+                        </td>
+                        <td class="col" width="32%">
+                          <div style="border:1px solid #eef2fb;border-radius:14px;background:#fff7f7;padding:12px;">
+                            <div style="font-size:11px;color:#64748b;">시장 심리</div>
+                            <div style="margin-top:4px;font-size:18px;font-weight:900;color:#b91c1c;">{{SENTIMENT_LABEL}}</div>
+                            <div style="font-size:12px;color:#94a3b8;">{{SENTIMENT_SCORE}} / 100</div>
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+                    <div style="margin-top:14px;font-size:12px;line-height:1.7;color:#64748b;">
+                      <b>한 줄 요약:</b> {{MARKET_ONE_LINE}}
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="pad">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f8fafc;border-left:4px solid #0f172a;border-radius:10px;margin-bottom:16px;">
+                <tr>
+                  <td style="padding:18px 16px;">
+                    <div style="font-size:12px;font-weight:900;color:#64748b;margin-bottom:6px;">💡 오늘의 한 줄</div>
+                    <div style="font-size:16px;line-height:1.65;font-weight:900;color:#0f172a;">“{{NEWS_ONE_LINER}}”</div>
+                    <div style="margin-top:8px;font-size:12px;line-height:1.7;color:#94a3b8;">{{NEWS_ONE_LINER_NOTE}}</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="pad">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" class="card">
+                <tr>
+                  <td style="padding:20px;">
+                    <div style="font-size:16px;font-weight:900;color:#0f172a;margin-bottom:12px;">🇰🇷 한국 시장 시그널</div>
+                    <div style="font-size:14px;line-height:2;color:#334155;">
+                      • 총 거래대금(24h): <b>{{KRW_TOTAL_24H}}</b> <small style="color:#94a3b8;">({{KRW_ASOF_KST}})</small><br/>
+                      • 한국 글로벌 점유율: <b>{{KR_SHARE_GLOBAL}}</b><br/>
+                      • XRP 한국 점유율: <b>{{XRP_KR_SHARE}}</b><br/>
+                      • 김치 프리미엄: <b>{{KIMCHI_PREM}}</b> <small style="color:#94a3b8;">(환율 {{USDKRW}})</small><br/>
+                      • 거래소 구도: <span style="color:#2563eb;">Upbit {{UPBIT_SHARE_24H}}</span> / Bithumb {{BITHUMB_SHARE_24H}}
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="pad">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" class="card">
+                <tr>
+                  <td style="padding:20px;">
+                    <div style="font-size:16px;font-weight:900;color:#0f172a;">🧩 자금 흐름 트리맵</div>
+                    <div style="margin-top:8px;font-size:13px;color:#64748b;"><b>해석:</b> {{TREEMAP_ONE_LINE}}</div>
+                    <div style="margin:16px 0;">
+                      <a href="https://data.blockmedia.co.kr/" target="_blank">
+                        <img src="https://ceciliamyeong.github.io/bm/assets/topcoins_treemap_latest.png" width="100%" style="border-radius:12px;border:1px solid #eee;display:block;">
+                      </a>
+                    </div>
+                    <div style="font-size:12px;color:#94a3b8;text-align:center;">{{DASHBOARD_PREVIEW_CAPTION}}</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="pad" align="center" style="padding-bottom:32px;">
+              <a href="https://data.blockmedia.co.kr/" class="btn">실시간 대시보드 바로가기 &nbsp;›</a>
+              <div style="height:12px;"></div>
+              <a href="SUBSCRIBE_URL" class="btn2">무료 구독 신청/관리 &nbsp;›</a>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="pad" style="padding:20px 28px 26px 28px;background:#fbfdff;border-top:1px solid #e8eef9;">
+              <div style="font-size:12px;color:#94a3b8;text-align:center;line-height:1.75;">
+                <a href="https://blockmedia.co.kr/" target="_blank" style="color:#64748b;text-decoration:underline;">블록미디어</a>
+                &nbsp;|&nbsp;
+                <a href="https://data.blockmedia.co.kr/" target="_blank" style="color:#64748b;text-decoration:underline;">블록미디어데이터</a>
+                <br/>본 메일은 구독 신청하신 독자님께 발송되었습니다.
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
