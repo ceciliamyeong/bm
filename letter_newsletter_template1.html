@@ -5,40 +5,76 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="x-apple-disable-message-reformatting" />
   <meta name="format-detection" content="telephone=no,address=no,email=no,date=no" />
-  <title>[블록미디어] 오늘 시장 온도 & 자금 흐름 — 대시보드 체험판</title>
+  <title>[블록미디어] 오늘 시장 온도 & 자금 흐름 — 데이터 인사이트</title>
   <style>
     .container{width:680px;max-width:680px}
     .pad{padding-left:28px;padding-right:28px}
     .card{background:#ffffff;border:1px solid #e8eef9;border-radius:18px;overflow:hidden}
-    .h1{font-size:34px;line-height:1.2;font-weight:900;letter-spacing:-.5px;color:#0f172a}
+    .h1{font-size:32px;line-height:1.22;font-weight:900;letter-spacing:-.5px;color:#0f172a}
     .lead{font-size:15px;line-height:1.75;color:#475569}
-    .kicker{font-size:13px;font-weight:900;color:#3b82f6;letter-spacing:.06em}
-    .btn{display:inline-block;width:100%;max-width:520px;text-align:center;background:linear-gradient(180deg,#3b82f6,#2563eb);
-         color:#ffffff;text-decoration:none;font-weight:900;font-size:17px;letter-spacing:-.2px;padding:16px 18px;border-radius:16px;
-         box-shadow:0 14px 34px rgba(37,99,235,.22)}
-    .btn2{display:inline-block;width:100%;max-width:520px;text-align:center;background:#ffffff;
-         color:#2563eb;text-decoration:none;font-weight:900;font-size:16px;letter-spacing:-.2px;padding:14px 18px;border-radius:16px;
-         border:1px solid #dbe7ff}
+    .kicker{font-size:12px;font-weight:900;color:#334155;letter-spacing:.10em}
     .pill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:900}
     .muted{color:#64748b}
     .small{font-size:12px;line-height:1.75;color:#94a3b8}
     .grid td{vertical-align:top}
+
+    /* Minimal buttons */
+    .btnline{
+      display:block;
+      width:100%;
+      text-align:center;
+      background:#ffffff;
+      border:1px solid #d0d7de;
+      color:#111827;
+      text-decoration:none;
+      font-weight:800;
+      font-size:14px;
+      padding:12px 10px;
+      border-radius:12px;
+      line-height:1.15;
+    }
+    .btnsub{
+      display:inline-block;
+      background:transparent;
+      border:1px solid #e5e7eb;
+      color:#374151;
+      text-decoration:none;
+      font-weight:700;
+      font-size:12.5px;
+      padding:9px 16px;
+      border-radius:11px;
+      line-height:1.1;
+    }
+    .btnsoft{
+      display:inline-block;
+      background:#ffffff;
+      border:1px solid #e5e7eb;
+      color:#111827;
+      text-decoration:none;
+      font-weight:800;
+      font-size:13.5px;
+      padding:10px 14px;
+      border-radius:12px;
+      line-height:1.15;
+    }
+
     @media (max-width: 720px){
       .container{width:100% !important;max-width:100% !important}
       .pad{padding-left:16px !important;padding-right:16px !important}
       .h1{font-size:26px !important;line-height:1.25 !important}
       .col{display:block !important;width:100% !important;padding:0 !important}
       .col + .col{padding-top:12px !important}
-      .btn,.btn2{max-width:100% !important}
     }
   </style>
 </head>
 
 <body style="margin:0;padding:0;background:#f4f6fb;font-family:Apple SD Gothic Neo,Malgun Gothic,Segoe UI,Arial,sans-serif;">
+  <!-- Preheader -->
   <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">
     오늘 시장 온도(심리·BM20·KRW)를 10초 안에. 더 깊은 데이터는 대시보드에서 확인하세요.
   </div>
 
+  <!-- Top util bar -->
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fbfdff;border-bottom:1px solid #e8eef9;">
     <tr>
       <td align="center" style="padding:8px 12px;">
@@ -48,7 +84,7 @@
               메일이 깨지면 <a href="{webversion}" style="color:#64748b;text-decoration:underline;">브라우저에서 보기</a>
             </td>
             <td align="right" style="font-size:12px;color:#94a3b8;">
-              <a href="SUBSCRIBE_URL" style="color:#2563eb;text-decoration:underline;font-weight:800;">무료 구독하기</a>
+              <!-- (의도적으로 비워둠: 상단 CTA 과다 방지) -->
             </td>
           </tr>
         </table>
@@ -56,6 +92,7 @@
     </tr>
   </table>
 
+  <!-- Brand header -->
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border-bottom:1px solid #e2e8f0;">
     <tr>
       <td align="center" style="padding:16px 20px;">
@@ -67,10 +104,8 @@
                 BLOCKMEDIA
               </a>
             </td>
-            <td align="right" valign="middle">
-              <a href="SUBSCRIBE_URL" target="_blank" style="font-size:15px;font-weight:800;color:#0033CC;text-decoration:none;">
-                ↗ Subscribe
-              </a>
+            <td align="right" valign="middle" style="font-size:12px;color:#94a3b8;">
+              <!-- 여기에도 Subscribe 링크를 일부러 안 넣음(CTA는 아래에서만) -->
             </td>
           </tr>
         </table>
@@ -84,18 +119,20 @@
         <table role="presentation" cellspacing="0" cellpadding="0" border="0" class="container"
                style="border-radius:24px;overflow:hidden;background:#ffffff;box-shadow:0 18px 55px rgba(15,23,42,.10);">
 
+          <!-- Hero -->
           <tr>
             <td class="pad" style="padding:28px 28px 14px 28px;">
               <div class="kicker">BLOCKMEDIA DAILY LETTER</div>
               <div style="height:10px;line-height:10px;font-size:0;">&nbsp;</div>
               <div class="h1">블록미디어 이메일,<br/>다시 시작합니다</div>
               <div style="margin-top:14px" class="lead">
-                오늘부터 뉴스레터는 <b style="color:#1d4ed8;">‘대시보드 체험판’</b>처럼 구성됩니다.<br/>
-                메일에서 핵심만 맛보고, 더 깊은 데이터(히스토리·세부 구성·코인별 드릴다운)는 대시보드에서 확인하세요.
+                오늘부터 뉴스레터는 <b style="color:#0f172a;">‘데이터 중심 인사이트’</b>로 구성됩니다.<br/>
+                메일에서는 핵심만 빠르게 훑고, 더 깊은 데이터(히스토리·세부 구성·코인별 드릴다운)는 대시보드에서 확인하세요.
               </div>
             </td>
           </tr>
 
+          <!-- Why email -->
           <tr>
             <td class="pad" style="padding:0 28px 16px 28px;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
@@ -107,7 +144,7 @@
                       웹의 소음 속에서 중요한 시그널은 쉽게 묻힙니다.<br/>
                       블록미디어 이메일은 <b>오늘 시장 온도</b>를 10초 안에 훑게 하고, 클릭 한 번으로 <b>대시보드</b>로 연결합니다.
                       <div style="margin-top:8px;">
-                        <span class="pill" style="background:#eaf1ff;color:#1d4ed8;">핵심</span>
+                        <span class="pill" style="background:#eef2ff;color:#1e40af;">핵심</span>
                         <span style="margin-left:8px;" class="muted">심리 · BM20 · KRW · 자금 흐름 · 코인 시그널</span>
                       </div>
                     </div>
@@ -117,6 +154,7 @@
             </td>
           </tr>
 
+          <!-- Market temperature -->
           <tr>
             <td class="pad" style="padding:0 28px 14px 28px;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" class="card">
@@ -150,10 +188,10 @@
                           </table>
                         </td>
                         <td width="33.33%">
-                          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border:1px solid #eef2fb;border-radius:14px;background:#fff7f7;">
+                          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border:1px solid #eef2fb;border-radius:14px;background:#fbfdff;">
                             <tr><td style="padding:12px 12px;">
                               <div style="font-size:11px;color:#64748b;">시장 심리</div>
-                              <div style="margin-top:6px;font-size:18px;font-weight:900;color:#b91c1c;">{{SENTIMENT_LABEL}}</div>
+                              <div style="margin-top:6px;font-size:18px;font-weight:900;color:#0f172a;">{{SENTIMENT_LABEL}}</div>
                               <div style="margin-top:6px;font-size:12px;color:#94a3b8;">{{SENTIMENT_SCORE}} / 100</div>
                             </td></tr>
                           </table>
@@ -163,24 +201,17 @@
 
                     <div style="height:12px;line-height:12px;font-size:0;">&nbsp;</div>
 
-                    <div style="font-size:12px;line-height:1.7;color:#64748b;">
+                    <div style="font-size:12.5px;line-height:1.7;color:#64748b;">
                       <b>한 줄 요약:</b> {{MARKET_ONE_LINE}}
                     </div>
 
                     <div style="height:14px;line-height:14px;font-size:0;">&nbsp;</div>
 
-                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-                      <tr>
-                        <td align="center">
-                          <a href="DASHBOARD_URL" target="_blank" class="btn">오늘 시장 대시보드 열기 &nbsp;›</a>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td align="center" style="padding-top:10px;">
-                          <a href="LOGIN_URL" target="_blank" class="btn2">전체 데이터 보기(로그인) &nbsp;›</a>
-                        </td>
-                      </tr>
-                    </table>
+                    <!-- Minimal links -->
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                      <a href="https://data.blockmedia.co.kr/" target="_blank" class="btnsoft">대시보드 열기 &nbsp;›</a>
+                      <a href="https://data.blockmedia.co.kr/bm20_index.html" target="_blank" class="btnsoft">전체 데이터(로그인) &nbsp;›</a>
+                    </div>
 
                     <div style="margin-top:10px;" class="small">
                       * 일부 지표는 미리보기로 제공됩니다. 상세 히스토리·코인별 드릴다운은 로그인 후 확인할 수 있습니다.
@@ -191,6 +222,7 @@
             </td>
           </tr>
 
+          <!-- One-liner -->
           <tr>
             <td class="pad" style="padding:0 28px 14px 28px;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
@@ -206,6 +238,7 @@
             </td>
           </tr>
 
+          <!-- Moves -->
           <tr>
             <td class="pad" style="padding:0 28px 14px 28px;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" class="card">
@@ -218,13 +251,14 @@
                       3) {{MOVE_3}}
                     </div>
                     <div style="height:12px;line-height:12px;font-size:0;">&nbsp;</div>
-                    <a href="DASHBOARD_URL#moves" target="_blank" class="btn2">왜 움직였는지 보기 &nbsp;›</a>
+                    <a href="https://data.blockmedia.co.kr/#moves" target="_blank" class="btnsoft">왜 움직였는지 보기 &nbsp;›</a>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
+          <!-- Korea signals -->
           <tr>
             <td class="pad" style="padding:0 28px 14px 28px;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" class="card">
@@ -238,13 +272,14 @@
                       • K-Safety(스테이블코인 비) <b>{{K_SAFETY}}</b>
                     </div>
                     <div style="height:12px;line-height:12px;font-size:0;">&nbsp;</div>
-                    <a href="DASHBOARD_URL#korea" target="_blank" class="btn2">한국 시장 데이터 전체 보기 &nbsp;›</a>
+                    <a href="https://data.blockmedia.co.kr/#korea" target="_blank" class="btnsoft">한국 시장 데이터 더 보기 &nbsp;›</a>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
+          <!-- Sponsor -->
           <tr>
             <td class="pad" style="padding:0 28px 14px 28px;">
               <a href="{{SPONSOR_CLICK_URL}}" target="_blank" style="display:block;text-decoration:none;">
@@ -263,27 +298,33 @@
             </td>
           </tr>
 
+          <!-- Treemap -->
           <tr>
             <td class="pad" style="padding:0 28px 14px 28px;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" class="card">
                 <tr>
                   <td style="padding:16px 16px 10px 16px;">
-                    <div style="font-size:15px;font-weight:900;color:#0f172a;">🧩 Top Coins Treemap <span class="pill" style="margin-left:8px;background:#eaf1ff;color:#1d4ed8;">핵심</span></div>
-                    <div style="margin-top:8px;font-size:13px;line-height:1.8;color:#334155;">“오늘 돈이 어디로 몰렸는지”를 한 장으로 확인합니다.</div>
+                    <div style="font-size:15px;font-weight:900;color:#0f172a;">
+                      🧩 Top Coins Treemap
+                      <span class="pill" style="margin-left:8px;background:#eef2ff;color:#1e40af;">핵심</span>
+                    </div>
+                    <div style="margin-top:8px;font-size:13px;line-height:1.8;color:#334155;">
+                      “오늘 돈이 어디로 몰렸는지”를 한 장으로 확인합니다.
+                    </div>
                     <div style="margin-top:8px;font-size:12px;line-height:1.75;color:#64748b;"><b>한 줄 해석:</b> {{TREEMAP_ONE_LINE}}</div>
                   </td>
                 </tr>
                 <tr>
                   <td style="padding:0 16px 16px 16px;">
-                    <a href="DASHBOARD_URL#treemap" target="_blank" style="text-decoration:none;">
-                      <img src="https://ceciliamyeong.github.io/bm/assets/topcoins_treemap_latest.png" alt="Top Coins Treemap"
+                    <a href="https://data.blockmedia.co.kr/#treemap" target="_blank" style="text-decoration:none;">
+                      <img src="https://data.blockmedia.co.kr/assets/topcoins_treemap_latest.png" alt="Top Coins Treemap"
                            style="display:block;width:100%;height:auto;border-radius:14px;border:0;outline:none;text-decoration:none;" />
                     </a>
                     <div style="margin-top:10px;font-size:12px;line-height:1.7;color:#64748b;">
                       ✓ “어떤 알트에 쏠렸는지” 즉시 파악 &nbsp;|&nbsp; ✓ 테마 전환 신호를 빠르게 캐치
                     </div>
                     <div style="margin-top:12px;">
-                      <a href="DASHBOARD_URL#treemap" target="_blank" class="btn2">자금 흐름(트리맵) 더 보기 &nbsp;›</a>
+                      <a href="https://data.blockmedia.co.kr/#treemap" target="_blank" class="btnsoft">자금 흐름(트리맵) 더 보기 &nbsp;›</a>
                     </div>
                   </td>
                 </tr>
@@ -291,13 +332,19 @@
             </td>
           </tr>
 
+          <!-- AAS -->
           <tr>
             <td class="pad" style="padding:0 28px 14px 28px;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" class="card">
                 <tr>
                   <td style="padding:16px 16px 10px 16px;">
-                    <div style="font-size:15px;font-weight:900;color:#0f172a;">🔎 AAS 리포트 <span class="pill" style="margin-left:8px;background:#f1f5f9;color:#475569;">Beta · 참고용</span></div>
-                    <div style="margin-top:8px;font-size:13px;line-height:1.8;color:#334155;">과열/과매도·관심도 변화를 짧게 요약합니다. (투자 조언 아님)</div>
+                    <div style="font-size:15px;font-weight:900;color:#0f172a;">
+                      🔎 AAS 리포트
+                      <span class="pill" style="margin-left:8px;background:#f1f5f9;color:#475569;">Beta · 참고용</span>
+                    </div>
+                    <div style="margin-top:8px;font-size:13px;line-height:1.8;color:#334155;">
+                      과열/과매도·관심도 변화를 짧게 요약합니다. (투자 조언 아님)
+                    </div>
                   </td>
                 </tr>
                 <tr>
@@ -325,30 +372,46 @@
                         <td align="right" style="padding:10px 12px;font-size:12px;color:#64748b;">{{AAS_NOTE_3}}</td>
                       </tr>
                     </table>
-                    <div style="margin-top:10px;font-size:11px;line-height:1.7;color:#94a3b8;">* 예시는 목업용 가상 데이터입니다. (실 서비스에서는 자동 생성)</div>
+                    <div style="margin-top:10px;font-size:11px;line-height:1.7;color:#94a3b8;">
+                      * 예시는 목업용 가상 데이터입니다. (실 서비스에서는 자동 생성)
+                    </div>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
+          <!-- CTA SECTION (the only CTA block) -->
           <tr>
-            <td class="pad" style="padding:10px 28px 6px 28px;">
+            <td class="pad" style="padding:10px 28px 10px 28px;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
-                  <td align="center" style="padding:6px 0 6px 0;">
-                    <a href="DASHBOARD_URL" target="_blank" class="btn">인사이트 따라가기(대시보드) &nbsp;›</a>
+                  <td width="48%" align="center">
+                    <a href="https://blockmedia.co.kr/kr?utm_source=newsletter&utm_medium=email&utm_campaign=daily_letter&utm_content=news"
+                       target="_blank" class="btnline">
+                      오늘 시장 핵심 뉴스 5개 &nbsp;›
+                    </a>
+                  </td>
+                  <td width="4%">&nbsp;</td>
+                  <td width="48%" align="center">
+                    <a href="https://data.blockmedia.co.kr/data-request?utm_source=newsletter&utm_medium=email&utm_campaign=daily_letter&utm_content=request"
+                       target="_blank" class="btnline">
+                      이런 데이터 원해요 &nbsp;›
+                    </a>
                   </td>
                 </tr>
                 <tr>
-                  <td align="center" style="padding:0 0 2px 0;">
-                    <a href="SUBSCRIBE_URL" target="_blank" class="btn2">무료 구독으로 매일 받기 &nbsp;›</a>
+                  <td colspan="3" align="center" style="padding-top:10px;">
+                    <a href="SUBSCRIBE_URL" target="_blank" class="btnsub">
+                      무료 구독으로 매일 받기 &nbsp;›
+                    </a>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
+          <!-- Dashboard preview -->
           <tr>
             <td class="pad" style="padding:0 28px 18px 28px;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" class="card">
@@ -362,7 +425,7 @@
                 </tr>
                 <tr>
                   <td style="padding:0 16px 16px 16px;">
-                    <a href="DASHBOARD_URL" target="_blank" style="text-decoration:none;">
+                    <a href="https://data.blockmedia.co.kr/" target="_blank" style="text-decoration:none;">
                       <img src="{{DASHBOARD_PREVIEW_IMG_URL}}" alt="Dashboard preview"
                            style="display:block;width:100%;height:auto;border-radius:14px;border:0;outline:none;text-decoration:none;" />
                     </a>
@@ -373,6 +436,7 @@
             </td>
           </tr>
 
+          <!-- Compliance -->
           <tr>
             <td class="pad" style="padding:0 28px 18px 28px;">
               <div style="font-size:12px;line-height:1.75;color:#94a3b8;text-align:center;">
@@ -382,6 +446,7 @@
             </td>
           </tr>
 
+          <!-- Footer -->
           <tr>
             <td class="pad" style="padding:14px 28px 26px 28px;background:#fbfdff;">
               <div style="font-size:12px;color:#94a3b8;text-align:center;line-height:1.75;">
@@ -400,4 +465,3 @@
   </table>
 </body>
 </html>
-
