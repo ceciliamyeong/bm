@@ -379,41 +379,54 @@ def build_placeholders() -> dict[str, str]:
 
     krw_total_txt = fmt_krw_big(combined) if combined is not None else "—"
 
-    # Sentiment (optional)
+    # Sentiment 
     sentiment_label, sentiment_score = ("—", "—")
-    hist = load_json_optional(BM20_HISTORY_JSON)
-    if hist is not None:
-        sentiment_label, sentiment_score = extract_sentiment(hist)
+    hist_obj = load_json_optional(BM20_HISTORY_JSON)
+    if hist_obj:
+        try:
+            # 이미지처럼 전체가 리스트인 경우 마지막(최신) 데이터 추출
+            latest_entry = hist_obj[-1] if isinstance(hist_obj, list) else hist_obj.get("latest", hist_obj)
+            
+            # 이미지 4~6행의 'sentiment' 주머니 확인
+            sent_data = latest_entry.get("sentiment", {})
+            label = sent_data.get("status") or sent_data.get("sentiment_label")
+            score = sent_data.get("value") or sent_data.get("sentiment_score")
+            
+            if label: sentiment_label = str(label)
+            if score is not None: sentiment_score = f"{float(score):.0f}"
+        except Exception:
+            pass
 
-    # Korea signals (some are optional / not yet sourced)
+    # Korea signals 
     xrp_kr_share = "—"
     xrp_obj = load_json_optional(XRP_KR_SHARE_JSON)
-    if xrp_obj is not None:
-        xrp_kr_share = extract_xrp_kr_share(xrp_obj)
+    if xrp_obj and isinstance(xrp_obj, dict):
+        # 이미지에서 확인된 'k_xrp_share_pct_24h' 키를 사용
+        v_xrp = xrp_obj.get("k_xrp_share_pct_24h")
+        if v_xrp is not None:
+            xrp_kr_share = fmt_share_pct(float(v_xrp))
 
-    # KR global share + K-safety may live in krw json depending on your generator; try common keys
-    def pick_nested(d: dict, keys: tuple[str, ...]) -> Any | None:
-        for k in keys:
-            if k in d and d.get(k) is not None:
-                return d.get(k)
-        return None
-
+    # 3. 한국 글로벌 점유율 (bm20_history.json의 k_market 대응)
     kr_share_global = "—"
+    if hist_obj:
+    try:
+        latest_entry = hist_obj[-1] if isinstance(hist_obj, list) else hist_obj.get("latest", hist_obj)
+        # 이미지 11행의 'k_share_percent' 사용
+        v_global = latest_entry.get("k_market", {}).get("k_share_percent")
+        if v_global is not None:
+            kr_share_global = fmt_share_pct(float(v_global))
+    except Exception:
+        pass
+
+    # 4. K-Safety (기존 KRW 데이터에서 추출)
     k_safety = "—"
     if isinstance(krw, dict):
-        meta = krw.get("meta") if isinstance(krw.get("meta"), dict) else {}
-        v = pick_nested(krw, ("kr_share_global", "kr_share_global_pct")) or pick_nested(meta, ("kr_share_global", "kr_share_global_pct"))
-        if v is not None:
-            try:
-                kr_share_global = fmt_share_pct(float(v))
-            except Exception:
-                kr_share_global = str(v)
-        v2 = pick_nested(krw, ("k_safety", "stablecoin_ratio", "stable_ratio")) or pick_nested(meta, ("k_safety", "stablecoin_ratio", "stable_ratio"))
-        if v2 is not None:
-            try:
-                k_safety = fmt_share_pct(float(v2))
-            except Exception:
-                k_safety = str(v2)
+        meta = krw.get("meta", {})
+        # stablecoin_ratio 등 존재하는 키 탐색
+        v_safe = krw.get("k_safety") or meta.get("k_safety") or \
+                 krw.get("stablecoin_ratio") or meta.get("stablecoin_ratio")
+        if v_safe is not None:
+            k_safety = fmt_share_pct(float(v_safe))
 
     top10_conc = compute_top10_concentration(df)
 
