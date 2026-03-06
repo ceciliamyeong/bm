@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>US Crypto Spot ETF | BLOCKMEDIA Data</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --bg2: #161b22;
+      --bg3: #21262d;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text2: #8b949e;
+      --green: #3fb950;
+      --red: #f85149;
+      --blue: #58a6ff;
+      --orange: #f0883e;
+      --purple: #bc8cff;
+      --yellow: #e3b341;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .site-title { font-size: 15px; font-weight: 700; color: var(--text); text-decoration: none; }
+    .page-badge {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px 10px;
+      font-size: 12px;
+      color: var(--blue);
+      font-weight: 600;
+    }
+    .header-meta { font-size: 12px; color: var(--text2); }
+    #updated-at { color: var(--text); font-weight: 500; }
+
+    /* ── Nav ── */
+    nav {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+    }
+    nav a {
+      color: var(--text2);
+      text-decoration: none;
+      padding: 10px 14px;
+      font-size: 13px;
+      white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      transition: color .2s, border-color .2s;
+    }
+    nav a:hover { color: var(--text); }
+    nav a.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+    /* ── Layout ── */
+    main { max-width: 1200px; margin: 0 auto; padding: 24px 16px; }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--blue);
+    }
+
+    /* ── KPI Cards ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .kpi-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+    .kpi-label {
+      font-size: 11px;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 6px;
+    }
+    .kpi-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .kpi-value.positive { color: var(--green); }
+    .kpi-value.negative { color: var(--red); }
+    .kpi-sub {
+      font-size: 11px;
+      color: var(--text2);
+      margin-top: 4px;
+    }
+
+    /* ── Tabs ── */
+    .tab-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .tab-btn {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 16px;
+      color: var(--text2);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .tab-btn.active, .tab-btn:hover {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: #fff;
+    }
+
+    /* ── Chart Cards ── */
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 768px) { .chart-grid { grid-template-columns: 1fr; } }
+
+    .chart-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .chart-card.full { grid-column: 1 / -1; }
+    .chart-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text2);
+      margin-bottom: 12px;
+    }
+    .chart-wrap { position: relative; height: 200px; }
+    .chart-wrap.tall { height: 260px; }
+
+    /* ── ETF Table ── */
+    .table-wrap {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow-x: auto;
+      margin-bottom: 24px;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead { background: var(--bg3); }
+    th {
+      padding: 10px 14px;
+      text-align: right;
+      color: var(--text2);
+      font-weight: 500;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      border-bottom: 1px solid var(--border);
+    }
+    th:first-child { text-align: left; }
+    td {
+      padding: 10px 14px;
+      text-align: right;
+      border-bottom: 1px solid var(--border);
+    }
+    td:first-child { text-align: left; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(88,166,255,.05); }
+    .ticker { font-weight: 700; color: var(--blue); }
+    .inst { color: var(--text2); font-size: 12px; }
+    .pos { color: var(--green); }
+    .neg { color: var(--red); }
+    .null-val { color: var(--text2); }
+
+    /* ── Coin Toggle ── */
+    .coin-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .coin-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 16px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text2);
+      transition: all .2s;
+    }
+    .coin-btn.active-btc { background: #f7931a22; border-color: #f7931a; color: #f7931a; }
+    .coin-btn.active-eth { background: #627eea22; border-color: #627eea; color: #627eea; }
+    .coin-btn.active-sol { background: #9945ff22; border-color: #9945ff; color: #9945ff; }
+    .coin-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot-btc { background: #f7931a; }
+    .dot-eth { background: #627eea; }
+    .dot-sol { background: #9945ff; }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 16px 20px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text2);
+    }
+
+    .loading { color: var(--text2); font-size: 13px; }
+    .error-msg { color: var(--red); font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <a href="/" class="site-title">BLOCKMEDIA Data</a>
+    <span class="page-badge">US Crypto ETF</span>
+  </div>
+  <div class="header-meta">
+    Updated: <span id="updated-at">-</span>
+  </div>
+</header>
+
+<nav>
+  <a href="/">KRW Market</a>
+  <a href="/bm20_index.html">BM20 Index</a>
+  <a href="/etf.html" class="active">US ETF Flow</a>
+</nav>
+
+<main>
+
+  <!-- Coin Toggle -->
+  <div class="coin-toggle">
+    <button class="coin-btn active-btc" id="btn-btc" onclick="switchCoin('btc')">
+      <span class="coin-dot dot-btc"></span> BTC Spot ETF
+    </button>
+    <button class="coin-btn" id="btn-eth" onclick="switchCoin('eth')">
+      <span class="coin-dot dot-eth"></span> ETH Spot ETF
+    </button>
+    <button class="coin-btn" id="btn-sol" onclick="switchCoin('sol')">
+      <span class="coin-dot dot-sol"></span> SOL Spot ETF
+    </button>
+  </div>
+
+  <!-- KPI -->
+  <div class="section-title"><span class="dot"></span> <span id="kpi-title">BTC Spot ETF 현황</span></div>
+  <div class="kpi-grid" id="kpi-grid">
+    <div class="kpi-card"><div class="kpi-label">총 AUM</div><div class="kpi-value" id="k-aum">-</div><div class="kpi-sub" id="k-aum-date">-</div></div>
+    <div class="kpi-card"><div class="kpi-label">일별 순유입</div><div class="kpi-value" id="k-daily">-</div><div class="kpi-sub" id="k-daily-date">-</div></div>
+    <div class="kpi-card"><div class="kpi-label">누적 순유입</div><div class="kpi-value" id="k-cum">-</div><div class="kpi-sub">출시 이후</div></div>
+    <div class="kpi-card"><div class="kpi-label">일별 거래대금</div><div class="kpi-value" id="k-vol">-</div><div class="kpi-sub">24h</div></div>
+    <div class="kpi-card"><div class="kpi-label">총 보유량</div><div class="kpi-value" id="k-holdings">-</div><div class="kpi-sub" id="k-holdings-label">BTC</div></div>
+    <div class="kpi-card"><div class="kpi-label">시총 비중</div><div class="kpi-value" id="k-pct">-</div><div class="kpi-sub">ETF AUM / 코인 시총</div></div>
+  </div>
+
+  <!-- Charts -->
+  <div class="chart-grid">
+    <div class="chart-card full">
+      <div class="chart-title">📊 일별 순유입/유출 (Daily Net Flow)</div>
+      <div class="chart-wrap tall"><canvas id="chart-flow"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">📈 누적 순유입 (Cumulative Net Inflow)</div>
+      <div class="chart-wrap"><canvas id="chart-cum"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">💹 일별 거래대금 (Daily Value Traded)</div>
+      <div class="chart-wrap"><canvas id="chart-vol"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ETF 개별 테이블 -->
+  <div class="section-title"><span class="dot"></span> <span id="table-title">BTC Spot ETF 개별 현황</span></div>
+  <div class="table-wrap">
+    <table id="etf-table">
+      <thead>
+        <tr>
+          <th>Ticker / 운용사</th>
+          <th>AUM</th>
+          <th>일별 순유입</th>
+          <th>누적 순유입</th>
+          <th>일별 거래대금</th>
+          <th>수수료</th>
+        </tr>
+      </thead>
+      <tbody id="etf-tbody">
+        <tr><td colspan="6" class="loading" style="text-align:center;padding:20px">로딩 중...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</main>
+
+<footer>
+  본 대시보드의 정보는 시장 동향 파악을 위한 참고 자료이며, 투자 권유 또는 재무적 조언이 아닙니다. &nbsp;|&nbsp;
+  Source: <a href="https://blockmedia.co.kr" target="_blank" style="color:var(--blue)">BLOCKMEDIA</a> &nbsp;·&nbsp;
+  <a href="https://sosovalue.com" target="_blank" style="color:var(--blue)">SoSoValue</a>
+</footer>
+
+<script>
+// ── 상태 ──
+let currentCoin = 'btc';
+let metricsData = { btc: null, eth: null, sol: null };
+let historyData = { btc: null, eth: null, sol: null };
+let charts = {};
+
+const COIN_COLOR = { btc: '#f7931a', eth: '#627eea', sol: '#9945ff' };
+const COIN_LABEL = { btc: 'BTC', eth: 'ETH', sol: 'SOL' };
+
+// ── 유틸 ──
+function fmt$B(v) {
+  if (v == null) return '-';
+  const n = parseFloat(v);
+  if (Math.abs(n) >= 1e9) return (n/1e9).toFixed(2) + 'B';
+  if (Math.abs(n) >= 1e6) return (n/1e6).toFixed(1) + 'M';
+  return n.toFixed(0);
+}
+function fmt$M(v) {
+  if (v == null) return '-';
+  return (parseFloat(v)/1e6).toFixed(1) + 'M';
+}
+function fmtNum(v, digits=0) {
+  if (v == null) return '-';
+  return parseFloat(v).toLocaleString('en-US', {maximumFractionDigits: digits});
+}
+function fmtPct(v) {
+  if (v == null) return '-';
+  return (parseFloat(v)*100).toFixed(2) + '%';
+}
+function colorClass(v) {
+  if (v == null) return 'null-val';
+  return parseFloat(v) >= 0 ? 'pos' : 'neg';
+}
+function sign$(v) {
+  if (v == null) return '-';
+  const n = parseFloat(v);
+  const s = n >= 0 ? '+' : '';
+  return s + '$' + fmt$B(Math.abs(n));
+}
+
+// ── 데이터 로드 ──
+async function loadData(coin) {
+  if (metricsData[coin] && historyData[coin]) return; // 캐시
+  try {
+    const [mRes, hRes] = await Promise.all([
+      fetch(`data/etf_${coin}_metrics.json`),
+      fetch(`data/etf_${coin}_history.json`)
+    ]);
+    metricsData[coin] = await mRes.json();
+    historyData[coin] = await hRes.json();
+  } catch(e) {
+    console.error('데이터 로드 실패:', e);
+  }
+}
+
+// ── KPI 렌더 ──
+function renderKPI(coin) {
+  const d = metricsData[coin];
+  if (!d) return;
+
+  document.getElementById('kpi-title').textContent = `${COIN_LABEL[coin]} Spot ETF 현황`;
+  document.getElementById('k-holdings-label').textContent = COIN_LABEL[coin];
+
+  const aum = d.totalNetAssets?.value;
+  document.getElementById('k-aum').textContent = '$' + fmt$B(aum);
+  document.getElementById('k-aum-date').textContent = d.totalNetAssets?.lastUpdateDate || '';
+
+  const daily = d.dailyNetInflow?.value;
+  const dailyEl = document.getElementById('k-daily');
+  dailyEl.textContent = '$' + fmt$M(Math.abs(daily));
+  dailyEl.className = 'kpi-value ' + (parseFloat(daily) >= 0 ? 'positive' : 'negative');
+  dailyEl.textContent = (parseFloat(daily) >= 0 ? '+$' : '-$') + fmt$M(Math.abs(daily));
+  document.getElementById('k-daily-date').textContent = d.dailyNetInflow?.lastUpdateDate || '';
+
+  document.getElementById('k-cum').textContent = '$' + fmt$B(d.cumNetInflow?.value);
+  document.getElementById('k-vol').textContent = '$' + fmt$B(d.dailyTotalValueTraded?.value);
+  document.getElementById('k-holdings').textContent = fmtNum(d.totalTokenHoldings?.value, 0);
+  document.getElementById('k-pct').textContent = fmtPct(d.totalNetAssetsPercentage?.value);
+
+  // 업데이트 시간
+  if (d.updatedAt) {
+    document.getElementById('updated-at').textContent = d.updatedAt.replace('T', ' ').replace('Z', ' UTC');
+  }
+}
+
+// ── 차트 렌더 ──
+function destroyCharts() {
+  Object.values(charts).forEach(c => c?.destroy());
+  charts = {};
+}
+
+function renderCharts(coin) {
+  const h = historyData[coin];
+  if (!h?.data) return;
+
+  destroyCharts();
+
+  const sorted = [...h.data].sort((a,b) => a.date.localeCompare(b.date));
+  const labels = sorted.map(d => d.date.slice(5)); // MM-DD
+  const color = COIN_COLOR[coin];
+
+  const flowData = sorted.map(d => (d.totalNetInflow / 1e6).toFixed(2));
+  const cumData  = sorted.map(d => (d.cumNetInflow / 1e9).toFixed(2));
+  const volData  = sorted.map(d => (d.totalValueTraded / 1e9).toFixed(2));
+
+  const flowColors = flowData.map(v => parseFloat(v) >= 0 ? '#3fb95088' : '#f8514988');
+  const flowBorders = flowData.map(v => parseFloat(v) >= 0 ? '#3fb950' : '#f85149');
+
+  const baseOpts = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
+    scales: {
+      x: { ticks: { color: '#8b949e', maxTicksLimit: 10, font: { size: 11 } }, grid: { color: '#21262d' } },
+      y: { ticks: { color: '#8b949e', font: { size: 11 } }, grid: { color: '#21262d' } }
+    }
+  };
+
+  // Flow 차트
+  charts.flow = new Chart(document.getElementById('chart-flow'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: '순유입 (M USD)',
+        data: flowData,
+        backgroundColor: flowColors,
+        borderColor: flowBorders,
+        borderWidth: 1,
+        borderRadius: 2,
+      }]
+    },
+    options: { ...baseOpts, plugins: { ...baseOpts.plugins, tooltip: {
+      callbacks: { label: ctx => ` $${ctx.parsed.y}M` }
+    }}}
+  });
+
+  // Cumulative 차트
+  charts.cum = new Chart(document.getElementById('chart-cum'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: '누적 유입 (B USD)',
+        data: cumData,
+        borderColor: color,
+        backgroundColor: color + '22',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 0,
+      }]
+    },
+    options: { ...baseOpts }
+  });
+
+  // Volume 차트
+  charts.vol = new Chart(document.getElementById('chart-vol'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: '거래대금 (B USD)',
+        data: volData,
+        backgroundColor: color + '55',
+        borderColor: color,
+        borderWidth: 1,
+        borderRadius: 2,
+      }]
+    },
+    options: { ...baseOpts }
+  });
+}
+
+// ── 테이블 렌더 ──
+function renderTable(coin) {
+  const d = metricsData[coin];
+  if (!d?.list) return;
+
+  document.getElementById('table-title').textContent = `${COIN_LABEL[coin]} Spot ETF 개별 현황`;
+
+  const tbody = document.getElementById('etf-tbody');
+  tbody.innerHTML = '';
+
+  const sorted = [...d.list].sort((a,b) => {
+    const av = parseFloat(a.netAssets?.value || 0);
+    const bv = parseFloat(b.netAssets?.value || 0);
+    return bv - av;
+  });
+
+  sorted.forEach(etf => {
+    const daily = etf.dailyNetInflow?.value;
+    const cum   = etf.cumNetInflow?.value;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>
+        <div class="ticker">${etf.ticker || '-'}</div>
+        <div class="inst">${etf.institute || ''}</div>
+      </td>
+      <td>$${fmt$B(etf.netAssets?.value)}</td>
+      <td class="${colorClass(daily)}">${daily != null ? (parseFloat(daily)>=0?'+':'')+' $'+fmt$M(Math.abs(daily)) : '-'}</td>
+      <td class="${colorClass(cum)}">$${fmt$B(cum)}</td>
+      <td>$${fmt$B(etf.dailyValueTraded?.value)}</td>
+      <td>${etf.fee?.value != null ? (parseFloat(etf.fee.value)*100).toFixed(2)+'%' : '-'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ── 코인 전환 ──
+async function switchCoin(coin) {
+  currentCoin = coin;
+  document.getElementById('btn-btc').className = 'coin-btn' + (coin==='btc' ? ' active-btc' : '');
+  document.getElementById('btn-eth').className = 'coin-btn' + (coin==='eth' ? ' active-eth' : '');
+  document.getElementById('btn-sol').className = 'coin-btn' + (coin==='sol' ? ' active-sol' : '');
+
+  await loadData(coin);
+  renderKPI(coin);
+  renderCharts(coin);
+  renderTable(coin);
+}
+
+// ── 초기 로드 ──
+switchCoin('btc');
+</script>
+</body>
+</html>
