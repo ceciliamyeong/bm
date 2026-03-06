@@ -24,6 +24,7 @@ HEADERS = {
 ETF_TYPES = {
     "btc": "us-btc-spot",
     "eth": "us-eth-spot",
+    "sol": "us-sol-spot",
 }
 
 def fetch_current_metrics(etf_type):
@@ -66,7 +67,7 @@ def main():
     updated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     print(f"[{updated_at}] ETF 데이터 수집 시작")
 
-    all_summary = {"updatedAt": updated_at, "btc": {}, "eth": {}}
+    all_summary = {"updatedAt": updated_at, "btc": {}, "eth": {}, "sol": {}}
 
     for coin, etf_type in ETF_TYPES.items():
         print(f"\n--- {coin.upper()} ({etf_type}) ---")
