@@ -1,0 +1,57 @@
+name: Test SoSoValue API
+
+on:
+  workflow_dispatch:  # 수동 실행 (Actions 탭에서 버튼 클릭)
+
+jobs:
+  test-api:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test SoSoValue ETF Endpoints
+        env:
+          SOSOVALUE_API_KEY: ${{ secrets.SOSOVALUE_API_KEY }}
+        run: |
+          echo "=============================="
+          echo "BTC ETF Historical Inflow"
+          echo "=============================="
+          curl -s -o /tmp/btc_history.json -w "HTTP Status: %{http_code}\n" \
+            -H "x-soso-api-key: $SOSOVALUE_API_KEY" \
+            "https://openapi.sosovalue.com/api/v1/etf/inflow/history?etfIndex=us-btc-spot"
+          cat /tmp/btc_history.json | head -c 500
+          echo ""
+
+          echo "=============================="
+          echo "BTC ETF Current Metrics"
+          echo "=============================="
+          curl -s -o /tmp/btc_metrics.json -w "HTTP Status: %{http_code}\n" \
+            -H "x-soso-api-key: $SOSOVALUE_API_KEY" \
+            "https://openapi.sosovalue.com/api/v1/etf/metrics?etfIndex=us-btc-spot"
+          cat /tmp/btc_metrics.json | head -c 500
+          echo ""
+
+          echo "=============================="
+          echo "ETH ETF Current Metrics"
+          echo "=============================="
+          curl -s -o /tmp/eth_metrics.json -w "HTTP Status: %{http_code}\n" \
+            -H "x-soso-api-key: $SOSOVALUE_API_KEY" \
+            "https://openapi.sosovalue.com/api/v1/etf/metrics?etfIndex=us-eth-spot"
+          cat /tmp/eth_metrics.json | head -c 500
+          echo ""
+
+          echo "=============================="
+          echo "SOL ETF Current Metrics"
+          echo "=============================="
+          curl -s -o /tmp/sol_metrics.json -w "HTTP Status: %{http_code}\n" \
+            -H "x-soso-api-key: $SOSOVALUE_API_KEY" \
+            "https://openapi.sosovalue.com/api/v1/etf/metrics?etfIndex=us-sol-spot"
+          cat /tmp/sol_metrics.json | head -c 500
+          echo ""
+
+          echo "=============================="
+          echo "XRP ETF Current Metrics"
+          echo "=============================="
+          curl -s -o /tmp/xrp_metrics.json -w "HTTP Status: %{http_code}\n" \
+            -H "x-soso-api-key: $SOSOVALUE_API_KEY" \
+            "https://openapi.sosovalue.com/api/v1/etf/metrics?etfIndex=us-xrp-spot"
+          cat /tmp/xrp_metrics.json | head -c 500
+          echo ""
