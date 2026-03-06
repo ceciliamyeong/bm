@@ -57,6 +57,13 @@ def fetch_historical_inflow(etf_type):
         raise Exception(f"API error: {data.get('msg')}")
     return data["data"]
 
+def load_json(path):
+    """기존 JSON 파일 로드 (없으면 None 반환)"""
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return None
+
 def save_json(path, data):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
@@ -94,17 +101,30 @@ def main():
         except Exception as e:
             print(f"  ❌ metrics 실패: {e}")
 
-        # 히스토리컬
+        # 히스토리컬 - 누적 저장
         try:
-            history = fetch_historical_inflow(etf_type)
-            # 최신순 정렬 (최근 90일만 저장해서 용량 절약)
-            history_sorted = sorted(history, key=lambda x: x["date"], reverse=True)[:90]
-            save_json(f"data/etf_{coin}_history.json", {
+            new_records = fetch_historical_inflow(etf_type)
+            hist_path = f"data/etf_{coin}_history.json"
+
+            # 기존 누적 데이터 로드
+            existing = load_json(hist_path)
+            existing_records = existing.get("data", []) if existing else []
+            prev_count = len(existing_records)
+
+            # 머지: date 기준 중복 제거, 신규 데이터 우선
+            merged = {}
+            for row in existing_records:
+                merged[row["date"]] = row
+            for row in new_records:
+                merged[row["date"]] = row
+            merged_records = sorted(merged.values(), key=lambda x: x["date"])
+
+            save_json(hist_path, {
                 "updatedAt": updated_at,
                 "type": etf_type,
-                "data": history_sorted
+                "data": merged_records
             })
-            print(f"  히스토리: {len(history_sorted)}일치 저장")
+            print(f"  히스토리: {prev_count}일 → {len(merged_records)}일 (+ {len(merged_records) - prev_count}일 추가)")
         except Exception as e:
             print(f"  ❌ history 실패: {e}")
 
