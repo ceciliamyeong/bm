@@ -20,6 +20,35 @@
       --purple: #bc8cff;
       --yellow: #e3b341;
     }
+    :root.light {
+      --bg: #f8fafc;
+      --bg2: #ffffff;
+      --bg3: #f1f5f9;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --text2: #64748b;
+      --green: #16a34a;
+      --red: #dc2626;
+      --blue: #2563eb;
+      --orange: #ea580c;
+      --purple: #7c3aed;
+      --yellow: #d97706;
+    }
+    /* 토글 버튼 */
+    .theme-toggle {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 12px;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--text2);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all .2s;
+    }
+    .theme-toggle:hover { color: var(--text); border-color: var(--text2); }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background: var(--bg);
@@ -257,7 +286,8 @@
     <a href="/" class="site-title">BLOCKMEDIA Data</a>
     <span class="page-badge">US Crypto ETF</span>
   </div>
-  <div class="header-meta">
+  <div class="header-meta" style="display:flex;align-items:center;gap:12px;">
+    <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn">☀️ Light</button>
     Updated: <span id="updated-at">-</span>
   </div>
 </header>
@@ -333,8 +363,9 @@
 </main>
 
 <footer>
-  Source: <a href="https://sosovalue.com" target="_blank" style="color:var(--blue)">SoSoValue</a> &nbsp;|&nbsp;
-  Information Purpose Only · BLOCKMEDIA Data
+  본 대시보드의 정보는 시장 동향 파악을 위한 참고 자료이며, 투자 권유 또는 재무적 조언이 아닙니다. &nbsp;|&nbsp;
+  Source: <a href="https://blockmedia.co.kr" target="_blank" style="color:var(--blue)">BLOCKMEDIA</a> &nbsp;·&nbsp;
+  <a href="https://sosovalue.com" target="_blank" style="color:var(--blue)">SoSoValue</a>
 </footer>
 
 <script>
@@ -446,13 +477,14 @@ function renderCharts(coin) {
   const flowColors = flowData.map(v => parseFloat(v) >= 0 ? '#3fb95088' : '#f8514988');
   const flowBorders = flowData.map(v => parseFloat(v) >= 0 ? '#3fb950' : '#f85149');
 
+  const { tickColor, gridColor } = getChartTheme();
   const baseOpts = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
     scales: {
-      x: { ticks: { color: '#8b949e', maxTicksLimit: 10, font: { size: 11 } }, grid: { color: '#21262d' } },
-      y: { ticks: { color: '#8b949e', font: { size: 11 } }, grid: { color: '#21262d' } }
+      x: { ticks: { color: tickColor, maxTicksLimit: 10, font: { size: 11 } }, grid: { color: gridColor } },
+      y: { ticks: { color: tickColor, font: { size: 11 } }, grid: { color: gridColor } }
     }
   };
 
@@ -559,8 +591,35 @@ async function switchCoin(coin) {
   renderTable(coin);
 }
 
+// ── 테마 토글 ──
+function toggleTheme() {
+  const isLight = document.documentElement.classList.toggle('light');
+  document.getElementById('theme-btn').textContent = isLight ? '🌙 Dark' : '☀️ Light';
+  localStorage.setItem('etf-theme', isLight ? 'light' : 'dark');
+  // 차트 색상 업데이트
+  renderCharts(currentCoin);
+}
+
+function getChartTheme() {
+  const isLight = document.documentElement.classList.contains('light');
+  return {
+    tickColor: isLight ? '#64748b' : '#8b949e',
+    gridColor: isLight ? '#e2e8f0' : '#21262d',
+  };
+}
+
+// ── 초기 테마 복원 ──
+(function() {
+  const saved = localStorage.getItem('etf-theme');
+  if (saved === 'light') {
+    document.documentElement.classList.add('light');
+    document.getElementById('theme-btn').textContent = '🌙 Dark';
+  }
+})();
+
 // ── 초기 로드 ──
 switchCoin('btc');
 </script>
 </body>
 </html>
+
