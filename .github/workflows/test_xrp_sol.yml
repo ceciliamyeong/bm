@@ -1,0 +1,52 @@
+name: Test XRP SOL ETF API
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-xrp-sol:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test XRP and SOL ETF Endpoints
+        env:
+          SOSOVALUE_API_KEY: ${{ secrets.SOSOVALUE_API_KEY }}
+        run: |
+          echo "=============================="
+          echo "XRP ETF Current Metrics"
+          echo "=============================="
+          curl -s -w "\nHTTP Status: %{http_code}\n" \
+            -X POST "https://api.sosovalue.xyz/openapi/v2/etf/currentEtfDataMetrics" \
+            -H "x-soso-api-key: $SOSOVALUE_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"type": "us-xrp-spot"}' | head -c 600
+          echo ""
+
+          echo "=============================="
+          echo "SOL ETF Current Metrics"
+          echo "=============================="
+          curl -s -w "\nHTTP Status: %{http_code}\n" \
+            -X POST "https://api.sosovalue.xyz/openapi/v2/etf/currentEtfDataMetrics" \
+            -H "x-soso-api-key: $SOSOVALUE_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"type": "us-sol-spot"}' | head -c 600
+          echo ""
+
+          echo "=============================="
+          echo "XRP ETF Historical Inflow"
+          echo "=============================="
+          curl -s -w "\nHTTP Status: %{http_code}\n" \
+            -X POST "https://api.sosovalue.xyz/openapi/v2/etf/historicalInflowChart" \
+            -H "x-soso-api-key: $SOSOVALUE_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"type": "us-xrp-spot"}' | head -c 600
+          echo ""
+
+          echo "=============================="
+          echo "SOL ETF Historical Inflow"
+          echo "=============================="
+          curl -s -w "\nHTTP Status: %{http_code}\n" \
+            -X POST "https://api.sosovalue.xyz/openapi/v2/etf/historicalInflowChart" \
+            -H "x-soso-api-key: $SOSOVALUE_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"type": "us-sol-spot"}' | head -c 600
+          echo ""
