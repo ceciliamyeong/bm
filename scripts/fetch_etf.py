@@ -8,7 +8,11 @@ BTC/ETH Spot ETF 데이터를 가져와 data/ 폴더에 JSON으로 저장
 import requests
 import json
 import os
+import urllib3
 from datetime import datetime, timezone
+
+# SSL 인증서 검증 비활성화 (api.sosovalue.xyz 인증서 이슈 우회)
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 API_KEY = os.environ["SOSOVALUE_API_KEY"]
 BASE_URL = "https://api.sosovalue.xyz"
@@ -28,7 +32,8 @@ def fetch_current_metrics(etf_type):
         f"{BASE_URL}/openapi/v2/etf/currentEtfDataMetrics",
         headers=HEADERS,
         json={"type": etf_type},
-        timeout=15
+        timeout=15,
+        verify=False
     )
     r.raise_for_status()
     data = r.json()
@@ -42,7 +47,8 @@ def fetch_historical_inflow(etf_type):
         f"{BASE_URL}/openapi/v2/etf/historicalInflowChart",
         headers=HEADERS,
         json={"type": etf_type},
-        timeout=15
+        timeout=15,
+        verify=False
     )
     r.raise_for_status()
     data = r.json()
