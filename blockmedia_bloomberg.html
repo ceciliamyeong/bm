@@ -21,7 +21,7 @@
     img { display:block; max-width:100%; height:auto; }
     p, div, td, span { word-break:keep-all; overflow-wrap:break-word; }
 
-    .wrap    { width:680px; max-width:680px; }
+    .wrap    { width:100%; max-width:680px; margin:0 auto; }
     .pad     { padding-left:32px; padding-right:32px; }
     .serif   { font-family:'Playfair Display',Georgia,'Times New Roman',serif; }
 
@@ -87,7 +87,7 @@
 
     @media only screen and (max-width:620px) {
       .wrap { width:100% !important; max-width:100% !important; }
-      .pad  { padding-left:20px !important; padding-right:20px !important; }
+      .pad  { padding-left:16px !important; padding-right:16px !important; }
 
       /* 대시보드 2단 → 세로 */
       .main-col { display:block !important; width:100% !important; padding:0 !important; }
@@ -99,14 +99,17 @@
       .snap-sub  { font-size:9px !important; }
 
       /* BM20 2단 유지 */
-      .bm20-val  { font-size:15px !important; }
+      .bm20-val  { font-size:13px !important; }
 
       /* CTA 2단 → 세로 */
       .cta-col  { display:block !important; width:100% !important; padding:0 0 8px 0 !important; }
       .cta-gap  { display:none !important; }
 
-      .hero-title { font-size:28px !important; }
-      .ticker-cell { font-size:10px !important; padding-right:10px !important; }
+      .hero-title { font-size:26px !important; }
+      .ticker-cell { font-size:10px !important; padding-right:8px !important; }
+
+      /* outer 패딩 줄이기 */
+      td[style*="padding:28px 12px"] { padding:12px 8px !important; }
     }
   </style>
 </head>
@@ -124,7 +127,7 @@
   <tr>
     <td align="center" style="padding:0 20px;">
       <table role="presentation" cellpadding="0" cellspacing="0" border="0"
-             style="width:100%;max-width:680px;">
+             style="width:100%;max-width:680px;margin:0 auto;">
         <tr>
           <td style="padding:12px 0;">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -161,7 +164,7 @@
   <tr>
     <td align="center" style="padding:8px 20px;">
       <table role="presentation" cellpadding="0" cellspacing="0" border="0"
-             style="width:100%;max-width:680px;">
+             style="width:100%;max-width:680px;margin:0 auto;">
         <tr>
           <td>
             <table role="presentation" cellpadding="0" cellspacing="0" border="0">
@@ -189,7 +192,7 @@
     <td align="center" style="padding:28px 12px;">
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
              class="wrap"
-             style="background:#faf8f5;border:1px solid #d4cfc8;">
+             style="max-width:680px;background:#faf8f5;border:1px solid #d4cfc8;margin:0 auto;">
 
         <!-- ══ HERO ══ -->
         <tr>
@@ -630,3 +633,4 @@
 
 </body>
 </html>
+
