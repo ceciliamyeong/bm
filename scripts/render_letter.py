@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
@@ -72,48 +73,107 @@ def _kst_now() -> str:
     return datetime.now(kst).strftime("%Y.%m.%d %H:%M")
 
 
-def fetch_coingecko_ticker() -> dict[str, str]:
-    """BTC·ETH·XRP 현재가 + 24h 변동률 (CoinGecko 무료 API)"""
-    try:
-        resp = requests.get(
-            "https://api.coingecko.com/api/v3/simple/price",
-            params={"ids": "bitcoin,ethereum,ripple",
-                    "vs_currencies": "usd",
-                    "include_24hr_change": "true"},
-            timeout=10,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-    except Exception as e:
-        print(f"WARN: CoinGecko fetch failed: {e}")
-        fb = {"PRICE": "—", "CHANGE": "—", "COLOR": "ticker-down"}
-        return {
-            **{f"TICKER_BTC_{k}": v for k, v in fb.items()},
-            **{f"TICKER_ETH_{k}": v for k, v in fb.items()},
-            **{f"TICKER_XRP_{k}": v for k, v in fb.items()},
-            "TICKER_TIME": _kst_now(),
-        }
+def fetch_coingecko_ticker(usdkrw_hint: float | None = None) -> dict[str, str]:
+    """BTC·ETH·XRP 현재가 + 24h 변동률
+    1순위: 업비트 KRW 가격 → USD 환산 (차단 없음, 안정적)
+    2순위: Binance USD (업비트 실패 시 폴백)
+    """
+    UPBIT_MARKETS = "KRW-BTC,KRW-ETH,KRW-XRP"
+    SYMS = {"KRW-BTC": "BTC", "KRW-ETH": "ETH", "KRW-XRP": "XRP"}
 
-    def _fmt(coin_id: str, sym: str) -> dict:
-        d = data.get(coin_id, {})
-        price, chg = d.get("usd"), d.get("usd_24h_change")
-        if price is None:
-            p_str = "—"
-        elif price >= 1_000:
-            p_str = f"${price:,.0f}"
-        elif price >= 1:
-            p_str = f"${price:,.2f}"
+    fb = {"PRICE": "—", "CHANGE": "—", "COLOR": "ticker-down"}
+    fallback = {
+        **{f"TICKER_BTC_{k}": v for k, v in fb.items()},
+        **{f"TICKER_ETH_{k}": v for k, v in fb.items()},
+        **{f"TICKER_XRP_{k}": v for k, v in fb.items()},
+        "TICKER_TIME": _kst_now(),
+    }
+
+    def _fmt_from_upbit(item: dict, sym: str, fx: float) -> dict:
+        try:
+            price_krw = float(item["trade_price"])
+            chg       = float(item["signed_change_rate"]) * 100  # 0.041 → 4.1
+            price_usd = price_krw / fx
+        except Exception:
+            return {f"TICKER_{sym}_PRICE": "—", f"TICKER_{sym}_CHANGE": "—", f"TICKER_{sym}_COLOR": "ticker-down"}
+        if price_usd >= 1_000:
+            p_str = f"${price_usd:,.0f}"
+        elif price_usd >= 1:
+            p_str = f"${price_usd:,.2f}"
         else:
-            p_str = f"${price:.4f}"
-        if chg is None:
-            return {f"TICKER_{sym}_PRICE": p_str, f"TICKER_{sym}_CHANGE": "—", f"TICKER_{sym}_COLOR": "ticker-down"}
+            p_str = f"${price_usd:.4f}"
         arrow = "▲" if chg >= 0 else "▼"
         cls   = "ticker-up" if chg >= 0 else "ticker-down"
         return {f"TICKER_{sym}_PRICE": p_str, f"TICKER_{sym}_CHANGE": f"{arrow}{abs(chg):.1f}%", f"TICKER_{sym}_COLOR": cls}
 
-    result = {**_fmt("bitcoin","BTC"), **_fmt("ethereum","ETH"), **_fmt("ripple","XRP")}
-    result["TICKER_TIME"] = _kst_now()
-    return result
+    # ── 1순위: 업비트 ──
+    try:
+        resp = requests.get(
+            "https://api.upbit.com/v1/ticker",
+            params={"markets": UPBIT_MARKETS},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        items = {item["market"]: item for item in resp.json()}
+
+        # 환율: 힌트 우선 → 업비트 BTC KRW/USD 역산
+        fx = usdkrw_hint
+        if not fx or fx < 100:
+            btc_krw = float(items["KRW-BTC"]["trade_price"])
+            # Binance BTC USD로 환율 추정 (짧은 요청 한 번)
+            try:
+                b = requests.get("https://api.binance.com/api/v3/ticker/price",
+                                 params={"symbol": "BTCUSDT"}, timeout=5).json()
+                btc_usd = float(b["price"])
+                fx = btc_krw / btc_usd
+            except Exception:
+                fx = 1350.0  # 최후 하드코딩 폴백
+
+        result = {}
+        for market, sym in SYMS.items():
+            result.update(_fmt_from_upbit(items[market], sym, fx))
+        result["TICKER_TIME"] = _kst_now()
+        print(f"INFO: Ticker via Upbit (fx={fx:.1f})")
+        return result
+
+    except Exception as e:
+        print(f"WARN: Upbit ticker failed: {e} — trying Binance fallback")
+
+    # ── 2순위: Binance 폴백 ──
+    try:
+        resp = requests.get(
+            "https://api.binance.com/api/v3/ticker/24hr",
+            params={"symbols": '["BTCUSDT","ETHUSDT","XRPUSDT"]'},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        data = {item["symbol"]: item for item in resp.json()}
+
+        def _fmt_binance(bsym: str, sym: str) -> dict:
+            d = data.get(bsym, {})
+            try:
+                price = float(d["lastPrice"])
+                chg   = float(d["priceChangePercent"])
+            except Exception:
+                return {f"TICKER_{sym}_PRICE": "—", f"TICKER_{sym}_CHANGE": "—", f"TICKER_{sym}_COLOR": "ticker-down"}
+            if price >= 1_000:
+                p_str = f"${price:,.0f}"
+            elif price >= 1:
+                p_str = f"${price:,.2f}"
+            else:
+                p_str = f"${price:.4f}"
+            arrow = "▲" if chg >= 0 else "▼"
+            cls   = "ticker-up" if chg >= 0 else "ticker-down"
+            return {f"TICKER_{sym}_PRICE": p_str, f"TICKER_{sym}_CHANGE": f"{arrow}{abs(chg):.1f}%", f"TICKER_{sym}_COLOR": cls}
+
+        result = {**_fmt_binance("BTCUSDT","BTC"), **_fmt_binance("ETHUSDT","ETH"), **_fmt_binance("XRPUSDT","XRP")}
+        result["TICKER_TIME"] = _kst_now()
+        print("INFO: Ticker via Binance fallback")
+        return result
+
+    except Exception as e:
+        print(f"WARN: Binance fallback also failed: {e}")
+        return fallback
 
 
 def fetch_upbit_top_bottom(n: int = 3) -> dict[str, str]:
@@ -661,8 +721,13 @@ def build_placeholders() -> dict[str, str]:
     ph.update(aas_defaults)
 
     # ── 실시간 데이터 주입 ──
-    # CoinGecko 티커 (BTC·ETH·XRP)
-    for k, v in fetch_coingecko_ticker().items():
+    # 업비트 티커 (BTC·ETH·XRP), usdkrw 힌트 전달로 환율 API 호출 최소화
+    usdkrw_float = None
+    try:
+        usdkrw_float = float(str(usdkrw).replace(",", "")) if usdkrw else None
+    except Exception:
+        pass
+    for k, v in fetch_coingecko_ticker(usdkrw_hint=usdkrw_float).items():
         ph["{{" + k + "}}"] = v
 
     # BM20 티커 (기존 bm20_1d_pct 재사용)
@@ -679,11 +744,6 @@ def build_placeholders() -> dict[str, str]:
         ph["{{" + k + "}}"] = v
 
     # 김치 vs 코인베이스 프리미엄
-    usdkrw_float = None
-    try:
-        usdkrw_float = float(str(usdkrw).replace(",", "")) if usdkrw else None
-    except Exception:
-        pass
     for k, v in fetch_premium_data(usdkrw_float).items():
         ph["{{" + k + "}}"] = v
 
