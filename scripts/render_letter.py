@@ -38,7 +38,7 @@ from datetime import datetime, timezone, timedelta
 
 ROOT = Path(__file__).resolve().parent.parent
 
-TEMPLATE = ROOT / "letter_newsletter_template.html"
+TEMPLATE = ROOT / "newsletter_blockmedia.html"  # 블록미디어 공식 뉴스레터 템플릿
 
 BM20_JSON = ROOT / "bm20_latest.json"
 DAILY_CSV = ROOT / "bm20_daily_data_latest.csv"
@@ -62,122 +62,117 @@ MUTED = "#64748b"
 # 1x1 transparent gif to avoid broken image boxes in email clients
 TRANSPARENT_GIF = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
 
-# ------------------ 한국 투자자 시그널: 업비트 API + 코인베이스 프리미엄 ------------------
 
-def fetch_upbit_top_bottom(n: int = 3) -> dict[str, str]:
-    """
-    업비트 KRW 마켓 전체 ticker 조회 → 24h 등락률 기준 Top/Bottom n 반환.
-    실패 시 "—" 로 채운 dict 반환.
-    """
-    FALLBACK = {
-        **{f"UPBIT_TOP{i}_SYMBOL": "—" for i in range(1, n + 1)},
-        **{f"UPBIT_TOP{i}_CHG":    "—" for i in range(1, n + 1)},
-        **{f"UPBIT_BOT{i}_SYMBOL": "—" for i in range(1, n + 1)},
-        **{f"UPBIT_BOT{i}_CHG":    "—" for i in range(1, n + 1)},
-    }
+# ─────────────────────────────────────────────────────────
+# 실시간 데이터: CoinGecko 티커 + 업비트 Top/Bottom + 프리미엄
+# ─────────────────────────────────────────────────────────
+
+def _kst_now() -> str:
+    kst = timezone(timedelta(hours=9))
+    return datetime.now(kst).strftime("%Y.%m.%d %H:%M")
+
+
+def fetch_coingecko_ticker() -> dict[str, str]:
+    """BTC·ETH·XRP 현재가 + 24h 변동률 (CoinGecko 무료 API)"""
     try:
-        # 1) KRW 마켓 목록 조회
-        markets_resp = requests.get(
-            "https://api.upbit.com/v1/market/all",
-            params={"isDetails": "false"},
+        resp = requests.get(
+            "https://api.coingecko.com/api/v3/simple/price",
+            params={"ids": "bitcoin,ethereum,ripple",
+                    "vs_currencies": "usd",
+                    "include_24hr_change": "true"},
             timeout=10,
         )
-        markets_resp.raise_for_status()
-        krw_markets = [
-            m["market"] for m in markets_resp.json()
-            if m["market"].startswith("KRW-")
-        ]
+        resp.raise_for_status()
+        data = resp.json()
+    except Exception as e:
+        print(f"WARN: CoinGecko fetch failed: {e}")
+        fb = {"PRICE": "—", "CHANGE": "—", "COLOR": "ticker-down"}
+        return {
+            **{f"TICKER_BTC_{k}": v for k, v in fb.items()},
+            **{f"TICKER_ETH_{k}": v for k, v in fb.items()},
+            **{f"TICKER_XRP_{k}": v for k, v in fb.items()},
+            "TICKER_TIME": _kst_now(),
+        }
 
-        # 2) 전체 ticker 조회 (최대 100개씩 나눠서)
+    def _fmt(coin_id: str, sym: str) -> dict:
+        d = data.get(coin_id, {})
+        price, chg = d.get("usd"), d.get("usd_24h_change")
+        if price is None:
+            p_str = "—"
+        elif price >= 1_000:
+            p_str = f"${price:,.0f}"
+        elif price >= 1:
+            p_str = f"${price:,.2f}"
+        else:
+            p_str = f"${price:.4f}"
+        if chg is None:
+            return {f"TICKER_{sym}_PRICE": p_str, f"TICKER_{sym}_CHANGE": "—", f"TICKER_{sym}_COLOR": "ticker-down"}
+        arrow = "▲" if chg >= 0 else "▼"
+        cls   = "ticker-up" if chg >= 0 else "ticker-down"
+        return {f"TICKER_{sym}_PRICE": p_str, f"TICKER_{sym}_CHANGE": f"{arrow}{abs(chg):.1f}%", f"TICKER_{sym}_COLOR": cls}
+
+    result = {**_fmt("bitcoin","BTC"), **_fmt("ethereum","ETH"), **_fmt("ripple","XRP")}
+    result["TICKER_TIME"] = _kst_now()
+    return result
+
+
+def fetch_upbit_top_bottom(n: int = 3) -> dict[str, str]:
+    """업비트 KRW 전체 마켓 24h 등락률 Top/Bottom n"""
+    FB = {**{f"UPBIT_TOP{i}_SYMBOL": "—" for i in range(1,n+1)},
+          **{f"UPBIT_TOP{i}_CHG":    "—" for i in range(1,n+1)},
+          **{f"UPBIT_BOT{i}_SYMBOL": "—" for i in range(1,n+1)},
+          **{f"UPBIT_BOT{i}_CHG":    "—" for i in range(1,n+1)}}
+    try:
+        mkts = [m["market"] for m in
+                requests.get("https://api.upbit.com/v1/market/all",
+                             params={"isDetails":"false"}, timeout=10).json()
+                if m["market"].startswith("KRW-")]
         tickers = []
-        chunk_size = 100
-        for i in range(0, len(krw_markets), chunk_size):
-            chunk = krw_markets[i : i + chunk_size]
-            r = requests.get(
-                "https://api.upbit.com/v1/ticker",
-                params={"markets": ",".join(chunk)},
-                timeout=10,
-            )
-            r.raise_for_status()
-            tickers.extend(r.json())
-
-        # 3) 등락률 정렬
+        for i in range(0, len(mkts), 100):
+            tickers += requests.get("https://api.upbit.com/v1/ticker",
+                                    params={"markets": ",".join(mkts[i:i+100])},
+                                    timeout=10).json()
         tickers.sort(key=lambda x: x.get("signed_change_rate", 0), reverse=True)
-        tops    = tickers[:n]
-        bottoms = tickers[-n:][::-1]  # 가장 많이 내린 순
-
         result = {}
-        for i, t in enumerate(tops, 1):
+        for i, t in enumerate(tickers[:n], 1):
             sym = t["market"].replace("KRW-", "")
             pct = float(t.get("signed_change_rate", 0)) * 100
             result[f"UPBIT_TOP{i}_SYMBOL"] = sym
             result[f"UPBIT_TOP{i}_CHG"]    = f"+{pct:.1f}%"
-        for i, t in enumerate(bottoms, 1):
+        for i, t in enumerate(reversed(tickers[-n:]), 1):
             sym = t["market"].replace("KRW-", "")
             pct = float(t.get("signed_change_rate", 0)) * 100
             result[f"UPBIT_BOT{i}_SYMBOL"] = sym
             result[f"UPBIT_BOT{i}_CHG"]    = f"{pct:.1f}%"
         return result
-
     except Exception as e:
-        print(f"WARN: Upbit top/bottom fetch failed: {e}")
-        return FALLBACK
+        print(f"WARN: Upbit top/bottom failed: {e}")
+        return FB
 
 
 def fetch_premium_data(usdkrw: float | None) -> dict[str, str]:
-    """
-    김치 프리미엄  = (업비트 BTC KRW / 환율 − CoinGecko BTC USD) / CoinGecko BTC USD × 100
-    코인베이스 프리미엄 = (업비트 BTC KRW / 환율 − Coinbase BTC USD) / Coinbase BTC USD × 100
-    실패 시 "—" 반환.
-    """
-    FALLBACK = {
-        "KIMCHI_PREM_PCT":  "—",
-        "CB_PREMIUM_PCT":   "—",
-        "PREMIUM_COMMENT":  "프리미엄 데이터를 가져올 수 없습니다.",
-    }
+    """김치 프리미엄 vs 코인베이스 프리미엄 계산"""
+    FB = {"KIMCHI_PREM_PCT": "—", "CB_PREMIUM_PCT": "—",
+          "PREMIUM_COMMENT": "프리미엄 데이터를 가져올 수 없습니다."}
     try:
-        # 1) 업비트 BTC KRW 현재가
-        upbit_r = requests.get(
-            "https://api.upbit.com/v1/ticker",
-            params={"markets": "KRW-BTC"},
-            timeout=10,
-        )
-        upbit_r.raise_for_status()
-        upbit_btc_krw = float(upbit_r.json()[0]["trade_price"])
+        upbit_btc_krw = float(
+            requests.get("https://api.upbit.com/v1/ticker",
+                         params={"markets":"KRW-BTC"}, timeout=10).json()[0]["trade_price"])
+        cg = requests.get("https://api.coingecko.com/api/v3/simple/price",
+                          params={"ids":"bitcoin","vs_currencies":"usd,krw"}, timeout=10).json()["bitcoin"]
+        cg_usd, cg_krw = float(cg["usd"]), float(cg["krw"])
+        fx = usdkrw if (usdkrw and usdkrw > 100) else (cg_krw / cg_usd)
+        cb_usd = float(
+            requests.get("https://api.coinbase.com/v2/prices/BTC-USD/spot", timeout=10).json()["data"]["amount"])
+        upbit_usd  = upbit_btc_krw / fx
+        kimchi_pct = (upbit_usd - cg_usd)  / cg_usd  * 100
+        cb_pct     = (upbit_usd - cb_usd)   / cb_usd  * 100
 
-        # 2) CoinGecko BTC USD + KRW 환율
-        cg_r = requests.get(
-            "https://api.coingecko.com/api/v3/simple/price",
-            params={"ids": "bitcoin", "vs_currencies": "usd,krw"},
-            timeout=10,
-        )
-        cg_r.raise_for_status()
-        cg_data = cg_r.json()["bitcoin"]
-        cg_btc_usd = float(cg_data["usd"])
-        cg_btc_krw = float(cg_data["krw"])
-
-        # 환율: bm20 json에서 왔으면 그걸 쓰고, 없으면 CoinGecko KRW/USD로 역산
-        fx = usdkrw if (usdkrw and usdkrw > 100) else (cg_btc_krw / cg_btc_usd)
-
-        # 3) Coinbase BTC USD (Coinbase Advanced API, 무료·키 불필요)
-        cb_r = requests.get(
-            "https://api.coinbase.com/v2/prices/BTC-USD/spot",
-            timeout=10,
-        )
-        cb_r.raise_for_status()
-        cb_btc_usd = float(cb_r.json()["data"]["amount"])
-
-        # 4) 프리미엄 계산
-        upbit_btc_usd = upbit_btc_krw / fx
-        kimchi_pct = (upbit_btc_usd - cg_btc_usd) / cg_btc_usd * 100
-        cb_pct     = (upbit_btc_usd - cb_btc_usd)  / cb_btc_usd  * 100
-
-        def _fmt_pct(v: float) -> str:
+        def _c(v: float) -> str:
             arrow = "▲" if v >= 0 else "▼"
             color = GREEN if v >= 0 else RED
             return f'<span style="color:{color};font-weight:900;">{arrow}{abs(v):.2f}%</span>'
 
-        # 코멘트 자동 생성
         if kimchi_pct > 1 and cb_pct > 0:
             comment = "김치·코인베이스 프리미엄 동시 양전 → 글로벌 대비 국내 수요 강세 신호."
         elif kimchi_pct > 1 and cb_pct <= 0:
@@ -187,16 +182,10 @@ def fetch_premium_data(usdkrw: float | None) -> dict[str, str]:
         else:
             comment = f"김치 {kimchi_pct:+.2f}% / 코인베이스 {cb_pct:+.2f}% — 중립 구간."
 
-        return {
-            "KIMCHI_PREM_PCT": _fmt_pct(kimchi_pct),
-            "CB_PREMIUM_PCT":  _fmt_pct(cb_pct),
-            "PREMIUM_COMMENT": comment,
-        }
-
+        return {"KIMCHI_PREM_PCT": _c(kimchi_pct), "CB_PREMIUM_PCT": _c(cb_pct), "PREMIUM_COMMENT": comment}
     except Exception as e:
         print(f"WARN: Premium fetch failed: {e}")
-        return FALLBACK
-
+        return FB
 
 # ------------------ small IO helpers ------------------
 
@@ -670,21 +659,6 @@ def build_placeholders() -> dict[str, str]:
         "{{DASHBOARD_PREVIEW_CAPTION}}": dash_preview_caption,
     }
     ph.update(aas_defaults)
-
-    # ── 한국 투자자 시그널: 업비트 Top/Bottom + 프리미엄 ──
-    upbit_tb = fetch_upbit_top_bottom(n=3)
-    for k, v in upbit_tb.items():
-        ph["{{" + k + "}}"] = v
-
-    usdkrw_float = None
-    if usdkrw is not None:
-        try:
-            usdkrw_float = float(str(usdkrw).replace(",", ""))
-        except Exception:
-            pass
-    premium = fetch_premium_data(usdkrw_float)
-    for k, v in premium.items():
-        ph["{{" + k + "}}"] = v
 
     # also replace plain tokens (not wrapped)
     ph["SUBSCRIBE_URL"] = subscribe_url
