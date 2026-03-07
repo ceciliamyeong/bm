@@ -660,6 +660,33 @@ def build_placeholders() -> dict[str, str]:
     }
     ph.update(aas_defaults)
 
+    # ── 실시간 데이터 주입 ──
+    # CoinGecko 티커 (BTC·ETH·XRP)
+    for k, v in fetch_coingecko_ticker().items():
+        ph["{{" + k + "}}"] = v
+
+    # BM20 티커 (기존 bm20_1d_pct 재사용)
+    if bm20_1d_pct is not None:
+        arrow = "▲" if bm20_1d_pct >= 0 else "▼"
+        ph["{{TICKER_BM20_CHANGE}}"] = f"{arrow}{abs(bm20_1d_pct):.1f}%"
+        ph["{{TICKER_BM20_COLOR}}"]  = "ticker-up" if bm20_1d_pct >= 0 else "ticker-down"
+    else:
+        ph["{{TICKER_BM20_CHANGE}}"] = "—"
+        ph["{{TICKER_BM20_COLOR}}"]  = "ticker-down"
+
+    # 업비트 Top3 / Bottom3
+    for k, v in fetch_upbit_top_bottom(n=3).items():
+        ph["{{" + k + "}}"] = v
+
+    # 김치 vs 코인베이스 프리미엄
+    usdkrw_float = None
+    try:
+        usdkrw_float = float(str(usdkrw).replace(",", "")) if usdkrw else None
+    except Exception:
+        pass
+    for k, v in fetch_premium_data(usdkrw_float).items():
+        ph["{{" + k + "}}"] = v
+
     # also replace plain tokens (not wrapped)
     ph["SUBSCRIBE_URL"] = subscribe_url
     ph["https://data.blockmedia.co.kr/data-request?utm_source=newsletter&utm_medium=email&utm_campaign=daily_letter&utm_content=request"] = data_request_url
