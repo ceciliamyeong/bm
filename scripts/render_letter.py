@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
@@ -48,6 +47,7 @@ BTC_JSON = ROOT / "out/history/btc_usd_series.json"  # optional
 
 BM20_HISTORY_JSON = ROOT / "data/bm20_history.json"  # optional
 XRP_KR_SHARE_JSON = ROOT / "out/global/k_xrp_share_24h_latest.json"  # optional
+ETF_JSON          = ROOT / "data/etf_summary.json"  # optional
 
 NEWS_ONELINER_TXT = ROOT / "out/latest/news_one_liner.txt"
 NEWS_ONELINER_NOTE_TXT = ROOT / "out/latest/news_one_liner_note.txt"
@@ -73,14 +73,11 @@ def _kst_now() -> str:
     return datetime.now(kst).strftime("%Y.%m.%d %H:%M")
 
 
-def fetch_coingecko_ticker(usdkrw_hint: float | None = None) -> dict[str, str]:
-    """BTC·ETH·XRP 현재가 + 24h 변동률
-    1순위: 업비트 KRW 가격 → USD 환산 (차단 없음, 안정적)
-    2순위: Binance USD (업비트 실패 시 폴백)
-    """
-    UPBIT_MARKETS = "KRW-BTC,KRW-ETH,KRW-XRP"
-    SYMS = {"KRW-BTC": "BTC", "KRW-ETH": "ETH", "KRW-XRP": "XRP"}
+def fetch_yahoo_ticker() -> dict[str, str]:
+    """BTC·ETH·XRP 현재가 + 24h 변동률 (Yahoo Finance — yfinance)"""
+    import yfinance as yf
 
+    SYMBOLS = {"BTC-USD": "BTC", "ETH-USD": "ETH", "XRP-USD": "XRP"}
     fb = {"PRICE": "—", "CHANGE": "—", "COLOR": "ticker-down"}
     fallback = {
         **{f"TICKER_BTC_{k}": v for k, v in fb.items()},
@@ -89,91 +86,45 @@ def fetch_coingecko_ticker(usdkrw_hint: float | None = None) -> dict[str, str]:
         "TICKER_TIME": _kst_now(),
     }
 
-    def _fmt_from_upbit(item: dict, sym: str, fx: float) -> dict:
-        try:
-            price_krw = float(item["trade_price"])
-            chg       = float(item["signed_change_rate"]) * 100  # 0.041 → 4.1
-            price_usd = price_krw / fx
-        except Exception:
-            return {f"TICKER_{sym}_PRICE": "—", f"TICKER_{sym}_CHANGE": "—", f"TICKER_{sym}_COLOR": "ticker-down"}
-        if price_usd >= 1_000:
-            p_str = f"${price_usd:,.0f}"
-        elif price_usd >= 1:
-            p_str = f"${price_usd:,.2f}"
-        else:
-            p_str = f"${price_usd:.4f}"
-        arrow = "▲" if chg >= 0 else "▼"
-        cls   = "ticker-up" if chg >= 0 else "ticker-down"
-        return {f"TICKER_{sym}_PRICE": p_str, f"TICKER_{sym}_CHANGE": f"{arrow}{abs(chg):.1f}%", f"TICKER_{sym}_COLOR": cls}
-
-    # ── 1순위: 업비트 ──
     try:
-        resp = requests.get(
-            "https://api.upbit.com/v1/ticker",
-            params={"markets": UPBIT_MARKETS},
-            timeout=10,
-        )
-        resp.raise_for_status()
-        items = {item["market"]: item for item in resp.json()}
-
-        # 환율: 힌트 우선 → 업비트 BTC KRW/USD 역산
-        fx = usdkrw_hint
-        if not fx or fx < 100:
-            btc_krw = float(items["KRW-BTC"]["trade_price"])
-            # Binance BTC USD로 환율 추정 (짧은 요청 한 번)
-            try:
-                b = requests.get("https://api.binance.com/api/v3/ticker/price",
-                                 params={"symbol": "BTCUSDT"}, timeout=5).json()
-                btc_usd = float(b["price"])
-                fx = btc_krw / btc_usd
-            except Exception:
-                fx = 1350.0  # 최후 하드코딩 폴백
-
+        tickers = yf.Tickers(" ".join(SYMBOLS.keys()))
         result = {}
-        for market, sym in SYMS.items():
-            result.update(_fmt_from_upbit(items[market], sym, fx))
-        result["TICKER_TIME"] = _kst_now()
-        print(f"INFO: Ticker via Upbit (fx={fx:.1f})")
-        return result
-
-    except Exception as e:
-        print(f"WARN: Upbit ticker failed: {e} — trying Binance fallback")
-
-    # ── 2순위: Binance 폴백 ──
-    try:
-        resp = requests.get(
-            "https://api.binance.com/api/v3/ticker/24hr",
-            params={"symbols": '["BTCUSDT","ETHUSDT","XRPUSDT"]'},
-            timeout=10,
-        )
-        resp.raise_for_status()
-        data = {item["symbol"]: item for item in resp.json()}
-
-        def _fmt_binance(bsym: str, sym: str) -> dict:
-            d = data.get(bsym, {})
+        for yf_sym, sym in SYMBOLS.items():
             try:
-                price = float(d["lastPrice"])
-                chg   = float(d["priceChangePercent"])
-            except Exception:
-                return {f"TICKER_{sym}_PRICE": "—", f"TICKER_{sym}_CHANGE": "—", f"TICKER_{sym}_COLOR": "ticker-down"}
-            if price >= 1_000:
-                p_str = f"${price:,.0f}"
-            elif price >= 1:
-                p_str = f"${price:,.2f}"
-            else:
-                p_str = f"${price:.4f}"
-            arrow = "▲" if chg >= 0 else "▼"
-            cls   = "ticker-up" if chg >= 0 else "ticker-down"
-            return {f"TICKER_{sym}_PRICE": p_str, f"TICKER_{sym}_CHANGE": f"{arrow}{abs(chg):.1f}%", f"TICKER_{sym}_COLOR": cls}
+                info  = tickers.tickers[yf_sym].fast_info
+                price = float(info.last_price)
+                prev  = float(info.previous_close)
+                chg   = (price - prev) / prev * 100 if prev else 0.0
 
-        result = {**_fmt_binance("BTCUSDT","BTC"), **_fmt_binance("ETHUSDT","ETH"), **_fmt_binance("XRPUSDT","XRP")}
+                if price >= 1_000:
+                    p_str = f"${price:,.0f}"
+                elif price >= 1:
+                    p_str = f"${price:,.2f}"
+                else:
+                    p_str = f"${price:.4f}"
+
+                arrow = "▲" if chg >= 0 else "▼"
+                cls   = "ticker-up" if chg >= 0 else "ticker-down"
+                result[f"TICKER_{sym}_PRICE"]  = p_str
+                result[f"TICKER_{sym}_CHANGE"] = f"{arrow}{abs(chg):.1f}%"
+                result[f"TICKER_{sym}_COLOR"]  = cls
+            except Exception as e:
+                print(f"WARN: Yahoo ticker {yf_sym} failed: {e}")
+                result[f"TICKER_{sym}_PRICE"]  = "—"
+                result[f"TICKER_{sym}_CHANGE"] = "—"
+                result[f"TICKER_{sym}_COLOR"]  = "ticker-down"
+
         result["TICKER_TIME"] = _kst_now()
-        print("INFO: Ticker via Binance fallback")
+        print("INFO: Ticker via Yahoo Finance")
         return result
 
     except Exception as e:
-        print(f"WARN: Binance fallback also failed: {e}")
+        print(f"WARN: Yahoo Finance fetch failed: {e}")
         return fallback
+
+
+# 하위 호환 alias (기존 호출부 변경 불필요)
+fetch_coingecko_ticker = fetch_yahoo_ticker
 
 
 def fetch_upbit_top_bottom(n: int = 3) -> dict[str, str]:
@@ -218,10 +169,11 @@ def fetch_premium_data(usdkrw: float | None) -> dict[str, str]:
         upbit_btc_krw = float(
             requests.get("https://api.upbit.com/v1/ticker",
                          params={"markets":"KRW-BTC"}, timeout=10).json()[0]["trade_price"])
-        cg = requests.get("https://api.coingecko.com/api/v3/simple/price",
-                          params={"ids":"bitcoin","vs_currencies":"usd,krw"}, timeout=10).json()["bitcoin"]
-        cg_usd, cg_krw = float(cg["usd"]), float(cg["krw"])
-        fx = usdkrw if (usdkrw and usdkrw > 100) else (cg_krw / cg_usd)
+        # Yahoo Finance로 BTC USD 기준가 조회
+        import yfinance as yf
+        yf_btc = yf.Ticker("BTC-USD").fast_info
+        cg_usd = float(yf_btc.last_price)
+        fx = usdkrw if (usdkrw and usdkrw > 100) else 1350.0  # 환율 힌트 없으면 하드코딩 폴백
         cb_usd = float(
             requests.get("https://api.coinbase.com/v2/prices/BTC-USD/spot", timeout=10).json()["data"]["amount"])
         upbit_usd  = upbit_btc_krw / fx
@@ -246,6 +198,99 @@ def fetch_premium_data(usdkrw: float | None) -> dict[str, str]:
     except Exception as e:
         print(f"WARN: Premium fetch failed: {e}")
         return FB
+
+def load_etf_summary() -> dict[str, str]:
+    """data/etf_summary.json → ETF 플레이스홀더 딕셔너리"""
+    FB = {
+        "{{ETF_BTC_INFLOW}}": "—", "{{ETF_BTC_AUM}}": "—", "{{ETF_BTC_CUM}}": "—", "{{ETF_BTC_HOLDINGS}}": "—",
+        "{{ETF_ETH_INFLOW}}": "—", "{{ETF_ETH_AUM}}": "—", "{{ETF_ETH_CUM}}": "—", "{{ETF_ETH_HOLDINGS}}": "—",
+        "{{ETF_SOL_INFLOW}}": "—", "{{ETF_SOL_AUM}}": "—", "{{ETF_SOL_CUM}}": "—", "{{ETF_SOL_HOLDINGS}}": "—",
+        "{{ETF_BTC_INFLOW_COLOR}}": "color:#64748b;",
+        "{{ETF_ETH_INFLOW_COLOR}}": "color:#64748b;",
+        "{{ETF_SOL_INFLOW_COLOR}}": "color:#64748b;",
+        "{{ETF_COMMENT}}": "ETF 데이터를 불러올 수 없습니다.",
+        "{{ETF_ASOF}}": "—",
+    }
+    if not ETF_JSON.exists():
+        print(f"WARN: ETF json not found: {ETF_JSON}")
+        return FB
+    try:
+        raw = json.loads(ETF_JSON.read_text(encoding="utf-8"))
+    except Exception as e:
+        print(f"WARN: ETF json parse error: {e}")
+        return FB
+
+    def _fmt_usd(val, digits=0) -> str:
+        """숫자 → 억달러 단위 포맷"""
+        try:
+            v = float(val)
+        except Exception:
+            return "—"
+        billions = v / 1_000_000_000
+        if abs(billions) >= 1:
+            return f"${billions:+.1f}B" if digits == 0 else f"${billions:.1f}B"
+        millions = v / 1_000_000
+        return f"${millions:+.0f}M"
+
+    def _fmt_aum(val) -> str:
+        try:
+            v = float(val)
+            b = v / 1_000_000_000
+            return f"${b:.1f}B"
+        except Exception:
+            return "—"
+
+    def _fmt_holdings(val, sym) -> str:
+        try:
+            v = float(val)
+            return f"{v:,.0f} {sym}"
+        except Exception:
+            return "—"
+
+    def _inflow_color(val) -> str:
+        try:
+            v = float(val)
+            if v > 0:  return f"color:#16a34a;font-weight:900;"
+            if v < 0:  return f"color:#dc2626;font-weight:900;"
+        except Exception:
+            pass
+        return "color:#64748b;"
+
+    def _parse(coin: str, sym: str) -> dict:
+        d = raw.get(coin, {})
+        inflow_raw = d.get("dailyNetInflow", None)
+        return {
+            f"{{{{ETF_{sym}_INFLOW}}}}":       _fmt_usd(inflow_raw),
+            f"{{{{ETF_{sym}_AUM}}}}":           _fmt_aum(d.get("totalNetAssets")),
+            f"{{{{ETF_{sym}_CUM}}}}":           _fmt_usd(d.get("cumNetInflow"), digits=0),
+            f"{{{{ETF_{sym}_HOLDINGS}}}}":      _fmt_holdings(d.get("totalTokenHoldings"), sym),
+            f"{{{{ETF_{sym}_INFLOW_COLOR}}}}":  _inflow_color(inflow_raw),
+        }
+
+    result = {}
+    result.update(_parse("btc", "BTC"))
+    result.update(_parse("eth", "ETH"))
+    result.update(_parse("sol", "SOL"))
+
+    # ETF 코멘트 자동 생성
+    try:
+        btc_v = float(raw.get("btc", {}).get("dailyNetInflow", 0))
+        eth_v = float(raw.get("eth", {}).get("dailyNetInflow", 0))
+        if btc_v > 0 and eth_v > 0:
+            comment = f"BTC·ETH ETF 동시 순유입 — 기관 수급 전반적 우호."
+        elif btc_v > 0 and eth_v <= 0:
+            comment = f"BTC ETF 순유입, ETH 소폭 유출 — BTC 집중 매수 구간."
+        elif btc_v < 0 and eth_v < 0:
+            comment = f"BTC·ETH ETF 동시 순유출 — 기관 단기 차익실현 신호."
+        else:
+            comment = f"ETF 혼조세 — 방향성 확인 필요."
+    except Exception:
+        comment = "—"
+
+    result["{{ETF_COMMENT}}"] = comment
+    result["{{ETF_ASOF}}"] = str(raw.get("updatedAt", "—"))[:10]
+    return result
+
 
 # ------------------ small IO helpers ------------------
 
@@ -720,17 +765,21 @@ def build_placeholders() -> dict[str, str]:
     }
     ph.update(aas_defaults)
 
+    # ETF
+    ph.update(load_etf_summary())
+
     # ── 실시간 데이터 주입 ──
-    # 업비트 티커 (BTC·ETH·XRP), usdkrw 힌트 전달로 환율 API 호출 최소화
     usdkrw_float = None
     try:
         usdkrw_float = float(str(usdkrw).replace(",", "")) if usdkrw else None
     except Exception:
         pass
-    for k, v in fetch_coingecko_ticker(usdkrw_hint=usdkrw_float).items():
+
+    # 업비트 티커 (BTC·ETH·XRP)
+    for k, v in fetch_yahoo_ticker().items():
         ph["{{" + k + "}}"] = v
 
-    # BM20 티커 (기존 bm20_1d_pct 재사용)
+    # BM20 티커
     if bm20_1d_pct is not None:
         arrow = "▲" if bm20_1d_pct >= 0 else "▼"
         ph["{{TICKER_BM20_CHANGE}}"] = f"{arrow}{abs(bm20_1d_pct):.1f}%"
