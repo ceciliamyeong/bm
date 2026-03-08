@@ -492,6 +492,94 @@
 
         <tr><td><hr class="rule-thick" /></td></tr>
 
+        <!-- ══ US ETF FLOW ══ -->
+        <tr>
+          <td class="pad" style="padding:20px 32px 24px;">
+
+            <!-- 헤더 -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                   style="margin-bottom:12px;">
+              <tr>
+                <td valign="middle">
+                  <span style="font-size:10px;font-weight:700;letter-spacing:0.18em;
+                               text-transform:uppercase;color:#1a56db;">🇺🇸 US Crypto ETF Flow</span>
+                </td>
+                <td align="right" valign="middle">
+                  <span style="font-size:10px;color:#8a9abf;">{{ETF_ASOF}} 기준</span>
+                </td>
+              </tr>
+            </table>
+
+            <!-- 3단 카드: BTC / ETH / SOL -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                   style="table-layout:fixed;margin-bottom:12px;">
+              <tr>
+                <!-- BTC ETF -->
+                <td width="33%" style="width:33%;padding-right:6px;vertical-align:top;">
+                  <div style="background:#0a1628;padding:12px 11px;">
+                    <div style="font-size:9px;color:#5a7a9a;letter-spacing:0.12em;
+                                text-transform:uppercase;margin-bottom:8px;">BTC Spot ETF</div>
+                    <div style="font-size:18px;font-weight:900;letter-spacing:-0.02em;
+                                {{ETF_BTC_INFLOW_COLOR}}">{{ETF_BTC_INFLOW}}</div>
+                    <div style="font-size:9px;color:#3a5a7a;margin-top:5px;">일별 순유입</div>
+                    <div style="border-top:1px solid #1e3a5f;margin:8px 0;"></div>
+                    <div style="font-size:10px;color:#5a7a9a;">AUM <b style="color:#8ab0e0;">{{ETF_BTC_AUM}}</b></div>
+                    <div style="font-size:10px;color:#5a7a9a;">누적 <b style="color:#8ab0e0;">{{ETF_BTC_CUM}}</b></div>
+                    <div style="font-size:9px;color:#3a5a7a;margin-top:3px;">{{ETF_BTC_HOLDINGS}}</div>
+                  </div>
+                </td>
+                <!-- ETH ETF -->
+                <td width="33%" style="width:33%;padding-right:6px;vertical-align:top;">
+                  <div style="background:#0a1628;padding:12px 11px;">
+                    <div style="font-size:9px;color:#5a7a9a;letter-spacing:0.12em;
+                                text-transform:uppercase;margin-bottom:8px;">ETH Spot ETF</div>
+                    <div style="font-size:18px;font-weight:900;letter-spacing:-0.02em;
+                                {{ETF_ETH_INFLOW_COLOR}}">{{ETF_ETH_INFLOW}}</div>
+                    <div style="font-size:9px;color:#3a5a7a;margin-top:5px;">일별 순유입</div>
+                    <div style="border-top:1px solid #1e3a5f;margin:8px 0;"></div>
+                    <div style="font-size:10px;color:#5a7a9a;">AUM <b style="color:#8ab0e0;">{{ETF_ETH_AUM}}</b></div>
+                    <div style="font-size:10px;color:#5a7a9a;">누적 <b style="color:#8ab0e0;">{{ETF_ETH_CUM}}</b></div>
+                    <div style="font-size:9px;color:#3a5a7a;margin-top:3px;">{{ETF_ETH_HOLDINGS}}</div>
+                  </div>
+                </td>
+                <!-- SOL ETF -->
+                <td width="34%" style="width:34%;vertical-align:top;">
+                  <div style="background:#0a1628;padding:12px 11px;">
+                    <div style="font-size:9px;color:#5a7a9a;letter-spacing:0.12em;
+                                text-transform:uppercase;margin-bottom:8px;">SOL Spot ETF</div>
+                    <div style="font-size:18px;font-weight:900;letter-spacing:-0.02em;
+                                {{ETF_SOL_INFLOW_COLOR}}">{{ETF_SOL_INFLOW}}</div>
+                    <div style="font-size:9px;color:#3a5a7a;margin-top:5px;">일별 순유입</div>
+                    <div style="border-top:1px solid #1e3a5f;margin:8px 0;"></div>
+                    <div style="font-size:10px;color:#5a7a9a;">AUM <b style="color:#8ab0e0;">{{ETF_SOL_AUM}}</b></div>
+                    <div style="font-size:10px;color:#5a7a9a;">누적 <b style="color:#8ab0e0;">{{ETF_SOL_CUM}}</b></div>
+                    <div style="font-size:9px;color:#3a5a7a;margin-top:3px;">{{ETF_SOL_HOLDINGS}}</div>
+                  </div>
+                </td>
+              </tr>
+            </table>
+
+            <!-- 자동 코멘트 -->
+            <div style="font-size:12px;line-height:1.75;color:#3a4a6a;
+                        padding:10px 14px;background:#f0f5ff;border-left:2px solid #1a56db;
+                        margin-bottom:10px;">
+              {{ETF_COMMENT}}
+            </div>
+
+            <!-- 대시보드 링크 -->
+            <div style="text-align:right;">
+              <a href="https://data.blockmedia.co.kr/etf.html" target="_blank"
+                 style="font-size:10px;font-weight:700;color:#1a56db;
+                        letter-spacing:0.06em;border-bottom:1px solid #c8d4e8;padding-bottom:1px;">
+                ETF 전체 현황 보기 →
+              </a>
+            </div>
+
+          </td>
+        </tr>
+
+        <tr><td><hr class="rule-thick" /></td></tr>
+
         <!-- ══ 트리맵 ══ -->
         <tr>
           <td class="pad" style="padding:20px 32px 24px;">
