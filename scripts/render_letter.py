@@ -130,6 +130,15 @@ def fetch_yahoo_ticker() -> dict[str, str]:
 fetch_coingecko_ticker = fetch_yahoo_ticker
 
 
+def fmt_vol_krw(v: float) -> str:
+    """거래대금 KRW 단위 포맷: 조/억 단위"""
+    if v >= 1_000_000_000_000:
+        return f"{v/1_000_000_000_000:.1f}조"
+    if v >= 100_000_000:
+        return f"{v/100_000_000:.0f}억"
+    return f"{v:,.0f}"
+
+
 def fetch_upbit_top_bottom(n: int = 3) -> dict[str, str]:
     """업비트 KRW 전체 마켓 24h 등락률 Top/Bottom n"""
     FB = {**{f"UPBIT_TOP{i}_SYMBOL": "—" for i in range(1,n+1)},
@@ -162,6 +171,41 @@ def fetch_upbit_top_bottom(n: int = 3) -> dict[str, str]:
     except Exception as e:
         print(f"WARN: Upbit top/bottom failed: {e}")
         return FB
+
+
+def fetch_exchange_vol_top3() -> dict[str, str]:
+    """업비트·빗썸·코인원 거래대금 Top3 — krw_24h_latest.json by_exchange_top 에서 읽기"""
+    FB = {
+        **{f"UPBIT_VOL{i}_SYM":   "—" for i in range(1, 4)},
+        **{f"UPBIT_VOL{i}_AMT":   "—" for i in range(1, 4)},
+        **{f"BITHUMB_VOL{i}_SYM": "—" for i in range(1, 4)},
+        **{f"BITHUMB_VOL{i}_AMT": "—" for i in range(1, 4)},
+        **{f"COINONE_VOL{i}_SYM": "—" for i in range(1, 4)},
+        **{f"COINONE_VOL{i}_AMT": "—" for i in range(1, 4)},
+    }
+    try:
+        krw = load_json_optional(KRW_JSON)
+        if not krw:
+            return FB
+        by_ex = krw.get("by_exchange_top", {})
+
+        mapping = [
+            ("upbit_top5",   "UPBIT"),
+            ("bithumb_top5", "BITHUMB"),
+            ("coinone_top5", "COINONE"),
+        ]
+        result = {}
+        for key, prefix in mapping:
+            entries = by_ex.get(key, [])[:3]
+            for i, entry in enumerate(entries, 1):
+                sym = entry.get("symbol", "—").replace("KRW-", "")
+                val = float(entry.get("value", 0))
+                result[f"{prefix}_VOL{i}_SYM"] = sym
+                result[f"{prefix}_VOL{i}_AMT"] = fmt_vol_krw(val)
+        FB.update(result)
+    except Exception as e:
+        print(f"WARN: exchange vol top3 failed: {e}")
+    return FB
 
 
 def fetch_premium_data(usdkrw: float | None) -> dict[str, str]:
@@ -716,16 +760,6 @@ def build_placeholders() -> dict[str, str]:
     nasdaq_1d = load_index_series_1d(NASDAQ_JSON)
     kospi_1d  = load_index_series_1d(KOSPI_JSON)
 
-    # BTC 도미넌스 (bm20_latest.json)
-    btc_dom = "—"
-    try:
-        if isinstance(bm20, dict):
-            v = bm20.get("btc_dominance") or bm20.get("btc_dom") or                 (bm20.get("market") or {}).get("btc_dominance")
-            if v is not None:
-                btc_dom = f"{float(v):.1f}%"
-    except Exception:
-        pass
-
     # News
     news_one_liner = load_text_first_line(NEWS_ONELINER_TXT)
     news_one_liner_note = load_text_first_line(NEWS_ONELINER_NOTE_TXT)
@@ -814,7 +848,9 @@ def build_placeholders() -> dict[str, str]:
         # 글로벌 지수
         "{{NASDAQ_1D}}": nasdaq_1d,
         "{{KOSPI_1D}}": kospi_1d,
-        "{{BTC_DOM}}": btc_dom,
+        # 글로벌 지수
+        "{{NASDAQ_1D}}": nasdaq_1d,
+        "{{KOSPI_1D}}": kospi_1d,
 
         # News
         "{{NEWS_ONE_LINER}}": news_one_liner,
@@ -859,6 +895,10 @@ def build_placeholders() -> dict[str, str]:
 
     # 업비트 Top3 / Bottom3
     for k, v in fetch_upbit_top_bottom(n=3).items():
+        ph["{{" + k + "}}"] = v
+
+    # 빗썸·코인원 거래대금 Top3
+    for k, v in fetch_exchange_vol_top3().items():
         ph["{{" + k + "}}"] = v
 
     # 김치 vs 코인베이스 프리미엄
