@@ -2,8 +2,8 @@ name: Render Letter (daily)
 on:
   workflow_dispatch:
   schedule:
-    # 매일 09:20 KST (00:20 UTC)
-    - cron: "20 0 * * *"
+    # 매일 06:30 KST (21:30 UTC 전날)
+    - cron: "30 21 * * *"
 permissions:
   contents: write
 concurrency:
@@ -107,6 +107,7 @@ jobs:
           if ! git diff --cached --quiet; then
             DATE=$(TZ=Asia/Seoul date +%F)
             git commit -m "chore: render letter + btc + treemap (${DATE})"
+            git pull --rebase origin main
             git push origin HEAD:main
           else
             echo "No changes to commit"
