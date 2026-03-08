@@ -3,7 +3,7 @@ name: BM20 Data Pipeline
 on:
   schedule:
     # 한국 시간 오전 5시, 오후 5시 (하루 2회)
-    - cron: '0 8,20 * * *'
+    - cron: '0 20 * * *'  # KST 05:00
   workflow_dispatch:
 
 jobs:
