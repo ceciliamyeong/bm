@@ -38,7 +38,7 @@ from datetime import datetime, timezone, timedelta
 
 ROOT = Path(__file__).resolve().parent.parent
 
-TEMPLATE = ROOT / "newsletter_blockmedia.html"  # 블록미디어 공식 뉴스레터 템플릿
+TEMPLATE = ROOT / "letter_newsletter_template.html"  # 블록미디어 공식 뉴스레터 템플릿
 
 BM20_JSON = ROOT / "bm20_latest.json"
 DAILY_CSV = ROOT / "bm20_daily_data_latest.csv"
@@ -48,6 +48,9 @@ BTC_JSON = ROOT / "out/history/btc_usd_series.json"  # optional
 BM20_HISTORY_JSON = ROOT / "data/bm20_history.json"  # optional
 XRP_KR_SHARE_JSON = ROOT / "out/global/k_xrp_share_24h_latest.json"  # optional
 ETF_JSON          = ROOT / "data/etf_summary.json"  # optional
+KRW_SNAPSHOTS_JSON = ROOT / "out/history/krw_24h_snapshots.json"  # optional
+NASDAQ_JSON       = ROOT / "nasdaq_series.json"  # optional
+KOSPI_JSON        = ROOT / "kospi_series.json"   # optional
 
 NEWS_ONELINER_TXT = ROOT / "out/latest/news_one_liner.txt"
 NEWS_ONELINER_NOTE_TXT = ROOT / "out/latest/news_one_liner_note.txt"
@@ -443,6 +446,44 @@ def compute_top10_concentration(df: pd.DataFrame) -> str:
         return "—"
     return fmt_share_pct(top10 / total)
 
+# ------------------ index series + krw snapshots helpers ------------------
+
+def load_krw_snapshots_top10() -> str:
+    """out/history/krw_24h_snapshots.json 에서 top10 집중도"""
+    try:
+        import json as _json
+        raw = _json.loads(KRW_SNAPSHOTS_JSON.read_text(encoding="utf-8")) if KRW_SNAPSHOTS_JSON.exists() else None
+        if raw is None:
+            return "—"
+        item = raw[-1] if isinstance(raw, list) else raw
+        pct = item.get("top10", {}).get("top10_share_pct")
+        if pct is not None:
+            return f"{float(pct):.1f}%"
+    except Exception:
+        pass
+    return "—"
+
+
+def load_index_series_1d(path: Path) -> str:
+    """[{date, price}] 배열 마지막 두 항목으로 1D 등락 계산"""
+    try:
+        import json as _json
+        if not path.exists():
+            return "—"
+        raw = _json.loads(path.read_text(encoding="utf-8"))
+        if not raw or len(raw) < 2:
+            return "—"
+        prev = float(raw[-2]["price"])
+        curr = float(raw[-1]["price"])
+        if prev <= 0:
+            return "—"
+        chg = (curr - prev) / prev * 100
+        arrow = "▲" if chg >= 0 else "▼"
+        return f"{arrow}{abs(chg):.2f}%"
+    except Exception:
+        return "—"
+
+
 # ------------------ sentiment + xrp share helpers ------------------
 
 def extract_sentiment(obj: Any) -> tuple[str, str]:
@@ -650,17 +691,40 @@ def build_placeholders() -> dict[str, str]:
         except Exception:
             pass
 
-    # 4. K-Safety (기존 KRW 데이터에서 추출)
+    # 4. K-Safety = stablecoins.stable_dominance_pct (krw_24h_latest.json)
     k_safety = "—"
     if isinstance(krw, dict):
-        meta = krw.get("meta", {})
-        # stablecoin_ratio 등 존재하는 키 탐색
-        v_safe = krw.get("k_safety") or meta.get("k_safety") or \
-                 krw.get("stablecoin_ratio") or meta.get("stablecoin_ratio")
+        v_safe = (krw.get("stablecoins") or {}).get("stable_dominance_pct")
+        if v_safe is None:
+            meta = krw.get("meta", {})
+            v_safe = krw.get("k_safety") or meta.get("k_safety") or                      krw.get("stablecoin_ratio") or meta.get("stablecoin_ratio")
         if v_safe is not None:
-            k_safety = fmt_share_pct(float(v_safe))
+            k_safety = f"{float(v_safe):.1f}%"
 
-    top10_conc = compute_top10_concentration(df)
+    # Top10 집중도: krw_24h_latest.json 우선, snapshots fallback, BM20 CSV 최후
+    top10_conc = "—"
+    if isinstance(krw, dict):
+        v_top10 = (krw.get("top10") or {}).get("top10_share_pct")
+        if v_top10 is not None:
+            top10_conc = f"{float(v_top10):.1f}%"
+    if top10_conc == "—":
+        top10_conc = load_krw_snapshots_top10()
+    if top10_conc == "—":
+        top10_conc = compute_top10_concentration(df)
+
+    # NASDAQ / KOSPI 1D 등락
+    nasdaq_1d = load_index_series_1d(NASDAQ_JSON)
+    kospi_1d  = load_index_series_1d(KOSPI_JSON)
+
+    # BTC 도미넌스 (bm20_latest.json)
+    btc_dom = "—"
+    try:
+        if isinstance(bm20, dict):
+            v = bm20.get("btc_dominance") or bm20.get("btc_dom") or                 (bm20.get("market") or {}).get("btc_dominance")
+            if v is not None:
+                btc_dom = f"{float(v):.1f}%"
+    except Exception:
+        pass
 
     # News
     news_one_liner = load_text_first_line(NEWS_ONELINER_TXT)
@@ -746,6 +810,11 @@ def build_placeholders() -> dict[str, str]:
         "{{XRP_KR_SHARE}}": xrp_kr_share,
         "{{TOP10_CONC_24H}}": top10_conc,
         "{{K_SAFETY}}": k_safety,
+
+        # 글로벌 지수
+        "{{NASDAQ_1D}}": nasdaq_1d,
+        "{{KOSPI_1D}}": kospi_1d,
+        "{{BTC_DOM}}": btc_dom,
 
         # News
         "{{NEWS_ONE_LINER}}": news_one_liner,
