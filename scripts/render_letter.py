@@ -47,10 +47,10 @@ BTC_JSON = ROOT / "out/history/btc_usd_series.json"  # optional
 
 BM20_HISTORY_JSON = ROOT / "data/bm20_history.json"  # optional
 XRP_KR_SHARE_JSON = ROOT / "out/global/k_xrp_share_24h_latest.json"  # optional
-ETF_JSON          = ROOT / "data/etf_summary.json"               # optional
-KRW_SNAPSHOTS_JSON = ROOT / "out/history/krw_24h_snapshots.json" # optional
-NASDAQ_JSON       = ROOT / "nasdaq_series.json"                   # optional
-KOSPI_JSON        = ROOT / "kospi_series.json"                    # optional
+ETF_JSON          = ROOT / "data/etf_summary.json"  # optional
+KRW_SNAPSHOTS_JSON = ROOT / "out/history/krw_24h_snapshots.json"  # optional
+NASDAQ_JSON       = ROOT / "nasdaq_series.json"  # optional
+KOSPI_JSON        = ROOT / "kospi_series.json"   # optional
 
 NEWS_ONELINER_TXT = ROOT / "out/latest/news_one_liner.txt"
 NEWS_ONELINER_NOTE_TXT = ROOT / "out/latest/news_one_liner_note.txt"
@@ -77,12 +77,10 @@ def _kst_now() -> str:
 
 
 def fetch_yahoo_ticker() -> dict[str, str]:
-    """BTC·ETH·XRP 현재가 + 24h 변동률
-    yfinance 1.2.x: history(period='2d') 방식 사용
-    """
+    """BTC·ETH·XRP 현재가 + 24h 변동률 (Yahoo Finance — yfinance)"""
     import yfinance as yf
 
-    SYMBOLS = [("BTC-USD", "BTC"), ("ETH-USD", "ETH"), ("XRP-USD", "XRP")]
+    SYMBOLS = {"BTC-USD": "BTC", "ETH-USD": "ETH", "XRP-USD": "XRP"}
     fb = {"PRICE": "—", "CHANGE": "—", "COLOR": "ticker-down"}
     fallback = {
         **{f"TICKER_BTC_{k}": v for k, v in fb.items()},
@@ -91,23 +89,15 @@ def fetch_yahoo_ticker() -> dict[str, str]:
         "TICKER_TIME": _kst_now(),
     }
 
-    result = {}
     try:
-        syms_str = " ".join(s for s, _ in SYMBOLS)
-        # 1.2.x: download() 로 한 번에 가져오기
-        df = yf.download(syms_str, period="2d", interval="1d",
-                         auto_adjust=True, progress=False, threads=False)
-
-        for yf_sym, sym in SYMBOLS:
+        tickers = yf.Tickers(" ".join(SYMBOLS.keys()))
+        result = {}
+        for yf_sym, sym in SYMBOLS.items():
             try:
-                # multi-ticker download는 컬럼이 (field, ticker) MultiIndex
-                close_col = ("Close", yf_sym) if (("Close", yf_sym) in df.columns) else "Close"
-                closes = df[close_col].dropna()
-                if len(closes) < 2:
-                    raise ValueError("not enough data")
-                prev  = float(closes.iloc[-2])
-                price = float(closes.iloc[-1])
-                chg   = (price - prev) / prev * 100
+                info  = tickers.tickers[yf_sym].fast_info
+                price = float(info.last_price)
+                prev  = float(info.previous_close)
+                chg   = (price - prev) / prev * 100 if prev else 0.0
 
                 if price >= 1_000:
                     p_str = f"${price:,.0f}"
@@ -121,135 +111,56 @@ def fetch_yahoo_ticker() -> dict[str, str]:
                 result[f"TICKER_{sym}_PRICE"]  = p_str
                 result[f"TICKER_{sym}_CHANGE"] = f"{arrow}{abs(chg):.1f}%"
                 result[f"TICKER_{sym}_COLOR"]  = cls
-                print(f"INFO: {sym} {p_str} {arrow}{abs(chg):.1f}%")
             except Exception as e:
-                print(f"WARN: Yahoo ticker {yf_sym} parse failed: {e}")
+                print(f"WARN: Yahoo ticker {yf_sym} failed: {e}")
                 result[f"TICKER_{sym}_PRICE"]  = "—"
                 result[f"TICKER_{sym}_CHANGE"] = "—"
                 result[f"TICKER_{sym}_COLOR"]  = "ticker-down"
 
         result["TICKER_TIME"] = _kst_now()
+        print("INFO: Ticker via Yahoo Finance")
         return result
 
     except Exception as e:
-        print(f"WARN: Yahoo Finance download failed: {e}")
+        print(f"WARN: Yahoo Finance fetch failed: {e}")
         return fallback
 
 
-fetch_coingecko_ticker = fetch_yahoo_ticker  # 하위 호환 alias
-
-
-def fmt_vol_krw(v: float) -> str:
-    """거래대금 KRW 단위 포맷: 조/억 단위"""
-    if v >= 1_000_000_000_000:
-        return f"{v/1_000_000_000_000:.1f}조"
-    if v >= 100_000_000:
-        return f"{v/100_000_000:.0f}억"
-    return f"{v:,.0f}"
+# 하위 호환 alias (기존 호출부 변경 불필요)
+fetch_coingecko_ticker = fetch_yahoo_ticker
 
 
 def fetch_upbit_top_bottom(n: int = 3) -> dict[str, str]:
-    """업비트 KRW 전체 마켓 24h 등락률 Top/Bottom n + 거래대금 Top n"""
-    FB = {**{f"UPBIT_TOP{i}_SYMBOL": "—" for i in range(1, n+1)},
-          **{f"UPBIT_TOP{i}_CHG":    "—" for i in range(1, n+1)},
-          **{f"UPBIT_BOT{i}_SYMBOL": "—" for i in range(1, n+1)},
-          **{f"UPBIT_BOT{i}_CHG":    "—" for i in range(1, n+1)},
-          **{f"UPBIT_VOL{i}_SYM":    "—" for i in range(1, n+1)},
-          **{f"UPBIT_VOL{i}_AMT":    "—" for i in range(1, n+1)}}
+    """업비트 KRW 전체 마켓 24h 등락률 Top/Bottom n"""
+    FB = {**{f"UPBIT_TOP{i}_SYMBOL": "—" for i in range(1,n+1)},
+          **{f"UPBIT_TOP{i}_CHG":    "—" for i in range(1,n+1)},
+          **{f"UPBIT_BOT{i}_SYMBOL": "—" for i in range(1,n+1)},
+          **{f"UPBIT_BOT{i}_CHG":    "—" for i in range(1,n+1)}}
     try:
         mkts = [m["market"] for m in
                 requests.get("https://api.upbit.com/v1/market/all",
-                             params={"isDetails": "false"}, timeout=10).json()
+                             params={"isDetails":"false"}, timeout=10).json()
                 if m["market"].startswith("KRW-")]
         tickers = []
         for i in range(0, len(mkts), 100):
             tickers += requests.get("https://api.upbit.com/v1/ticker",
                                     params={"markets": ",".join(mkts[i:i+100])},
                                     timeout=10).json()
-
-        # 등락률 정렬
-        by_chg = sorted(tickers, key=lambda x: x.get("signed_change_rate", 0), reverse=True)
+        tickers.sort(key=lambda x: x.get("signed_change_rate", 0), reverse=True)
         result = {}
-        for i, t in enumerate(by_chg[:n], 1):
+        for i, t in enumerate(tickers[:n], 1):
             sym = t["market"].replace("KRW-", "")
             pct = float(t.get("signed_change_rate", 0)) * 100
             result[f"UPBIT_TOP{i}_SYMBOL"] = sym
             result[f"UPBIT_TOP{i}_CHG"]    = f"+{pct:.1f}%"
-        for i, t in enumerate(reversed(by_chg[-n:]), 1):
+        for i, t in enumerate(reversed(tickers[-n:]), 1):
             sym = t["market"].replace("KRW-", "")
             pct = float(t.get("signed_change_rate", 0)) * 100
             result[f"UPBIT_BOT{i}_SYMBOL"] = sym
             result[f"UPBIT_BOT{i}_CHG"]    = f"{pct:.1f}%"
-
-        # 거래대금 Top n
-        by_vol = sorted(tickers, key=lambda x: float(x.get("acc_trade_price_24h", 0) or 0), reverse=True)
-        for i, t in enumerate(by_vol[:n], 1):
-            sym = t["market"].replace("KRW-", "")
-            vol = float(t.get("acc_trade_price_24h", 0) or 0)
-            result[f"UPBIT_VOL{i}_SYM"] = sym
-            result[f"UPBIT_VOL{i}_AMT"] = fmt_vol_krw(vol)
-
         return result
     except Exception as e:
         print(f"WARN: Upbit top/bottom failed: {e}")
-        return FB
-
-
-def fetch_bithumb_vol_top3() -> dict[str, str]:
-    """빗썸 거래대금 Top3 (공개 API)"""
-    FB = {**{f"BITHUMB_VOL{i}_SYM": "—" for i in range(1, 4)},
-          **{f"BITHUMB_VOL{i}_AMT": "—" for i in range(1, 4)}}
-    try:
-        data = requests.get(
-            "https://api.bithumb.com/public/ticker/ALL_KRW",
-            timeout=10
-        ).json().get("data", {})
-        items = []
-        for sym, v in data.items():
-            if sym == "date":
-                continue
-            try:
-                vol = float(v.get("acc_trade_value_24H", 0) or 0)
-                items.append((sym, vol))
-            except Exception:
-                continue
-        items.sort(key=lambda x: x[1], reverse=True)
-        result = {}
-        for i, (sym, vol) in enumerate(items[:3], 1):
-            result[f"BITHUMB_VOL{i}_SYM"] = sym
-            result[f"BITHUMB_VOL{i}_AMT"] = fmt_vol_krw(vol)
-        return result
-    except Exception as e:
-        print(f"WARN: Bithumb vol top3 failed: {e}")
-        return FB
-
-
-def fetch_coinone_vol_top3() -> dict[str, str]:
-    """코인원 거래대금 Top3 (공개 API)"""
-    FB = {**{f"COINONE_VOL{i}_SYM": "—" for i in range(1, 4)},
-          **{f"COINONE_VOL{i}_AMT": "—" for i in range(1, 4)}}
-    try:
-        data = requests.get(
-            "https://api.coinone.co.kr/public/v2/ticker_new/KRW",
-            timeout=10
-        ).json().get("tickers", [])
-        items = []
-        for t in data:
-            try:
-                vol = float(t.get("quote_volume", 0) or 0)
-                sym = t.get("target_currency", "")
-                if sym:
-                    items.append((sym, vol))
-            except Exception:
-                continue
-        items.sort(key=lambda x: x[1], reverse=True)
-        result = {}
-        for i, (sym, vol) in enumerate(items[:3], 1):
-            result[f"COINONE_VOL{i}_SYM"] = sym
-            result[f"COINONE_VOL{i}_AMT"] = fmt_vol_krw(vol)
-        return result
-    except Exception as e:
-        print(f"WARN: Coinone vol top3 failed: {e}")
         return FB
 
 
@@ -261,14 +172,11 @@ def fetch_premium_data(usdkrw: float | None) -> dict[str, str]:
         upbit_btc_krw = float(
             requests.get("https://api.upbit.com/v1/ticker",
                          params={"markets":"KRW-BTC"}, timeout=10).json()[0]["trade_price"])
-        # Yahoo Finance BTC USD 기준가 (프리미엄 계산용)
+        # Yahoo Finance로 BTC USD 기준가 조회
         import yfinance as yf
-        df_btc = yf.download("BTC-USD", period="1d", interval="1m",
-                             auto_adjust=True, progress=False, threads=False)
-        if df_btc.empty:
-            raise ValueError("Yahoo BTC data empty")
-        cg_usd = float(df_btc["Close"].iloc[-1])
-        fx = usdkrw if (usdkrw and usdkrw > 100) else 1350.0
+        yf_btc = yf.Ticker("BTC-USD").fast_info
+        cg_usd = float(yf_btc.last_price)
+        fx = usdkrw if (usdkrw and usdkrw > 100) else 1350.0  # 환율 힌트 없으면 하드코딩 폴백
         cb_usd = float(
             requests.get("https://api.coinbase.com/v2/prices/BTC-USD/spot", timeout=10).json()["data"]["amount"])
         upbit_usd  = upbit_btc_krw / fx
@@ -315,46 +223,51 @@ def load_etf_summary() -> dict[str, str]:
         print(f"WARN: ETF json parse error: {e}")
         return FB
 
-    def _fmt_usd(val) -> str:
+    def _fmt_usd(val, digits=0) -> str:
+        """숫자 → 억달러 단위 포맷"""
         try:
             v = float(val)
         except Exception:
             return "—"
         billions = v / 1_000_000_000
         if abs(billions) >= 1:
-            return f"${billions:+.1f}B"
-        return f"${v/1_000_000:+.0f}M"
+            return f"${billions:+.1f}B" if digits == 0 else f"${billions:.1f}B"
+        millions = v / 1_000_000
+        return f"${millions:+.0f}M"
 
     def _fmt_aum(val) -> str:
         try:
-            return f"${float(val)/1_000_000_000:.1f}B"
+            v = float(val)
+            b = v / 1_000_000_000
+            return f"${b:.1f}B"
         except Exception:
             return "—"
 
     def _fmt_holdings(val, sym) -> str:
         try:
-            return f"{float(val):,.0f} {sym}"
+            v = float(val)
+            return f"{v:,.0f} {sym}"
         except Exception:
             return "—"
 
     def _inflow_color(val) -> str:
         try:
             v = float(val)
-            if v > 0: return "color:#16a34a;font-weight:900;"
-            if v < 0: return "color:#dc2626;font-weight:900;"
+            if v > 0:  return f"color:#16a34a;font-weight:900;"
+            if v < 0:  return f"color:#dc2626;font-weight:900;"
         except Exception:
             pass
         return "color:#64748b;"
 
     def _parse(coin: str, sym: str) -> dict:
         d = raw.get(coin, {})
-        inflow_raw = d.get("dailyNetInflow")
+        inflow_raw = d.get("dailyNetInflow", None)
         return {
-            f"{{{{ETF_{sym}_INFLOW}}}}":      _fmt_usd(inflow_raw),
-            f"{{{{ETF_{sym}_AUM}}}}":          _fmt_aum(d.get("totalNetAssets")),
-            f"{{{{ETF_{sym}_CUM}}}}":          _fmt_usd(d.get("cumNetInflow")),
-            f"{{{{ETF_{sym}_HOLDINGS}}}}":     _fmt_holdings(d.get("totalTokenHoldings"), sym),
-            f"{{{{ETF_{sym}_INFLOW_COLOR}}}}": _inflow_color(inflow_raw),
+            f"{{{{ETF_{sym}_INFLOW}}}}":       _fmt_usd(inflow_raw),
+            f"{{{{ETF_{sym}_AUM}}}}":           _fmt_aum(d.get("totalNetAssets")),
+            f"{{{{ETF_{sym}_CUM}}}}":           _fmt_usd(d.get("cumNetInflow"), digits=0),
+            f"{{{{ETF_{sym}_HOLDINGS}}}}":      _fmt_holdings(d.get("totalTokenHoldings"), sym),
+            f"{{{{ETF_{sym}_INFLOW_COLOR}}}}":  _inflow_color(inflow_raw),
         }
 
     result = {}
@@ -362,17 +275,18 @@ def load_etf_summary() -> dict[str, str]:
     result.update(_parse("eth", "ETH"))
     result.update(_parse("sol", "SOL"))
 
+    # ETF 코멘트 자동 생성
     try:
         btc_v = float(raw.get("btc", {}).get("dailyNetInflow", 0))
         eth_v = float(raw.get("eth", {}).get("dailyNetInflow", 0))
         if btc_v > 0 and eth_v > 0:
-            comment = "BTC·ETH ETF 동시 순유입 — 기관 수급 전반적 우호."
+            comment = f"BTC·ETH ETF 동시 순유입 — 기관 수급 전반적 우호."
         elif btc_v > 0 and eth_v <= 0:
-            comment = "BTC ETF 순유입, ETH 소폭 유출 — BTC 집중 매수 구간."
+            comment = f"BTC ETF 순유입, ETH 소폭 유출 — BTC 집중 매수 구간."
         elif btc_v < 0 and eth_v < 0:
-            comment = "BTC·ETH ETF 동시 순유출 — 기관 단기 차익실현 신호."
+            comment = f"BTC·ETH ETF 동시 순유출 — 기관 단기 차익실현 신호."
         else:
-            comment = "ETF 혼조세 — 방향성 확인 필요."
+            comment = f"ETF 혼조세 — 방향성 확인 필요."
     except Exception:
         comment = "—"
 
@@ -532,14 +446,13 @@ def compute_top10_concentration(df: pd.DataFrame) -> str:
         return "—"
     return fmt_share_pct(top10 / total)
 
+# ------------------ index series + krw snapshots helpers ------------------
 
 def load_krw_snapshots_top10() -> str:
-    """
-    out/history/krw_24h_snapshots.json 에서 top10 집중도 읽기.
-    배열이면 마지막 항목 사용.
-    """
+    """out/history/krw_24h_snapshots.json 에서 top10 집중도"""
     try:
-        raw = load_json_optional(KRW_SNAPSHOTS_JSON)
+        import json as _json
+        raw = _json.loads(KRW_SNAPSHOTS_JSON.read_text(encoding="utf-8")) if KRW_SNAPSHOTS_JSON.exists() else None
         if raw is None:
             return "—"
         item = raw[-1] if isinstance(raw, list) else raw
@@ -551,13 +464,13 @@ def load_krw_snapshots_top10() -> str:
     return "—"
 
 
-def load_index_series_1d(path: Path, label: str) -> str:
-    """
-    [{date, price}] 배열에서 마지막 두 항목으로 1D 등락 계산.
-    예: '+1.23%' / '-0.45%'
-    """
+def load_index_series_1d(path: Path) -> str:
+    """[{date, price}] 배열 마지막 두 항목으로 1D 등락 계산"""
     try:
-        raw = load_json_optional(path)
+        import json as _json
+        if not path.exists():
+            return "—"
+        raw = _json.loads(path.read_text(encoding="utf-8"))
         if not raw or len(raw) < 2:
             return "—"
         prev = float(raw[-2]["price"])
@@ -569,6 +482,7 @@ def load_index_series_1d(path: Path, label: str) -> str:
         return f"{arrow}{abs(chg):.2f}%"
     except Exception:
         return "—"
+
 
 # ------------------ sentiment + xrp share helpers ------------------
 
@@ -782,14 +696,12 @@ def build_placeholders() -> dict[str, str]:
     if isinstance(krw, dict):
         v_safe = (krw.get("stablecoins") or {}).get("stable_dominance_pct")
         if v_safe is None:
-            # fallback: 구키
             meta = krw.get("meta", {})
-            v_safe = krw.get("k_safety") or meta.get("k_safety") or \
-                     krw.get("stablecoin_ratio") or meta.get("stablecoin_ratio")
+            v_safe = krw.get("k_safety") or meta.get("k_safety") or                      krw.get("stablecoin_ratio") or meta.get("stablecoin_ratio")
         if v_safe is not None:
             k_safety = f"{float(v_safe):.1f}%"
 
-    # Top10 집중도 = top10.top10_share_pct (krw_24h_latest.json)
+    # Top10 집중도: krw_24h_latest.json 우선, snapshots fallback, BM20 CSV 최후
     top10_conc = "—"
     if isinstance(krw, dict):
         v_top10 = (krw.get("top10") or {}).get("top10_share_pct")
@@ -801,16 +713,14 @@ def build_placeholders() -> dict[str, str]:
         top10_conc = compute_top10_concentration(df)
 
     # NASDAQ / KOSPI 1D 등락
-    nasdaq_1d = load_index_series_1d(NASDAQ_JSON, "NASDAQ")
-    kospi_1d  = load_index_series_1d(KOSPI_JSON,  "KOSPI")
+    nasdaq_1d = load_index_series_1d(NASDAQ_JSON)
+    kospi_1d  = load_index_series_1d(KOSPI_JSON)
 
-    # BTC 도미넌스 (BM20 JSON에서)
+    # BTC 도미넌스 (bm20_latest.json)
     btc_dom = "—"
     try:
-        bm20_raw = load_json_optional(BM20_JSON)
-        if isinstance(bm20_raw, dict):
-            v = bm20_raw.get("btc_dominance") or bm20_raw.get("btc_dom") or \
-                bm20_raw.get("market", {}).get("btc_dominance")
+        if isinstance(bm20, dict):
+            v = bm20.get("btc_dominance") or bm20.get("btc_dom") or                 (bm20.get("market") or {}).get("btc_dominance")
             if v is not None:
                 btc_dom = f"{float(v):.1f}%"
     except Exception:
@@ -934,7 +844,7 @@ def build_placeholders() -> dict[str, str]:
     except Exception:
         pass
 
-    # Yahoo Finance 티커 (BTC·ETH·XRP)
+    # 업비트 티커 (BTC·ETH·XRP)
     for k, v in fetch_yahoo_ticker().items():
         ph["{{" + k + "}}"] = v
 
@@ -947,14 +857,8 @@ def build_placeholders() -> dict[str, str]:
         ph["{{TICKER_BM20_CHANGE}}"] = "—"
         ph["{{TICKER_BM20_COLOR}}"]  = "ticker-down"
 
-    # 업비트 Top3 / Bottom3 + 거래대금 Top3
+    # 업비트 Top3 / Bottom3
     for k, v in fetch_upbit_top_bottom(n=3).items():
-        ph["{{" + k + "}}"] = v
-
-    # 빗썸 / 코인원 거래대금 Top3
-    for k, v in fetch_bithumb_vol_top3().items():
-        ph["{{" + k + "}}"] = v
-    for k, v in fetch_coinone_vol_top3().items():
         ph["{{" + k + "}}"] = v
 
     # 김치 vs 코인베이스 프리미엄
