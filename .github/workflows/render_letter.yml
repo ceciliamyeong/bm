@@ -80,6 +80,10 @@ jobs:
           python3 scripts/render_treemap_png.py
           test -f assets/topcoins_treemap_latest.png
           echo "[OK] treemap png ready"
+
+      - name: Fetch Top News from WP
+        run: python scripts/fetch_top_news.py    
+          
       - name: Render letter.html
         shell: bash
         run: |
