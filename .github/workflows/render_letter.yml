@@ -106,7 +106,8 @@ jobs:
             data/etf_summary.json \
             nasdaq_series.json kospi_series.json \
             assets/topcoins_treemap_latest.png \
-            bm20_latest.json bm20_daily_data_latest.csv || true
+            bm20_latest.json bm20_daily_data_latest.csv \
+            out/latest/top_news_latest.json || true
           if ! git diff --cached --quiet; then
             DATE=$(TZ=Asia/Seoul date +%F)
             git commit -m "chore: render letter + btc + treemap (${DATE})"
