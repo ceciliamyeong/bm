@@ -15,22 +15,23 @@
 
 
     /* ── Fluid 핵심: display:inline-block + min-width ── */
-    /* 3단 (스냅샷·ETF): min-width 덕분에 폭 부족 시 자동 줄바꿈 */
-    .f3{display:inline-block;width:32%;min-width:130px;vertical-align:top;box-sizing:border-box;}
+    /* 3단 (스냅샷·ETF): 모바일에서도 3단 강제 유지 */
+    .f3{display:inline-block;width:32%;min-width:0;vertical-align:top;box-sizing:border-box;}
     /* 2단 (프리미엄·Top/Bottom) */
-    .f2{display:inline-block;width:49%;min-width:140px;vertical-align:top;box-sizing:border-box;}
+    .f2{display:inline-block;width:49%;min-width:0;vertical-align:top;box-sizing:border-box;}
     /* 4단 */
-    .f4{display:inline-block;width:24%;min-width:100px;vertical-align:top;box-sizing:border-box;}
-    /* 거래소 Top3: 모바일에서 1단 */
-    .fex{display:inline-block;width:32%;min-width:140px;vertical-align:top;box-sizing:border-box;}
+    .f4{display:inline-block;width:24%;min-width:0;vertical-align:top;box-sizing:border-box;}
+    /* 거래소 Top3: 모바일에서도 3단 유지 */
+    .fex{display:inline-block;width:32%;min-width:0;vertical-align:top;box-sizing:border-box;}
 
     /* 보조 */
     @media only screen and (max-width:600px){
       .mail-wrap{width:100%!important;}
       .ps{padding-left:14px!important;padding-right:14px!important;}
       .hero-title{font-size:26px!important;}
-      /* 거래소만 1단으로 명시 (min-width만으론 부족할 때) */
-      .fex{display:block!important;width:100%!important;min-width:0!important;margin-bottom:8px!important;}
+      /* f3·fex 모바일에서도 3단 강제 유지 */
+      .f3{display:inline-block!important;width:32%!important;min-width:0!important;}
+      .fex{display:inline-block!important;width:32%!important;min-width:0!important;margin-bottom:6px!important;}
       /* KRW+BM20 → 1단 */
       .col-l,.col-r{display:block!important;width:100%!important;border-right:none!important;padding:14px 0!important;}
     }
@@ -347,7 +348,7 @@
           <div style="background:#0a1628;padding:14px 13px;border-top:2px solid #ff6b35;">
             <div style="font-size:22px;line-height:1;margin-bottom:6px;">🌶️</div>
             <div style="font-size:11px;color:#ff9d80;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;line-height:1.4;">김치 프리미엄</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;color:#fff;line-height:1.2;"><span style="color:#dc2626;font-weight:900;">▼0.90%</span></div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;color:#fff;line-height:1.2;"><span style="color:#dc2626;font-weight:900;">▼0.94%</span></div>
             <div style="font-size:9px;color:#5a7a9a;margin-top:4px;line-height:1.4;">업비트 BTC vs 글로벌</div>
           </div>
         </div><!--
@@ -389,7 +390,7 @@
               </svg>
             </div>
             <div style="font-size:11px;color:#7eb3ff;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;line-height:1.4;">코인베이스 프리미엄</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;color:#fff;line-height:1.2;"><span style="color:#dc2626;font-weight:900;">▼0.89%</span></div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;color:#fff;line-height:1.2;"><span style="color:#dc2626;font-weight:900;">▼0.93%</span></div>
             <div style="font-size:9px;color:#5a7a9a;margin-top:4px;line-height:1.4;">BTC Coinbase vs Binance</div>
           </div>
         </div>
@@ -452,8 +453,8 @@
           <div style="border:1px solid #c8d8f0;padding:10px 11px;">
             <div style="font-size:9px;font-weight:700;color:#0a7c42;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:7px;line-height:1.4;">▲ Top 3</div>
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-              <tr><td style="font-size:13px;font-weight:700;padding:8px 0;border-bottom:1px solid #edf2fc;">SAHARA</td><td align="right" style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:#0a7c42;padding:8px 0;border-bottom:1px solid #edf2fc;">+23.8%</td></tr>
-              <tr><td style="font-size:13px;font-weight:700;padding:8px 0;border-bottom:1px solid #edf2fc;">KERNEL</td><td align="right" style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:#0a7c42;padding:8px 0;border-bottom:1px solid #edf2fc;">+11.7%</td></tr>
+              <tr><td style="font-size:13px;font-weight:700;padding:8px 0;border-bottom:1px solid #edf2fc;">SAHARA</td><td align="right" style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:#0a7c42;padding:8px 0;border-bottom:1px solid #edf2fc;">+25.1%</td></tr>
+              <tr><td style="font-size:13px;font-weight:700;padding:8px 0;border-bottom:1px solid #edf2fc;">KERNEL</td><td align="right" style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:#0a7c42;padding:8px 0;border-bottom:1px solid #edf2fc;">+10.8%</td></tr>
               <tr><td style="font-size:13px;font-weight:700;padding:8px 0;">DEEP</td><td align="right" style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:#0a7c42;padding:8px 0;">+8.8%</td></tr>
             </table>
           </div>
@@ -462,9 +463,9 @@
           <div style="border:1px solid #c8d8f0;padding:10px 11px;">
             <div style="font-size:9px;font-weight:700;color:#c81e1e;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:7px;line-height:1.4;">▼ Bottom 3</div>
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-              <tr><td style="font-size:13px;font-weight:700;padding:8px 0;border-bottom:1px solid #edf2fc;">AKT</td><td align="right" style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:#c81e1e;padding:8px 0;border-bottom:1px solid #edf2fc;">-4.6%</td></tr>
-              <tr><td style="font-size:13px;font-weight:700;padding:8px 0;border-bottom:1px solid #edf2fc;">STEEM</td><td align="right" style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:#c81e1e;padding:8px 0;border-bottom:1px solid #edf2fc;">-4.2%</td></tr>
-              <tr><td style="font-size:13px;font-weight:700;padding:8px 0;">SXP</td><td align="right" style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:#c81e1e;padding:8px 0;">-4.1%</td></tr>
+              <tr><td style="font-size:13px;font-weight:700;padding:8px 0;border-bottom:1px solid #edf2fc;">SXP</td><td align="right" style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:#c81e1e;padding:8px 0;border-bottom:1px solid #edf2fc;">-5.0%</td></tr>
+              <tr><td style="font-size:13px;font-weight:700;padding:8px 0;border-bottom:1px solid #edf2fc;">AKT</td><td align="right" style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:#c81e1e;padding:8px 0;border-bottom:1px solid #edf2fc;">-4.7%</td></tr>
+              <tr><td style="font-size:13px;font-weight:700;padding:8px 0;">STEEM</td><td align="right" style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:#c81e1e;padding:8px 0;">-4.2%</td></tr>
             </table>
           </div>
         </div>
