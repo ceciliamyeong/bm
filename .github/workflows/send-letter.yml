@@ -7,14 +7,13 @@ on:
       - completed
 jobs:
   send:
-    # render-data 가 성공했을 때만 실행 (수동 실행 시엔 항상 실행)
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     env:
       TZ: Asia/Seoul
-      STIBEE_API_KEY: ${{ secrets.STIBEE_API_KEY }}
-      STIBEE_LIST_ID: ${{ secrets.STIBEE_LIST_ID }}
-      STIBEE_EMAIL_ID: ${{ secrets.STIBEE_EMAIL_ID }}
+      STIBEE_API_KEY:    ${{ secrets.STIBEE_API_KEY }}
+      STIBEE_LIST_ID:    ${{ secrets.STIBEE_LIST_ID }}
+      STIBEE_FROM_EMAIL: ${{ secrets.STIBEE_FROM_EMAIL }}
     steps:
       - name: Checkout main
         uses: actions/checkout@v4
