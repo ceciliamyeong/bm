@@ -1,0 +1,1710 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>KRW Market | BLOCKMEDIA Data</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
+
+  <style>
+    :root {
+      --bg:     #0d1117;
+      --bg2:    #161b22;
+      --bg3:    #21262d;
+      --border: #30363d;
+      --text:   #e6edf3;
+      --text2:  #8b949e;
+      --green:  #3fb950;
+      --red:    #f85149;
+      --blue:   #58a6ff;
+      --orange: #f0883e;
+      --purple: #bc8cff;
+      --yellow: #e3b341;
+
+      --accent:   #2563eb;
+      --accent-2: #7c3aed;
+
+      --shadow: 0 1px 3px rgba(0,0,0,.4);
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .site-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .page-badge {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px 10px;
+      font-size: 12px;
+      color: var(--blue);
+      font-weight: 600;
+    }
+    .header-meta { font-size: 12px; color: var(--text2); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .header-meta .chip {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 11px;
+      color: var(--text2);
+      white-space: nowrap;
+    }
+    .header-meta .chip b { color: var(--text); font-weight: 600; }
+
+    /* ── Top Nav (pages) ── */
+    nav.top-nav {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      position: sticky;
+      top: 49px;
+      z-index: 95;
+    }
+    nav.top-nav a {
+      color: var(--text2);
+      text-decoration: none;
+      padding: 10px 14px;
+      font-size: 13px;
+      white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      transition: color .2s, border-color .2s;
+    }
+    nav.top-nav a:hover { color: var(--text); }
+    nav.top-nav a.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+    /* ── Section Toggle ── */
+    .section-toggle {
+      display: flex;
+      gap: 8px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding: 12px 20px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 89px;
+      z-index: 90;
+    }
+    .section-toggle::-webkit-scrollbar { display: none; }
+    .sec-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 14px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text2);
+      white-space: nowrap;
+      transition: all .2s;
+    }
+    .sec-btn:hover { color: var(--text); border-color: var(--text2); }
+    .sec-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+    /* 섹션별 active 색상 */
+    .sec-btn.active-overview  { background: #1a2a4a; border-color: var(--blue);   color: var(--blue);   }
+    .sec-btn.active-flows     { background: #2a2a14; border-color: var(--yellow); color: var(--yellow); }
+    .sec-btn.active-trends    { background: #152a1a; border-color: var(--green);  color: var(--green);  }
+    .sec-btn.active-topcoins  { background: #251a3a; border-color: var(--purple); color: var(--purple); }
+    .sec-btn.active-extop     { background: #2a1e10; border-color: var(--orange); color: var(--orange); }
+    .sec-btn.active-kimchi    { background: #2a2210; border-color: var(--yellow); color: var(--yellow); }
+
+    /* dot 색 */
+    .dot-overview { background: var(--blue);   }
+    .dot-flows    { background: var(--yellow); }
+    .dot-trends   { background: var(--green);  }
+    .dot-topcoins { background: var(--purple); }
+    .dot-extop    { background: var(--orange); }
+    .dot-kimchi   { background: var(--yellow); }
+
+    /* ── Layout ── */
+    main { max-width: 1200px; margin: 0 auto; padding: 24px 16px 48px; }
+
+    /* ── Section title ── */
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      scroll-margin-top: 100px;
+    }
+    .section-title .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--blue);
+      flex-shrink: 0;
+    }
+    .section-title .dot.yellow { background: var(--yellow); }
+    .section-title .dot.green  { background: var(--green); }
+    .section-title .dot.purple { background: var(--purple); }
+    .section-title .dot.orange { background: var(--orange); }
+    .section-title .sub {
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--text2);
+      margin-left: 4px;
+    }
+    .section-title .right {
+      margin-left: auto;
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--text2);
+    }
+
+    /* ── Section visibility (toggle) ── */
+    .section { margin-top: 0; }
+    .section.sec-hidden { display: none; }
+
+    /* ── KPI Cards ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 0;
+    }
+    .kpi-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+    }
+    .kpi-label {
+      font-size: 11px;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 6px;
+    }
+    .kpi-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .kpi-note { font-size: 11px; color: var(--text2); }
+
+    /* KPI accent: 한국 점유율, XRP, BM20 */
+    .kpi-card.accent { border-color: #1d4ed880; background: #0d1b2e; }
+    .kpi-card.danger { border-left: 3px solid var(--red); }
+
+    /* ── Sparkline canvas ── */
+    .kpi-mini-chart { width: 100%; height: 56px; display: block; margin-top: 8px; }
+
+    /* ── Thermometer ── */
+    .thermo-wrap { display: flex; flex-direction: column; gap: 8px; }
+    .thermo-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .thermo-value {
+      font-size: 11px;
+      color: var(--text2);
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      padding: 3px 8px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .thermo-bar {
+      position: relative;
+      height: 10px;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: linear-gradient(90deg,
+        rgba(239,68,68,.85) 0%,
+        rgba(239,68,68,.45) 20%,
+        rgba(234,179,8,.55) 40%,
+        rgba(148,163,184,.55) 50%,
+        rgba(34,197,94,.45) 80%,
+        rgba(34,197,94,.85) 100%);
+    }
+    .thermo-marker {
+      position: absolute; top: 50%;
+      transform: translate(-50%,-50%);
+      width: 2px; height: 16px;
+      background: var(--text);
+      border-radius: 2px;
+    }
+    .thermo-dot {
+      position: absolute; top: 50%;
+      transform: translate(-50%,-50%);
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--text);
+      border: 2px solid var(--bg2);
+    }
+    .thermo-scale {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--text2);
+    }
+
+    /* ── BM20 card extras ── */
+    .bm20-desc { margin-top: 10px; font-size: 12px; line-height: 1.5; color: var(--text2); }
+    .bm20-link { display: inline-block; margin-top: 4px; font-weight: 600; color: var(--blue); text-decoration: none; font-size: 12px; }
+    .bm20-link:hover { text-decoration: underline; }
+
+    /* ── Chart panels ── */
+    .panel {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .widget { padding: 14px; min-width: 0; }
+
+    .widget-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .w-title { display: flex; gap: 10px; align-items: flex-start; }
+    .w-icon {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--blue);
+      font-weight: 800;
+      font-size: 11px;
+      flex: 0 0 auto;
+    }
+    .w-title h4 { margin: 0; font-size: 13px; color: var(--text); }
+    .w-title .desc { margin-top: 3px; font-size: 11px; color: var(--text2); line-height: 1.35; }
+    .w-meta { text-align: right; color: var(--text2); font-size: 11px; white-space: nowrap; }
+
+    /* ── Chart areas ── */
+    .chart { width: 100%; height: 320px; }
+    #totalChart  { height: 360px; }
+    #treemap     { height: 360px; }
+    #stableChart { height: 220px; }
+
+    /* ── Controls / toolbar ── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .btn {
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      color: var(--text2);
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .btn:hover { border-color: var(--text2); color: var(--text); }
+    .btn.active { border-color: var(--blue); color: var(--blue); background: #1d3a5e50; font-weight: 700; }
+
+    /* ── Widgets grid ── */
+    .widgets {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 900px) { .widgets { grid-template-columns: repeat(2, 1fr); } }
+
+    .widgets-wide {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 900px) { .widgets-wide { grid-template-columns: repeat(2, 1fr); } }
+
+    /* ── Pill / tag ── */
+    .pill {
+      font-size: 11px;
+      color: var(--text2);
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      padding: 3px 8px;
+      border-radius: 999px;
+      white-space: nowrap;
+      display: inline-block;
+    }
+    .pill.isFear    { border-color: rgba(239,68,68,.35);  background: rgba(239,68,68,.08);  color: #f87171; }
+    .pill.isNeutral { border-color: rgba(148,163,184,.35); background: rgba(148,163,184,.10); color: var(--text2); }
+    .pill.isGreed   { border-color: rgba(34,197,94,.35);  background: rgba(34,197,94,.08);  color: #4ade80; }
+
+    /* ── List ── */
+    .list { margin: 0; padding: 0; list-style: none; }
+    .list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 2px;
+      border-top: 1px solid var(--border);
+      font-size: 12.5px;
+      color: var(--text);
+    }
+    .list li:first-child { border-top: none; }
+
+    /* ── Footnote ── */
+    .footnote { margin-top: 10px; font-size: 12px; color: var(--text2); }
+
+    /* ── Trend grid ── */
+    .trend-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 900px) { .trend-grid { grid-template-columns: 1fr 1fr; } }
+
+    /* ── Footer disclaimer ── */
+    .footer-disclaimer {
+      margin-top: 32px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .footer-disclaimer .icon {
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: var(--text2);
+      flex-shrink: 0;
+    }
+    .footer-disclaimer .title  { margin: 0; font-size: 13px; font-weight: 700; }
+    .footer-disclaimer .sub    { margin: 2px 0 0; font-size: 11px; color: var(--text2); }
+    .footer-disclaimer .body   { margin: 8px 0 0; font-size: 12px; line-height: 1.55; color: var(--text2); }
+
+    /* chart height overrides */
+    #kshareChart, #xrpKShareChart, #kshareCompareChart, #fngChart { height: 280px; }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="header-left">
+    <a href="/" class="site-title">BLOCKMEDIA Data</a>
+    <span class="page-badge">KRW Market</span>
+  </div>
+  <div class="header-meta">
+    <span class="chip">UPDATED: <b id="metaUpdated">-</b></span>
+    <span class="chip">SIGNAL: <b id="metaSignal">-</b></span>
+  </div>
+</header>
+
+<!-- ── TOP NAV (pages) ── -->
+<nav class="top-nav">
+  <a href="/index.html" class="active">🇰🇷 KRW Market</a>
+  <a href="/bm20_index.html">📊 BM20 Index</a>
+  <a href="/etf.html">🌐 US ETF Flow</a>
+</nav>
+
+<!-- ── SECTION TOGGLE ── -->
+<div class="section-toggle">
+  <button class="sec-btn active-overview" id="btn-overview" onclick="switchSection('overview')">
+    <span class="sec-dot dot-overview"></span> Overview
+  </button>
+  <button class="sec-btn" id="btn-flows" onclick="switchSection('flows')">
+    <span class="sec-dot dot-flows"></span> Flows
+  </button>
+  <button class="sec-btn" id="btn-trends" onclick="switchSection('trends')">
+    <span class="sec-dot dot-trends"></span> Trends
+  </button>
+  <button class="sec-btn" id="btn-topcoins" onclick="switchSection('topcoins')">
+    <span class="sec-dot dot-topcoins"></span> Top Coins
+  </button>
+  <button class="sec-btn" id="btn-extop" onclick="switchSection('extop')">
+    <span class="sec-dot dot-extop"></span> Exchange Top5
+  </button>
+  <button class="sec-btn" id="btn-kimchi" onclick="switchSection('kimchi')">
+    <span class="sec-dot dot-kimchi"></span> Smart Kimchi
+  </button>
+</div>
+
+<main>
+
+  <!-- ── OVERVIEW ── -->
+  <section class="section" id="sec-overview">
+    <div class="section-title">
+      <span class="dot"></span> Overview
+      <span class="sub">KRW Rolling 24h · 최근 24시간 거래대금 기준</span>
+    </div>
+
+    <div class="kpi-grid">
+      <!-- 총 거래대금 -->
+      <div class="kpi-card">
+        <div class="kpi-label">총 거래대금 (rolling 24h)</div>
+        <div class="kpi-value" id="kpiTotal">-</div>
+        <div class="kpi-note" id="kpiTs">-</div>
+      </div>
+
+      <!-- Top10 집중도 -->
+      <div class="kpi-card">
+        <div class="kpi-label">Top10 집중도 (%)</div>
+        <div class="kpi-value" id="kpiTop10">-</div>
+        <div class="kpi-note" id="kpiTop10Note">-</div>
+      </div>
+
+      <!-- 거래소 비중 -->
+      <div class="kpi-card">
+        <div class="kpi-label">거래소 비중 (%)</div>
+        <div class="kpi-value" id="kpiEx">-</div>
+        <div class="kpi-note" id="kpiExNote">-</div>
+      </div>
+
+      <!-- K-Safety -->
+      <div class="kpi-card" style="border-color:#1d4ed870;">
+        <div class="kpi-label" style="color:#60a5fa;">K-Safety (스테이블코인 비)</div>
+        <div class="kpi-value" id="kpiStable">-</div>
+        <div class="kpi-note" id="kpiStableNote">-</div>
+      </div>
+
+      <!-- 한국 시장 점유율 -->
+      <div class="kpi-card accent">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:8px;">
+          <div>
+            <div class="kpi-label" style="color:#60a5fa;">한국 시장 점유율 (Global)</div>
+            <div class="kpi-note" style="margin:2px 0 0;">전 세계 거래량 대비 비중</div>
+          </div>
+          <span class="pill">최근 14D</span>
+        </div>
+        <div class="kpi-value" id="kpiKShare" style="font-size:22px; margin-top:6px;">-</div>
+        <canvas id="kshareSpark" class="kpi-mini-chart" height="56"></canvas>
+      </div>
+
+      <!-- XRP 점유율 -->
+      <div class="kpi-card accent" id="kpiXrpCard">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:8px;">
+          <div>
+            <div class="kpi-label" style="color:#60a5fa;">XRP 한국 점유율 (Global)</div>
+            <div class="kpi-note" style="margin:2px 0 0;">전 세계 XRP 거래량 대비 한국 비중</div>
+          </div>
+          <span class="pill">최근 14D</span>
+        </div>
+        <div class="kpi-value" id="kpiXrpKShare" style="font-size:22px; margin-top:6px;">-</div>
+        <canvas id="xrpKshareSpark" class="kpi-mini-chart" height="56"></canvas>
+      </div>
+
+      <!-- BM20 Index -->
+      <div class="kpi-card" id="kpiBm20Card">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:8px;">
+          <div>
+            <div class="kpi-label">BM20 Index</div>
+            <div class="kpi-note" style="margin:2px 0 0;">Methodology 기준</div>
+          </div>
+          <span class="pill" id="bm20AsOfPill">-</span>
+        </div>
+        <div class="kpi-value" id="kpiBm20Level" style="font-size:22px; margin-top:6px;">-</div>
+        <div class="kpi-note" id="kpiBm20Chg" style="margin-top:4px;">전일 대비: -</div>
+        <div class="bm20-desc">
+          BM20은 글로벌 디지털 자산 시장을 대표하는 대형 자산 20종으로 구성된
+          <strong style="color:var(--text);">블록미디어 자체 산출 지수</strong>입니다.
+          <br>
+          <a href="https://data.blockmedia.co.kr/bm20_index.html" class="bm20-link">지수 구성 및 산출 방식 보기 →</a>
+        </div>
+      </div>
+
+      <!-- 글로벌 시장 심리 -->
+      <div class="kpi-card danger">
+        <div class="thermo-wrap">
+          <div class="thermo-head">
+            <div>
+              <div class="kpi-label" style="color:#f87171;">글로벌 시장 심리</div>
+              <div class="kpi-note" id="fngStatusText" style="margin:4px 0 0;">-</div>
+            </div>
+            <span class="thermo-value" id="fngValueNote">심리 점수: - / 100</span>
+          </div>
+          <div class="thermo-bar">
+            <div class="thermo-marker" id="fngMarker" style="left:50%;"></div>
+            <div class="thermo-dot"   id="fngDot"    style="left:50%;"></div>
+          </div>
+          <div class="thermo-scale">
+            <span>극도의 공포</span><span>중립</span><span>극도의 탐욕</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FLOWS ── -->
+  <section class="section sec-hidden" id="sec-flows">
+    <div class="section-title">
+      <span class="dot yellow"></span> Flows &amp; Concentration
+      <span class="sub">총 거래대금 수준 + 거래소/집중도 분석</span>
+      <span class="right">Snapshot cadence: 8h</span>
+    </div>
+
+    <div class="toolbar" style="margin-bottom:14px;">
+      <button class="btn" id="btn1d">1D</button>
+      <button class="btn active" id="btn3d">3D</button>
+      <button class="btn" id="btn7d">7D</button>
+      <span class="pill">rolling 24h · overlaps ok</span>
+    </div>
+
+    <div class="panel widget" style="margin-bottom:12px;">
+      <div class="widget-head">
+        <div class="w-title">
+          <div class="w-icon">Σ</div>
+          <div>
+            <h4>총 거래대금 추이 (Rolling 24h)</h4>
+            <div class="desc">업비트·빗썸·코인원 스택 바</div>
+          </div>
+        </div>
+        <div class="w-meta" id="wTotalMeta">UPDATED: -</div>
+      </div>
+      <div id="totalChart" class="chart"></div>
+    </div>
+
+    <div class="widgets-wide">
+      <div class="panel widget" id="sec-concentration">
+        <div class="widget-head">
+          <div class="w-title">
+            <div class="w-icon">%</div>
+            <div>
+              <h4>거래소 점유율(%) 추이</h4>
+              <div class="desc">업비트·빗썸·코인원 비중 이동</div>
+            </div>
+          </div>
+          <div class="w-meta">Source: BLOCKMEDIA</div>
+        </div>
+        <div id="shareChart" class="chart"></div>
+      </div>
+
+      <div class="panel widget">
+        <div class="widget-head">
+          <div class="w-title">
+            <div class="w-icon">10</div>
+            <div>
+              <h4>Top10 vs Rest (집중/확산)</h4>
+              <div class="desc">Top10/Rest + Top10 점유율 라인</div>
+            </div>
+          </div>
+          <div class="w-meta">Source: BLOCKMEDIA</div>
+        </div>
+        <div id="topRestChart" class="chart"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── TRENDS ── -->
+  <section class="section sec-hidden" id="sec-trends">
+    <div class="section-title">
+      <span class="dot green"></span> Trends
+      <span class="sub">상단 KPI 카드 지표를 독립 차트로 추적합니다</span>
+    </div>
+
+    <div class="trend-grid">
+      <div class="panel widget">
+        <div class="widget-head">
+          <div class="w-title">
+            <div class="w-icon">KR</div>
+            <div>
+              <h4>한국 시장 점유율(%) 추이 (Global)</h4>
+              <div class="desc">전 세계 거래량 대비 한국 비중 · Rolling 24h</div>
+            </div>
+          </div>
+          <div class="w-meta">Source: BLOCKMEDIA</div>
+        </div>
+        <div id="kshareChart" class="chart"></div>
+      </div>
+
+      <div class="panel widget">
+        <div class="widget-head">
+          <div class="w-title">
+            <div class="w-icon">X</div>
+            <div>
+              <h4>XRP 시장 점유율(%) 추이 (Global)</h4>
+              <div class="desc">전 세계 XRP 현물 거래량 대비 한국 비중 · Rolling 24h</div>
+            </div>
+          </div>
+          <div class="w-meta">Source: BLOCKMEDIA</div>
+        </div>
+        <div id="xrpKShareChart" class="chart"></div>
+      </div>
+
+      <div class="panel widget">
+        <div class="widget-head">
+          <div class="w-title">
+            <div class="w-icon">⇄</div>
+            <div>
+              <h4>한국 점유율 vs XRP 점유율</h4>
+              <div class="desc">동행/괴리 비교 · Rolling 24h</div>
+            </div>
+          </div>
+          <div class="w-meta">Source: BLOCKMEDIA</div>
+        </div>
+        <div id="kshareCompareChart" class="chart"></div>
+      </div>
+
+      <div class="panel widget">
+        <div class="widget-head">
+          <div class="w-title">
+            <div class="w-icon">FG</div>
+            <div>
+              <h4>탐욕·공포 지수 추이</h4>
+              <div class="desc">0~100 · 구간(공포/중립/탐욕)으로 해석</div>
+            </div>
+          </div>
+          <div class="w-meta">Source: BLOCKMEDIA</div>
+        </div>
+        <div id="fngChart" class="chart"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── TOP COINS ── -->
+  <section class="section sec-hidden" id="sec-topcoins">
+    <div class="section-title">
+      <span class="dot purple"></span> Top Coins
+      <span class="sub">"어떤 알트에 쏠렸는지"를 한눈에 확인합니다</span>
+      <span class="right">
+        <span class="pill" id="pillNow">-</span>
+        <span class="pill" id="pillSignal" style="margin-left:4px;">-</span>
+      </span>
+    </div>
+
+    <div class="widgets">
+      <div class="panel widget">
+        <div class="widget-head">
+          <div class="w-title">
+            <div class="w-icon">T</div>
+            <div>
+              <h4>Top10 Treemap</h4>
+              <div class="desc">규모(거래대금) 기준 시각화</div>
+            </div>
+          </div>
+          <div class="w-meta">VIEW: 24h</div>
+        </div>
+        <div id="treemap" class="chart"></div>
+        <ul class="list" id="top10List" style="margin-top:8px;"></ul>
+      </div>
+
+      <div class="panel widget" id="sec-stables">
+        <div class="widget-head">
+          <div class="w-title">
+            <div class="w-icon">S</div>
+            <div>
+              <h4>Stable Dominance</h4>
+              <div class="desc">KRW 시장 "안전선호/대기자금" 신호</div>
+            </div>
+          </div>
+          <div class="w-meta">K-Safety</div>
+        </div>
+        <div id="stableChart" class="chart"></div>
+        <div class="footnote">
+          KPI의 <b style="color:var(--text);">K-Safety</b>와 동일한 데이터(스테이블 거래대금/비중) 기반입니다.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── EXCHANGE TOP5 ── -->
+  <section class="section sec-hidden" id="sec-extop">
+    <div class="section-title">
+      <span class="dot orange"></span> Exchange Top5
+      <span class="sub">거래소별로 "상위 코인"을 봅니다</span>
+      <span class="right">Upbit · Bithumb · Coinone</span>
+    </div>
+
+    <div class="widgets">
+      <div class="panel widget">
+        <div class="widget-head">
+          <div class="w-title">
+            <div class="w-icon">U</div>
+            <div>
+              <h4>Upbit Top5</h4>
+              <div class="desc">최근 24h 거래대금 기준</div>
+            </div>
+          </div>
+          <div class="w-meta">KRW pairs</div>
+        </div>
+        <ul class="list" id="upTop5"></ul>
+      </div>
+
+      <div class="panel widget">
+        <div class="widget-head">
+          <div class="w-title">
+            <div class="w-icon">B</div>
+            <div>
+              <h4>Bithumb Top5</h4>
+              <div class="desc">최근 24h 거래대금 기준</div>
+            </div>
+          </div>
+          <div class="w-meta">KRW pairs</div>
+        </div>
+        <ul class="list" id="btTop5"></ul>
+      </div>
+    </div>
+
+    <div class="panel widget" style="margin-top:12px;">
+      <div class="widget-head">
+        <div class="w-title">
+          <div class="w-icon">C</div>
+          <div>
+            <h4>Coinone Top5</h4>
+            <div class="desc">최근 24h 거래대금 기준</div>
+          </div>
+        </div>
+        <div class="w-meta">KRW pairs</div>
+      </div>
+      <ul class="list" id="coTop5"></ul>
+    </div>
+  </section>
+
+  <!-- ── SMART KIMCHI ── -->
+  <section class="section sec-hidden" id="sec-kimchi">
+    <div class="section-title">
+      <span class="dot" style="background:var(--yellow);"></span> Smart Kimchi
+      <span class="sub">BTC/ETH/XRP 김프 추이 + Kimchi Type/Score</span>
+      <span class="right" id="kimchiUpdated">UPDATED: -</span>
+    </div>
+
+    <div class="widgets">
+      <div class="panel widget">
+        <div class="widget-head">
+          <div class="w-title">
+            <div class="w-icon">%</div>
+            <div>
+              <h4>Kimchi Premium % (BTC / ETH / XRP)</h4>
+              <div class="desc">국내(Upbit KRW) vs 글로벌(USD) * 환산</div>
+            </div>
+          </div>
+          <div class="w-meta">v1</div>
+        </div>
+        <div id="kimchiPremChart" class="chart"></div>
+      </div>
+
+      <div class="panel widget">
+        <div class="widget-head">
+          <div class="w-title">
+            <div class="w-icon">K</div>
+            <div>
+              <h4>Kimchi Type &amp; Score</h4>
+              <div class="desc">Retail/Constraint/Neutral 분류 + score</div>
+            </div>
+          </div>
+          <div class="w-meta">v1</div>
+        </div>
+        <div id="kimchiScoreChart" class="chart"></div>
+
+        <div style="margin-top:10px;">
+          <span class="pill" style="margin-bottom:8px; display:inline-block;">Kimchi Comment</span>
+          <div style="font-size:13px; line-height:1.55; margin-top:6px;">
+            <div id="kimchiCommentHead" style="font-weight:700; color:var(--text);">-</div>
+            <div id="kimchiCommentBody" style="margin:6px 0 0; color:var(--text2); font-size:12px;">-</div>
+          </div>
+        </div>
+
+        <div style="margin-top:10px;">
+          <span class="pill" style="display:inline-block; margin-bottom:6px;">FX Context</span>
+          <div id="fxComment" style="font-size:12px; line-height:1.5; color:var(--text2); margin-top:4px;">-</div>
+        </div>
+
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:10px;">
+          <span class="pill" id="kimchiTypePill">-</span>
+          <span class="pill" id="kimchiScorePill">-</span>
+          <span class="pill" id="kimchiPremPill">-</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer class="footer-disclaimer" role="note" aria-label="disclaimer">
+    <div class="icon">i</div>
+    <div>
+      <p class="title">Disclaimer</p>
+      <p class="sub">Information Purpose Only</p>
+      <p class="body">
+        본 지수 및 대시보드에 제공되는 정보는 시장 동향 파악을 위한 참고 자료이며,
+        특정 디지털 자산에 대한 투자 권유 또는 재무적 조언을 구성하지 않습니다.
+        투자 결정은 각 투자자의 판단과 책임 하에 이루어져야 합니다.
+      </p>
+    </div>
+  </footer>
+
+</main>
+
+<!-- ── Section switch ── -->
+<script>
+const SECTIONS = ['overview','flows','trends','topcoins','extop','kimchi'];
+
+function switchSection(name) {
+  // 버튼 active 상태 교체
+  SECTIONS.forEach(s => {
+    const btn = document.getElementById('btn-' + s);
+    if (btn) {
+      btn.className = 'sec-btn' + (s === name ? ' active-' + s : '');
+    }
+  });
+
+  // 섹션 show/hide
+  SECTIONS.forEach(s => {
+    const sec = document.getElementById('sec-' + s);
+    if (sec) sec.classList.toggle('sec-hidden', s !== name);
+  });
+
+  // 차트가 숨겨져 있다가 표시될 때 resize 필요
+  requestAnimationFrame(() => {
+    // allCharts는 init() 이후 전역에서 접근
+    if (typeof _allCharts !== 'undefined') {
+      _allCharts.forEach(c => c?.resize());
+    }
+    // 페이지 상단으로 스크롤 (헤더 바로 아래)
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+}
+</script>
+
+<script>
+  
+  const EX_COLORS = {
+    upbit:   "#2563eb",
+    bithumb:"#16a34a",
+    coinone:  "#7c3aed",
+  };
+  
+  const AXIS_UNIT = 1e12;
+  const AXIS_UNIT_LABEL = "조원";
+
+  function fmtAxis(v){
+    if (!Number.isFinite(v)) return "";
+    return (v / AXIS_UNIT).toLocaleString("ko-KR");
+  }
+
+  function num(x){
+    const n = Number(x);
+    return Number.isFinite(n) ? n : 0;
+  }
+  function fmtKRW(n){
+    n = num(n);
+    const abs = Math.abs(n);
+    if (abs >= 1e12) return (n/1e12).toFixed(2) + "조원";
+    if (abs >= 1e8)  return (n/1e8).toFixed(0) + "억원";
+    return n.toLocaleString("ko-KR") + "원";
+  }
+
+  function drawSparkline(canvas, values){
+    if(!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const w = canvas.width = canvas.clientWidth || 240;
+    const h = canvas.height = canvas.getAttribute("height") ? Number(canvas.getAttribute("height")) : 56;
+
+    ctx.clearRect(0,0,w,h);
+
+    const arr = (Array.isArray(values) ? values : []).filter(v => Number.isFinite(v));
+    if(arr.length < 2){
+      ctx.globalAlpha = 0.4;
+      ctx.beginPath();
+      ctx.moveTo(0, h*0.6);
+      ctx.lineTo(w, h*0.6);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = "#8b949e";
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      return;
+    }
+
+    const min = Math.min(...arr);
+    const max = Math.max(...arr);
+    const pad = 6;
+    const denom = (max - min) || 1;
+    const xStep = (w - pad*2) / (arr.length - 1);
+
+    ctx.beginPath();
+    arr.forEach((v,i)=>{
+      const x = pad + i*xStep;
+      const y = pad + (h - pad*2) * (1 - (v - min)/denom);
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#58a6ff";
+    ctx.stroke();
+
+    const last = arr[arr.length-1];
+    const lx = pad + (arr.length-1)*xStep;
+    const ly = pad + (h - pad*2) * (1 - (last - min)/denom);
+
+    ctx.beginPath();
+    ctx.arc(lx, ly, 3, 0, Math.PI*2);
+    ctx.fillStyle = "#58a6ff";
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(lx, ly, 5, 0, Math.PI*2);
+    ctx.strokeStyle = "#161b22";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  function nowKST(){
+    const d = new Date();
+    const utc = d.getTime() + d.getTimezoneOffset() * 60000;
+    const kst = new Date(utc + 9 * 60 * 60000);
+    const MM = String(kst.getMonth() + 1).padStart(2, "0");
+    const DD = String(kst.getDate()).padStart(2, "0");
+    const hh = String(kst.getHours()).padStart(2, "0");
+    const mm = String(kst.getMinutes()).padStart(2, "0");
+    return `${MM}/${DD} ${hh}:${mm} KST`;
+  }
+
+  function fmtPct(p){
+    if (p === null || p === undefined || Number.isNaN(p)) return "-";
+    const sign = p > 0 ? "+" : "";
+    return sign + Number(p).toFixed(2) + "%";
+  }
+  function fmtPct1(p){
+    if (p === null || p === undefined || Number.isNaN(p)) return "-";
+    const sign = p > 0 ? "+" : "";
+    return sign + Number(p).toFixed(1) + "%";
+  }
+  async function loadJSON(url){
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error("Failed to load: " + url + " (" + res.status + ")");
+    return await res.json();
+  }
+
+  function urls(){
+    const bust = "v=" + Date.now();
+    return {
+      latest: "/out/history/krw_24h_latest.json?" + bust,
+      hist:   "/out/history/krw_24h_snapshots.json?" + bust,
+      xrpHist: "/out/global/k_xrp_share_24h_history.json?" + bust,
+      kimchiLatest: "/out/history/kimchi_latest.json?" + bust,
+      kimchiHist:   "/out/history/kimchi_snapshots.json?" + bust,
+      fxLatest: "/out/history/fx_latest.json?" + bust,
+      bm20History: "/data/bm20_history.json?" + bust,
+      bm20Latest: "/bm20_latest.json?" + bust
+    };
+  }
+
+  let treemap, totalChart, shareChart, topRestChart, stableChart, kimchiPremChart, kimchiScoreChart;
+  let xrpKShareChart, kshareCompareChart, kshareChart, fngChart;
+  let HISTORY = [], LATEST = null;
+  let BM20_HIST = [];
+  let XRP_HIST = [];
+  let KIMCHI_HIST = [], KIMCHI_LATEST = null;
+  let CURRENT_RANGE = 3;
+  let FX_LATEST = null;
+
+  function setActive(range){
+    document.getElementById("btn1d")?.classList.toggle("active", range === 1);
+    document.getElementById("btn3d")?.classList.toggle("active", range === 3);
+    document.getElementById("btn7d")?.classList.toggle("active", range === 7);
+  }
+
+  function sliceByDays(history, days){
+    const need = days * 3;
+    const arr = Array.isArray(history) ? history : [];
+    return arr.slice(-Math.max(need, 2));
+  }
+
+  function sliceBm20(hist, days){
+    const need = days * 3;
+    const arr = Array.isArray(hist) ? hist : [];
+    return arr.slice(-Math.max(need, 2));
+  }
+
+  function parseDateAny(d){
+    const t = d?.ts || d?.time || d?.datetime || d?.date || d?.timestamp;
+    const dt = t ? new Date(t) : null;
+    return (dt && !isNaN(dt.getTime())) ? dt : null;
+  }
+
+  function fmtMDHM(dt){
+    const mm = String(dt.getMonth()+1).padStart(2,"0");
+    const dd = String(dt.getDate()).padStart(2,"0");
+    const hh = String(dt.getHours()).padStart(2,"0");
+    const mi = String(dt.getMinutes()).padStart(2,"0");
+    return `${mm}/${dd} ${hh}:${mi} KST`;
+  }
+
+  // ── echarts 다크 테마 공통 옵션 ──
+  const DARK_TOOLTIP = {
+    trigger: "axis",
+    confine: true,
+    borderWidth: 1,
+    borderColor: "#30363d",
+    backgroundColor: "#161b22",
+    textStyle: { color: "#e6edf3", fontSize: 12 },
+    extraCssText: "box-shadow:0 8px 24px rgba(0,0,0,.5); border-radius:8px; padding:10px 12px;"
+  };
+  const DARK_AXIS = {
+    axisLine: { lineStyle: { color: "#30363d" } },
+    axisTick: { show: false },
+    axisLabel: { color: "#8b949e" },
+    splitLine: { lineStyle: { color: "#21262d" } }
+  };
+
+  function renderBm20(rangeDays){
+    if(!kshareChart && !fngChart && !xrpKShareChart && !kshareCompareChart) return;
+    if(!Array.isArray(BM20_HIST) || BM20_HIST.length < 2) return;
+
+    const h = sliceBm20(BM20_HIST, rangeDays);
+    const xs = h.map(d=>{
+      const dt = parseDateAny(d);
+      return dt ? fmtMDHM(dt) : "-";
+    });
+
+    const kSeries = h.map(d => Number(d?.k_market?.k_share_percent) || 0);
+    const fSeries = h.map(d => Number(d?.sentiment?.value) );
+
+    if(kshareChart){
+      const vals = kSeries.filter(v=>Number.isFinite(v));
+      const lo = vals.length ? Math.min(...vals) : 0;
+      const hi = vals.length ? Math.max(...vals) : 5;
+      const pad = Math.max(0.2, (hi-lo)*0.25);
+
+      kshareChart.setOption({
+        backgroundColor: "transparent",
+        grid:{ left:52, right:18, top:32, bottom:44, containLabel:true },
+        tooltip:{
+          ...DARK_TOOLTIP,
+          formatter:(ps)=>{
+            const i = ps[0].dataIndex;
+            const v = kSeries[i];
+            const vv = Number.isFinite(v) ? v.toFixed(2) : "-";
+            return `<div style="font-weight:700; margin-bottom:4px;">${xs[i]}</div>
+                    <div>한국 점유율 <b>${vv}%</b></div>`;
+          }
+        },
+        xAxis:{ type:"category", data:xs, boundaryGap:false, ...DARK_AXIS, axisLabel:{ rotate:(xs.length>10?25:0), color:"#8b949e" } },
+        yAxis:{ type:"value", min:0, max:10, splitNumber:4, ...DARK_AXIS, axisLabel:{ color:"#8b949e", formatter:(v)=> v.toFixed(2)+"%" } },
+        series:[{ name:"K Share", type:"line", smooth:true, symbol:"circle", symbolSize:6, showSymbol:xs.length<=30, itemStyle:{ borderWidth:2, borderColor:"#161b22", color:"#58a6ff" }, data:kSeries, lineStyle:{ width:2, color:"#58a6ff" }, areaStyle:{ opacity:0.08, color:"#58a6ff" } }]
+      }, true);
+    }
+
+    if(xrpKShareChart){
+      if(Array.isArray(XRP_HIST) && XRP_HIST.length >= 2){
+        const xr = sliceBm20(XRP_HIST, rangeDays);
+        const xrx = xr.map(d=>{
+          const dt = parseDateAny({ timestamp: d?.as_of || d?.timestamp || d?.ts || d?.time || d?.datetime || d?.date });
+          return dt ? fmtMDHM(dt) : "-";
+        });
+        const xrpSeries = xr.map(d => {
+          const v = Number(d?.k_xrp_share_pct_24h);
+          return Number.isFinite(v) ? v : null;
+        });
+        const vals = xrpSeries.filter(v=>Number.isFinite(v));
+        const hi = vals.length ? Math.max(...vals) : 15;
+        const pad2 = Math.max(0.2, hi*0.25);
+
+        xrpKShareChart.setOption({
+          backgroundColor: "transparent",
+          grid:{ left:52, right:18, top:32, bottom:44, containLabel:true },
+          tooltip:{
+            ...DARK_TOOLTIP,
+            formatter:(ps)=>{
+              const i = ps[0].dataIndex;
+              const v = xrpSeries[i];
+              const vv = Number.isFinite(v) ? v.toFixed(2) : "-";
+              return `<div style="font-weight:700; margin-bottom:4px;">${xrx[i]}</div>
+                      <div>XRP 점유율 <b>${vv}%</b></div>`;
+            }
+          },
+          xAxis:{ type:"category", data:xrx, boundaryGap:false, ...DARK_AXIS, axisLabel:{ rotate:(xrx.length>10?25:0), color:"#8b949e" } },
+          yAxis:{ type:"value", min:0, max:Math.ceil((hi+pad2)*100)/100, splitNumber:4, ...DARK_AXIS, axisLabel:{ color:"#8b949e", formatter:(v)=> Number(v).toFixed(2)+"%" } },
+          series:[{ name:"XRP Share", type:"line", smooth:true, symbol:"circle", symbolSize:6, showSymbol:xrx.length<=30, itemStyle:{ borderWidth:2, borderColor:"#161b22", color:"#3fb950" }, data:xrpSeries, connectNulls:true, lineStyle:{ width:2, color:"#3fb950" }, areaStyle:{ opacity:0.08, color:"#3fb950" } }]
+        }, true);
+      }
+    }
+
+    if(kshareCompareChart){
+      if(Array.isArray(XRP_HIST) && XRP_HIST.length >= 2){
+        const bm = sliceBm20(BM20_HIST, rangeDays);
+        const xr = sliceBm20(XRP_HIST, rangeDays);
+
+        const bmMap = new Map(
+          bm.map(d=>{
+            const t = d?.timestamp || d?.ts || d?.time || d?.datetime || d?.date;
+            const ms = t ? new Date(t).getTime() : null;
+            const v = Number(d?.k_market?.k_share_percent);
+            return (ms && Number.isFinite(v)) ? [ms, v] : null;
+          }).filter(Boolean)
+        );
+        const xrMap = new Map(
+          xr.map(d=>{
+            const t = d?.as_of || d?.timestamp || d?.ts || d?.time || d?.datetime || d?.date;
+            const ms = t ? new Date(t).getTime() : null;
+            const v = Number(d?.k_xrp_share_pct_24h);
+            return (ms && Number.isFinite(v)) ? [ms, v] : null;
+          }).filter(Boolean)
+        );
+        const common = [...bmMap.keys()].filter(ms => xrMap.has(ms)).sort((a,b)=>a-b);
+        if(common.length >= 2){
+          const cx = common.map(ms => fmtMDHM(new Date(ms)));
+          const kC = common.map(ms => bmMap.get(ms));
+          const xC = common.map(ms => xrMap.get(ms));
+          const diff = xC.map((v,i)=> (Number.isFinite(v) && Number.isFinite(kC[i])) ? (v - kC[i]) : null);
+
+          kshareCompareChart.setOption({
+            backgroundColor: "transparent",
+            grid:{ left:52, right:18, top:32, bottom:44, containLabel:true },
+            tooltip:{
+              ...DARK_TOOLTIP,
+              formatter:(ps)=>{
+                const i = ps[0].dataIndex;
+                const kv=kC[i], xv=xC[i], dv=diff[i];
+                const kt = Number.isFinite(kv) ? kv.toFixed(2)+"%" : "-";
+                const xt = Number.isFinite(xv) ? xv.toFixed(2)+"%" : "-";
+                const dt2 = Number.isFinite(dv) ? (dv>=0?"+":"") + dv.toFixed(2)+"%p" : "-";
+                return `<div style="font-weight:700; margin-bottom:4px;">${cx[i]}</div>
+                        <div>한국 <b>${kt}</b></div>
+                        <div>XRP <b>${xt}</b></div>
+                        <div style="color:#8b949e; margin-top:2px;">괴리(XRP-한국) <b>${dt2}</b></div>`;
+              }
+            },
+            legend:{ top:2, left:0, itemWidth:14, itemHeight:8, data:["한국 점유율","XRP 점유율","괴리(XRP-한국)"], textStyle:{ color:"#8b949e" } },
+            xAxis:{ type:"category", data:cx, boundaryGap:false, ...DARK_AXIS, axisLabel:{ rotate:(cx.length>10?25:0), color:"#8b949e" } },
+            yAxis:{ type:"value", splitNumber:4, ...DARK_AXIS, axisLabel:{ color:"#8b949e", formatter:(v)=> Number(v).toFixed(2)+"%" } },
+            series:[
+              { name:"한국 점유율", type:"line", smooth:true, showSymbol:cx.length<=30, symbol:"circle", symbolSize:6, itemStyle:{ borderWidth:2, borderColor:"#161b22" }, data:kC, connectNulls:true, lineStyle:{ width:2 }, areaStyle:{ opacity:0.06 } },
+              { name:"XRP 점유율", type:"line", smooth:true, showSymbol:cx.length<=30, symbol:"circle", symbolSize:6, itemStyle:{ borderWidth:2, borderColor:"#161b22" }, data:xC, connectNulls:true, lineStyle:{ width:2 }, areaStyle:{ opacity:0.06 } },
+              { name:"괴리(XRP-한국)", type:"line", smooth:true, showSymbol:cx.length<=30, symbol:"circle", symbolSize:5, itemStyle:{ borderWidth:2, borderColor:"#161b22" }, data:diff, connectNulls:true, lineStyle:{ width:2, type:"dashed" } }
+            ]
+          }, true);
+        }
+      }
+    }
+
+    if(fngChart){
+      fngChart.setOption({
+        backgroundColor: "transparent",
+        grid:{ left:52, right:18, top:32, bottom:44, containLabel:true },
+        tooltip:{
+          ...DARK_TOOLTIP,
+          formatter:(ps)=>{
+            const i = ps[0].dataIndex;
+            const v = fSeries[i];
+            const vv = Number.isFinite(v) ? v : null;
+            let label = "-";
+            if(vv!=null){
+              if(vv<25) label="극도의 공포";
+              else if(vv<50) label="공포";
+              else if(vv<75) label="탐욕";
+              else label="극도의 탐욕";
+            }
+            return `<div style="font-weight:700; margin-bottom:4px;">${xs[i]}</div>
+                    <div>심리 점수 <b>${vv!=null?vv:"-"} / 100</b></div>
+                    <div style="color:#8b949e; margin-top:2px;">${label}</div>`;
+          }
+        },
+        xAxis:{ type:"category", data:xs, boundaryGap:false, ...DARK_AXIS, axisLabel:{ rotate:(xs.length>10?25:0), color:"#8b949e" } },
+        yAxis:{ type:"value", min:0, max:100, interval:25, ...DARK_AXIS, axisLabel:{ color:"#8b949e" } },
+        series:[{
+          name:"Fear&Greed", type:"line", smooth:true, symbol:"circle", symbolSize:6, showSymbol:false,
+          data:fSeries, connectNulls:true, lineStyle:{ width:2 }, areaStyle:{ opacity:0.08 },
+          markArea:{
+            silent:true,
+            data:[
+              [{yAxis:0,  itemStyle:{color:"rgba(239,68,68,.2)"}},{yAxis:25}],
+              [{yAxis:25, itemStyle:{color:"rgba(239,68,68,.10)"}},{yAxis:50}],
+              [{yAxis:50, itemStyle:{color:"rgba(34,197,94,.08)"}},{yAxis:75}],
+              [{yAxis:75, itemStyle:{color:"rgba(34,197,94,.15)"}},{yAxis:100}]
+            ]
+          },
+          markLine:{
+            silent:true, symbol:["none","none"],
+            lineStyle:{ color:"#30363d", type:"dashed", width:1 },
+            label:{ color:"#8b949e", formatter:(p)=>p.value },
+            data:[{yAxis:25},{yAxis:50},{yAxis:75}]
+          }
+        }]
+      }, true);
+
+      const last = fSeries.slice().reverse().find(v=>Number.isFinite(v));
+      const pill = document.getElementById("fngTrendPill");
+      if(pill){
+        let label = "-";
+        pill.classList.remove("isFear","isNeutral","isGreed");
+        if(Number.isFinite(last)){
+          if(last<25){ label="Extreme Fear"; pill.classList.add("isFear"); }
+          else if(last<50){ label="Fear"; pill.classList.add("isFear"); }
+          else if(last<75){ label="Greed"; pill.classList.add("isGreed"); }
+          else { label="Extreme Greed"; pill.classList.add("isGreed"); }
+        }
+        pill.textContent = label;
+      }
+    }
+  }
+
+  function buildSeries(hist){
+    const x = hist.map(h => h.timestamp_label);
+    const total = hist.map(h => num(h.totals?.combined_24h));
+    const up = hist.map(h => num(h.totals?.upbit_24h));
+    const bt = hist.map(h => num(h.totals?.bithumb_24h));
+    const co = hist.map(h => num(h.totals?.coinone_24h));
+    const top10 = hist.map(h => num(h.top10?.top10_total_24h));
+    const rest = hist.map(h => num(h.top10?.rest_total_24h));
+    const topShare = hist.map(h => num(h.top10?.top10_share_pct));
+    const delta = total.map((v,i)=> i===0 ? null : (v - total[i-1]));
+    return { x, total, delta, up, bt, co, top10, rest, topShare };
+  }
+
+  function render(rangeDays){
+    CURRENT_RANGE = rangeDays;
+    setActive(rangeDays);
+
+    const hist = sliceByDays(HISTORY, rangeDays);
+    const s = buildSeries(hist);
+
+    totalChart?.setOption({
+      backgroundColor: "transparent",
+      animationDuration: 2400,
+      animationEasing: "quarticInOut",
+      grid: { left:72, right:18, top:44, bottom:44, containLabel:true },
+      tooltip: {
+        ...DARK_TOOLTIP,
+        trigger:"axis", axisPointer:{ type:"shadow" },
+        formatter:(params)=>{
+          const i = params[0].dataIndex;
+          const up = s.up[i]||0, bt=s.bt[i]||0, co=s.co[i]||0;
+          const total = (s.total && s.total[i]!=null) ? s.total[i] : (up+bt+co);
+          return `<b>${s.x[i]}</b><br/>총 ${fmtKRW(total)}<br/>업비트 ${fmtKRW(up)}<br/>빗썸 ${fmtKRW(bt)}<br/>코인원 ${fmtKRW(co)}`;
+        }
+      },
+      legend: { top:0, left:0, data:["Upbit","Bithumb","Coinone"], textStyle:{ color:"#8b949e" } },
+      xAxis: { type:"category", data:s.x, axisLabel:{ color:"#8b949e", rotate:(s.x.length>10?25:0) }, axisLine:{ lineStyle:{ color:"#30363d" } }, axisTick:{ show:false } },
+      yAxis: { type:"value", name:"(조원)", nameGap:8, axisLabel:{ color:"#8b949e", margin:10, formatter:(v)=>(v/1e12).toFixed(1) }, splitLine:{ lineStyle:{ color:"#21262d" } }, axisLine:{ show:false }, axisTick:{ show:false } },
+      series: [
+        { name:"Upbit",   type:"bar", stack:"total", barWidth:12, itemStyle:{ color:EX_COLORS.upbit },   data:s.up },
+        { name:"Bithumb", type:"bar", stack:"total", barWidth:12, itemStyle:{ color:EX_COLORS.bithumb }, data:s.bt },
+        { name:"Coinone", type:"bar", stack:"total", barWidth:12, itemStyle:{ color:EX_COLORS.coinone }, data:s.co }
+      ]
+    }, true);
+
+    if(stableChart){
+      const stablePct = hist.map(h => num(h.stablecoins?.stable_dominance_pct));
+      const stableVol = hist.map(h => num(h.stablecoins?.total_stable_vol_24h));
+      const vals = stablePct.filter(v => Number.isFinite(v));
+      const lo = vals.length ? Math.min(...vals) : 0;
+      const hi = vals.length ? Math.max(...vals) : 100;
+      const pad = Math.max(2, (hi-lo)*0.25);
+      const ymin = Math.max(0, Math.floor((lo-pad)*10)/10);
+      const ymax = Math.min(100, Math.ceil((hi+pad)*10)/10);
+
+      stableChart.setOption({
+        backgroundColor: "transparent",
+        grid:{ left:56, right:18, top:22, bottom:36 },
+        tooltip:{ ...DARK_TOOLTIP, formatter:(params)=>{ const i=params[0].dataIndex; return `<b>${s.x[i]}</b><br/>Stable Dom ${stablePct[i].toFixed(1)}%<br/>Stable Vol ${fmtKRW(stableVol[i])}`; } },
+        xAxis:{ type:"category", data:s.x, axisLabel:{ rotate:(s.x.length>10?25:0), color:"#8b949e" }, axisLine:{ lineStyle:{ color:"#30363d" } }, axisTick:{ show:false } },
+        yAxis:{ type:"value", min:ymin, max:ymax, axisLabel:{ color:"#8b949e" }, splitLine:{ lineStyle:{ color:"#21262d" } }, axisLine:{ show:false }, axisTick:{ show:false } },
+        series:[{ type:"line", smooth:true, symbolSize:6, data:stablePct, lineStyle:{ color:"#3fb950", width:2 }, itemStyle:{ color:"#3fb950" }, areaStyle:{ opacity:0.08, color:"#3fb950" } }]
+      }, true);
+    }
+
+    const shareUp = s.total.map((_,i)=> s.total[i] ? s.up[i]/s.total[i]*100 : 0);
+    const shareBt = s.total.map((_,i)=> s.total[i] ? s.bt[i]/s.total[i]*100 : 0);
+    const shareCo = s.total.map((_,i)=> s.total[i] ? s.co[i]/s.total[i]*100 : 0);
+    shareChart?.setOption({
+      backgroundColor: "transparent",
+      grid:{ left:44, right:14, top:34, bottom:34, containLabel:true },
+      tooltip:{ ...DARK_TOOLTIP, formatter:(params)=>{ const i=params[0].dataIndex; return `<b>${s.x[i]}</b><br/>업비트 ${shareUp[i].toFixed(1)}%<br/>빗썸 ${shareBt[i].toFixed(1)}%<br/>코인원 ${shareCo[i].toFixed(1)}%`; } },
+      legend:{ top:6, left:0, itemWidth:14, itemHeight:8, data:["Upbit","Bithumb","Coinone"], textStyle:{ color:"#8b949e" } },
+      xAxis:{ type:"category", data:s.x, axisLabel:{ rotate:(s.x.length>10?25:0), color:"#8b949e" }, axisLine:{ lineStyle:{ color:"#30363d" } }, axisTick:{ show:false } },
+      yAxis:{ type:"value", min:0, max:100, axisLabel:{ color:"#8b949e" }, splitLine:{ lineStyle:{ color:"#21262d" } }, axisLine:{ show:false }, axisTick:{ show:false } },
+      series:[
+        { name:"Upbit",   type:"line", stack:"s", areaStyle:{ opacity:0.6 }, smooth:true, symbolSize:3, data:shareUp,   itemStyle:{ color:EX_COLORS.upbit } },
+        { name:"Bithumb", type:"line", stack:"s", areaStyle:{ opacity:0.6 }, smooth:true, symbolSize:3, data:shareBt,   itemStyle:{ color:EX_COLORS.bithumb } },
+        { name:"Coinone", type:"line", stack:"s", areaStyle:{ opacity:0.6 }, smooth:true, symbolSize:3, data:shareCo,   itemStyle:{ color:EX_COLORS.coinone } }
+      ]
+    }, true);
+
+    topRestChart?.setOption({
+      backgroundColor: "transparent",
+      grid:{ left:56, right:44, top:40, bottom:34, containLabel:true },
+      tooltip:{ ...DARK_TOOLTIP, axisPointer:{ type:"shadow" }, formatter:(params)=>{ const i=params[0].dataIndex; return `<b>${s.x[i]}</b><br/>Top10 ${fmtKRW(s.top10[i])}<br/>Rest ${fmtKRW(s.rest[i])}<br/>Top10 Share ${s.topShare[i].toFixed(1)}%`; } },
+      legend:{ top:6, left:0, itemWidth:14, itemHeight:8, data:["Top10","Rest","Top10 Share %"], textStyle:{ color:"#8b949e" } },
+      xAxis:{ type:"category", data:s.x, axisLabel:{ rotate:(s.x.length>10?25:0), color:"#8b949e" }, axisLine:{ lineStyle:{ color:"#30363d" } }, axisTick:{ show:false } },
+      yAxis:[
+        { type:"value", name:`(${AXIS_UNIT_LABEL})`, nameGap:10, axisLabel:{ formatter:(v)=>fmtAxis(v), color:"#8b949e" }, splitLine:{ lineStyle:{ color:"#21262d" } }, axisLine:{ show:false }, axisTick:{ show:false } },
+        { type:"value", min:0, max:100, splitLine:{ show:false }, axisLabel:{ color:"#8b949e" }, axisLine:{ show:false }, axisTick:{ show:false } }
+      ],
+      series:[
+        { name:"Top10", type:"bar", stack:"t", data:s.top10, barWidth:16 },
+        { name:"Rest",  type:"bar", stack:"t", data:s.rest,  barWidth:16 },
+        { name:"Top10 Share %", type:"line", yAxisIndex:1, smooth:true, symbolSize:6, data:s.topShare }
+      ]
+    }, true);
+
+    if(kimchiScoreChart && Array.isArray(KIMCHI_HIST) && KIMCHI_HIST.length){
+      const kHist = sliceByDays(KIMCHI_HIST, rangeDays);
+      const kx = kHist.map(h => h.timestamp_label);
+      const ks = kHist.map(h => num(h.smart_kimchi?.score_v1));
+      kimchiScoreChart.setOption({
+        backgroundColor:"transparent",
+        grid:{ left:44, right:18, top:30, bottom:36, containLabel:true },
+        tooltip:{ ...DARK_TOOLTIP },
+        xAxis:{ type:"category", data:kx, axisLabel:{ rotate:(kx.length>10?25:0), color:"#8b949e" }, axisLine:{ lineStyle:{ color:"#30363d" } }, axisTick:{ show:false } },
+        yAxis:{ type:"value", min:0, max:100, name:"Score", axisLabel:{ color:"#8b949e" }, splitLine:{ lineStyle:{ color:"#21262d" } }, axisLine:{ show:false }, axisTick:{ show:false } },
+        series:[{ type:"line", smooth:true, symbolSize:6, data:ks, lineStyle:{ color:"#e3b341", width:2 }, itemStyle:{ color:"#e3b341" }, areaStyle:{ opacity:0.08, color:"#e3b341" } }]
+      }, true);
+    }
+
+    if(kimchiPremChart && Array.isArray(KIMCHI_HIST) && KIMCHI_HIST.length){
+      const kHist = sliceByDays(KIMCHI_HIST, rangeDays);
+      const kx   = kHist.map(h=>h.timestamp_label);
+      const kb   = kHist.map(h=>num(h.kimchi_premium_pct?.BTC));
+      const ke   = kHist.map(h=>num(h.kimchi_premium_pct?.ETH));
+      const kxrp = kHist.map(h=>num(h.kimchi_premium_pct?.XRP));
+      const kd   = kb.map((_,i)=>{ if(i===0) return null; return Math.abs(kb[i]-kb[i-1])+Math.abs(ke[i]-ke[i-1])+Math.abs(kxrp[i]-kxrp[i-1]); });
+
+      kimchiPremChart.setOption({
+        backgroundColor:"transparent",
+        grid:{ left:44, right:18, top:30, bottom:36, containLabel:true },
+        tooltip:{ ...DARK_TOOLTIP, formatter:(params)=>{ const i=params[0].dataIndex; const d=kd[i]; const dText=(d===null)?"-":((d>=0?"+":"")+d.toFixed(2)+"p"); return `<b>${kx[i]}</b><br/>BTC ${fmtPct(kb[i])}<br/>ETH ${fmtPct(ke[i])}<br/>XRP ${fmtPct(kxrp[i])}<br/>ΔKimchi ${dText}`; } },
+        legend:{ top:6, left:0, itemWidth:14, itemHeight:8, data:["BTC","ETH","XRP","ΔKimchi"], textStyle:{ color:"#8b949e" } },
+        xAxis:{ type:"category", data:kx, axisLabel:{ rotate:(kx.length>10?25:0), color:"#8b949e" }, axisLine:{ lineStyle:{ color:"#30363d" } }, axisTick:{ show:false } },
+        yAxis:[
+          { type:"value", name:"%", axisLabel:{ formatter:(v)=>Number(v).toFixed(1), color:"#8b949e" }, splitLine:{ lineStyle:{ color:"#21262d" } }, axisLine:{ show:false }, axisTick:{ show:false } },
+          { type:"value", name:"Δp", splitLine:{ show:false }, axisLabel:{ formatter:(v)=>Number(v).toFixed(1), color:"#8b949e" }, axisLine:{ show:false }, axisTick:{ show:false } }
+        ],
+        series:[
+          { name:"BTC", type:"line", smooth:true, symbolSize:5, data:kb,   lineStyle:{ color:"#f7931a", width:2 }, itemStyle:{ color:"#f7931a" } },
+          { name:"ETH", type:"line", smooth:true, symbolSize:5, data:ke,   lineStyle:{ color:"#627eea", width:2 }, itemStyle:{ color:"#627eea" } },
+          { name:"XRP", type:"line", smooth:true, symbolSize:5, data:kxrp, lineStyle:{ color:"#58a6ff", width:2 }, itemStyle:{ color:"#58a6ff" } },
+          { name:"ΔKimchi", type:"bar", yAxisIndex:1, barWidth:12, data:kd, itemStyle:{ color:"#e3b341" } }
+        ]
+      }, true);
+    }
+  }
+
+  function fillTopList(elId, arr){
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.innerHTML = "";
+    (arr || []).slice(0,5).forEach((c, idx) => {
+      const sym = (c.symbol || "").replace("KRW-","");
+      const li = document.createElement("li");
+      li.innerHTML = `<span>${idx+1}. ${sym}</span><span>${fmtKRW(c.value)}</span>`;
+      el.appendChild(li);
+    });
+  }
+
+  function buildKimchiComment(latest, history, kimchiLatest){
+    const ts = (latest?.timestamp_label || "-");
+    const t = latest?.totals || {};
+    const top = latest?.top10 || {};
+    const st = latest?.stablecoins || {};
+    const total = num(t.combined_24h);
+    const topShare = num(top.top10_share_pct);
+    const stableDom = num(st.stable_dominance_pct);
+    const kl = kimchiLatest || {};
+    const kPrem = kl.kimchi_premium_pct || {};
+    const btc = num(kPrem.BTC);
+    const eth = num(kPrem.ETH);
+    const xrp = num(kPrem.XRP);
+    const kType = (kl.smart_kimchi?.type || "-");
+    const kScore = num(kl.smart_kimchi?.score_v1);
+    const heat = total >= 4e12 ? "거래대금은 4조원대에서 유지되고 있으며 시장환경이 과열 조짐을 나타낼 가능성이 있습니다." : total >= 2e12 ? "거래 대금이 2조원대에서 유지되고 있으며 리스크온/리스크오프가 교차하는 상황입니다" : "거래대금이 다소 적은 수준으로 위험 회피 심리가 강화되고 있습니다.";
+    const crowd = topShare >= 70 ? "거래소 내 상위 10종목 쏠림이 강한 상태로 테마 장세 성격이 짙습니다" : topShare >= 60 ? "거래소 내 상위 10 종목 쏠림이 유지되고 있지만 그 강도는 둔화되고 있습니다." : "거래소 내 상위 10종목에 대한 쏠림이 완화되면서 종목 확산이 진행되고 있습니다";
+    const stable = stableDom >= 10 ? "거래소 내 스테이블 코인 비중이 높은 수준으로 관망하는 대기 자금이 많습니다." : stableDom >= 5 ? "거래소 내 스테이블 코인 비중이 중립 수준으로 관망 또는 투자 대기 상황입니다." : "거래소 내 스테이블 코인 비중이 낮은 수준이며 현물 알트 쪽으로 자금이 움직이고 있습니다";
+    const head = `Kimchi ${kType} (${kScore.toFixed(1)}점)`;
+    const body = `${ts} 기준, BTC ${btc.toFixed(2)}%·ETH ${eth.toFixed(2)}%·XRP ${xrp.toFixed(2)}%로 집계됐다. ${heat}. ${crowd}. ${stable}.`;
+    return { head, body };
+  }
+
+  function attachAutoResize(charts){
+    const ro = new ResizeObserver(() => {
+      requestAnimationFrame(() => charts.forEach(c => c?.resize()));
+    });
+    charts.forEach(c => c && ro.observe(c.getDom()));
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) setTimeout(() => charts.forEach(c => c?.resize()), 50);
+    });
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => setTimeout(() => charts.forEach(c => c?.resize()), 50));
+    }
+    window.addEventListener("orientationchange", () => {
+      setTimeout(() => charts.forEach(c => c?.resize()), 200);
+    });
+  }
+
+  async function refreshData(){
+    const u = urls();
+    const [latest, history, kimchiLatest, kimchiHist, fxLatest, bm20Hist, bm20Latest, xrpHist] =
+      await Promise.all([
+        loadJSON(u.latest),
+        loadJSON(u.hist),
+        loadJSON(u.kimchiLatest),
+        loadJSON(u.kimchiHist),
+        loadJSON(u.fxLatest),
+        loadJSON(u.bm20History),
+        loadJSON(u.bm20Latest),
+        loadJSON(u.xrpHist)
+      ]);
+
+    LATEST = latest;
+    HISTORY = Array.isArray(history) ? history : [];
+    BM20_HIST = Array.isArray(bm20Hist) ? bm20Hist : [];
+    KIMCHI_LATEST = kimchiLatest;
+    KIMCHI_HIST = Array.isArray(kimchiHist) ? kimchiHist : [];
+    XRP_HIST = Array.isArray(xrpHist) ? xrpHist : [];
+    FX_LATEST = fxLatest;
+
+    const BM20_LATEST = bm20Latest || null;
+
+    if (BM20_LATEST) {
+      const level = Number(BM20_LATEST.bm20Level);
+      const chgPt = Number(BM20_LATEST.bm20PointChange);
+      const chgPctRaw = Number(BM20_LATEST.returns?.["1D"]);
+      const chgPct = Number.isFinite(chgPctRaw) ? chgPctRaw * 100 : null;
+      const chgPtSafe = Number.isFinite(chgPt) ? chgPt : 0;
+
+      const levelEl = document.getElementById("kpiBm20Level");
+      if (levelEl) levelEl.textContent = Number.isFinite(level) ? level.toLocaleString("ko-KR", { maximumFractionDigits:2 }) : "-";
+
+      const noteEl = document.getElementById("kpiBm20Chg");
+      if (noteEl) {
+        if (Number.isFinite(chgPct)) {
+          const sign = chgPct > 0 ? "+" : "";
+          noteEl.textContent = `전일 대비: ${sign}${chgPtSafe.toFixed(2)} (${sign}${chgPct.toFixed(2)}%)`;
+        } else {
+          noteEl.textContent = "전일 대비: -";
+        }
+      }
+      const asOfEl = document.getElementById("bm20AsOfPill");
+      if (asOfEl && BM20_LATEST.asOf) asOfEl.textContent = BM20_LATEST.asOf;
+    }
+
+    if (FX_LATEST){
+      const official = FX_LATEST.usdkrw_official;
+      const market   = FX_LATEST.usdtkrw_market;
+      const gap = market - official;
+      const fxText = gap > 15
+        ? `시장 환율(${market.toFixed(1)}원)이 공식 환율(${official.toFixed(1)}원)보다 크게 높은 수준으로, 환율 변동이 김프에 차지하는 요인이 큽니다.`
+        : gap > 5
+          ? `시장 환율이 공식 환율 대비 소폭 높은 수준으로, 김프에 환율 요인이 일부 반영돼 있습니다.`
+          : `시장·공식 환율 괴리가 크지 않아, 현재 김프는 개별 코인의 수급에 따라 영향을 크게 받습니다.`;
+      document.getElementById("fxComment").textContent = fxText;
+    }
+
+    if (bm20Hist && bm20Hist.length > 0) {
+      const bLatest = bm20Hist[bm20Hist.length - 1];
+      const kShare = bLatest.k_market?.k_share_percent || 0;
+      document.getElementById("kpiKShare").textContent = kShare + "%";
+
+      const kSeries = (Array.isArray(bm20Hist) ? bm20Hist : []).slice(-14).map(d => Number(d?.k_market?.k_share_percent) || 0);
+      drawSparkline(document.getElementById("kshareSpark"), kSeries);
+
+      const fng = bLatest.sentiment || {};
+      const fngEl = document.getElementById("fngStatusText");
+      const fngNote = document.getElementById("fngValueNote");
+
+      const statusMap = {
+        "Extreme Fear":"극도의 공포", "Fear":"공포", "Neutral":"중립", "Greed":"탐욕", "Extreme Greed":"극도의 탐욕"
+      };
+      const korStatus = statusMap[fng.status] || fng.status || "-";
+      fngEl.textContent = korStatus;
+      fngNote.textContent = `심리 점수: ${fng.value || '-'} / 100`;
+
+      const v = Number(fng.value);
+      const pct = Number.isFinite(v) ? Math.max(0, Math.min(100, v)) : 50;
+      const marker = document.getElementById("fngMarker");
+      const dot    = document.getElementById("fngDot");
+      if(marker) marker.style.left = pct + "%";
+      if(dot)    dot.style.left = pct + "%";
+      if(fng.value <= 25)       fngEl.style.color = "#f87171";
+      else if(fng.value >= 75)  fngEl.style.color = "#4ade80";
+      else                      fngEl.style.color = "#58a6ff";
+    }
+
+    if (Array.isArray(XRP_HIST) && XRP_HIST.length > 0) {
+      const xLatest = XRP_HIST[XRP_HIST.length - 1];
+      const xVal = Number(xLatest?.k_xrp_share_pct_24h);
+      const xEl = document.getElementById("kpiXrpKShare");
+      if (xEl) xEl.textContent = Number.isFinite(xVal) ? xVal.toFixed(2) + "%" : "-";
+      const xSeries = XRP_HIST.slice(-14).map(d => { const v=Number(d?.k_xrp_share_pct_24h); return Number.isFinite(v)?v:null; }).filter(v=>v!==null);
+      drawSparkline(document.getElementById("xrpKshareSpark"), xSeries);
+    }
+
+    const t = latest.totals || {};
+    const top = latest.top10 || {};
+    document.getElementById("kpiTotal").textContent = fmtKRW(t.combined_24h);
+    document.getElementById("kpiTs").textContent = `현재 시각: ${nowKST()}`;
+    document.getElementById("kpiTop10").textContent = `${fmtPct1(top.top10_share_pct)} (Top10)`;
+    document.getElementById("kpiTop10Note").textContent = `Top10 ${fmtKRW(top.top10_total_24h)} · Rest ${fmtKRW(top.rest_total_24h)}`;
+
+    const combined = num(t.combined_24h);
+    const upShare = combined > 0 ? (num(t.upbit_24h)/combined*100) : 0;
+    const btShare = combined > 0 ? (num(t.bithumb_24h)/combined*100) : 0;
+    const coShare = combined > 0 ? (num(t.coinone_24h)/combined*100) : 0;
+    document.getElementById("kpiEx").textContent = `업비트 ${upShare.toFixed(1)}%`;
+    document.getElementById("kpiExNote").textContent = `빗썸 ${btShare.toFixed(1)}% · 코인원 ${coShare.toFixed(1)}%`;
+
+    const st = latest.stablecoins || {};
+    const stPct = num(st.stable_dominance_pct);
+    const stVol = num(st.total_stable_vol_24h);
+    document.getElementById("kpiStable").textContent = `${stPct.toFixed(1)}%`;
+    const by = st.by_asset || {};
+    const byText = Object.keys(by).length
+      ? Object.entries(by).sort((a,b)=>num(b[1])-num(a[1])).map(([k,v])=>`${k} ${fmtKRW(v)}`).join(" · ")
+      : "데이터 없음";
+    document.getElementById("kpiStableNote").textContent = `합계 ${fmtKRW(stVol)} · ${byText}`;
+
+    // header chip 업데이트
+    document.getElementById("metaUpdated").textContent = nowKST();
+    const topPct = num(top.top10_share_pct);
+    const signal = topPct >= 70 ? "쏠림 강함" : (topPct >= 60 ? "쏠림" : "확산");
+    document.getElementById("metaSignal").textContent = signal;
+
+    const coins = (top.coins || []);
+    const list = document.getElementById("top10List");
+    list.innerHTML = "";
+    coins.forEach((c, idx) => {
+      const li = document.createElement("li");
+      const sym = (c.symbol || "").replace("KRW-","");
+      li.innerHTML = `<span>${idx+1}. ${sym}</span><span>${fmtKRW(c.value)} · ${num(c.share_pct).toFixed(1)}%</span>`;
+      list.appendChild(li);
+    });
+
+    document.getElementById("pillNow").textContent = `현재판: ${latest.timestamp_label || "-"}`;
+    document.getElementById("pillSignal").textContent = `신호: ${signal}`;
+
+    treemap?.setOption({
+      backgroundColor:"transparent",
+      tooltip:{ formatter:(p)=>{ const d=p.data||{}; return `<b>${d.name}</b><br/>${fmtKRW(d.value)}<br/>${num(d.share_pct).toFixed(1)}%`; } },
+      series:[{
+        type:"treemap", roam:false, nodeClick:false,
+        breadcrumb:{ show:false },
+        label:{ show:true, formatter:"{b}" },
+        upperLabel:{ show:false },
+        itemStyle:{ borderColor:"#161b22", borderWidth:2 },
+        data:coins.map(c=>({ name:(c.symbol||"").replace("KRW-",""), value:num(c.value), share_pct:num(c.share_pct) }))
+      }]
+    });
+
+    const exTop = latest.by_exchange_top || {};
+    fillTopList("upTop5",  exTop.upbit_top5);
+    fillTopList("btTop5",  exTop.bithumb_top5);
+    fillTopList("coTop5",  exTop.coinone_top5);
+
+    const c = buildKimchiComment(LATEST, HISTORY, KIMCHI_LATEST);
+    document.getElementById("kimchiCommentHead").textContent = c.head;
+    document.getElementById("kimchiCommentBody").textContent = c.body;
+
+    const kType  = (KIMCHI_LATEST?.smart_kimchi?.type || "-");
+    const kScore = num(KIMCHI_LATEST?.smart_kimchi?.score_v1);
+    const btcPrem = num(KIMCHI_LATEST?.kimchi_premium_pct?.BTC);
+    document.getElementById("kimchiTypePill").textContent = `Type: ${kType}`;
+    document.getElementById("kimchiScorePill").textContent = `Score: ${kScore.toFixed(1)} / 100`;
+    document.getElementById("kimchiPremPill").textContent = `BTC Kimchi: ${fmtPct(btcPrem)}`;
+
+    const fxEl = document.getElementById("fxComment");
+    if (FX_LATEST && fxEl){
+      const official = num(FX_LATEST.usdkrw_official);
+      const market   = num(FX_LATEST.usdtkrw_market);
+      const gap = market - official;
+      const fxText = gap > 15
+        ? `시장 환율(${market.toFixed(1)}원)이 공식 환율(${official.toFixed(1)}원)보다 크게 높은 수준으로, 환율 변동이 김프에 차지하는 요인이 큽니다.`
+        : gap > 5
+          ? `거래소 환율이 공식 환율 대비 소폭 높은 수준으로, 김프에 환율 요인이 일부 반영돼 있습니다.`
+          : `시장·공식 환율 괴리가 크지 않아, 현재 김프는 개별 코인의 수급에 따라 영향을 크게 받습니다.`;
+      fxEl.textContent = fxText;
+    }
+
+    render(CURRENT_RANGE);
+    renderBm20(CURRENT_RANGE);
+  }
+
+  (async function init(){
+    try{
+      treemap            = echarts.init(document.getElementById("treemap"));
+      totalChart         = echarts.init(document.getElementById("totalChart"));
+      shareChart         = echarts.init(document.getElementById("shareChart"));
+      kshareChart        = echarts.init(document.getElementById("kshareChart"));
+      xrpKShareChart     = echarts.init(document.getElementById("xrpKShareChart"));
+      kshareCompareChart = echarts.init(document.getElementById("kshareCompareChart"));
+      fngChart           = echarts.init(document.getElementById("fngChart"));
+      topRestChart       = echarts.init(document.getElementById("topRestChart"));
+      stableChart        = echarts.init(document.getElementById("stableChart"));
+      kimchiScoreChart   = echarts.init(document.getElementById("kimchiScoreChart"));
+      kimchiPremChart    = echarts.init(document.getElementById("kimchiPremChart"));
+
+      const allCharts = [
+        treemap, totalChart, shareChart, topRestChart, stableChart,
+        kshareChart, xrpKShareChart, kshareCompareChart, fngChart,
+        kimchiScoreChart, kimchiPremChart
+      ].filter(Boolean);
+      window._allCharts = allCharts;
+      attachAutoResize(allCharts);
+
+      document.getElementById("btn1d")?.addEventListener("click", ()=>{ render(1); renderBm20(1); });
+      document.getElementById("btn3d")?.addEventListener("click", ()=>{ render(3); renderBm20(3); });
+      document.getElementById("btn7d")?.addEventListener("click", ()=>{ render(7); renderBm20(7); });
+
+      await refreshData();
+      setInterval(refreshData, 60*1000);
+
+      window.addEventListener("resize", ()=>{
+        treemap?.resize(); totalChart?.resize(); shareChart?.resize();
+        kshareChart?.resize(); xrpKShareChart?.resize(); kshareCompareChart?.resize();
+        fngChart?.resize(); topRestChart?.resize(); stableChart?.resize();
+        kimchiScoreChart?.resize(); kimchiPremChart?.resize();
+      });
+    } catch(err){
+      console.error(err);
+      alert("JSON 로딩 실패: /out/history/*.json 경로/배포를 확인하세요.");
+    }
+  })();
+</script>
+
+</body>
+</html>
