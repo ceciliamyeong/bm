@@ -25,7 +25,7 @@ MAX_ARTICLES      = 3   # 뉴스 기사 최대 수
 MAX_FETCH         = 6   # API 요청 수 (한 줄 글 포함해서 여유있게)
 REQUEST_TIMEOUT   = 15
 
-OUT_DIR  = Path(__file__).parent / "out" / "latest"
+OUT_DIR  = Path(__file__).resolve().parent.parent / "out" / "latest"
 OUT_FILE = OUT_DIR / "top_news_latest.json"
 
 KST = timezone(timedelta(hours=9))
