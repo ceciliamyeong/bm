@@ -6,32 +6,34 @@
   <title>BM20 Index | BLOCKMEDIA Data</title>
   <script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
 
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
   <style>
     :root {
-      --bg:     #0d1117;
-      --bg2:    #161b22;
-      --bg3:    #21262d;
-      --border: #30363d;
-      --text:   #e6edf3;
-      --text2:  #8b949e;
-      --green:  #3fb950;
-      --red:    #f85149;
-      --blue:   #58a6ff;
-      --orange: #f0883e;
-      --purple: #bc8cff;
-      --yellow: #e3b341;
-      --up:     #3fb950;
-      --down:   #f85149;
+      --bg:     #f5f7fa;
+      --bg2:    #ffffff;
+      --bg3:    #f1f5f9;
+      --border: #e2e8f0;
+      --text:   #0f172a;
+      --text2:  #64748b;
+      --green:  #16a34a;
+      --red:    #dc2626;
+      --blue:   #2563eb;
+      --orange: #ea580c;
+      --purple: #7c3aed;
+      --yellow: #d97706;
+      --up:     #16a34a;
+      --down:   #dc2626;
 
-      --shadow: 0 1px 3px rgba(0,0,0,.4);
-      --radius: 8px;
+      --shadow: 0 1px 3px rgba(15,23,42,0.06);
+      --radius: 10px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       font-size: 14px;
       line-height: 1.6;
       overflow-x: hidden;
@@ -54,13 +56,14 @@
     .header-left { display: flex; align-items: center; gap: 12px; }
     .site-title {
       font-size: 15px;
-      font-weight: 700;
+      font-weight: 800;
       color: var(--text);
       text-decoration: none;
+      letter-spacing: -0.04em;
     }
     .page-badge {
-      background: var(--bg3);
-      border: 1px solid var(--border);
+      background: rgba(124,58,237,0.08);
+      border: 1px solid rgba(124,58,237,0.25);
       border-radius: 6px;
       padding: 2px 10px;
       font-size: 12px;
@@ -124,7 +127,7 @@
       display: flex;
       align-items: center;
       gap: 7px;
-      background: var(--bg3);
+      background: var(--bg2);
       border: 1px solid var(--border);
       border-radius: 20px;
       padding: 6px 14px;
@@ -134,15 +137,16 @@
       text-decoration: none;
       white-space: nowrap;
       transition: all .2s;
+      box-shadow: var(--shadow);
     }
-    .sub-nav a:hover { color: var(--text); border-color: var(--text2); }
+    .sub-nav a:hover { color: var(--text); border-color: var(--purple); }
     .sub-nav a .sec-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
-    .sub-nav a.active-overview   { background: #251a3a; border-color: var(--purple); color: var(--purple); }
-    .sub-nav a.active-series     { background: #1a2a4a; border-color: var(--blue);   color: var(--blue);   }
-    .sub-nav a.active-comparison { background: #152a1a; border-color: var(--green);  color: var(--green);  }
-    .sub-nav a.active-movers     { background: #2a2a14; border-color: var(--yellow); color: var(--yellow); }
-    .sub-nav a.active-universe   { background: #2a1e10; border-color: var(--orange); color: var(--orange); }
+    .sub-nav a.active-overview   { background: rgba(124,58,237,0.07); border-color: var(--purple); color: var(--purple); }
+    .sub-nav a.active-series     { background: rgba(37,99,235,0.07);  border-color: var(--blue);   color: var(--blue);   }
+    .sub-nav a.active-comparison { background: rgba(22,163,74,0.07);  border-color: var(--green);  color: var(--green);  }
+    .sub-nav a.active-movers     { background: rgba(217,119,6,0.07);  border-color: var(--yellow); color: var(--yellow); }
+    .sub-nav a.active-universe   { background: rgba(234,88,12,0.07);  border-color: var(--orange); color: var(--orange); }
 
     .dot-overview   { background: var(--purple); }
     .dot-series     { background: var(--blue);   }
@@ -163,11 +167,12 @@
       font-weight: 700;
       margin-bottom: 14px;
       padding-bottom: 8px;
-      border-bottom: 1px solid var(--border);
+      border-bottom: 2px solid rgba(37,99,235,0.15);
       display: flex;
       align-items: center;
       gap: 8px;
       flex-wrap: wrap;
+      letter-spacing: -0.03em;
     }
     .section-title .dot {
       width: 8px; height: 8px;
@@ -196,20 +201,25 @@
       background: var(--bg2);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 14px 16px;
+      padding: 16px 18px;
+      box-shadow: var(--shadow);
+      transition: box-shadow .2s;
     }
+    .kpi-card:hover { box-shadow: 0 4px 12px rgba(15,23,42,0.08); }
     .kpi-label {
       font-size: 11px;
       color: var(--text2);
       text-transform: uppercase;
-      letter-spacing: .5px;
+      letter-spacing: .6px;
       margin-bottom: 6px;
+      font-weight: 500;
     }
     .kpi-value {
       font-size: 22px;
-      font-weight: 700;
+      font-weight: 800;
       color: var(--text);
       margin-bottom: 4px;
+      letter-spacing: -0.04em;
     }
     .kpi-note { font-size: 11px; color: var(--text2); }
 
@@ -256,7 +266,7 @@
       transition: all .15s;
     }
     .btn:hover { border-color: var(--text2); color: var(--text); }
-    .btn.active { border-color: var(--purple); color: var(--purple); background: #2a1a4e50; font-weight: 700; }
+    .btn.active { border-color: var(--purple); color: var(--purple); background: rgba(124,58,237,0.08); font-weight: 700; }
 
     /* ── Pill ── */
     .pill {
@@ -497,21 +507,21 @@
   const DARK_TOOLTIP = {
     trigger: 'axis',
     borderWidth: 1,
-    borderColor: '#30363d',
-    backgroundColor: '#161b22',
-    textStyle: { color: '#e6edf3', fontSize: 12 },
-    extraCssText: 'box-shadow:0 8px 24px rgba(0,0,0,.5); border-radius:8px; padding:10px 12px;'
+    borderColor: '#e2e8f0',
+    backgroundColor: '#ffffff',
+    textStyle: { color: '#0f172a', fontSize: 12 },
+    extraCssText: 'box-shadow:0 8px 24px rgba(15,23,42,0.12); border-radius:8px; padding:10px 12px;'
   };
   const DARK_XAXIS = {
-    axisLine: { lineStyle: { color: '#30363d' } },
+    axisLine: { lineStyle: { color: '#e2e8f0' } },
     axisTick: { show: false },
-    axisLabel: { color: '#8b949e', hideOverlap: true }
+    axisLabel: { color: '#94a3b8', hideOverlap: true }
   };
   const DARK_YAXIS = {
     axisLine: { show: false },
     axisTick: { show: false },
-    axisLabel: { color: '#8b949e' },
-    splitLine: { lineStyle: { color: '#21262d' } }
+    axisLabel: { color: '#94a3b8' },
+    splitLine: { lineStyle: { color: '#e2e8f0' } }
   };
 
   const fmtNum = (v, d = 0) => {
@@ -605,22 +615,22 @@
       },
       toolbox: {
         right: 10,
-        iconStyle: { borderColor: '#8b949e' },
-        emphasis: { iconStyle: { borderColor: '#e6edf3' } },
+        iconStyle: { borderColor: '#94a3b8' },
+        emphasis: { iconStyle: { borderColor: '#0f172a' } },
         feature: { dataZoom: { yAxisIndex: 'none' }, restore: {}, saveAsImage: {} }
       },
       dataZoom: [
         { type: 'inside', xAxisIndex: 0 },
-        { type: 'slider', xAxisIndex: 0, height: 18, bottom: 25, borderColor: '#30363d', fillerColor: 'rgba(88,166,255,.08)', handleStyle: { color: '#58a6ff' }, textStyle: { color: '#8b949e' } }
+        { type: 'slider', xAxisIndex: 0, height: 18, bottom: 25, borderColor: '#e2e8f0', fillerColor: 'rgba(88,166,255,.08)', handleStyle: { color: '#2563eb' }, textStyle: { color: '#94a3b8' } }
       ],
-      legend: { bottom: 0, textStyle: { color: '#8b949e' } },
+      legend: { bottom: 0, textStyle: { color: '#94a3b8' } },
       xAxis: { type: 'category', data: dates, ...DARK_XAXIS },
       yAxis: [
         { type: 'value', name: 'BM20', ...DARK_YAXIS, axisLabel: { ...DARK_YAXIS.axisLabel, formatter: v => Math.round(v).toLocaleString() } },
         { type: 'value', name: 'BTC', position: 'right', scale: true, ...DARK_YAXIS, axisLabel: { ...DARK_YAXIS.axisLabel, formatter: v => '$' + Math.round(v).toLocaleString() } }
       ],
       series: [
-        { name: 'BM20', type: 'line', data: data.map(d => Math.round(d.v)), smooth: true, showSymbol: false, lineStyle: { color: '#bc8cff', width: 2 }, itemStyle: { color: '#bc8cff' }, areaStyle: { opacity: 0.06, color: '#bc8cff' } },
+        { name: 'BM20', type: 'line', data: data.map(d => Math.round(d.v)), smooth: true, showSymbol: false, lineStyle: { color: '#7c3aed', width: 2 }, itemStyle: { color: '#7c3aed' }, areaStyle: { opacity: 0.06, color: '#7c3aed' } },
         { name: 'BTC',  type: 'line', data: dates.map(d => btcMap.get(d)),  yAxisIndex: 1, smooth: true, showSymbol: false, lineStyle: { color: '#f0883e', width: 2 }, itemStyle: { color: '#f0883e' } }
       ]
     }, true);
@@ -670,29 +680,29 @@
     { const dates = alignedDatesWith(ndqMap);
       btcNasdaqChart.setOption({ ...commonOpt, xAxis: { ...commonOpt.xAxis, data: dates }, yAxis: yAxisPair, series: [
         { name: 'BTC',    type: 'line', data: seriesFromMap(dates, btcMap), showSymbol: false, connectNulls: true, lineStyle: { color: '#f0883e', width: 2 }, itemStyle: { color: '#f0883e' } },
-        { name: 'NASDAQ', type: 'line', data: seriesFromMap(dates, ndqMap), yAxisIndex: 1, showSymbol: false, connectNulls: true, lineStyle: { color: '#58a6ff', width: 2 }, itemStyle: { color: '#58a6ff' } }
-      ], legend: { bottom: 0, textStyle: { color: '#8b949e' } } }, true); }
+        { name: 'NASDAQ', type: 'line', data: seriesFromMap(dates, ndqMap), yAxisIndex: 1, showSymbol: false, connectNulls: true, lineStyle: { color: '#2563eb', width: 2 }, itemStyle: { color: '#2563eb' } }
+      ], legend: { bottom: 0, textStyle: { color: '#94a3b8' } } }, true); }
 
     // BM20 vs NASDAQ
     { const dates = alignedDatesWith(ndqMap);
       bm20NasdaqChart.setOption({ ...commonOpt, xAxis: { ...commonOpt.xAxis, data: dates }, yAxis: yAxisPair, series: [
-        { name: 'BM20',   type: 'line', data: seriesFromMap(dates, bm20Map), showSymbol: false, connectNulls: true, lineStyle: { color: '#bc8cff', width: 2 }, itemStyle: { color: '#bc8cff' } },
-        { name: 'NASDAQ', type: 'line', data: seriesFromMap(dates, ndqMap),  yAxisIndex: 1, showSymbol: false, connectNulls: true, lineStyle: { color: '#58a6ff', width: 2 }, itemStyle: { color: '#58a6ff' } }
-      ], legend: { bottom: 0, textStyle: { color: '#8b949e' } } }, true); }
+        { name: 'BM20',   type: 'line', data: seriesFromMap(dates, bm20Map), showSymbol: false, connectNulls: true, lineStyle: { color: '#7c3aed', width: 2 }, itemStyle: { color: '#7c3aed' } },
+        { name: 'NASDAQ', type: 'line', data: seriesFromMap(dates, ndqMap),  yAxisIndex: 1, showSymbol: false, connectNulls: true, lineStyle: { color: '#2563eb', width: 2 }, itemStyle: { color: '#2563eb' } }
+      ], legend: { bottom: 0, textStyle: { color: '#94a3b8' } } }, true); }
 
     // BTC vs KOSPI
     { const dates = alignedDatesWith(kspMap);
       btcKospiChart.setOption({ ...commonOpt, xAxis: { ...commonOpt.xAxis, data: dates }, yAxis: yAxisPair, series: [
         { name: 'BTC',   type: 'line', data: seriesFromMap(dates, btcMap), showSymbol: false, connectNulls: true, lineStyle: { color: '#f0883e', width: 2 }, itemStyle: { color: '#f0883e' } },
-        { name: 'KOSPI', type: 'line', data: seriesFromMap(dates, kspMap), yAxisIndex: 1, showSymbol: false, connectNulls: true, lineStyle: { color: '#3fb950', width: 2 }, itemStyle: { color: '#3fb950' } }
-      ], legend: { bottom: 0, textStyle: { color: '#8b949e' } } }, true); }
+        { name: 'KOSPI', type: 'line', data: seriesFromMap(dates, kspMap), yAxisIndex: 1, showSymbol: false, connectNulls: true, lineStyle: { color: '#16a34a', width: 2 }, itemStyle: { color: '#16a34a' } }
+      ], legend: { bottom: 0, textStyle: { color: '#94a3b8' } } }, true); }
 
     // BM20 vs KOSPI
     { const dates = alignedDatesWith(kspMap);
       bm20KospiChart.setOption({ ...commonOpt, xAxis: { ...commonOpt.xAxis, data: dates }, yAxis: yAxisPair, series: [
-        { name: 'BM20',  type: 'line', data: seriesFromMap(dates, bm20Map), showSymbol: false, connectNulls: true, lineStyle: { color: '#bc8cff', width: 2 }, itemStyle: { color: '#bc8cff' } },
-        { name: 'KOSPI', type: 'line', data: seriesFromMap(dates, kspMap),  yAxisIndex: 1, showSymbol: false, connectNulls: true, lineStyle: { color: '#3fb950', width: 2 }, itemStyle: { color: '#3fb950' } }
-      ], legend: { bottom: 0, textStyle: { color: '#8b949e' } } }, true); }
+        { name: 'BM20',  type: 'line', data: seriesFromMap(dates, bm20Map), showSymbol: false, connectNulls: true, lineStyle: { color: '#7c3aed', width: 2 }, itemStyle: { color: '#7c3aed' } },
+        { name: 'KOSPI', type: 'line', data: seriesFromMap(dates, kspMap),  yAxisIndex: 1, showSymbol: false, connectNulls: true, lineStyle: { color: '#16a34a', width: 2 }, itemStyle: { color: '#16a34a' } }
+      ], legend: { bottom: 0, textStyle: { color: '#94a3b8' } } }, true); }
   }
 
   function renderMovers(rows){
@@ -711,7 +721,7 @@
       grid: { left: 40, right: 20, top: 20, bottom: 30 },
       xAxis: { type: 'category', data: top6.map(r => r.sym), ...DARK_XAXIS },
       yAxis: { type: 'value', ...DARK_YAXIS, axisLabel: { ...DARK_YAXIS.axisLabel, formatter: v => (v*100).toFixed(0)+'%' } },
-      series: [{ type: 'bar', data: top6.map(r => r.chg), itemStyle: { color: p => p.value >= 0 ? '#3fb950' : '#f85149' } }]
+      series: [{ type: 'bar', data: top6.map(r => r.chg), itemStyle: { color: p => p.value >= 0 ? '#16a34a' : '#dc2626' } }]
     });
 
     const top20 = sorted.slice(0,20);
@@ -720,8 +730,8 @@
       tooltip: { ...DARK_TOOLTIP, trigger: 'item', formatter: p => `<b>${top20[p.dataIndex].sym}</b>: ${fmtPctRatio(top20[p.dataIndex].chg)}` },
       xAxis: { type: 'category', data: top20.map(r => r.sym), ...DARK_XAXIS, axisLabel: { ...DARK_XAXIS.axisLabel, interval: 0, rotate: 30, fontSize: 10 } },
       yAxis: { type: 'category', data: ['1D'], show: false },
-      visualMap: { show: false, min: -0.05, max: 0.05, inRange: { color: ['#f85149','#21262d','#3fb950'] } },
-      series: [{ type: 'heatmap', data: top20.map((r,i) => [i, 0, r.chg]), label: { show: true, fontSize: 9, color: '#e6edf3', formatter: p => (p.value[2]*100).toFixed(1) } }]
+      visualMap: { show: false, min: -0.05, max: 0.05, inRange: { color: ['#dc2626','#f1f5f9','#16a34a'] } },
+      series: [{ type: 'heatmap', data: top20.map((r,i) => [i, 0, r.chg]), label: { show: true, fontSize: 9, color: '#0f172a', formatter: p => (p.value[2]*100).toFixed(1) } }]
     });
   }
 
