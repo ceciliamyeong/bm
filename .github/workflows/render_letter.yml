@@ -61,7 +61,6 @@ jobs:
           check nasdaq_series.json
           check kospi_series.json
           check out/history/krw_24h_snapshots.json
-
           if [ "$MISSING" -gt 0 ]; then
             echo "ERROR: $MISSING file(s) missing"
             exit 1
@@ -107,7 +106,7 @@ jobs:
           if ! git diff --cached --quiet; then
             DATE=$(TZ=Asia/Seoul date +%F)
             git commit -m "chore: render letter + btc + treemap (${DATE})"
-            git pull --rebase origin main
+            git pull --rebase --autostash origin main
             git push origin HEAD:main
           else
             echo "No changes to commit"
