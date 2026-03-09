@@ -6,33 +6,35 @@
   <title>KRW Market | BLOCKMEDIA Data</title>
   <script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
 
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
   <style>
     :root {
-      --bg:     #0d1117;
-      --bg2:    #161b22;
-      --bg3:    #21262d;
-      --border: #30363d;
-      --text:   #e6edf3;
-      --text2:  #8b949e;
-      --green:  #3fb950;
-      --red:    #f85149;
-      --blue:   #58a6ff;
-      --orange: #f0883e;
-      --purple: #bc8cff;
-      --yellow: #e3b341;
+      --bg:     #f5f7fa;
+      --bg2:    #ffffff;
+      --bg3:    #f1f5f9;
+      --border: #e2e8f0;
+      --text:   #0f172a;
+      --text2:  #64748b;
+      --green:  #16a34a;
+      --red:    #dc2626;
+      --blue:   #2563eb;
+      --orange: #ea580c;
+      --purple: #7c3aed;
+      --yellow: #d97706;
 
       --accent:   #2563eb;
       --accent-2: #7c3aed;
 
-      --shadow: 0 1px 3px rgba(0,0,0,.4);
-      --radius: 8px;
+      --shadow: 0 1px 3px rgba(15,23,42,0.06);
+      --radius: 10px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       font-size: 14px;
       line-height: 1.6;
     }
@@ -54,13 +56,14 @@
     .header-left { display: flex; align-items: center; gap: 12px; }
     .site-title {
       font-size: 15px;
-      font-weight: 700;
+      font-weight: 800;
       color: var(--text);
       text-decoration: none;
+      letter-spacing: -0.04em;
     }
     .page-badge {
-      background: var(--bg3);
-      border: 1px solid var(--border);
+      background: rgba(37,99,235,0.08);
+      border: 1px solid rgba(37,99,235,0.2);
       border-radius: 6px;
       padding: 2px 10px;
       font-size: 12px;
@@ -124,7 +127,7 @@
       display: flex;
       align-items: center;
       gap: 7px;
-      background: var(--bg3);
+      background: var(--bg2);
       border: 1px solid var(--border);
       border-radius: 20px;
       padding: 6px 14px;
@@ -136,17 +139,18 @@
       white-space: nowrap;
       transition: all .2s;
       flex-shrink: 0;
+      box-shadow: var(--shadow);
     }
-    .sec-btn:hover { color: var(--text); border-color: var(--text2); }
+    .sec-btn:hover { color: var(--text); border-color: var(--blue); }
     .sec-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
     /* 섹션별 active 색상 */
-    .sec-btn.active-overview  { background: #1a2a4a; border-color: var(--blue);   color: var(--blue);   }
-    .sec-btn.active-flows     { background: #2a2a14; border-color: var(--yellow); color: var(--yellow); }
-    .sec-btn.active-trends    { background: #152a1a; border-color: var(--green);  color: var(--green);  }
-    .sec-btn.active-topcoins  { background: #251a3a; border-color: var(--purple); color: var(--purple); }
-    .sec-btn.active-extop     { background: #2a1e10; border-color: var(--orange); color: var(--orange); }
-    .sec-btn.active-kimchi    { background: #2a2210; border-color: var(--yellow); color: var(--yellow); }
+    .sec-btn.active-overview  { background: rgba(37,99,235,0.08);  border-color: var(--blue);   color: var(--blue);   }
+    .sec-btn.active-flows     { background: rgba(217,119,6,0.08);  border-color: var(--yellow); color: var(--yellow); }
+    .sec-btn.active-trends    { background: rgba(22,163,74,0.08);  border-color: var(--green);  color: var(--green);  }
+    .sec-btn.active-topcoins  { background: rgba(124,58,237,0.08); border-color: var(--purple); color: var(--purple); }
+    .sec-btn.active-extop     { background: rgba(234,88,12,0.08);  border-color: var(--orange); color: var(--orange); }
+    .sec-btn.active-kimchi    { background: rgba(217,119,6,0.08);  border-color: var(--yellow); color: var(--yellow); }
 
     /* dot 색 */
     .dot-overview { background: var(--blue);   }
@@ -165,11 +169,12 @@
       font-weight: 700;
       margin-bottom: 14px;
       padding-bottom: 8px;
-      border-bottom: 1px solid var(--border);
+      border-bottom: 2px solid rgba(37,99,235,0.15);
       display: flex;
       align-items: center;
       gap: 8px;
       scroll-margin-top: 100px;
+      letter-spacing: -0.03em;
     }
     .section-title .dot {
       width: 8px; height: 8px;
@@ -209,25 +214,30 @@
       background: var(--bg2);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 14px 16px;
+      padding: 16px 18px;
+      box-shadow: var(--shadow);
+      transition: box-shadow .2s;
     }
+    .kpi-card:hover { box-shadow: 0 4px 12px rgba(15,23,42,0.08); }
     .kpi-label {
       font-size: 11px;
       color: var(--text2);
       text-transform: uppercase;
-      letter-spacing: .5px;
+      letter-spacing: .6px;
       margin-bottom: 6px;
+      font-weight: 500;
     }
     .kpi-value {
-      font-size: 20px;
-      font-weight: 700;
+      font-size: 22px;
+      font-weight: 800;
       color: var(--text);
       margin-bottom: 4px;
+      letter-spacing: -0.04em;
     }
     .kpi-note { font-size: 11px; color: var(--text2); }
 
     /* KPI accent: 한국 점유율, XRP, BM20 */
-    .kpi-card.accent { border-color: #1d4ed880; background: #0d1b2e; }
+    .kpi-card.accent { border-color: rgba(37,99,235,0.3); background: rgba(37,99,235,0.04); }
     .kpi-card.danger { border-left: 3px solid var(--red); }
 
     /* ── Sparkline canvas ── */
@@ -345,7 +355,7 @@
       transition: all .15s;
     }
     .btn:hover { border-color: var(--text2); color: var(--text); }
-    .btn.active { border-color: var(--blue); color: var(--blue); background: #1d3a5e50; font-weight: 700; }
+    .btn.active { border-color: var(--blue); color: var(--blue); background: rgba(37,99,235,0.08); font-weight: 700; }
 
     /* ── Widgets grid ── */
     .widgets {
@@ -373,9 +383,9 @@
       white-space: nowrap;
       display: inline-block;
     }
-    .pill.isFear    { border-color: rgba(239,68,68,.35);  background: rgba(239,68,68,.08);  color: #f87171; }
-    .pill.isNeutral { border-color: rgba(148,163,184,.35); background: rgba(148,163,184,.10); color: var(--text2); }
-    .pill.isGreed   { border-color: rgba(34,197,94,.35);  background: rgba(34,197,94,.08);  color: #4ade80; }
+    .pill.isFear    { border-color: rgba(220,38,38,.35);  background: rgba(220,38,38,.08);  color: #dc2626; }
+    .pill.isNeutral { border-color: rgba(100,116,139,.35); background: rgba(100,116,139,.10); color: var(--text2); }
+    .pill.isGreed   { border-color: rgba(22,163,74,.35);  background: rgba(22,163,74,.08);  color: #16a34a; }
 
     /* ── List ── */
     .list { margin: 0; padding: 0; list-style: none; }
@@ -512,8 +522,8 @@
       </div>
 
       <!-- K-Safety -->
-      <div class="kpi-card" style="border-color:#1d4ed870;">
-        <div class="kpi-label" style="color:#60a5fa;">K-Safety (스테이블코인 비)</div>
+      <div class="kpi-card" style="border-color:rgba(37,99,235,0.3);">
+        <div class="kpi-label" style="color:var(--blue);">K-Safety (스테이블코인 비)</div>
         <div class="kpi-value" id="kpiStable">-</div>
         <div class="kpi-note" id="kpiStableNote">-</div>
       </div>
@@ -522,7 +532,7 @@
       <div class="kpi-card accent">
         <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:8px;">
           <div>
-            <div class="kpi-label" style="color:#60a5fa;">한국 시장 점유율 (Global)</div>
+            <div class="kpi-label" style="color:var(--blue);">한국 시장 점유율 (Global)</div>
             <div class="kpi-note" style="margin:2px 0 0;">전 세계 거래량 대비 비중</div>
           </div>
           <span class="pill">최근 14D</span>
@@ -535,7 +545,7 @@
       <div class="kpi-card accent" id="kpiXrpCard">
         <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:8px;">
           <div>
-            <div class="kpi-label" style="color:#60a5fa;">XRP 한국 점유율 (Global)</div>
+            <div class="kpi-label" style="color:var(--blue);">XRP 한국 점유율 (Global)</div>
             <div class="kpi-note" style="margin:2px 0 0;">전 세계 XRP 거래량 대비 한국 비중</div>
           </div>
           <span class="pill">최근 14D</span>
@@ -957,7 +967,7 @@
       ctx.moveTo(0, h*0.6);
       ctx.lineTo(w, h*0.6);
       ctx.lineWidth = 1;
-      ctx.strokeStyle = "#8b949e";
+      ctx.strokeStyle = "#94a3b8";
       ctx.stroke();
       ctx.globalAlpha = 1;
       return;
@@ -976,7 +986,7 @@
       if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
     });
     ctx.lineWidth = 2;
-    ctx.strokeStyle = "#58a6ff";
+    ctx.strokeStyle = "#2563eb";
     ctx.stroke();
 
     const last = arr[arr.length-1];
@@ -985,12 +995,12 @@
 
     ctx.beginPath();
     ctx.arc(lx, ly, 3, 0, Math.PI*2);
-    ctx.fillStyle = "#58a6ff";
+    ctx.fillStyle = "#2563eb";
     ctx.fill();
 
     ctx.beginPath();
     ctx.arc(lx, ly, 5, 0, Math.PI*2);
-    ctx.strokeStyle = "#161b22";
+    ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = 2;
     ctx.stroke();
   }
@@ -1082,16 +1092,16 @@
     trigger: "axis",
     confine: true,
     borderWidth: 1,
-    borderColor: "#30363d",
-    backgroundColor: "#161b22",
-    textStyle: { color: "#e6edf3", fontSize: 12 },
-    extraCssText: "box-shadow:0 8px 24px rgba(0,0,0,.5); border-radius:8px; padding:10px 12px;"
+    borderColor: "#e2e8f0",
+    backgroundColor: "#ffffff",
+    textStyle: { color: "#0f172a", fontSize: 12 },
+    extraCssText: "box-shadow:0 4px 16px rgba(15,23,42,0.1); border-radius:8px; padding:10px 12px;"
   };
   const DARK_AXIS = {
-    axisLine: { lineStyle: { color: "#30363d" } },
+    axisLine: { lineStyle: { color: "#e2e8f0" } },
     axisTick: { show: false },
-    axisLabel: { color: "#8b949e" },
-    splitLine: { lineStyle: { color: "#21262d" } }
+    axisLabel: { color: "#94a3b8" },
+    splitLine: { lineStyle: { color: "#e2e8f0" } }
   };
 
   function renderBm20(rangeDays){
@@ -1126,9 +1136,9 @@
                     <div>한국 점유율 <b>${vv}%</b></div>`;
           }
         },
-        xAxis:{ type:"category", data:xs, boundaryGap:false, ...DARK_AXIS, axisLabel:{ rotate:(xs.length>10?25:0), color:"#8b949e" } },
-        yAxis:{ type:"value", min:0, max:10, splitNumber:4, ...DARK_AXIS, axisLabel:{ color:"#8b949e", formatter:(v)=> v.toFixed(2)+"%" } },
-        series:[{ name:"K Share", type:"line", smooth:true, symbol:"circle", symbolSize:6, showSymbol:xs.length<=30, itemStyle:{ borderWidth:2, borderColor:"#161b22", color:"#58a6ff" }, data:kSeries, lineStyle:{ width:2, color:"#58a6ff" }, areaStyle:{ opacity:0.08, color:"#58a6ff" } }]
+        xAxis:{ type:"category", data:xs, boundaryGap:false, ...DARK_AXIS, axisLabel:{ rotate:(xs.length>10?25:0), color:"#94a3b8" } },
+        yAxis:{ type:"value", min:0, max:10, splitNumber:4, ...DARK_AXIS, axisLabel:{ color:"#94a3b8", formatter:(v)=> v.toFixed(2)+"%" } },
+        series:[{ name:"K Share", type:"line", smooth:true, symbol:"circle", symbolSize:6, showSymbol:xs.length<=30, itemStyle:{ borderWidth:2, borderColor:"#ffffff", color:"#2563eb" }, data:kSeries, lineStyle:{ width:2, color:"#2563eb" }, areaStyle:{ opacity:0.08, color:"#2563eb" } }]
       }, true);
     }
 
@@ -1160,9 +1170,9 @@
                       <div>XRP 점유율 <b>${vv}%</b></div>`;
             }
           },
-          xAxis:{ type:"category", data:xrx, boundaryGap:false, ...DARK_AXIS, axisLabel:{ rotate:(xrx.length>10?25:0), color:"#8b949e" } },
-          yAxis:{ type:"value", min:0, max:Math.ceil((hi+pad2)*100)/100, splitNumber:4, ...DARK_AXIS, axisLabel:{ color:"#8b949e", formatter:(v)=> Number(v).toFixed(2)+"%" } },
-          series:[{ name:"XRP Share", type:"line", smooth:true, symbol:"circle", symbolSize:6, showSymbol:xrx.length<=30, itemStyle:{ borderWidth:2, borderColor:"#161b22", color:"#3fb950" }, data:xrpSeries, connectNulls:true, lineStyle:{ width:2, color:"#3fb950" }, areaStyle:{ opacity:0.08, color:"#3fb950" } }]
+          xAxis:{ type:"category", data:xrx, boundaryGap:false, ...DARK_AXIS, axisLabel:{ rotate:(xrx.length>10?25:0), color:"#94a3b8" } },
+          yAxis:{ type:"value", min:0, max:Math.ceil((hi+pad2)*100)/100, splitNumber:4, ...DARK_AXIS, axisLabel:{ color:"#94a3b8", formatter:(v)=> Number(v).toFixed(2)+"%" } },
+          series:[{ name:"XRP Share", type:"line", smooth:true, symbol:"circle", symbolSize:6, showSymbol:xrx.length<=30, itemStyle:{ borderWidth:2, borderColor:"#ffffff", color:"#16a34a" }, data:xrpSeries, connectNulls:true, lineStyle:{ width:2, color:"#16a34a" }, areaStyle:{ opacity:0.08, color:"#16a34a" } }]
         }, true);
       }
     }
@@ -1209,16 +1219,16 @@
                 return `<div style="font-weight:700; margin-bottom:4px;">${cx[i]}</div>
                         <div>한국 <b>${kt}</b></div>
                         <div>XRP <b>${xt}</b></div>
-                        <div style="color:#8b949e; margin-top:2px;">괴리(XRP-한국) <b>${dt2}</b></div>`;
+                        <div style="color:#64748b; margin-top:2px;">괴리(XRP-한국) <b>${dt2}</b></div>`;
               }
             },
-            legend:{ top:2, left:0, itemWidth:14, itemHeight:8, data:["한국 점유율","XRP 점유율","괴리(XRP-한국)"], textStyle:{ color:"#8b949e" } },
-            xAxis:{ type:"category", data:cx, boundaryGap:false, ...DARK_AXIS, axisLabel:{ rotate:(cx.length>10?25:0), color:"#8b949e" } },
-            yAxis:{ type:"value", splitNumber:4, ...DARK_AXIS, axisLabel:{ color:"#8b949e", formatter:(v)=> Number(v).toFixed(2)+"%" } },
+            legend:{ top:2, left:0, itemWidth:14, itemHeight:8, data:["한국 점유율","XRP 점유율","괴리(XRP-한국)"], textStyle:{ color:"#94a3b8" } },
+            xAxis:{ type:"category", data:cx, boundaryGap:false, ...DARK_AXIS, axisLabel:{ rotate:(cx.length>10?25:0), color:"#94a3b8" } },
+            yAxis:{ type:"value", splitNumber:4, ...DARK_AXIS, axisLabel:{ color:"#94a3b8", formatter:(v)=> Number(v).toFixed(2)+"%" } },
             series:[
-              { name:"한국 점유율", type:"line", smooth:true, showSymbol:cx.length<=30, symbol:"circle", symbolSize:6, itemStyle:{ borderWidth:2, borderColor:"#161b22" }, data:kC, connectNulls:true, lineStyle:{ width:2 }, areaStyle:{ opacity:0.06 } },
-              { name:"XRP 점유율", type:"line", smooth:true, showSymbol:cx.length<=30, symbol:"circle", symbolSize:6, itemStyle:{ borderWidth:2, borderColor:"#161b22" }, data:xC, connectNulls:true, lineStyle:{ width:2 }, areaStyle:{ opacity:0.06 } },
-              { name:"괴리(XRP-한국)", type:"line", smooth:true, showSymbol:cx.length<=30, symbol:"circle", symbolSize:5, itemStyle:{ borderWidth:2, borderColor:"#161b22" }, data:diff, connectNulls:true, lineStyle:{ width:2, type:"dashed" } }
+              { name:"한국 점유율", type:"line", smooth:true, showSymbol:cx.length<=30, symbol:"circle", symbolSize:6, itemStyle:{ borderWidth:2, borderColor:"#ffffff" }, data:kC, connectNulls:true, lineStyle:{ width:2 }, areaStyle:{ opacity:0.06 } },
+              { name:"XRP 점유율", type:"line", smooth:true, showSymbol:cx.length<=30, symbol:"circle", symbolSize:6, itemStyle:{ borderWidth:2, borderColor:"#ffffff" }, data:xC, connectNulls:true, lineStyle:{ width:2 }, areaStyle:{ opacity:0.06 } },
+              { name:"괴리(XRP-한국)", type:"line", smooth:true, showSymbol:cx.length<=30, symbol:"circle", symbolSize:5, itemStyle:{ borderWidth:2, borderColor:"#ffffff" }, data:diff, connectNulls:true, lineStyle:{ width:2, type:"dashed" } }
             ]
           }, true);
         }
@@ -1244,11 +1254,11 @@
             }
             return `<div style="font-weight:700; margin-bottom:4px;">${xs[i]}</div>
                     <div>심리 점수 <b>${vv!=null?vv:"-"} / 100</b></div>
-                    <div style="color:#8b949e; margin-top:2px;">${label}</div>`;
+                    <div style="color:#64748b; margin-top:2px;">${label}</div>`;
           }
         },
-        xAxis:{ type:"category", data:xs, boundaryGap:false, ...DARK_AXIS, axisLabel:{ rotate:(xs.length>10?25:0), color:"#8b949e" } },
-        yAxis:{ type:"value", min:0, max:100, interval:25, ...DARK_AXIS, axisLabel:{ color:"#8b949e" } },
+        xAxis:{ type:"category", data:xs, boundaryGap:false, ...DARK_AXIS, axisLabel:{ rotate:(xs.length>10?25:0), color:"#94a3b8" } },
+        yAxis:{ type:"value", min:0, max:100, interval:25, ...DARK_AXIS, axisLabel:{ color:"#94a3b8" } },
         series:[{
           name:"Fear&Greed", type:"line", smooth:true, symbol:"circle", symbolSize:6, showSymbol:false,
           data:fSeries, connectNulls:true, lineStyle:{ width:2 }, areaStyle:{ opacity:0.08 },
@@ -1263,8 +1273,8 @@
           },
           markLine:{
             silent:true, symbol:["none","none"],
-            lineStyle:{ color:"#30363d", type:"dashed", width:1 },
-            label:{ color:"#8b949e", formatter:(p)=>p.value },
+            lineStyle:{ color:"#cbd5e1", type:"dashed", width:1 },
+            label:{ color:"#94a3b8", formatter:(p)=>p.value },
             data:[{yAxis:25},{yAxis:50},{yAxis:75}]
           }
         }]
@@ -1321,9 +1331,9 @@
           return `<b>${s.x[i]}</b><br/>총 ${fmtKRW(total)}<br/>업비트 ${fmtKRW(up)}<br/>빗썸 ${fmtKRW(bt)}<br/>코인원 ${fmtKRW(co)}`;
         }
       },
-      legend: { top:0, left:0, data:["Upbit","Bithumb","Coinone"], textStyle:{ color:"#8b949e" } },
-      xAxis: { type:"category", data:s.x, axisLabel:{ color:"#8b949e", rotate:(s.x.length>10?25:0) }, axisLine:{ lineStyle:{ color:"#30363d" } }, axisTick:{ show:false } },
-      yAxis: { type:"value", name:"(조원)", nameGap:8, axisLabel:{ color:"#8b949e", margin:10, formatter:(v)=>(v/1e12).toFixed(1) }, splitLine:{ lineStyle:{ color:"#21262d" } }, axisLine:{ show:false }, axisTick:{ show:false } },
+      legend: { top:0, left:0, data:["Upbit","Bithumb","Coinone"], textStyle:{ color:"#94a3b8" } },
+      xAxis: { type:"category", data:s.x, axisLabel:{ color:"#94a3b8", rotate:(s.x.length>10?25:0) }, axisLine:{ lineStyle:{ color:"#e2e8f0" } }, axisTick:{ show:false } },
+      yAxis: { type:"value", name:"(조원)", nameGap:8, axisLabel:{ color:"#94a3b8", margin:10, formatter:(v)=>(v/1e12).toFixed(1) }, splitLine:{ lineStyle:{ color:"#e2e8f0" } }, axisLine:{ show:false }, axisTick:{ show:false } },
       series: [
         { name:"Upbit",   type:"bar", stack:"total", barWidth:12, itemStyle:{ color:EX_COLORS.upbit },   data:s.up },
         { name:"Bithumb", type:"bar", stack:"total", barWidth:12, itemStyle:{ color:EX_COLORS.bithumb }, data:s.bt },
@@ -1345,9 +1355,9 @@
         backgroundColor: "transparent",
         grid:{ left:56, right:18, top:22, bottom:36 },
         tooltip:{ ...DARK_TOOLTIP, formatter:(params)=>{ const i=params[0].dataIndex; return `<b>${s.x[i]}</b><br/>Stable Dom ${stablePct[i].toFixed(1)}%<br/>Stable Vol ${fmtKRW(stableVol[i])}`; } },
-        xAxis:{ type:"category", data:s.x, axisLabel:{ rotate:(s.x.length>10?25:0), color:"#8b949e" }, axisLine:{ lineStyle:{ color:"#30363d" } }, axisTick:{ show:false } },
-        yAxis:{ type:"value", min:ymin, max:ymax, axisLabel:{ color:"#8b949e" }, splitLine:{ lineStyle:{ color:"#21262d" } }, axisLine:{ show:false }, axisTick:{ show:false } },
-        series:[{ type:"line", smooth:true, symbolSize:6, data:stablePct, lineStyle:{ color:"#3fb950", width:2 }, itemStyle:{ color:"#3fb950" }, areaStyle:{ opacity:0.08, color:"#3fb950" } }]
+        xAxis:{ type:"category", data:s.x, axisLabel:{ rotate:(s.x.length>10?25:0), color:"#94a3b8" }, axisLine:{ lineStyle:{ color:"#e2e8f0" } }, axisTick:{ show:false } },
+        yAxis:{ type:"value", min:ymin, max:ymax, axisLabel:{ color:"#94a3b8" }, splitLine:{ lineStyle:{ color:"#e2e8f0" } }, axisLine:{ show:false }, axisTick:{ show:false } },
+        series:[{ type:"line", smooth:true, symbolSize:6, data:stablePct, lineStyle:{ color:"#16a34a", width:2 }, itemStyle:{ color:"#16a34a" }, areaStyle:{ opacity:0.08, color:"#16a34a" } }]
       }, true);
     }
 
@@ -1358,9 +1368,9 @@
       backgroundColor: "transparent",
       grid:{ left:44, right:14, top:34, bottom:34, containLabel:true },
       tooltip:{ ...DARK_TOOLTIP, formatter:(params)=>{ const i=params[0].dataIndex; return `<b>${s.x[i]}</b><br/>업비트 ${shareUp[i].toFixed(1)}%<br/>빗썸 ${shareBt[i].toFixed(1)}%<br/>코인원 ${shareCo[i].toFixed(1)}%`; } },
-      legend:{ top:6, left:0, itemWidth:14, itemHeight:8, data:["Upbit","Bithumb","Coinone"], textStyle:{ color:"#8b949e" } },
-      xAxis:{ type:"category", data:s.x, axisLabel:{ rotate:(s.x.length>10?25:0), color:"#8b949e" }, axisLine:{ lineStyle:{ color:"#30363d" } }, axisTick:{ show:false } },
-      yAxis:{ type:"value", min:0, max:100, axisLabel:{ color:"#8b949e" }, splitLine:{ lineStyle:{ color:"#21262d" } }, axisLine:{ show:false }, axisTick:{ show:false } },
+      legend:{ top:6, left:0, itemWidth:14, itemHeight:8, data:["Upbit","Bithumb","Coinone"], textStyle:{ color:"#94a3b8" } },
+      xAxis:{ type:"category", data:s.x, axisLabel:{ rotate:(s.x.length>10?25:0), color:"#94a3b8" }, axisLine:{ lineStyle:{ color:"#e2e8f0" } }, axisTick:{ show:false } },
+      yAxis:{ type:"value", min:0, max:100, axisLabel:{ color:"#94a3b8" }, splitLine:{ lineStyle:{ color:"#e2e8f0" } }, axisLine:{ show:false }, axisTick:{ show:false } },
       series:[
         { name:"Upbit",   type:"line", stack:"s", areaStyle:{ opacity:0.6 }, smooth:true, symbolSize:3, data:shareUp,   itemStyle:{ color:EX_COLORS.upbit } },
         { name:"Bithumb", type:"line", stack:"s", areaStyle:{ opacity:0.6 }, smooth:true, symbolSize:3, data:shareBt,   itemStyle:{ color:EX_COLORS.bithumb } },
@@ -1372,11 +1382,11 @@
       backgroundColor: "transparent",
       grid:{ left:56, right:44, top:40, bottom:34, containLabel:true },
       tooltip:{ ...DARK_TOOLTIP, axisPointer:{ type:"shadow" }, formatter:(params)=>{ const i=params[0].dataIndex; return `<b>${s.x[i]}</b><br/>Top10 ${fmtKRW(s.top10[i])}<br/>Rest ${fmtKRW(s.rest[i])}<br/>Top10 Share ${s.topShare[i].toFixed(1)}%`; } },
-      legend:{ top:6, left:0, itemWidth:14, itemHeight:8, data:["Top10","Rest","Top10 Share %"], textStyle:{ color:"#8b949e" } },
-      xAxis:{ type:"category", data:s.x, axisLabel:{ rotate:(s.x.length>10?25:0), color:"#8b949e" }, axisLine:{ lineStyle:{ color:"#30363d" } }, axisTick:{ show:false } },
+      legend:{ top:6, left:0, itemWidth:14, itemHeight:8, data:["Top10","Rest","Top10 Share %"], textStyle:{ color:"#94a3b8" } },
+      xAxis:{ type:"category", data:s.x, axisLabel:{ rotate:(s.x.length>10?25:0), color:"#94a3b8" }, axisLine:{ lineStyle:{ color:"#e2e8f0" } }, axisTick:{ show:false } },
       yAxis:[
-        { type:"value", name:`(${AXIS_UNIT_LABEL})`, nameGap:10, axisLabel:{ formatter:(v)=>fmtAxis(v), color:"#8b949e" }, splitLine:{ lineStyle:{ color:"#21262d" } }, axisLine:{ show:false }, axisTick:{ show:false } },
-        { type:"value", min:0, max:100, splitLine:{ show:false }, axisLabel:{ color:"#8b949e" }, axisLine:{ show:false }, axisTick:{ show:false } }
+        { type:"value", name:`(${AXIS_UNIT_LABEL})`, nameGap:10, axisLabel:{ formatter:(v)=>fmtAxis(v), color:"#94a3b8" }, splitLine:{ lineStyle:{ color:"#e2e8f0" } }, axisLine:{ show:false }, axisTick:{ show:false } },
+        { type:"value", min:0, max:100, splitLine:{ show:false }, axisLabel:{ color:"#94a3b8" }, axisLine:{ show:false }, axisTick:{ show:false } }
       ],
       series:[
         { name:"Top10", type:"bar", stack:"t", data:s.top10, barWidth:16 },
@@ -1393,8 +1403,8 @@
         backgroundColor:"transparent",
         grid:{ left:44, right:18, top:30, bottom:36, containLabel:true },
         tooltip:{ ...DARK_TOOLTIP },
-        xAxis:{ type:"category", data:kx, axisLabel:{ rotate:(kx.length>10?25:0), color:"#8b949e" }, axisLine:{ lineStyle:{ color:"#30363d" } }, axisTick:{ show:false } },
-        yAxis:{ type:"value", min:0, max:100, name:"Score", axisLabel:{ color:"#8b949e" }, splitLine:{ lineStyle:{ color:"#21262d" } }, axisLine:{ show:false }, axisTick:{ show:false } },
+        xAxis:{ type:"category", data:kx, axisLabel:{ rotate:(kx.length>10?25:0), color:"#94a3b8" }, axisLine:{ lineStyle:{ color:"#e2e8f0" } }, axisTick:{ show:false } },
+        yAxis:{ type:"value", min:0, max:100, name:"Score", axisLabel:{ color:"#94a3b8" }, splitLine:{ lineStyle:{ color:"#e2e8f0" } }, axisLine:{ show:false }, axisTick:{ show:false } },
         series:[{ type:"line", smooth:true, symbolSize:6, data:ks, lineStyle:{ color:"#e3b341", width:2 }, itemStyle:{ color:"#e3b341" }, areaStyle:{ opacity:0.08, color:"#e3b341" } }]
       }, true);
     }
@@ -1411,16 +1421,16 @@
         backgroundColor:"transparent",
         grid:{ left:44, right:18, top:30, bottom:36, containLabel:true },
         tooltip:{ ...DARK_TOOLTIP, formatter:(params)=>{ const i=params[0].dataIndex; const d=kd[i]; const dText=(d===null)?"-":((d>=0?"+":"")+d.toFixed(2)+"p"); return `<b>${kx[i]}</b><br/>BTC ${fmtPct(kb[i])}<br/>ETH ${fmtPct(ke[i])}<br/>XRP ${fmtPct(kxrp[i])}<br/>ΔKimchi ${dText}`; } },
-        legend:{ top:6, left:0, itemWidth:14, itemHeight:8, data:["BTC","ETH","XRP","ΔKimchi"], textStyle:{ color:"#8b949e" } },
-        xAxis:{ type:"category", data:kx, axisLabel:{ rotate:(kx.length>10?25:0), color:"#8b949e" }, axisLine:{ lineStyle:{ color:"#30363d" } }, axisTick:{ show:false } },
+        legend:{ top:6, left:0, itemWidth:14, itemHeight:8, data:["BTC","ETH","XRP","ΔKimchi"], textStyle:{ color:"#94a3b8" } },
+        xAxis:{ type:"category", data:kx, axisLabel:{ rotate:(kx.length>10?25:0), color:"#94a3b8" }, axisLine:{ lineStyle:{ color:"#e2e8f0" } }, axisTick:{ show:false } },
         yAxis:[
-          { type:"value", name:"%", axisLabel:{ formatter:(v)=>Number(v).toFixed(1), color:"#8b949e" }, splitLine:{ lineStyle:{ color:"#21262d" } }, axisLine:{ show:false }, axisTick:{ show:false } },
-          { type:"value", name:"Δp", splitLine:{ show:false }, axisLabel:{ formatter:(v)=>Number(v).toFixed(1), color:"#8b949e" }, axisLine:{ show:false }, axisTick:{ show:false } }
+          { type:"value", name:"%", axisLabel:{ formatter:(v)=>Number(v).toFixed(1), color:"#94a3b8" }, splitLine:{ lineStyle:{ color:"#e2e8f0" } }, axisLine:{ show:false }, axisTick:{ show:false } },
+          { type:"value", name:"Δp", splitLine:{ show:false }, axisLabel:{ formatter:(v)=>Number(v).toFixed(1), color:"#94a3b8" }, axisLine:{ show:false }, axisTick:{ show:false } }
         ],
         series:[
           { name:"BTC", type:"line", smooth:true, symbolSize:5, data:kb,   lineStyle:{ color:"#f7931a", width:2 }, itemStyle:{ color:"#f7931a" } },
           { name:"ETH", type:"line", smooth:true, symbolSize:5, data:ke,   lineStyle:{ color:"#627eea", width:2 }, itemStyle:{ color:"#627eea" } },
-          { name:"XRP", type:"line", smooth:true, symbolSize:5, data:kxrp, lineStyle:{ color:"#58a6ff", width:2 }, itemStyle:{ color:"#58a6ff" } },
+          { name:"XRP", type:"line", smooth:true, symbolSize:5, data:kxrp, lineStyle:{ color:"#2563eb", width:2 }, itemStyle:{ color:"#2563eb" } },
           { name:"ΔKimchi", type:"bar", yAxisIndex:1, barWidth:12, data:kd, itemStyle:{ color:"#e3b341" } }
         ]
       }, true);
@@ -1564,7 +1574,7 @@
       if(dot)    dot.style.left = pct + "%";
       if(fng.value <= 25)       fngEl.style.color = "#f87171";
       else if(fng.value >= 75)  fngEl.style.color = "#4ade80";
-      else                      fngEl.style.color = "#58a6ff";
+      else                      fngEl.style.color = "#2563eb";
     }
 
     if (Array.isArray(XRP_HIST) && XRP_HIST.length > 0) {
@@ -1627,7 +1637,7 @@
         breadcrumb:{ show:false },
         label:{ show:true, formatter:"{b}" },
         upperLabel:{ show:false },
-        itemStyle:{ borderColor:"#161b22", borderWidth:2 },
+        itemStyle:{ borderColor:"#ffffff", borderWidth:2 },
         data:coins.map(c=>({ name:(c.symbol||"").replace("KRW-",""), value:num(c.value), share_pct:num(c.share_pct) }))
       }]
     });
