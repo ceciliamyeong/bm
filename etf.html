@@ -5,27 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>US Crypto Spot ETF | BLOCKMEDIA Data</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
   <style>
     :root {
-      --bg: #0d1117;
-      --bg2: #161b22;
-      --bg3: #21262d;
-      --border: #30363d;
-      --text: #e6edf3;
-      --text2: #8b949e;
-      --green: #3fb950;
-      --red: #f85149;
-      --blue: #58a6ff;
-      --orange: #f0883e;
-      --purple: #bc8cff;
-      --yellow: #e3b341;
-      --xrp: #346aa9;
+      --bg:     #f5f7fa;
+      --bg2:    #ffffff;
+      --bg3:    #f1f5f9;
+      --border: #e2e8f0;
+      --text:   #0f172a;
+      --text2:  #64748b;
+      --green:  #16a34a;
+      --red:    #dc2626;
+      --blue:   #2563eb;
+      --orange: #ea580c;
+      --purple: #7c3aed;
+      --yellow: #d97706;
+      --xrp:    #346aa9;
+      --shadow-sm: 0 1px 3px rgba(15,23,42,0.06);
+      --shadow-md: 0 4px 12px rgba(15,23,42,0.08);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       font-size: 14px;
       line-height: 1.6;
     }
@@ -40,12 +44,16 @@
       justify-content: space-between;
       flex-wrap: wrap;
       gap: 8px;
+      box-shadow: var(--shadow-sm);
     }
     .header-left { display: flex; align-items: center; gap: 12px; }
-    .site-title { font-size: 15px; font-weight: 700; color: var(--text); text-decoration: none; }
+    .site-title {
+      font-size: 15px; font-weight: 800; color: var(--text);
+      text-decoration: none; letter-spacing: -0.04em;
+    }
     .page-badge {
-      background: var(--bg3);
-      border: 1px solid var(--border);
+      background: rgba(37,99,235,0.08);
+      border: 1px solid rgba(37,99,235,0.2);
       border-radius: 6px;
       padding: 2px 10px;
       font-size: 12px;
@@ -53,7 +61,7 @@
       font-weight: 600;
     }
     .header-meta { font-size: 12px; color: var(--text2); }
-    #updated-at { color: var(--text); font-weight: 500; }
+    #updated-at { color: var(--text); font-weight: 600; }
 
     /* ── Nav ── */
     nav {
@@ -69,25 +77,28 @@
       text-decoration: none;
       padding: 10px 14px;
       font-size: 13px;
+      font-weight: 500;
       white-space: nowrap;
       border-bottom: 2px solid transparent;
       transition: color .2s, border-color .2s;
+      letter-spacing: -0.02em;
     }
     nav a:hover { color: var(--text); }
-    nav a.active { color: var(--blue); border-bottom-color: var(--blue); }
+    nav a.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 700; }
 
     /* ── Layout ── */
     main { max-width: 1200px; margin: 0 auto; padding: 24px 16px; }
 
     .section-title {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
       margin-bottom: 16px;
       padding-bottom: 8px;
-      border-bottom: 1px solid var(--border);
+      border-bottom: 2px solid rgba(37,99,235,0.15);
       display: flex;
       align-items: center;
       gap: 8px;
+      letter-spacing: -0.03em;
     }
     .section-title .dot {
       width: 8px; height: 8px;
@@ -105,20 +116,25 @@
     .kpi-card {
       background: var(--bg2);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 14px 16px;
+      border-radius: 10px;
+      padding: 16px 18px;
+      box-shadow: 0 1px 3px rgba(15,23,42,0.06);
+      transition: box-shadow .2s;
     }
+    .kpi-card:hover { box-shadow: 0 4px 12px rgba(15,23,42,0.08); }
     .kpi-label {
       font-size: 11px;
       color: var(--text2);
       text-transform: uppercase;
-      letter-spacing: .5px;
+      letter-spacing: .6px;
       margin-bottom: 6px;
+      font-weight: 500;
     }
     .kpi-value {
-      font-size: 20px;
-      font-weight: 700;
+      font-size: 22px;
+      font-weight: 800;
       color: var(--text);
+      letter-spacing: -0.04em;
     }
     .kpi-value.positive { color: var(--green); }
     .kpi-value.negative { color: var(--red); }
@@ -141,13 +157,16 @@
       padding: 6px 16px;
       color: var(--text2);
       font-size: 13px;
+      font-weight: 500;
       cursor: pointer;
       transition: all .2s;
+      font-family: inherit;
     }
     .tab-btn.active, .tab-btn:hover {
       background: var(--blue);
       border-color: var(--blue);
       color: #fff;
+      font-weight: 600;
     }
 
     /* ── Chart Cards ── */
@@ -162,15 +181,18 @@
     .chart-card {
       background: var(--bg2);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 16px;
+      border-radius: 10px;
+      padding: 18px;
+      box-shadow: 0 1px 3px rgba(15,23,42,0.06);
     }
     .chart-card.full { grid-column: 1 / -1; }
     .chart-title {
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 600;
       color: var(--text2);
-      margin-bottom: 12px;
+      margin-bottom: 14px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
     }
     .chart-wrap { position: relative; height: 200px; }
     .chart-wrap.tall { height: 260px; }
@@ -179,35 +201,37 @@
     .table-wrap {
       background: var(--bg2);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 10px;
       overflow-x: auto;
       margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(15,23,42,0.06);
     }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     thead { background: var(--bg3); }
     th {
-      padding: 10px 14px;
+      padding: 11px 14px;
       text-align: right;
       color: var(--text2);
-      font-weight: 500;
+      font-weight: 600;
       font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: .4px;
+      letter-spacing: .5px;
       border-bottom: 1px solid var(--border);
     }
     th:first-child { text-align: left; }
     td {
-      padding: 10px 14px;
+      padding: 11px 14px;
       text-align: right;
       border-bottom: 1px solid var(--border);
+      font-weight: 500;
     }
     td:first-child { text-align: left; }
     tr:last-child td { border-bottom: none; }
-    tr:hover td { background: rgba(88,166,255,.05); }
+    tr:hover td { background: rgba(37,99,235,0.04); }
     .ticker { font-weight: 700; color: var(--blue); }
-    .inst { color: var(--text2); font-size: 12px; }
-    .pos { color: var(--green); }
-    .neg { color: var(--red); }
+    .inst { color: var(--text2); font-size: 12px; font-weight: 400; }
+    .pos { color: var(--green); font-weight: 600; }
+    .neg { color: var(--red); font-weight: 600; }
     .null-val { color: var(--text2); }
 
     /* ── Coin Toggle ── */
@@ -215,26 +239,30 @@
       display: flex;
       gap: 8px;
       margin-bottom: 20px;
+      flex-wrap: wrap;
     }
     .coin-btn {
       display: flex;
       align-items: center;
       gap: 6px;
-      background: var(--bg3);
+      background: var(--bg2);
       border: 1px solid var(--border);
       border-radius: 20px;
-      padding: 6px 16px;
+      padding: 7px 18px;
       cursor: pointer;
       font-size: 13px;
       font-weight: 600;
       color: var(--text2);
       transition: all .2s;
+      font-family: inherit;
+      box-shadow: 0 1px 3px rgba(15,23,42,0.06);
     }
-    .coin-btn.active-btc { background: #f7931a22; border-color: #f7931a; color: #f7931a; }
-    .coin-btn.active-eth { background: #627eea22; border-color: #627eea; color: #627eea; }
-    .coin-btn.active-sol { background: #9945ff22; border-color: #9945ff; color: #9945ff; }
-    .coin-btn.active-xrp { background: #346aa922; border-color: #346aa9; color: #346aa9; }
-    .coin-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .coin-btn:hover { border-color: var(--blue); color: var(--blue); }
+    .coin-btn.active-btc { background: rgba(247,147,26,0.08); border-color: #f7931a; color: #f7931a; }
+    .coin-btn.active-eth { background: rgba(98,126,234,0.08); border-color: #627eea; color: #627eea; }
+    .coin-btn.active-sol { background: rgba(153,69,255,0.08); border-color: #9945ff; color: #9945ff; }
+    .coin-btn.active-xrp { background: rgba(52,106,169,0.08); border-color: #346aa9; color: #346aa9; }
+    .coin-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     .dot-btc { background: #f7931a; }
     .dot-eth { background: #627eea; }
     .dot-sol { background: #9945ff; }
@@ -243,11 +271,14 @@
     /* ── Footer ── */
     footer {
       border-top: 1px solid var(--border);
-      padding: 16px 20px;
+      padding: 20px;
       text-align: center;
       font-size: 12px;
       color: var(--text2);
+      background: var(--bg2);
     }
+    footer a { color: var(--blue); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
 
     .loading { color: var(--text2); font-size: 13px; }
     .error-msg { color: var(--red); font-size: 13px; }
@@ -347,8 +378,8 @@
 
 <footer>
   본 대시보드의 정보는 시장 동향 파악을 위한 참고 자료이며, 투자 권유 또는 재무적 조언이 아닙니다. &nbsp;|&nbsp;
-  Source: <a href="https://blockmedia.co.kr" target="_blank" style="color:var(--blue)">BLOCKMEDIA</a> &nbsp;·&nbsp;
-  <a href="https://sosovalue.com" target="_blank" style="color:var(--blue)">SoSoValue</a>
+  Source: <a href="https://blockmedia.co.kr" target="_blank">BLOCKMEDIA</a> &nbsp;·&nbsp;
+  <a href="https://sosovalue.com" target="_blank">SoSoValue</a>
 </footer>
 
 <script>
@@ -459,16 +490,16 @@ function renderCharts(coin) {
   const cumData  = sorted.map(d => (d.cumNetInflow / 1e9).toFixed(2));
   const volData  = sorted.map(d => (d.totalValueTraded / 1e9).toFixed(2));
 
-  const flowColors = flowData.map(v => parseFloat(v) >= 0 ? '#3fb95088' : '#f8514988');
-  const flowBorders = flowData.map(v => parseFloat(v) >= 0 ? '#3fb950' : '#f85149');
+  const flowColors = flowData.map(v => parseFloat(v) >= 0 ? 'rgba(22,163,74,0.5)' : 'rgba(220,38,38,0.5)');
+  const flowBorders = flowData.map(v => parseFloat(v) >= 0 ? '#16a34a' : '#dc2626');
 
   const baseOpts = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
     scales: {
-      x: { ticks: { color: '#8b949e', maxTicksLimit: 10, font: { size: 11 } }, grid: { color: '#21262d' } },
-      y: { ticks: { color: '#8b949e', font: { size: 11 } }, grid: { color: '#21262d' } }
+      x: { ticks: { color: '#94a3b8', maxTicksLimit: 10, font: { size: 11 } }, grid: { color: '#e2e8f0' } },
+      y: { ticks: { color: '#94a3b8', font: { size: 11 } }, grid: { color: '#e2e8f0' } }
     }
   };
 
