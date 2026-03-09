@@ -28,7 +28,7 @@ STIBEE_API_KEY  = os.environ.get("STIBEE_API_KEY", "")
 STIBEE_LIST_ID  = os.environ.get("STIBEE_LIST_ID", "")
 STIBEE_EMAIL_ID = os.environ.get("STIBEE_EMAIL_ID", "")
 
-BASE_URL = "https://stibee.com/api/v1.0"
+BASE_URL = "https://api.stibee.com/v2"
 
 # ── 유효성 체크 ────────────────────────────────────────
 def check_env():
