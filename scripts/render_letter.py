@@ -938,12 +938,9 @@ def build_placeholders() -> dict[str, str]:
         "{{NEWS1_EXCERPT}}":   n1["excerpt"],
         "{{NEWS2_EXCERPT}}":   n2["excerpt"],
         "{{NEWS3_EXCERPT}}":   n3["excerpt"],
-        "{{NEWS1_THUMBNAIL}}": _thumb_html(n1["thumbnail"], n1["title"]),
-        "{{NEWS2_THUMBNAIL}}": _thumb_html(n2["thumbnail"], n2["title"]),
-        "{{NEWS3_THUMBNAIL}}": _thumb_html(n3["thumbnail"], n3["title"]),
-        "{{NEWS1_LINK_BTN}}":  _link_btn(n1["link"]),
-        "{{NEWS2_LINK_BTN}}":  _link_btn(n2["link"]),
-        "{{NEWS3_LINK_BTN}}":  _link_btn(n3["link"]),
+        "{{NEWS1_LINK}}":      n1["link"],
+        "{{NEWS2_LINK}}":      n2["link"],
+        "{{NEWS3_LINK}}":      n3["link"],
 
         # Sponsor
         "{{SPONSOR_CLICK_URL}}": sponsor_click,
