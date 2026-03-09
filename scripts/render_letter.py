@@ -880,6 +880,8 @@ def build_placeholders() -> dict[str, str]:
         "{{BM20_ASOF}}": str(asof)[:10] if asof else "—",
         "{{BM20_1D}}": bm20_1d_html,
         "{{BM20_BREADTH}}": breadth,
+        "{{BM20_UP}}": str(up),
+        "{{BM20_DOWN}}": str(down),
         "{{BM20_BEST3}}": best3,
         "{{BM20_WORST3}}": worst3,
         "{{BM20_COMMENT}}": comment,
