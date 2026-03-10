@@ -51,11 +51,31 @@ def load_html() -> str:
     return content
 
 # ── 제목 생성 ──────────────────────────────────────────
-def make_subject() -> str:
+def extract_headline(html: str) -> str:
+    """letter.html 에서 NEWS_HEADLINE 추출 (h1 또는 narrative-title 클래스)"""
+    import re
+    # narrative-title div 안의 텍스트 추출
+    m = re.search(r'class="narrative-title"[^>]*>(.*?)</div>', html, re.DOTALL)
+    if m:
+        text = re.sub(r"<[^>]+>", "", m.group(1)).replace("\n", " ").strip()
+        if text and text != "—":
+            return text
+    return ""
+
+
+def make_subject(html: str = "") -> str:
     today = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
     date_str = today.strftime("%m/%d")
     weekdays = ["월", "화", "수", "목", "금", "토", "일"]
     weekday  = weekdays[today.weekday()]
+
+    headline = extract_headline(html)
+    if headline:
+        # 너무 길면 30자 자르기
+        if len(headline) > 30:
+            headline = headline[:30] + "…"
+        return f"[블록미디어] {date_str}({weekday}) {headline}"
+
     return f"[블록미디어] {date_str}({weekday}) 오늘의 크립토 인사이트"
 
 def json_headers():
@@ -115,7 +135,7 @@ def send_email(email_id: int):
 if __name__ == "__main__":
     check_env()
     html     = load_html()
-    subject  = make_subject()
+    subject  = make_subject(html)
     print(f"[제목] {subject}")
     email_id = create_email(subject)
     update_content(email_id, html)
