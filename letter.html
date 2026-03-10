@@ -1,569 +1,450 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>[블록미디어] Daily Letter — 2026-03-10</title>
-  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
-  <style>
-    * { box-sizing: border-box; }
-    body { margin: 0; padding: 0; background-color: #f0f4f8; font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; color: #0f172a; -webkit-text-size-adjust: 100%; }
-    table { border-collapse: collapse; table-layout: fixed; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-    td { padding: 0; }
-    img { display: block; max-width: 100%; border: 0; outline: none; }
-    a { text-decoration: none; color: #2563eb; }
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>블록미디어 Daily Letter </title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #e8edf2;
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    color: #0f172a;
+    padding: 32px 16px;
+  }
 
-    .wrap { width: 100%; max-width: 660px; margin: 0 auto; background-color: #ffffff; }
-    .pad { padding: 0 24px; }
-    .mono { font-family: 'IBM Plex Mono', monospace; }
-    
-    .section-label { font-size: 10px; font-weight: 700; color: #2563eb; letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 8px; }
-    .rule-thick { border-top: 3px solid #0f172a; }
-    .rule-thin { border-top: 1px solid #e2e8f0; }
-    .card-dark { background-color: #0f172a; border-radius: 4px; }
-    .card-light { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; }
+  /* 목업 레이블 */
+  .mockup-label {
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
 
-    @media only screen and (max-width: 600px) {
-      .wrap { width: 100% !important; }
-      .pad { padding: 0 16px !important; }
-      .stack { display: block !important; width: 100% !important; border: none !important; padding-left: 0 !important; padding-right: 0 !important; }
-      .hide-mobile { display: none !important; }
+  .email-wrap {
+    max-width: 480px;
+    margin: 0 auto;
+    background: #fff;
+    border-top: 4px solid #2563eb;
+    box-shadow: 0 20px 60px rgba(15,23,42,0.15);
+    border-radius: 2px;
+  }
 
-      /* 섹션 구분선 위아래 여백 확보 */
-      tr td .rule-thick { margin-top: 12px !important; margin-bottom: 12px !important; }
-      tr td .rule-thin  { margin-top: 10px !important; margin-bottom: 10px !important; }
+  /* ── HEADER ── */
+  .header {
+    background: #0f172a;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-logo {
+    font-size: 15px; font-weight: 900; color: #fff; letter-spacing: -0.03em;
+  }
+  .header-logo span {
+    font-size: 9px; font-weight: 600; color: #60a5fa;
+    letter-spacing: 0.12em; margin-left: 7px; text-transform: uppercase;
+  }
+  .header-date {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px; color: #475569;
+  }
 
-      /* 모든 섹션 td 상하 패딩 일괄 확대 */
-      table.wrap tr > td { padding-top: 20px !important; padding-bottom: 20px !important; }
+  /* ── SECTION WRAPPER ── */
+  .section { padding: 20px 20px; }
+  .section + .section { border-top: 1px solid #f1f5f9; }
+  .section-thick { border-top: 3px solid #0f172a !important; }
 
-      /* section-label 위 여백 */
-      .section-label { margin-top: 4px !important; margin-bottom: 10px !important; }
-    }
-  </style>
+  .section-label {
+    font-size: 9px; font-weight: 800; color: #2563eb;
+    letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 10px;
+  }
+
+  /* ── ① 오늘의 시장 내러티브 ── */
+  .narrative-title {
+    font-size: 26px; font-weight: 900; line-height: 1.25;
+    letter-spacing: -0.04em; margin-bottom: 8px;
+  }
+  .narrative-body {
+    font-size: 13px; line-height: 1.85; color: #334155;
+    letter-spacing: -0.01em;
+  }
+  .narrative-body b { color: #2563eb; }
+
+  /* ── BTC + F&G 대시보드 ── */
+  .dashboard {
+    background: #0f172a;
+    border-radius: 4px;
+    margin-top: 14px;
+    display: flex;
+  }
+  .dash-cell {
+    flex: 1;
+    padding: 14px 10px;
+    text-align: center;
+    border-right: 1px solid #1e293b;
+  }
+  .dash-cell:last-child { border-right: none; }
+  .dash-label {
+    font-size: 9px; font-weight: 700; color: #94a3b8;
+    letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 5px;
+  }
+  .dash-value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 17px; font-weight: 700;
+  }
+  .dash-sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px; font-weight: 600; color: #60a5fa; margin-top: 3px;
+  }
+  .up { color: #22c55e; }
+  .down { color: #ef4444; }
+  .orange { color: #f97316; }
+
+  /* ── ② Upbit Movers ── */
+  .movers-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 2px;
+  }
+  .mover-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 12px;
+  }
+  .mover-card-label {
+    font-size: 9px; font-weight: 800;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .mover-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 5px 0; border-bottom: 1px solid #f1f5f9;
+    font-size: 12px;
+  }
+  .mover-row:last-child { border-bottom: none; }
+  .mover-sym { font-weight: 700; }
+  .mover-chg {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px; font-weight: 700;
+  }
+
+  /* ── ③ 뉴스 ── */
+  .news-item { padding: 14px 0; border-bottom: 1px solid #f1f5f9; }
+  .news-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .news-num {
+    font-size: 22px; font-weight: 900; color: #dbeafe;
+    line-height: 1; margin-bottom: 4px;
+  }
+  .news-cat {
+    font-size: 9px; font-weight: 700; color: #2563eb;
+    letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px;
+  }
+  .news-title {
+    font-size: 14px; font-weight: 700; line-height: 1.45;
+    letter-spacing: -0.02em; color: #0f172a; margin-bottom: 5px;
+  }
+  .news-excerpt {
+    font-size: 12px; color: #64748b; line-height: 1.65;
+  }
+  .news-link {
+    display: inline-block; margin-top: 6px;
+    font-size: 11px; font-weight: 700; color: #2563eb;
+  }
+
+  /* ── ④ ETF Flow ── */
+  .etf-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+    margin-top: 2px;
+  }
+  .etf-card {
+    background: #f8fafc; border: 1px solid #e2e8f0;
+    border-radius: 4px; padding: 10px 8px;
+  }
+  .etf-name { font-size: 10px; font-weight: 700; color: #475569; margin-bottom: 5px; }
+  .etf-flow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 17px; font-weight: 700;
+  }
+  .etf-aum { font-size: 12px; font-weight: 700; color: #475569; margin-top: 3px; }
+
+  /* treemap placeholder */
+  .treemap-placeholder {
+    margin-top: 12px;
+    background: #f0f7ff;
+    border: 1px dashed #bfdbfe;
+    border-radius: 4px;
+    height: 80px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: #93c5fd; font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+  .treemap-caption {
+    font-size: 11px; color: #94a3b8; text-align: center; margin-top: 6px;
+  }
+
+  /* ── ⑤ 코생지 AAS ── */
+  .aas-header {
+    background: #0f172a;
+    padding: 12px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .aas-title { font-size: 12px; font-weight: 900; color: #fff; letter-spacing: 0.08em; }
+  .aas-sub { font-size: 10px; color: #60a5fa; margin-top: 2px; }
+  .beta-badge {
+    font-size: 8px; font-weight: 700; background: #2563eb;
+    color: #fff; padding: 2px 7px; border-radius: 2px; letter-spacing: 0.1em;
+  }
+  .aas-table { width: 100%; font-size: 12px; border-collapse: collapse; margin-top: 12px; }
+  .aas-table th {
+    font-size: 9px; font-weight: 700; color: #94a3b8;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 6px 0; border-bottom: 2px solid #0f172a; text-align: left;
+  }
+  .aas-table th:last-child { text-align: right; }
+  .aas-table td { padding: 9px 0; border-bottom: 1px solid #f1f5f9; }
+  .aas-table td:last-child { text-align: right; color: #64748b; }
+  .aas-table tr:last-child td { border-bottom: none; }
+  .signal-buy { color: #16a34a; font-weight: 900; }
+  .signal-watch { color: #f97316; font-weight: 900; }
+
+  /* ── CTA ── */
+  .cta-section { padding: 16px 20px 20px; }
+  .cta-btn {
+    display: block; background: #2563eb; color: #fff;
+    text-align: center; padding: 13px;
+    font-size: 13px; font-weight: 700; border-radius: 4px;
+    letter-spacing: 0.04em; text-decoration: none;
+    margin-bottom: 8px;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    background: #0f172a; padding: 28px 20px; text-align: center;
+  }
+  .footer-logo { font-size: 15px; font-weight: 900; color: #fff; margin-bottom: 10px; }
+  .footer-links { display: flex; justify-content: center; gap: 12px; margin-bottom: 14px; }
+  .footer-links a { font-size: 11px; color: #60a5fa; text-decoration: underline; }
+  .footer-copy { font-size: 11px; color: #334155; }
+
+  .anno { position: relative; }
+
+  .section-question {
+    font-size: 20px; font-weight: 900;
+    letter-spacing: -0.04em; line-height: 1.25;
+    color: #0f172a;
+    margin-bottom: 14px;
+  }
+</style>
 </head>
-<body style="margin:0; padding:0; background-color:#f0f4f8;">
+<body>
 
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f0f4f8; padding: 20px 0;">
-  <tr>
-    <td align="center">
-      
-      <table class="wrap" role="presentation" width="660" cellspacing="0" cellpadding="0" border="0" style="border-top: 5px solid #2563eb; box-shadow: 0 10px 25px rgba(15,23,42,0.1);">
-        
-        
-        <tr>
-          <td style="background-color: #0f172a; padding: 14px 24px;">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-              <tr>
-                <td align="left" style="font-size: 18px; font-weight: 800; color: #ffffff; letter-spacing: -0.03em;">
-                  BLOCKMEDIA <span style="font-size: 11px; font-weight: 600; color: #60a5fa; letter-spacing: 0.12em; margin-left: 8px; text-transform: uppercase;">Daily Letter</span>
-                </td>
-                <td align="right">
-                  <a href="https://blockmedia.co.kr" style="font-size: 11px; font-weight: 700; color: #ffffff; border: 1px solid #334155; padding: 5px 12px; border-radius: 2px;">SUBSCRIBE ↗</a>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
+<div class="mockup-label">📐 블록미디어 Daily Letter — 새 흐름 목업</div>
 
-        
-        <tr>
-          <td class="pad" style="padding: 36px 24px 20px;">
-            <div class="section-label">2026-03-10 · Daily Letter</div>
-            <div class="rule-thick"></div>
-            <h1 style="font-size: 34px; font-weight: 900; line-height: 1.2; color: #0f172a; margin: 20px 0 14px; letter-spacing: -0.04em;">블록미디어 이메일,<br/>다시 시작합니다</h1>
-            <div class="rule-thin"></div>
-            <p style="font-size: 15px; line-height: 1.85; color: #334155; margin: 20px 0; letter-spacing: -0.02em;">
-              안녕하세요, 블록미디어는 지난 1년간 돈이 되는 <b style="color:#2563eb;">데이터와 인사이트를</b> 구축하는 데 집중해 왔습니다. 그 결과물을 오늘, <b style="color:#2563eb;">구독자님께 가장 먼저</b> 공개합니다.
-            </p>
-          </td>
-        </tr>
+<div class="email-wrap">
 
-        
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-logo">BLOCKMEDIA <span>Daily Letter</span></div>
+    <div class="header-date mono">2026-03-10</div>
+  </div>
 
-              <tr>
-                <td style="padding: 16px 20px;">
-                  <div style="font-size: 10px; font-weight: 800; color: #2563eb; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 8px;">💡 오늘의 한 줄</div>
-                  <div style="font-size: 16px; font-weight: 700; color: #0f172a; line-height: 1.6;">"—"</div>
-                  <div style="font-size: 13px; color: #475569; margin-top: 6px; line-height: 1.7;">[블록미디어 양원모 기자] 비트코인 시장에서 레버리지 축소와 청산 대기 물량 확대가 동시에 관측되면서 조만간 큰 변동성이 나타날 수 있다는 분석이 잇따르고 있다. 온체인 분석가와 시장 참여자들은 상승과 하락 어느 방향이든 단기적으로 강한 가격 움직임이 나타날 가능성을 경고하고 나섰다.
-9일(현지시각) 온체인 분석가 다크포스트(Darkfost)는 소셜 미디어 X(옛 트위터)에 크립토퀀트의 비트코인 추정 레버리지 비율 추이 그래프를 공유하고 “최근 비트코인 파생시장 레버리지가 빠르게 감소했다”고 분석했다. 해당 그래프에 따르면 바이낸스 기준 비트코인 추정 레버리지 비율은 지난 2월 약 0.198에서 최근 0.152까지 급격히 낮아졌다.
-다크포스트는 이 같은 움직임이 최근 시장 변동성 확대 이후 나타난 전형적인 구조라고 설명했다. 그는 “이 같은 레버리지 감소는 강한 가격 변동 이후 과도하게 쌓였던 포지션이 정리되는 과정에서 자주 나타난다”며 시장이 새로운 움직임을 준비하는 단계일 수 있다고 분석했다.
-비트코인 추정 레버리지 비율 추이. 그래프=크립토퀀트
-온체인 분석가 주앙 웨드손 알프랙탈 CEO도 같은 날 X를 통해 비트코인 청산맵 데이터를 공유하며 “비트코인과 전체 디지털자산 시장에서 곧 변동성이 나타날 것”이라고 전망했다. 주요 가격대에 청산 유동성이 집중돼 있다는 이유에서다. 청산맵은 레버리지 포지션이 대량으로 청산될 수 있는 가격 구간을 보여주는 지표다. 특정 가격대에 청산 물량이 몰려 있을 경우 가격이 해당 구간에 접근하면서 연쇄 청산이 발생해 변동성이 확대되는 경우가 많다.
-이미지=알파프랙탈
-웨드손 CEO는 현재 시장을 포지션 재분배 국면으로 해석했다. 그는 “비트코인 시장에서 재분배가 진행되고 있다”며 “변동성 확대는 인내심이 부족한 투자자들을 시장에서 이탈시키고 거래량과 관심을 다시 불러올 수 있다”고 설명했다.
-&#8216;단기 조정&#8217; 가능성을 제기하는 분석도 나왔다. 디지털자산 시장 분석가 미스터 크립토 웨일은 X에 비트코인이 ‘마지막 축적 단계’에 진입했을 수 있다고 주장했다. 그는 차트 분석을 근거로 단기적으로 약 4만5000달러 수준까지 하락할 가능성을 제시하며 “이후 다음 주요 상승 움직임이 나타날 수 있다”고 전망했다. 미스터 크립토 웨일은 “큰 기회는 시장에 최대 공포가 형성될 때 나타나는 경우가 많다”며 “앞으로 10일 안팎 동안 강한 변동성이 나타나며 약한 투자자들이 시장에서 정리될 수 있다”고 말했다.
-&nbsp;</div>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
+  <!-- ① 어제 시장 어땠어? -->
+  <div class="section anno">
+    <div class="section-question">① 어제 시장 어땠어? 🤔</div>
+    <div class="narrative-title">[롱/숏] 비트코인 7만달러 회복에도 &#8216;단기 헷지&#8217; 증가&#8230;초단기 구간 숏 증가</div>
+    <div class="narrative-body">
+      [블록미디어 함지현 기자] 디지털자산(가상자산) 파생상품 시장에서 비트코인이 7만달러 선을 회복한 가운데 주요 종목별 포지션에서는 롱(매수) 비중이 다소 우세한 흐름이 나타났다. 다만 초단기 구간에서는 일부 종목에서 숏(매도) 비중이 확대되며 단기 변동성이 커지고 있다… 🫠
+    </div>
 
-        
-        <tr><td class="pad"><div class="rule-thick"></div></td></tr>
+    <!-- 대시보드 -->
+    <div class="dashboard">
+      <div class="dash-cell">
+        <div class="dash-label">Bitcoin</div>
+        <div class="dash-value down"><span style="color:#16a34a;font-weight:900;">▲ +2.04%</span></div>
+        <div class="dash-sub">68,948</div>
+      </div>
+      <div class="dash-cell">
+        <div class="dash-label">BM20</div>
+        <div class="dash-value down"><span style="color:#16a34a;font-weight:900;">▲ +3.90%</span></div>
+        <div class="dash-sub">Lv 3,115.76</div>
+      </div>
+      <div class="dash-cell">
+        <div class="dash-label">Fear &amp; Greed</div>
+        <div class="dash-value orange">Extreme Fear</div>
+        <div class="dash-sub">13 / 100</div>
+      </div>
+    </div>
+  </div>
 
-        
-        <tr>
-          <td class="pad" style="padding: 24px 24px 12px;">
-            <div class="section-label">📊 Market Snapshot</div>
-            <table class="card-dark" role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-              <tr>
-                <td width="33.3%" align="center" style="padding: 18px 10px; border-right: 1px solid #1e293b;">
-                  <div style="font-size: 11px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px; letter-spacing: 0.1em;">BM20 INDEX</div>
-                  <div class="mono" style="font-size: 20px; font-weight: 700; color: #16a34a;"><span style="color:#16a34a;font-weight:900;">▲ +3.90%</span></div>
-                  <div style="font-size: 12px; color: #60a5fa; margin-top: 4px;">Lv 3,115.76</div>
-                </td>
-                <td width="33.3%" align="center" style="padding: 18px 10px; border-right: 1px solid #1e293b;">
-                  <div style="font-size: 11px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px; letter-spacing: 0.1em;">BITCOIN</div>
-                  <div class="mono" style="font-size: 20px; font-weight: 700; color: #16a34a;"><span style="color:#16a34a;font-weight:900;">▲ +2.04%</span></div>
-                  <div style="font-size: 12px; color: #60a5fa; margin-top: 4px;">$68,948</div>
-                </td>
-                <td width="33.4%" align="center" style="padding: 18px 10px;">
-                  <div style="font-size: 11px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px; letter-spacing: 0.1em;">FEAR &amp; GREED</div>
-                  <div class="mono" style="font-size: 20px; font-weight: 700; color: #f97316;">Extreme Fear</div>
-                  <div style="font-size: 12px; color: #60a5fa; margin-top: 4px;">13/100</div>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
+  <!-- ② 내 코인 올랐어 내렸어? -->
+  <div class="section section-thick anno">
+    <div class="section-question">② 내 코인 올랐어 내렸어? 🫨</div>
+    <div class="section-label">📈 Upbit Movers 24h</div>
+    <div class="movers-grid">
+      <div class="mover-card">
+        <div class="mover-card-label" style="color:#16a34a;">▲ Top 3</div>
+        <div class="mover-row"><span class="mover-sym">FLOW</span><span class="mover-chg up">+17.2%</span></div>
+        <div class="mover-row"><span class="mover-sym">EDGE</span><span class="mover-chg up">+13.8%</span></div>
+        <div class="mover-row"><span class="mover-sym">PLUME</span><span class="mover-chg up">+7.7%</span></div>
+      </div>
+      <div class="mover-card">
+        <div class="mover-card-label" style="color:#ef4444;">▼ Bottom 3</div>
+        <div class="mover-row"><span class="mover-sym">SAHARA</span><span class="mover-chg down">-5.8%</span></div>
+        <div class="mover-row"><span class="mover-sym">SIGN</span><span class="mover-chg down">-5.7%</span></div>
+        <div class="mover-row"><span class="mover-sym">STEEM</span><span class="mover-chg down">-3.5%</span></div>
+      </div>
+    </div>
+  </div>
 
-        
-        <tr>
-          <td class="pad" style="padding: 20px 24px 12px;">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-              <tr>
-                <td width="32.5%" class="card-dark" align="center" style="padding: 10px;">
-                  <div style="font-size: 11px; color: #94a3b8; margin-bottom: 3px;">NASDAQ</div>
-                  <div class="mono" style="font-size: 13px; font-weight: 600; color: #dc2626;">▲1.38%</div>
-                </td>
-                <td width="1.25%"></td>
-                <td width="32.5%" class="card-dark" align="center" style="padding: 10px;">
-                  <div style="font-size: 11px; color: #94a3b8; margin-bottom: 3px;">KOSPI</div>
-                  <div class="mono" style="font-size: 13px; font-weight: 600; color: #dc2626;">▼5.96%</div>
-                </td>
-                <td width="1.25%"></td>
-                <td width="32.5%" class="card-dark" align="center" style="padding: 10px;">
-                  <div style="font-size: 11px; color: #94a3b8; margin-bottom: 3px;">USD/KRW</div>
-                  <div class="mono" style="font-size: 13px; font-weight: 600; color: #ffffff;">1,470.39</div>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
+  <!-- ③ 왜 그랬어? -->
+  <div class="section section-thick anno">
+    <div class="section-question">③ 왜 그랬어? 🗣️</div>
 
-        
+    <div class="news-item">
+      <div class="news-num">01</div>
+      <div class="news-cat">디지털 자산</div>
+      <div class="news-title">비트코인 ‘폭풍전야’ 눈앞?… 분석가들 “큰 변동성 온다, 상승이든 하락이든”</div>
+      <div class="news-excerpt">비트코인 시장에서 레버리지 축소와 청산 대기 물량 확대가 동시에 관측되면서 조만간 큰 변동성이 나타날 수 있다는 분석이 잇따르고 있다. 상승과 하락 어느 방향이든 단기적으로 강한 가격 움직임이 나타날 가능성이 크다는 것이다. 과연 방향은?</div>
+      <a class="news-link" href="https://www.blockmedia.co.kr/archives/1057710">기사 전문 읽기 →</a>
+    </div>
 
-        <tr><td class="pad"><div class="rule-thin"></div></td></tr>
+    <div class="news-item">
+      <div class="news-num">02</div>
+      <div class="news-cat">디지털 자산</div>
+      <div class="news-title">비트코인 약한 손 14만 BTC 정리&#8230;파생시장·ETF 수급은 개선 조짐</div>
+      <div class="news-excerpt">비트코인 시장에서 단기 투자자들의 손실 매도가 이어지는 가운데 파생시장과 기관 수급에서는 제한적인 회복 신호가 동시에 나타나고 있다는 분석이 나왔다. 약한 투자자들의 이탈이 진행되는 동시에 시장 내부 지표는 점진적인 안정 국면에 들어섰다는 평가다.</div>
+      <a class="news-link" href="https://www.blockmedia.co.kr/archives/1057577">기사 전문 읽기 →</a>
+    </div>
 
-        
-        <tr>
-          <td class="pad" style="padding: 24px 24px;">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-              <tr>
-                <td class="stack" width="48%" valign="top" style="padding-right: 14px; border-right: 1px solid #e2e8f0;">
-                  <div class="section-label">🇰🇷 KRW Signal</div>
-                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-                    <tr>
-                      <td width="32%" class="card-dark" style="padding: 10px 6px; text-align: center;">
-                        <div style="font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">거래대금</div>
-                        <div class="mono" style="font-size: 13px; font-weight: 800; color: #ffffff;">2.37조원</div>
-                      </td>
-                      <td width="2%"></td>
-                      <td width="32%" class="card-dark" style="padding: 10px 6px; text-align: center;">
-                        <div style="font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">업비트 vs 빗썸</div>
-                        <div class="mono" style="font-size: 13px; font-weight: 800; color: #ffffff;">64.1%</div>
-                        <div style="font-size: 10px; color: #475569; margin-top: 2px;">29.3%</div>
-                      </td>
-                      <td width="2%"></td>
-                      <td width="32%" class="card-dark" style="padding: 10px 6px; text-align: center;">
-                        <div style="font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">스테이블비중</div>
-                        <div class="mono" style="font-size: 13px; font-weight: 800; color: #ffffff;">15.8%</div>
-                      </td>
-                    </tr>
-                  </table>
-                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top: 12px;">
-                    <tr>
-                      <td style="font-size: 12px; padding: 6px 0; border-bottom: 1px solid #f1f5f9; color: #475569;">글로벌 점유율</td>
-                      <td align="right" style="font-size: 12px; font-weight: 700; padding: 6px 0; border-bottom: 1px solid #f1f5f9;">1.5%</td>
-                    </tr>
-                    <tr>
-                      <td style="font-size: 12px; padding: 6px 0; color: #475569;">XRP 한국 점유율</td>
-                      <td align="right" style="font-size: 12px; font-weight: 700; padding: 6px 0;">9.2%</td>
-                    </tr>
-                  </table>
-                </td>
-
-                <td class="stack" width="48%" valign="top" style="padding-left: 14px;">
-                  <div class="section-label">📈 BM20 Index</div>
-                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-                    <tr>
-                      <td width="49%" class="card-dark" style="padding: 10px; text-align: center;">
-                        <div style="font-size: 8px; color: #cbd5e1; margin-bottom: 4px;">1D 방향성</div>
-                        <div class="mono" style="font-size: 14px; font-weight: 700; color: #16a34a;"><span style="color:#16a34a;font-weight:900;">▲ +3.90%</span></div>
-                      </td>
-                      <td width="2%"></td>
-                      <td width="49%" class="card-dark" style="padding: 10px; text-align: center;">
-                        <div style="font-size: 8px; color: #cbd5e1; margin-bottom: 4px;">BREADTH</div>
-                        <div class="mono" style="font-size: 13px; font-weight: 700; line-height: 1.6;">
-                          <span style="color:#16a34a;">상승 19</span>
-                          <span style="color:#94a3b8; font-weight:400;"> · </span>
-                          <span style="color:#dc2626;">하락 1</span>
-                        </div>
-                      </td>
-                    </tr>
-                  </table>
-                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top: 10px;">
-                    <tr>
-                      <td width="49%" style="background-color: #f0fdf4; border: 1px solid #dcfce7; padding: 10px; border-radius: 4px; vertical-align: top;">
-                        <div style="font-size: 8px; color: #16a34a; font-weight: 700; margin-bottom: 5px; letter-spacing: 0.08em;">▲ BEST 3</div>
-                        <div style="font-size: 12px; font-weight: 700; color: #065f46; line-height: 1.8; font-family: 'IBM Plex Mono', monospace;">SHIB +9.72%<br/>AVAX +6.44%<br/>SOL +5.43%</div>
-                      </td>
-                      <td width="2%"></td>
-                      <td width="49%" style="background-color: #fef2f2; border: 1px solid #fee2e2; padding: 10px; border-radius: 4px; vertical-align: top;">
-                        <div style="font-size: 8px; color: #dc2626; font-weight: 700; margin-bottom: 5px; letter-spacing: 0.08em;">▼ WORST 3</div>
-                        <div style="font-size: 12px; font-weight: 700; color: #991b1b; line-height: 1.8; font-family: 'IBM Plex Mono', monospace;">TRX -1.07%<br/>USDT +0.03%<br/>ARB +0.03%</div>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-
-        <tr><td class="pad"><div class="rule-thin"></div></td></tr>
-
-        
-        <tr>
-          <td class="pad" style="padding: 24px 24px 24px;">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-              <tr>
-                <td class="section-label">🇺🇸 US Crypto ETF Flow</td>
-                <td align="right" style="font-size: 12px; color: #94a3b8;">2026-03-09 기준</td>
-              </tr>
-            </table>
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top: 10px;">
-              <tr>
-                <td width="32.5%" class="card-light" valign="top" style="padding: 14px 10px;">
-                  <div style="font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 8px;">BTC SPOT</div>
-                  <div class="mono" style="font-size: 16px; font-weight: 700; color: #dc2626;">$-349M</div>
-                  <div style="font-size: 11px; color: #cbd5e1; margin-top: 4px;">일별 순유입</div>
-                  <div style="border-top: 1px solid #e2e8f0; margin: 10px 0;"></div>
-                  <div style="font-size: 11px; color: #475569;">AUM: <b>$87.1B</b></div>
-                  <div style="font-size: 11px; color: #475569; margin-top: 3px;">누적: <b>$+55.4B</b></div>
-                </td>
-                <td width="1.25%"></td>
-                <td width="32.5%" class="card-light" valign="top" style="padding: 14px 10px;">
-                  <div style="font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 8px;">ETH SPOT</div>
-                  <div class="mono" style="font-size: 16px; font-weight: 700; color: #dc2626;">$-83M</div>
-                  <div style="font-size: 11px; color: #cbd5e1; margin-top: 4px;">일별 순유입</div>
-                  <div style="border-top: 1px solid #e2e8f0; margin: 10px 0;"></div>
-                  <div style="font-size: 11px; color: #475569;">AUM: <b>$11.3B</b></div>
-                  <div style="font-size: 11px; color: #475569; margin-top: 3px;">누적: <b>$+11.6B</b></div>
-                </td>
-                <td width="1.25%"></td>
-                <td width="32.5%" class="card-light" valign="top" style="padding: 14px 10px;">
-                  <div style="font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 8px;">SOL SPOT</div>
-                  <div class="mono" style="font-size: 16px; font-weight: 700; color: #dc2626;">$-8M</div>
-                  <div style="font-size: 11px; color: #cbd5e1; margin-top: 4px;">일별 순유입</div>
-                  <div style="border-top: 1px solid #e2e8f0; margin: 10px 0;"></div>
-                  <div style="font-size: 11px; color: #475569;">AUM: <b>$0.8B</b></div>
-                  <div style="font-size: 11px; color: #475569; margin-top: 3px;">누적: <b>$+958M</b></div>
-                </td>
-              </tr>
-            </table>
-            <div style="font-size: 13px; line-height: 1.75; color: #334155; padding: 12px 16px; background-color: #f8fafc; margin: 12px 0 24px; border-radius: 4px;">BTC·ETH ETF 동시 순유출 — 기관 단기 차익실현 신호.</div>
-          </td>
-        </tr>
-
-        <tr><td class="pad"><div class="rule-thin"></div></td></tr>
-
-        
-        <tr>
-          <td class="pad" style="padding: 24px 24px 24px;">
-            <div class="section-label">🌶️ Premium Comparison</div>
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top: 10px;">
-              <tr>
-                <td width="49%" class="card-dark" style="padding: 18px 16px; border-top: 4px solid #ff6b35;">
-                  <div style="font-size: 11px; color: #ff9d80; font-weight: 700; margin-bottom: 6px;">🌶️ KIMCHI PREMIUM</div>
-                  <div class="mono" style="font-size: 24px; font-weight: 700; color: #dc2626;"><span style="color:#dc2626;font-weight:900;">▼0.83%</span></div>
-                  <div style="font-size: 10px; color: #cbd5e1; margin-top: 5px;">Upbit vs Global</div>
-                </td>
-                <td width="2%"></td>
-                <td width="49%" class="card-dark" style="padding: 18px 16px; border-top: 4px solid #3b82f6;">
-                  <div style="margin-bottom: 8px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="24" viewBox="0 0 36 24" style="display:inline-block;vertical-align:middle;border-radius:2px;">
-                      <rect width="36" height="24" fill="#B22234"/>
-                      <rect y="1.846" width="36" height="1.846" fill="#fff"/>
-                      <rect y="5.538" width="36" height="1.846" fill="#fff"/>
-                      <rect y="9.231" width="36" height="1.846" fill="#fff"/>
-                      <rect y="12.923" width="36" height="1.846" fill="#fff"/>
-                      <rect y="16.615" width="36" height="1.846" fill="#fff"/>
-                      <rect y="20.308" width="36" height="1.846" fill="#fff"/>
-                      <rect width="14.4" height="12.923" fill="#3C3B6E"/>
-                      <g fill="#fff">
-                        <circle cx="1.2" cy="1.1" r="0.65"/><circle cx="3.6" cy="1.1" r="0.65"/><circle cx="6" cy="1.1" r="0.65"/><circle cx="8.4" cy="1.1" r="0.65"/><circle cx="10.8" cy="1.1" r="0.65"/><circle cx="13.2" cy="1.1" r="0.65"/>
-                        <circle cx="2.4" cy="2.5" r="0.65"/><circle cx="4.8" cy="2.5" r="0.65"/><circle cx="7.2" cy="2.5" r="0.65"/><circle cx="9.6" cy="2.5" r="0.65"/><circle cx="12" cy="2.5" r="0.65"/>
-                        <circle cx="1.2" cy="3.9" r="0.65"/><circle cx="3.6" cy="3.9" r="0.65"/><circle cx="6" cy="3.9" r="0.65"/><circle cx="8.4" cy="3.9" r="0.65"/><circle cx="10.8" cy="3.9" r="0.65"/><circle cx="13.2" cy="3.9" r="0.65"/>
-                        <circle cx="2.4" cy="5.3" r="0.65"/><circle cx="4.8" cy="5.3" r="0.65"/><circle cx="7.2" cy="5.3" r="0.65"/><circle cx="9.6" cy="5.3" r="0.65"/><circle cx="12" cy="5.3" r="0.65"/>
-                        <circle cx="1.2" cy="6.7" r="0.65"/><circle cx="3.6" cy="6.7" r="0.65"/><circle cx="6" cy="6.7" r="0.65"/><circle cx="8.4" cy="6.7" r="0.65"/><circle cx="10.8" cy="6.7" r="0.65"/><circle cx="13.2" cy="6.7" r="0.65"/>
-                        <circle cx="2.4" cy="8.1" r="0.65"/><circle cx="4.8" cy="8.1" r="0.65"/><circle cx="7.2" cy="8.1" r="0.65"/><circle cx="9.6" cy="8.1" r="0.65"/><circle cx="12" cy="8.1" r="0.65"/>
-                        <circle cx="1.2" cy="9.5" r="0.65"/><circle cx="3.6" cy="9.5" r="0.65"/><circle cx="6" cy="9.5" r="0.65"/><circle cx="8.4" cy="9.5" r="0.65"/><circle cx="10.8" cy="9.5" r="0.65"/><circle cx="13.2" cy="9.5" r="0.65"/>
-                        <circle cx="2.4" cy="11" r="0.65"/><circle cx="4.8" cy="11" r="0.65"/><circle cx="7.2" cy="11" r="0.65"/><circle cx="9.6" cy="11" r="0.65"/><circle cx="12" cy="11" r="0.65"/>
-                        <circle cx="1.2" cy="12.3" r="0.65"/><circle cx="3.6" cy="12.3" r="0.65"/><circle cx="6" cy="12.3" r="0.65"/><circle cx="8.4" cy="12.3" r="0.65"/><circle cx="10.8" cy="12.3" r="0.65"/><circle cx="13.2" cy="12.3" r="0.65"/>
-                      </g>
-                    </svg>
-                    <span style="font-size: 11px; color: #93c5fd; font-weight: 700; margin-left: 6px; vertical-align: middle; letter-spacing: 0.06em;">COINBASE PREMIUM</span>
-                  </div>
-                  <div class="mono" style="font-size: 24px; font-weight: 700; color: #dc2626;"><span style="color:#dc2626;font-weight:900;">▼0.26%</span></div>
-                  <div style="font-size: 10px; color: #cbd5e1; margin-top: 5px;">Coinbase vs Binance</div>
-                </td>
-              </tr>
-            </table>
-            <div style="font-size: 13px; line-height: 1.75; color: #334155; padding: 12px 16px; background-color: #f8fafc; margin: 12px 0 24px; border-radius: 4px;">김치 역프리미엄 → 국내 매도 압력 또는 원화 약세 영향 가능성.</div>
-          </td>
-        </tr>
-
-        <tr><td class="pad"><div class="rule-thin"></div></td></tr>
-
-        
-        <tr>
-          <td class="pad" style="padding: 24px 24px;">
-            <div class="section-label">📊 Exchange Volume Top 3 (24h)</div>
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top: 10px;">
-              <tr>
-                <td width="32%" class="card-light" valign="top" style="padding: 12px;">
-                  <div style="font-size: 10px; font-weight: 700; color: #2563eb; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Upbit</div>
-                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="font-size: 12px;">
-                    <tr><td style="padding: 4px 0;">XRP</td><td align="right" class="mono" style="color:#64748b;">2437억</td></tr>
-                    <tr><td style="padding: 4px 0;">BTC</td><td align="right" class="mono" style="color:#64748b;">2249억</td></tr>
-                    <tr><td style="padding: 4px 0;">ETH</td><td align="right" class="mono" style="color:#64748b;">1425억</td></tr>
-                  </table>
-                </td>
-                <td width="2%"></td>
-                <td width="32%" class="card-light" valign="top" style="padding: 12px;">
-                  <div style="font-size: 10px; font-weight: 700; color: #2563eb; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Bithumb</div>
-                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="font-size: 12px;">
-                    <tr><td style="padding: 4px 0;">USDT</td><td align="right" class="mono" style="color:#64748b;">1167억</td></tr>
-                    <tr><td style="padding: 4px 0;">XRP</td><td align="right" class="mono" style="color:#64748b;">999억</td></tr>
-                    <tr><td style="padding: 4px 0;">BTC</td><td align="right" class="mono" style="color:#64748b;">963억</td></tr>
-                  </table>
-                </td>
-                <td width="2%"></td>
-                <td width="32%" class="card-light" valign="top" style="padding: 12px;">
-                  <div style="font-size: 10px; font-weight: 700; color: #2563eb; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Coinone</div>
-                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="font-size: 12px;">
-                    <tr><td style="padding: 4px 0;">USDC</td><td align="right" class="mono" style="color:#64748b;">796억</td></tr>
-                    <tr><td style="padding: 4px 0;">USDT</td><td align="right" class="mono" style="color:#64748b;">428억</td></tr>
-                    <tr><td style="padding: 4px 0;">BTC</td><td align="right" class="mono" style="color:#64748b;">90억</td></tr>
-                  </table>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-
-        
-        <tr>
-          <td class="pad" style="padding: 20px 24px 30px;">
-            <div class="section-label">📈 Upbit Movers (24h)</div>
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top: 10px;">
-              <tr>
-                <td width="49%" class="card-light" valign="top" style="padding: 14px;">
-                  <div style="font-size: 10px; font-weight: 700; color: #16a34a; margin-bottom: 8px; text-transform: uppercase;">▲ Top 3</div>
-                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="font-size: 13px;">
-                    <tr><td style="font-weight:700; padding:6px 0; border-bottom:1px solid #f1f5f9;">FLOW</td><td align="right" class="mono" style="font-weight:700; color:#16a34a;">+18.6%</td></tr>
-                    <tr><td style="font-weight:700; padding:6px 0; border-bottom:1px solid #f1f5f9;">EDGE</td><td align="right" class="mono" style="font-weight:700; color:#16a34a;">+13.4%</td></tr>
-                    <tr><td style="font-weight:700; padding:6px 0;">PLUME</td><td align="right" class="mono" style="font-weight:700; color:#16a34a;">+9.3%</td></tr>
-                  </table>
-                </td>
-                <td width="2%"></td>
-                <td width="49%" class="card-light" valign="top" style="padding: 14px;">
-                  <div style="font-size: 10px; font-weight: 700; color: #dc2626; margin-bottom: 8px; text-transform: uppercase;">▼ Bottom 3</div>
-                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="font-size: 13px;">
-                    <tr><td style="font-weight:700; padding:6px 0; border-bottom:1px solid #f1f5f9;">SAHARA</td><td align="right" class="mono" style="font-weight:700; color:#dc2626;">-6.3%</td></tr>
-                    <tr><td style="font-weight:700; padding:6px 0; border-bottom:1px solid #f1f5f9;">SIGN</td><td align="right" class="mono" style="font-weight:700; color:#dc2626;">-5.2%</td></tr>
-                    <tr><td style="font-weight:700; padding:6px 0;">STEEM</td><td align="right" class="mono" style="font-weight:700; color:#dc2626;">-3.2%</td></tr>
-                  </table>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-
-        <tr><td class="pad"><div class="rule-thick"></div></td></tr>
-
-        
-        <tr>
-          <td class="pad" style="padding: 24px 24px;">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-              <tr>
-                <td class="section-label">🧩 Fund Flow Treemap</td>
-                <td align="right"><span style="font-size: 9px; font-weight: 700; background-color: #2563eb; color: #fff; padding: 2px 7px; border-radius: 2px;">CORE</span></td>
-              </tr>
-            </table>
-            <div style="font-size: 14px; color: #334155; margin: 10px 0 16px; line-height: 1.6;">
-              <b style="color:#0f172a;">해석</b> &nbsp;상승 선두: SHIB +9.72% / 약세 선두: TRX -1.07%
-            </div>
-            <a href="https://data.blockmedia.co.kr/" target="_blank">
-              <img src="https://ceciliamyeong.github.io/bm/assets/topcoins_treemap_latest.png" alt="Treemap" width="100%" style="border: 1px solid #e2e8f0; border-radius: 4px;" />
-            </a>
-            <div style="margin-top: 8px; font-size: 12px; color: #94a3b8; text-align: center;">대시보드에서 BM20·KRW 수급·한국 시그널·트리맵을 한 번에 확인하세요.</div>
-          </td>
-        </tr>
-
-        <tr><td class="pad"><div class="rule-thin"></div></td></tr>
-
-        
-        <tr>
-          <td style="background-color: #0f172a; padding: 16px 24px;">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-              <tr>
-                <td>
-                  <div style="font-size: 13px; font-weight: 900; color: #ffffff; letter-spacing: 0.12em; text-transform: uppercase;">🔎 코생지</div>
-                  <div style="font-size: 11px; color: #60a5fa; margin-top: 3px; font-weight: 600;">블록미디어 시그니처 리포트 · Blockmedia Market Insight</div>
-                </td>
-                <td align="right">
-                  <span style="font-size: 9px; font-weight: 700; background-color: #2563eb; color: #fff; padding: 3px 8px; border-radius: 2px; letter-spacing: 0.1em;">BETA</span>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-        <tr>
-          <td class="pad" style="padding: 20px 24px;">
-            <div style="font-size: 12px; color: #94a3b8; margin-bottom: 16px;">과열 / 과매도 · 관심도 변화 요약 (투자 조언 아님)</div>
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border: 1px solid #e2e8f0;">
-              <tr style="background-color: #f8fafc; border-bottom: 2px solid #0f172a;">
-                <td style="padding: 10px 14px; font-size: 10px; font-weight: 700; color: #475569; letter-spacing: 0.1em;">COIN</td>
-                <td style="padding: 10px 14px; font-size: 10px; font-weight: 700; color: #475569; letter-spacing: 0.1em;">SIGNAL</td>
-                <td align="right" style="padding: 10px 14px; font-size: 10px; font-weight: 700; color: #475569; letter-spacing: 0.1em;">NOTE</td>
-              </tr>
-              <tr>
-                <td style="padding: 12px 14px; font-size: 13px; font-weight: 700; border-bottom: 1px solid #f1f5f9;">—</td>
-                <td style="padding: 12px 14px; font-size: 13px; font-weight: 900; color: #64748b; border-bottom: 1px solid #f1f5f9;">—</td>
-                <td align="right" style="padding: 12px 14px; font-size: 13px; color: #475569; border-bottom: 1px solid #f1f5f9;">—</td>
-              </tr>
-              <tr style="background-color: #f0f7ff;">
-                <td style="padding: 12px 14px; font-size: 13px; font-weight: 700; border-bottom: 1px solid #f1f5f9;">—</td>
-                <td style="padding: 12px 14px; font-size: 13px; font-weight: 900; color: #64748b; border-bottom: 1px solid #f1f5f9;">—</td>
-                <td align="right" style="padding: 12px 14px; font-size: 13px; color: #475569; border-bottom: 1px solid #f1f5f9;">—</td>
-              </tr>
-              <tr>
-                <td style="padding: 12px 14px; font-size: 13px; font-weight: 700;">—</td>
-                <td style="padding: 12px 14px; font-size: 13px; font-weight: 900; color: #64748b;">—</td>
-                <td align="right" style="padding: 12px 14px; font-size: 13px; color: #475569;">—</td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-
-        <tr><td class="pad"><div class="rule-thick"></div></td></tr>
-
-        
-        <tr>
-          <td class="pad" style="padding: 30px 24px;">
-            <div style="font-size: 13px; font-weight: 900; color: #0f172a; letter-spacing: -0.01em; margin-bottom: 4px;">📰 오늘 꼭 봐야할 뉴스 <span style="color: #2563eb;">TOP 3</span></div>
-            
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top: 16px; margin-bottom: 24px; border-bottom: 1px solid #f1f5f9; padding-bottom: 20px;">
-              <tr>
-                <td valign="top" style="width: 40px;">
-                  <div style="font-family: 'Pretendard', -apple-system, sans-serif; font-size: 26px; font-weight: 700; color: #dbeafe; line-height: 1;">01</div>
-                </td>
-                <td valign="top">
-                  <div style="font-size: 10px; font-weight: 700; color: #2563eb; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em;">디지털 자산</div>
-                  <a href="https://www.blockmedia.co.kr/archives/1057710" style="font-size: 17px; font-weight: 700; color: #0f172a; line-height: 1.45; letter-spacing: -0.02em;">비트코인 ‘폭풍전야’ 눈앞?… 분석가들 “큰 변동성 온다, 상승이든 하락이든”</a>
-                  <p style="font-size: 14px; color: #475569; line-height: 1.7; margin: 8px 0 10px;">비트코인 시장에서 레버리지 축소와 청산 대기 물량 확대가 동시에 관측되면서 조만간 큰 변동성이 나타날 수 있다는 분석이 잇따르고 있다. 상승과 하락 어느 방향이든 단기적으로 강한 가격 움직임이 나타날 가능성이 크다는 것이다. 과연 방향은?</p>
-                  <a href="https://www.blockmedia.co.kr/archives/1057710" style="font-size: 13px; font-weight: 700; color: #2563eb; text-decoration: none;">기사 전문 읽기 →</a>
-                </td>
-              </tr>
-            </table>
-
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 24px; border-bottom: 1px solid #f1f5f9; padding-bottom: 20px;">
-              <tr>
-                <td valign="top" style="width: 40px;">
-                  <div style="font-family: 'Pretendard', -apple-system, sans-serif; font-size: 26px; font-weight: 700; color: #dbeafe; line-height: 1;">02</div>
-                </td>
-                <td valign="top">
-                  <div style="font-size: 10px; font-weight: 700; color: #2563eb; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em;">디지털 자산</div>
-                  <a href="https://www.blockmedia.co.kr/archives/1057577" style="font-size: 17px; font-weight: 700; color: #0f172a; line-height: 1.45; letter-spacing: -0.02em;">비트코인 약한 손 14만 BTC 정리&#8230;파생시장·ETF 수급은 개선 조짐</a>
-                  <p style="font-size: 14px; color: #475569; line-height: 1.7; margin: 8px 0 10px;">비트코인 시장에서 단기 투자자들의 손실 매도가 이어지는 가운데 파생시장과 기관 수급에서는 제한적인 회복 신호가 동시에 나타나고 있다는 분석이 나왔다. 약한 투자자들의 이탈이 진행되는 동시에 시장 내부 지표는 점진적인 안정 국면에 들어섰다는 평가다.</p>
-                  <a href="https://www.blockmedia.co.kr/archives/1057577" style="font-size: 13px; font-weight: 700; color: #2563eb; text-decoration: none;">기사 전문 읽기 →</a>
-                </td>
-              </tr>
-            </table>
-
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-              <tr>
-                <td valign="top" style="width: 40px;">
-                  <div style="font-family: 'Pretendard', -apple-system, sans-serif; font-size: 26px; font-weight: 700; color: #dbeafe; line-height: 1;">03</div>
-                </td>
-                <td valign="top">
-                  <div style="font-size: 10px; font-weight: 700; color: #2563eb; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em;">디지털 자산</div>
-                  <a href="https://www.blockmedia.co.kr/archives/1057603" style="font-size: 17px; font-weight: 700; color: #0f172a; line-height: 1.45; letter-spacing: -0.02em;">트럼프 “이란 전쟁 곧 끝날 수도”…시장 불안 완화(종합)</a>
-                  <p style="font-size: 14px; color: #475569; line-height: 1.7; margin: 8px 0 10px;">도널드 트럼프 미국 대통령이 이란 전쟁이 곧 끝날 수 있다고 밝혔다.
+    <div class="news-item">
+      <div class="news-num">03</div>
+      <div class="news-cat">디지털 자산</div>
+      <div class="news-title">트럼프 “이란 전쟁 곧 끝날 수도”…시장 불안 완화(종합)</div>
+      <div class="news-excerpt">도널드 트럼프 미국 대통령이 이란 전쟁이 곧 끝날 수 있다고 밝혔다.
 트럼프 대통령은 9일(현지시각) CBS뉴스와 전화 인터뷰에서 “전쟁은 거의 끝난 상태라고 생각한다”며 “군사 작전이 원래 예상했던 4~5주 일정보다 훨씬 앞서 진행되고 있다”고 말했다.
-그는 “이란은 해군도, 통신도, 공군도 사실상 기능을 하지 못하는 상태”라고 주장했다.</p>
-                  <a href="https://www.blockmedia.co.kr/archives/1057603" style="font-size: 13px; font-weight: 700; color: #2563eb; text-decoration: none;">기사 전문 읽기 →</a>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
+그는 “이란은 해군도, 통신도, 공군도 사실상 기능을 하지 못하는 상태”라고 주장했다.</div>
+      <a class="news-link" href="https://www.blockmedia.co.kr/archives/1057603">기사 전문 읽기 →</a>
+    </div>
+  </div>
 
-        
-        <tr>
-          <td class="pad" style="padding: 20px 24px 30px;">
-            <a href="https://blockmedia.co.kr" style="display: block; background-color: #2563eb; color: #ffffff; text-align: center; padding: 16px; font-size: 14px; font-weight: 700; border-radius: 4px; letter-spacing: 0.05em; margin-bottom: 12px;">매일 아침 데이터 인사이트 받기 →</a>
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-              <tr>
-                <td width="49%">
-                  <a href="https://blockmedia.co.kr" style="display: block; background-color: #ffffff; border: 1px solid #2563eb; color: #2563eb; text-align: center; padding: 12px; font-size: 13px; font-weight: 700; border-radius: 4px;">오늘 핵심 뉴스 보기</a>
-                </td>
-                <td width="2%"></td>
-                <td width="49%">
-                  <a href="https://data.blockmedia.co.kr" style="display: block; background-color: #ffffff; border: 1px solid #2563eb; color: #2563eb; text-align: center; padding: 12px; font-size: 13px; font-weight: 700; border-radius: 4px;">실시간 대시보드</a>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
+  <!-- ④ 돈은 어디로? -->
+  <div class="section section-thick anno">
+    <div class="section-question">④ 돈은 어디로 흘러가고 있어? 🏃</div>
+    <div class="section-label">🇺🇸 US Crypto ETF Flow</div>
+    <div class="etf-grid">
+      <div class="etf-card">
+        <div class="etf-name">BTC SPOT</div>
+        <div class="etf-flow down">$-349M</div>
+        <div class="etf-aum">AUM $87.1B</div>
+      </div>
+      <div class="etf-card">
+        <div class="etf-name">ETH SPOT</div>
+        <div class="etf-flow down">$-83M</div>
+        <div class="etf-aum">AUM $11.3B</div>
+      </div>
+      <div class="etf-card">
+        <div class="etf-name">SOL SPOT</div>
+        <div class="etf-flow up">$-8M</div>
+        <div class="etf-aum">AUM $0.8B</div>
+      </div>
+    </div>
 
-        
-        <tr>
-          <td class="pad" style="padding: 20px 24px 40px; text-align: center;">
-            <div style="font-size: 11px; font-weight: 700; color: #94a3b8; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 8px;">Advertisement</div>
-            <a href="https://www.jpmorgan.com" target="_blank"><img src="https://data.blockmedia.co.kr/assets/banner_jpm.png" alt="Ad" width="100%" style="border: 1px solid #e2e8f0; border-radius: 4px; height: 80px; object-fit: cover;" /></a>
-          </td>
-        </tr>
+    <!-- 김치 vs 코인베이스 프리미엄 -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:16px;">
+      <tr>
+        <td width="49%" valign="top" style="background:#0f172a; border-top:4px solid #ff6b35; border-radius:4px; padding:18px 16px;">
+          <div style="font-size:11px; color:#ff9d80; font-weight:700; margin-bottom:6px;">🌶️ KIMCHI PREMIUM</div>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:24px; font-weight:700; color:#dc2626;"><span style="color:#dc2626;font-weight:900;">▼0.26%</span></div>
+          <div style="font-size:10px; color:#cbd5e1; margin-top:5px;">Upbit vs Global</div>
+        </td>
+        <td width="2%"></td>
+        <td width="49%" valign="top" style="background:#0f172a; border-top:4px solid #3b82f6; border-radius:4px; padding:18px 16px;">
+          <div style="margin-bottom:8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="24" viewBox="0 0 36 24" style="display:inline-block;vertical-align:middle;border-radius:2px;">
+              <rect width="36" height="24" fill="#B22234"/>
+              <rect y="1.846" width="36" height="1.846" fill="#fff"/><rect y="5.538" width="36" height="1.846" fill="#fff"/>
+              <rect y="9.231" width="36" height="1.846" fill="#fff"/><rect y="12.923" width="36" height="1.846" fill="#fff"/>
+              <rect y="16.615" width="36" height="1.846" fill="#fff"/><rect y="20.308" width="36" height="1.846" fill="#fff"/>
+              <rect width="14.4" height="12.923" fill="#3C3B6E"/>
+              <g fill="#fff">
+                <circle cx="1.2" cy="1.1" r="0.65"/><circle cx="3.6" cy="1.1" r="0.65"/><circle cx="6" cy="1.1" r="0.65"/><circle cx="8.4" cy="1.1" r="0.65"/><circle cx="10.8" cy="1.1" r="0.65"/><circle cx="13.2" cy="1.1" r="0.65"/>
+                <circle cx="2.4" cy="2.5" r="0.65"/><circle cx="4.8" cy="2.5" r="0.65"/><circle cx="7.2" cy="2.5" r="0.65"/><circle cx="9.6" cy="2.5" r="0.65"/><circle cx="12" cy="2.5" r="0.65"/>
+                <circle cx="1.2" cy="3.9" r="0.65"/><circle cx="3.6" cy="3.9" r="0.65"/><circle cx="6" cy="3.9" r="0.65"/><circle cx="8.4" cy="3.9" r="0.65"/><circle cx="10.8" cy="3.9" r="0.65"/><circle cx="13.2" cy="3.9" r="0.65"/>
+                <circle cx="2.4" cy="5.3" r="0.65"/><circle cx="4.8" cy="5.3" r="0.65"/><circle cx="7.2" cy="5.3" r="0.65"/><circle cx="9.6" cy="5.3" r="0.65"/><circle cx="12" cy="5.3" r="0.65"/>
+                <circle cx="1.2" cy="6.7" r="0.65"/><circle cx="3.6" cy="6.7" r="0.65"/><circle cx="6" cy="6.7" r="0.65"/><circle cx="8.4" cy="6.7" r="0.65"/><circle cx="10.8" cy="6.7" r="0.65"/><circle cx="13.2" cy="6.7" r="0.65"/>
+                <circle cx="2.4" cy="8.1" r="0.65"/><circle cx="4.8" cy="8.1" r="0.65"/><circle cx="7.2" cy="8.1" r="0.65"/><circle cx="9.6" cy="8.1" r="0.65"/><circle cx="12" cy="8.1" r="0.65"/>
+                <circle cx="1.2" cy="9.5" r="0.65"/><circle cx="3.6" cy="9.5" r="0.65"/><circle cx="6" cy="9.5" r="0.65"/><circle cx="8.4" cy="9.5" r="0.65"/><circle cx="10.8" cy="9.5" r="0.65"/><circle cx="13.2" cy="9.5" r="0.65"/>
+                <circle cx="2.4" cy="11" r="0.65"/><circle cx="4.8" cy="11" r="0.65"/><circle cx="7.2" cy="11" r="0.65"/><circle cx="9.6" cy="11" r="0.65"/><circle cx="12" cy="11" r="0.65"/>
+                <circle cx="1.2" cy="12.3" r="0.65"/><circle cx="3.6" cy="12.3" r="0.65"/><circle cx="6" cy="12.3" r="0.65"/><circle cx="8.4" cy="12.3" r="0.65"/><circle cx="10.8" cy="12.3" r="0.65"/><circle cx="13.2" cy="12.3" r="0.65"/>
+              </g>
+            </svg>
+            <span style="font-size:11px; color:#93c5fd; font-weight:700; margin-left:6px; vertical-align:middle; letter-spacing:0.06em;">COINBASE PREMIUM</span>
+          </div>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:24px; font-weight:700; color:#dc2626;"><span style="color:#dc2626;font-weight:900;">▼0.16%</span></div>
+          <div style="font-size:10px; color:#cbd5e1; margin-top:5px;">Coinbase vs Binance</div>
+        </td>
+      </tr>
+    </table>
+    <div style="font-size:13px; color:#334155; margin-top:12px; line-height:1.75; background:#f8fafc; padding:12px 16px; border-radius:4px;">김치 -0.26% / 코인베이스 -0.16% — 중립 구간.</div>
+  </div>
 
-        
-        <tr>
-          <td style="background-color: #0f172a; padding: 45px 24px; text-align: center;">
-            <div style="font-size: 20px; font-weight: 900; color: #ffffff; letter-spacing: -0.02em; margin-bottom: 15px;">BLOCKMEDIA</div>
-            <p style="font-size: 13px; color: #94a3b8; line-height: 1.8; margin: 0 0 20px;">
-              본 메일은 구독 신청하셨던 독자님께 발송되었습니다.<br/>
-              수신을 원치 않으실 경우 아래 버튼을 클릭해 주세요.
-            </p>
-            <table role="presentation" align="center" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 25px;">
-              <tr>
-                <td style="padding: 0 10px;"><a href="{{UNSUB_URL}}" style="font-size: 12px; color: #60a5fa; text-decoration: underline;">수신거부</a></td>
-                <td style="color: #334155;">|</td>
-                <td style="padding: 0 10px;"><a href="https://blockmedia.co.kr" style="font-size: 12px; color: #60a5fa; text-decoration: underline;">공식 홈페이지</a></td>
-                <td style="color: #334155;">|</td>
-                <td style="padding: 0 10px;"><a href="https://data.blockmedia.co.kr" style="font-size: 12px; color: #60a5fa; text-decoration: underline;">데이터 센터</a></td>
-              </tr>
-            </table>
-            <div style="font-size: 12px; color: #334155; letter-spacing: 0.05em;">© 2026 블록미디어. All rights reserved.</div>
-          </td>
-        </tr>
+    <!-- ⑤ 지금 사도 돼? -->
+  <div class="aas-header">
+    <div>
+      <div class="aas-title">🔎 코생지 — 블록미디어 시그널</div>
+      <div class="aas-sub">과열 / 과매도 · 관심도 변화 요약 (투자 조언 아님)</div>
+    </div>
+    <div class="beta-badge">BETA</div>
+  </div>
+  <div class="section anno" style="padding-top:0;">
+    <div style="margin-top:14px;"><div class="section-question">⑤ 지금 사도 돼? 😎</div></div>
+    <table class="aas-table">
+      <tr>
+        <th>COIN</th><th>SIGNAL</th><th>NOTE</th>
+      </tr>
+      <tr>
+        <td style="font-weight:700;">—</td>
+        <td class="signal-watch">—</td>
+        <td>—</td>
+      </tr>
+      <tr style="background:#f0f7ff;">
+        <td style="font-weight:700;">—</td>
+        <td class="signal-buy">—</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td style="font-weight:700;">—</td>
+        <td class="signal-watch">—</td>
+        <td>—</td>
+      </tr>
+    </table>
+  </div>
 
-      </table>
-    </td>
-  </tr>
-</table>
+  <!-- CTA -->
+  <div class="cta-section">
+    <a class="cta-btn" href="https://blockmedia.co.kr">매일 아침 데이터 인사이트 받기 →</a>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-logo">BLOCKMEDIA</div>
+    <div class="footer-links">
+      <a href="{{UNSUB_URL}}">수신거부</a>
+      <a href="#">공식 홈페이지</a>
+      <a href="#">데이터 센터</a>
+    </div>
+    <div class="footer-copy">© 2026 블록미디어. All rights reserved.</div>
+  </div>
+
 
 </body>
 </html>
