@@ -615,7 +615,7 @@
     return (b / a) - 1;
   }
 
-  let seriesChart, perfChart, moverChart, btcKospiChart, bm20KospiChart, btcNasdaqChart, bm20NasdaqChart, uniDonutChart;
+  let seriesChart, perfChart, moverChart, btcKospiChart, bm20KospiChart, btcNasdaqChart, bm20NasdaqChart;
   let SERIES = [], BTC_SERIES = [], NASDAQ_SERIES = [], KOSPI_SERIES = [];
 
   function initCharts(){
@@ -626,7 +626,6 @@
     bm20NasdaqChart = echarts.init(qs("#bm20NasdaqChart"));
     btcKospiChart   = echarts.init(qs("#btcKospiChart"));
     bm20KospiChart  = echarts.init(qs("#bm20KospiChart"));
-    uniDonutChart   = echarts.init(qs("#uniDonut"));
   }
 
   async function fetchJson(url){
