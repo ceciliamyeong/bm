@@ -589,6 +589,7 @@
     const n = Number(v); if (!Number.isFinite(n)) return "-";
     return (n >= 0 ? "+" : "") + (n * 100).toFixed(d) + "%";
   };
+  const BASE_URL = "https://data.blockmedia.co.kr/";
   const bust = () => "v=" + Date.now();
 
   function lastTwoValid(arr){
@@ -630,7 +631,8 @@
 
   async function fetchJson(url){
     try {
-      const r = await fetch(url + "?" + bust());
+      const full = url.startsWith('http') ? url : BASE_URL + url;
+      const r = await fetch(full + "?" + bust());
       return r.ok ? await r.json() : null;
     } catch(e) { return null; }
   }
@@ -912,7 +914,7 @@
     const csvTxt = await (async () => {
       const paths = [`bm20_daily_data_latest.csv`, `out/${date}/bm20_daily_data_${date}.csv`];
       for(const p of paths){
-        const r = await fetch(p + "?" + bust());
+        const r = await fetch(BASE_URL + p + "?" + bust());
         if(r.ok) return await r.text();
       }
       return null;
