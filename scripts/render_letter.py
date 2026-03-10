@@ -38,7 +38,7 @@ from datetime import datetime, timezone, timedelta
 
 ROOT = Path(__file__).resolve().parent.parent
 
-TEMPLATE = ROOT / "letter_newsletter_template.html"  # 블록미디어 공식 뉴스레터 템플릿
+TEMPLATE = ROOT / "letter_newsletter_template_v2.html"  # 블록미디어 공식 뉴스레터 템플릿
 
 BM20_JSON = ROOT / "bm20_latest.json"
 DAILY_CSV = ROOT / "bm20_daily_data_latest.csv"
@@ -295,12 +295,13 @@ def fetch_wp_newsletter_lead() -> dict[str, str]:
     }
 
     def _parse_post(post: dict) -> dict[str, str]:
-        content = _strip_html(post["content"]["rendered"])
-        if len(content) > 150:
-            content = content[:150].rstrip() + "…"
+        # excerpt 사용 — 기자 이름 없이 깔끔한 발췌문
+        excerpt = _strip_html(post["excerpt"]["rendered"])
+        if len(excerpt) > 150:
+            excerpt = excerpt[:150].rstrip() + "…"
         return {
             "NEWS_HEADLINE":       _strip_html(post["title"]["rendered"]),
-            "NEWS_ONE_LINER_NOTE": content,
+            "NEWS_ONE_LINER_NOTE": excerpt,
         }
 
     # 1차: 뉴스레터-리드 시도
