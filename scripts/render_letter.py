@@ -295,9 +295,12 @@ def fetch_wp_newsletter_lead() -> dict[str, str]:
     }
 
     def _parse_post(post: dict) -> dict[str, str]:
+        content = _strip_html(post["content"]["rendered"])
+        if len(content) > 150:
+            content = content[:150].rstrip() + "…"
         return {
             "NEWS_HEADLINE":       _strip_html(post["title"]["rendered"]),
-            "NEWS_ONE_LINER_NOTE": _strip_html(post["content"]["rendered"]),
+            "NEWS_ONE_LINER_NOTE": content,
         }
 
     # 1차: 뉴스레터-리드 시도
