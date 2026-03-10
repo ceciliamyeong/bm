@@ -848,7 +848,7 @@
     // Universe Table — bm20_universe.json에서 별도 fetch
     const universe = await fetchJson("bm20_universe.json");
     if(universe && universe.components && universe.components.length) {
-      const KRW_LISTED = new Set(['BTC','ETH','XRP','BNB','SOL','ADA','DOGE','DOT','AVAX','MATIC','LINK','UNI','ATOM','LTC','ETC','TRX','BCH','NEAR','APT','OP','ARB','SUI','TON','FIL','HBAR','ICP','SHIB']);
+      const KRW_LISTED = new Set(['BTC','ETH','XRP','SOL','ADA','DOGE','DOT','AVAX','MATIC','LINK','UNI','ATOM','LTC','ETC','TRX','BCH','NEAR','APT','OP','ARB','SUI','TON','FIL','HBAR','ICP','SHIB']);
 
       const CORE  = new Set(['BTC','ETH']);
       const FIVE  = new Set(['XRP','USDT','BNB']);
