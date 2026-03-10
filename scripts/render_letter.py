@@ -845,7 +845,7 @@ def build_placeholders() -> dict[str, str]:
 
     # Sponsor defaults (minimal + safe)
     sponsor_click = "https://blockmedia.co.kr/kr"
-    sponsor_banner = TRANSPARENT_GIF
+    sponsor_banner = "https://data.blockmedia.co.kr/assets/banner_jpm.png"
     sponsor_copy = ""
 
     # Dashboard preview defaults
