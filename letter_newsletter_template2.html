@@ -1,687 +1,452 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <meta name="x-apple-disable-message-reformatting"/>
-  <title>[블록미디어] Daily Letter — {{BM20_ASOF}}</title>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet"/>
-  <style>
-    body,table,td,a{-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;}
-    table,td{mso-table-lspace:0;mso-table-rspace:0;}
-    img{-ms-interpolation-mode:bicubic;border:0;outline:none;text-decoration:none;}
-    body{margin:0;padding:0;background:#dde4f0;font-family:"Noto Sans KR","IBM Plex Sans",sans-serif;}
-    a{text-decoration:none;color:inherit;}
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>블록미디어 Daily Letter — 목업</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #e8edf2;
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    color: #0f172a;
+    padding: 32px 16px;
+  }
 
+  /* 목업 레이블 */
+  .mockup-label {
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
 
-    /* ── Fluid 핵심: display:inline-block + min-width ── */
-    /* 3단 (스냅샷·ETF): 모바일에서도 3단 강제 유지 */
-    .f3{display:inline-block;width:32%;min-width:0;vertical-align:top;box-sizing:border-box;}
-    /* 2단 (프리미엄·Top/Bottom) */
-    .f2{display:inline-block;width:49%;min-width:0;vertical-align:top;box-sizing:border-box;}
-    /* 4단 */
-    .f4{display:inline-block;width:24%;min-width:0;vertical-align:top;box-sizing:border-box;}
-    /* 거래소 Top3: 모바일에서도 3단 유지 */
-    .fex{display:inline-block;width:32%;min-width:0;vertical-align:top;box-sizing:border-box;}
+  .email-wrap {
+    max-width: 480px;
+    margin: 0 auto;
+    background: #fff;
+    border-top: 4px solid #2563eb;
+    box-shadow: 0 20px 60px rgba(15,23,42,0.15);
+    border-radius: 2px;
+  }
 
-    /* 보조 */
-    @media only screen and (max-width:600px){
-      .mail-wrap{width:100%!important;}
-      .ps{padding-left:14px!important;padding-right:14px!important;}
-      .hero-title{font-size:26px!important;}
-      /* f3·fex 모바일에서도 3단 강제 유지 */
-      .f3{display:inline-block!important;width:32%!important;min-width:0!important;}
-      .fex{display:inline-block!important;width:32%!important;min-width:0!important;margin-bottom:6px!important;}
-      /* KRW+BM20 → 1단 */
-      .col-l,.col-r{display:block!important;width:100%!important;border-right:none!important;padding:14px 0!important;}
-    }
-  </style>
+  /* ── HEADER ── */
+  .header {
+    background: #0f172a;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-logo {
+    font-size: 15px; font-weight: 900; color: #fff; letter-spacing: -0.03em;
+  }
+  .header-logo span {
+    font-size: 9px; font-weight: 600; color: #60a5fa;
+    letter-spacing: 0.12em; margin-left: 7px; text-transform: uppercase;
+  }
+  .header-date {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px; color: #475569;
+  }
+
+  /* ── SECTION WRAPPER ── */
+  .section { padding: 20px 20px; }
+  .section + .section { border-top: 1px solid #f1f5f9; }
+  .section-thick { border-top: 3px solid #0f172a !important; }
+
+  .section-label {
+    font-size: 9px; font-weight: 800; color: #2563eb;
+    letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 10px;
+  }
+
+  /* ── ① 오늘의 시장 내러티브 ── */
+  .narrative-title {
+    font-size: 26px; font-weight: 900; line-height: 1.25;
+    letter-spacing: -0.04em; margin-bottom: 8px;
+  }
+  .narrative-body {
+    font-size: 13px; line-height: 1.85; color: #334155;
+    letter-spacing: -0.01em;
+  }
+  .narrative-body b { color: #2563eb; }
+
+  /* ── BTC + F&G 대시보드 ── */
+  .dashboard {
+    background: #0f172a;
+    border-radius: 4px;
+    margin-top: 14px;
+    display: flex;
+  }
+  .dash-cell {
+    flex: 1;
+    padding: 14px 10px;
+    text-align: center;
+    border-right: 1px solid #1e293b;
+  }
+  .dash-cell:last-child { border-right: none; }
+  .dash-label {
+    font-size: 9px; font-weight: 700; color: #94a3b8;
+    letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 5px;
+  }
+  .dash-value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 17px; font-weight: 700;
+  }
+  .dash-sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px; font-weight: 600; color: #60a5fa; margin-top: 3px;
+  }
+  .up { color: #22c55e; }
+  .down { color: #ef4444; }
+  .orange { color: #f97316; }
+
+  /* ── ② Upbit Movers ── */
+  .movers-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 2px;
+  }
+  .mover-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 12px;
+  }
+  .mover-card-label {
+    font-size: 9px; font-weight: 800;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .mover-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 5px 0; border-bottom: 1px solid #f1f5f9;
+    font-size: 12px;
+  }
+  .mover-row:last-child { border-bottom: none; }
+  .mover-sym { font-weight: 700; }
+  .mover-chg {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px; font-weight: 700;
+  }
+
+  /* ── ③ 뉴스 ── */
+  .news-item { padding: 14px 0; border-bottom: 1px solid #f1f5f9; }
+  .news-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .news-num {
+    font-size: 22px; font-weight: 900; color: #dbeafe;
+    line-height: 1; margin-bottom: 4px;
+  }
+  .news-cat {
+    font-size: 9px; font-weight: 700; color: #2563eb;
+    letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px;
+  }
+  .news-title {
+    font-size: 14px; font-weight: 700; line-height: 1.45;
+    letter-spacing: -0.02em; color: #0f172a; margin-bottom: 5px;
+  }
+  .news-excerpt {
+    font-size: 12px; color: #64748b; line-height: 1.65;
+  }
+  .news-link {
+    display: inline-block; margin-top: 6px;
+    font-size: 11px; font-weight: 700; color: #2563eb;
+  }
+
+  /* ── ④ ETF Flow ── */
+  .etf-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+    margin-top: 2px;
+  }
+  .etf-card {
+    background: #f8fafc; border: 1px solid #e2e8f0;
+    border-radius: 4px; padding: 10px 8px;
+  }
+  .etf-name { font-size: 10px; font-weight: 700; color: #475569; margin-bottom: 5px; }
+  .etf-flow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 17px; font-weight: 700;
+  }
+  .etf-aum { font-size: 12px; font-weight: 700; color: #475569; margin-top: 3px; }
+
+  /* treemap placeholder */
+  .treemap-placeholder {
+    margin-top: 12px;
+    background: #f0f7ff;
+    border: 1px dashed #bfdbfe;
+    border-radius: 4px;
+    height: 80px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: #93c5fd; font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+  .treemap-caption {
+    font-size: 11px; color: #94a3b8; text-align: center; margin-top: 6px;
+  }
+
+  /* ── ⑤ 코생지 AAS ── */
+  .aas-header {
+    background: #0f172a;
+    padding: 12px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .aas-title { font-size: 12px; font-weight: 900; color: #fff; letter-spacing: 0.08em; }
+  .aas-sub { font-size: 10px; color: #60a5fa; margin-top: 2px; }
+  .beta-badge {
+    font-size: 8px; font-weight: 700; background: #2563eb;
+    color: #fff; padding: 2px 7px; border-radius: 2px; letter-spacing: 0.1em;
+  }
+  .aas-table { width: 100%; font-size: 12px; border-collapse: collapse; margin-top: 12px; }
+  .aas-table th {
+    font-size: 9px; font-weight: 700; color: #94a3b8;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 6px 0; border-bottom: 2px solid #0f172a; text-align: left;
+  }
+  .aas-table th:last-child { text-align: right; }
+  .aas-table td { padding: 9px 0; border-bottom: 1px solid #f1f5f9; }
+  .aas-table td:last-child { text-align: right; color: #64748b; }
+  .aas-table tr:last-child td { border-bottom: none; }
+  .signal-buy { color: #16a34a; font-weight: 900; }
+  .signal-watch { color: #f97316; font-weight: 900; }
+
+  /* ── CTA ── */
+  .cta-section { padding: 16px 20px 20px; }
+  .cta-btn {
+    display: block; background: #2563eb; color: #fff;
+    text-align: center; padding: 13px;
+    font-size: 13px; font-weight: 700; border-radius: 4px;
+    letter-spacing: 0.04em; text-decoration: none;
+    margin-bottom: 8px;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    background: #0f172a; padding: 28px 20px; text-align: center;
+  }
+  .footer-logo { font-size: 15px; font-weight: 900; color: #fff; margin-bottom: 10px; }
+  .footer-links { display: flex; justify-content: center; gap: 12px; margin-bottom: 14px; }
+  .footer-links a { font-size: 11px; color: #60a5fa; text-decoration: underline; }
+  .footer-copy { font-size: 11px; color: #334155; }
+
+  .anno { position: relative; }
+
+  .section-question {
+    font-size: 20px; font-weight: 900;
+    letter-spacing: -0.04em; line-height: 1.25;
+    color: #0f172a;
+    margin-bottom: 14px;
+  }
+</style>
 </head>
-<body style="margin:0;padding:0;background:#dde4f0;">
+<body>
 
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#dde4f0;">
-<tr><td align="center" style="padding:20px 8px 40px;">
+<div class="mockup-label">📐 블록미디어 Daily Letter — 새 흐름 목업</div>
 
-<table class="mail-wrap" role="presentation" cellpadding="0" cellspacing="0" border="0"
-       style="max-width:660px;width:100%;background:#fff;border-top:4px solid #1a56db;">
+<div class="email-wrap">
 
-  <!-- ══ 탑바 ══ -->
-  <tr>
-    <td style="background:#0a1628;padding:13px 24px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td style="font-family:'IBM Plex Sans',sans-serif;font-size:17px;font-weight:700;color:#fff;letter-spacing:0.04em;">
-            BLOCKMEDIA
-            <span style="font-size:13px;font-weight:600;color:#5a8fd4;letter-spacing:0.14em;text-transform:uppercase;margin-left:8px;">Daily Letter</span>
-          </td>
-          <td align="right">
-            <a href="https://blockmedia.co.kr"
-               style="font-size:13px;font-weight:600;color:#5a8fd4;letter-spacing:0.1em;text-transform:uppercase;border:1px solid rgba(90,143,212,0.4);padding:4px 10px;">
-              Subscribe ↗
-            </a>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-logo">BLOCKMEDIA <span>Daily Letter</span></div>
+    <div class="header-date mono">2026-03-10</div>
+  </div>
 
+  <!-- ① 어제 시장 어땠어? -->
+  <div class="section anno">
+    <div class="section-question">① 어제 시장 어땠어? 🤔</div>
+    <div class="narrative-title">{{NEWS_HEADLINE}}</div>
+    <div style="font-size:15px; font-weight:900; color:#0f172a; letter-spacing:-0.03em; margin-bottom:12px; line-height:1.4;">
+      {{NEWS_SUBHEADLINE}} 🥈
+    </div>
+    <div class="narrative-body">
+      {{NEWS_ONE_LINER_NOTE}} 🫠
+    </div>
 
-  <!-- ══ HERO ══ -->
-  <tr>
-    <td class="ps" style="padding:28px 24px 0;">
-      <div style="font-size:13px;font-weight:700;color:#1a56db;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:12px;">
-        {{BM20_ASOF}} &nbsp;·&nbsp; Daily Letter
+    <!-- 대시보드 -->
+    <div class="dashboard">
+      <div class="dash-cell">
+        <div class="dash-label">Bitcoin</div>
+        <div class="dash-value down">{{BTC_1D}}</div>
+        <div class="dash-sub">{{BTC_USD}}</div>
       </div>
-      <hr style="border:none;border-top:3px solid #0a1628;margin:0;"/>
-      <div class="hero-title"
-           style="font-family:'Noto Sans KR','IBM Plex Sans',sans-serif;font-size:32px;font-weight:900;line-height:1.25;color:#0a1628;letter-spacing:-0.02em;padding:18px 0 16px;">
-        블록미디어 이메일,<br/>다시 시작합니다
+      <div class="dash-cell">
+        <div class="dash-label">BM20</div>
+        <div class="dash-value down">{{BM20_1D}}</div>
+        <div class="dash-sub">Lv {{BM20_LEVEL}}</div>
       </div>
-      <hr style="border:none;border-top:1px solid #dde6f4;margin:0;"/>
-      <div style="font-size:15px;line-height:1.9;color:#3a4a6a;padding:14px 0 20px;font-family:'Noto Sans KR',sans-serif;">
-        안녕하세요, 블록미디어입니다. 지난 1년여간 단순한 뉴스 전달을 넘어 <b style="color:#0a1628;">데이터 중심의 인사이트</b>를 구축하는 데 집중해 왔습니다. 그 결과물을 오늘, <b style="color:#0a1628;">구독자님께 가장 먼저</b> 공개합니다.
+      <div class="dash-cell">
+        <div class="dash-label">Fear &amp; Greed</div>
+        <div class="dash-value orange">{{SENTIMENT_LABEL}}</div>
+        <div class="dash-sub">{{SENTIMENT_SCORE}} / 100</div>
       </div>
-    </td>
-  </tr>
+    </div>
+  </div>
 
-  <!-- ══ 오늘의 한 줄 ══ -->
-  <tr>
-    <td class="ps" style="padding:0 24px 24px;">
-      <div style="border-left:3px solid #1a56db;background:#f0f5ff;padding:13px 16px;">
-        <div style="font-size:9px;font-weight:700;color:#1a56db;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:7px;">💡 오늘의 한 줄</div>
-        <div style="font-family:'IBM Plex Sans',sans-serif;font-size:15px;font-weight:600;color:#0a1628;line-height:1.6;">"{{NEWS_ONE_LINER}}"</div>
-        <div style="font-size:13px;color:#5a7a9a;line-height:1.7;margin-top:6px;">{{NEWS_ONE_LINER_NOTE}}</div>
+  <!-- ② 내 코인 올랐어 내렸어? -->
+  <div class="section section-thick anno">
+    <div class="section-question">② 내 코인 올랐어 내렸어? 🫨</div>
+    <div class="section-label">📈 Upbit Movers 24h</div>
+    <div class="movers-grid">
+      <div class="mover-card">
+        <div class="mover-card-label" style="color:#16a34a;">▲ Top 3</div>
+        <div class="mover-row"><span class="mover-sym">{{UPBIT_TOP1_SYMBOL}}</span><span class="mover-chg up">{{UPBIT_TOP1_CHG}}</span></div>
+        <div class="mover-row"><span class="mover-sym">{{UPBIT_TOP2_SYMBOL}}</span><span class="mover-chg up">{{UPBIT_TOP2_CHG}}</span></div>
+        <div class="mover-row"><span class="mover-sym">{{UPBIT_TOP3_SYMBOL}}</span><span class="mover-chg up">{{UPBIT_TOP3_CHG}}</span></div>
       </div>
-    </td>
-  </tr>
-
-  <tr><td><hr style="border:none;border-top:3px solid #0a1628;margin:0;"/></td></tr>
-
-  <!-- ══ 1. 시장 스냅샷 ══ -->
-  <tr>
-    <td class="ps" style="padding:18px 24px 10px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td style="font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#1a56db;">📊 Market Snapshot</td>
-          <td align="right" style="font-size:13px;color:#8a9abf;">KRW · 24h · {{BM20_ASOF}}</td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-
-  <!-- 스냅샷 3단 — Fluid -->
-  <tr>
-    <td class="ps" style="padding:0 24px 12px;">
-      <!-- font-size:0 으로 inline-block 간격 제거 -->
-      <div style="background:#0a1628;border:1px solid #1e3a5f;font-size:0;line-height:0;">
-        <div class="f3" style="padding:14px 12px;border-right:1px solid #1e3a5f;">
-          <div style="font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#5a7a9a;margin-bottom:6px;line-height:1.4;">BM20 Index</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;color:#fff;letter-spacing:-0.02em;line-height:1.2;">{{BM20_1D}}</div>
-          <div style="font-size:13px;color:#3a5a7a;margin-top:4px;line-height:1.4;">Lv {{BM20_LEVEL}} · {{BM20_BREADTH}}</div>
-        </div><!--
-     --><div class="f3" style="padding:14px 12px;border-right:1px solid #1e3a5f;">
-          <div style="font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#5a7a9a;margin-bottom:6px;line-height:1.4;">Bitcoin</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;color:#fff;letter-spacing:-0.02em;line-height:1.2;">{{BTC_1D}}</div>
-          <div style="font-size:13px;color:#3a5a7a;margin-top:4px;line-height:1.4;">${{BTC_USD}}</div>
-        </div><!--
-     --><div class="f3" style="padding:14px 12px;">
-          <div style="font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#5a7a9a;margin-bottom:6px;line-height:1.4;">Fear &amp; Greed</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;color:#fff;letter-spacing:-0.02em;line-height:1.2;">{{SENTIMENT_LABEL}}</div>
-          <div style="font-size:13px;color:#3a5a7a;margin-top:4px;line-height:1.4;">{{SENTIMENT_SCORE}} / 100</div>
-        </div>
+      <div class="mover-card">
+        <div class="mover-card-label" style="color:#ef4444;">▼ Bottom 3</div>
+        <div class="mover-row"><span class="mover-sym">{{UPBIT_BOT1_SYMBOL}}</span><span class="mover-chg down">{{UPBIT_BOT1_CHG}}</span></div>
+        <div class="mover-row"><span class="mover-sym">{{UPBIT_BOT2_SYMBOL}}</span><span class="mover-chg down">{{UPBIT_BOT2_CHG}}</span></div>
+        <div class="mover-row"><span class="mover-sym">{{UPBIT_BOT3_SYMBOL}}</span><span class="mover-chg down">{{UPBIT_BOT3_CHG}}</span></div>
       </div>
-    </td>
-  </tr>
+    </div>
+  </div>
 
-  <!-- 4단: NASDAQ·KOSPI·환율·도미넌스 — Fluid -->
-  <tr>
-    <td class="ps" style="padding:0 24px 6px;font-size:0;line-height:0;">
-      <div class="f3" style="padding-right:6px;">
-        <div style="background:#0a1628;padding:9px 8px;">
-          <div style="font-size:9px;color:#5a7a9a;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;line-height:1.4;">NASDAQ</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#fff;line-height:1.4;">{{NASDAQ_1D}}</div>
-        </div>
-      </div><!--
-   --><div class="f3" style="padding-right:6px;">
-        <div style="background:#0a1628;padding:9px 8px;">
-          <div style="font-size:9px;color:#5a7a9a;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;line-height:1.4;">KOSPI</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#fff;line-height:1.4;">{{KOSPI_1D}}</div>
-        </div>
-      </div><!--
-   --><div class="f3">
-        <div style="background:#0a1628;padding:9px 8px;">
-          <div style="font-size:9px;color:#5a7a9a;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;line-height:1.4;">USD/KRW</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#fff;line-height:1.4;">{{USDKRW}}</div>
-        </div>
+  <!-- ③ 왜 그랬어? -->
+  <div class="section section-thick anno">
+    <div class="section-question">③ 왜 그랬어? 🗣️</div>
+
+    <div class="news-item">
+      <div class="news-num">01</div>
+      <div class="news-cat">Market · Macro</div>
+      <div class="news-title">{{TOP_NEWS_1}}</div>
+      <div class="news-excerpt">{{NEWS1_EXCERPT}}</div>
+      <a class="news-link" href="#">기사 전문 읽기 →</a>
+    </div>
+
+    <div class="news-item">
+      <div class="news-num">02</div>
+      <div class="news-cat">Regulation</div>
+      <div class="news-title">{{TOP_NEWS_2}}</div>
+      <div class="news-excerpt">{{NEWS2_EXCERPT}}</div>
+      <a class="news-link" href="#">기사 전문 읽기 →</a>
+    </div>
+
+    <div class="news-item">
+      <div class="news-num">03</div>
+      <div class="news-cat">On-chain</div>
+      <div class="news-title">{{TOP_NEWS_3}}</div>
+      <div class="news-excerpt">{{NEWS3_EXCERPT}}</div>
+      <a class="news-link" href="#">기사 전문 읽기 →</a>
+    </div>
+  </div>
+
+  <!-- ④ 돈은 어디로? -->
+  <div class="section section-thick anno">
+    <div class="section-question">④ 돈은 어디로 흘러가고 있어? 🏃</div>
+    <div class="section-label">🇺🇸 US Crypto ETF Flow</div>
+    <div class="etf-grid">
+      <div class="etf-card">
+        <div class="etf-name">BTC SPOT</div>
+        <div class="etf-flow down">{{ETF_BTC_INFLOW}}</div>
+        <div class="etf-aum">AUM {{ETF_BTC_AUM}}</div>
       </div>
-    </td>
-  </tr>
-
-  <!-- 요약 박스 -->
-  <tr>
-    <td class="ps" style="padding:8px 24px 16px;">
-      <div style="background:#f0f5ff;border-left:2px solid #1a56db;padding:10px 13px;font-size:13px;line-height:1.8;color:#3a4a6a;">
-        <b style="color:#0a1628;">한 줄 요약</b>&nbsp;{{MARKET_ONE_LINE}}
+      <div class="etf-card">
+        <div class="etf-name">ETH SPOT</div>
+        <div class="etf-flow down">{{ETF_ETH_INFLOW}}</div>
+        <div class="etf-aum">AUM {{ETF_ETH_AUM}}</div>
       </div>
-    </td>
-  </tr>
-  <tr>
-    <td class="ps" style="padding:0 24px 18px;">
-      <a href="https://data.blockmedia.co.kr/bm20_index.html"
-         style="font-size:13px;font-weight:700;color:#1a56db;letter-spacing:0.06em;border-bottom:1px solid #c8d8f0;padding-bottom:1px;">
-        BM20 전체 차트 보기 →
-      </a>
-    </td>
-  </tr>
-
-  <tr><td><hr style="border:none;border-top:1px solid #dde6f4;margin:0;"/></td></tr>
-
-  <!-- ══ 2. KRW 시그널 + BM20 상세 ══ -->
-  <tr>
-    <td class="ps" style="padding:18px 24px 0;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td class="col-l" style="width:50%;padding:0 16px 0 0;border-right:1px solid #dde6f4;vertical-align:top;">
-            <div style="font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#1a56db;margin-bottom:10px;">🇰🇷 KRW Signal</div>
-            <div style="font-size:0;line-height:0;">
-              <div style="display:inline-block;width:32%;min-width:68px;vertical-align:top;padding-right:4px;box-sizing:border-box;">
-                <div style="background:#0a1628;padding:9px 7px;">
-                  <div style="font-size:9px;color:#5a7a9a;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:3px;line-height:1.4;">거래대금</div>
-                  <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#fff;line-height:1.3;">{{KRW_TOTAL_24H}}</div>
-                  <div style="font-size:9px;color:#3a5a7a;margin-top:2px;line-height:1.3;">{{KRW_ASOF_KST}}</div>
-                </div>
-              </div><!--
-           --><div style="display:inline-block;width:32%;min-width:68px;vertical-align:top;padding-right:4px;box-sizing:border-box;">
-                <div style="background:#0a1628;padding:9px 7px;">
-                  <div style="font-size:9px;color:#5a7a9a;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:3px;line-height:1.4;">김치 프리미엄</div>
-                  <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#fff;line-height:1.3;">{{KIMCHI_PREM}}</div>
-                  <div style="font-size:9px;color:#3a5a7a;margin-top:2px;line-height:1.3;">{{USDKRW}}</div>
-                </div>
-              </div><!--
-           --><div style="display:inline-block;width:32%;min-width:68px;vertical-align:top;box-sizing:border-box;">
-                <div style="background:#0a1628;padding:9px 7px;">
-                  <div style="font-size:9px;color:#5a7a9a;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:3px;line-height:1.4;">K-Safety</div>
-                  <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#fff;line-height:1.3;">{{K_SAFETY}}</div>
-                  <div style="font-size:9px;color:#3a5a7a;margin-top:2px;line-height:1.3;">스테이블 비중</div>
-                </div>
-              </div>
-            </div>
-            <div style="font-size:0;line-height:0;margin-top:5px;">
-              <div style="display:inline-block;width:49%;min-width:80px;vertical-align:top;padding-right:4px;box-sizing:border-box;">
-                <div style="background:#0a1628;padding:9px 7px;">
-                  <div style="font-size:9px;color:#5a7a9a;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:3px;line-height:1.4;">글로벌 점유율</div>
-                  <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#fff;line-height:1.3;">{{KR_SHARE_GLOBAL}}</div>
-                </div>
-              </div><!--
-           --><div style="display:inline-block;width:49%;min-width:80px;vertical-align:top;box-sizing:border-box;">
-                <div style="background:#0a1628;padding:9px 7px;">
-                  <div style="font-size:9px;color:#5a7a9a;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:3px;line-height:1.4;">XRP 점유율</div>
-                  <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#fff;line-height:1.3;">{{XRP_KR_SHARE}}</div>
-                </div>
-              </div>
-            </div>
-          </td>
-          <td class="col-r" style="width:50%;padding:0 0 0 16px;vertical-align:top;">
-            <div style="font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#1a56db;margin-bottom:10px;">📈 BM20 상세</div>
-            <div style="font-size:0;line-height:0;">
-              <div style="display:inline-block;width:49%;min-width:75px;vertical-align:top;padding-right:4px;box-sizing:border-box;">
-                <div style="background:#0a1628;padding:9px 7px;">
-                  <div style="font-size:9px;color:#5a7a9a;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:3px;line-height:1.4;">1D 등락</div>
-                  <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#fff;line-height:1.3;">{{BM20_1D}}</div>
-                </div>
-              </div><!--
-           --><div style="display:inline-block;width:49%;min-width:75px;vertical-align:top;box-sizing:border-box;">
-                <div style="background:#0a1628;padding:9px 7px;">
-                  <div style="font-size:9px;color:#5a7a9a;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:3px;line-height:1.4;">Breadth</div>
-                  <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#fff;line-height:1.3;">{{BM20_BREADTH}}</div>
-                </div>
-              </div>
-            </div>
-            <div style="background:#0a1628;padding:9px 7px;margin-top:5px;font-size:0;line-height:0;">
-              <div style="display:inline-block;width:49%;vertical-align:top;font-size:13px;padding-right:6px;box-sizing:border-box;">
-                <div style="font-size:9px;color:#5a7a9a;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:5px;line-height:1.4;">▲ Best</div>
-                <div style="color:#2ecc71;font-weight:700;line-height:1.8;font-family:'IBM Plex Mono',monospace;">{{BM20_BEST3}}</div>
-              </div><!--
-           --><div style="display:inline-block;width:49%;vertical-align:top;font-size:13px;padding-left:6px;box-sizing:border-box;border-left:1px solid #1a2a40;">
-                <div style="font-size:9px;color:#5a7a9a;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:5px;line-height:1.4;">▼ Worst</div>
-                <div style="color:#e74c3c;font-weight:700;line-height:1.8;font-family:'IBM Plex Mono',monospace;">{{BM20_WORST3}}</div>
-              </div>
-            </div>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-  <tr>
-    <td class="ps" style="padding:10px 24px 18px;">
-      <a href="https://data.blockmedia.co.kr/"
-         style="font-size:13px;font-weight:700;color:#1a56db;letter-spacing:0.06em;border-bottom:1px solid #c8d8f0;padding-bottom:1px;">
-        KRW 대시보드 전체 보기 →
-      </a>
-    </td>
-  </tr>
-
-  <tr><td><hr style="border:none;border-top:3px solid #0a1628;margin:0;"/></td></tr>
-
-  <!-- ══ 3. US ETF Flow — Fluid 3단 ══ -->
-  <tr>
-    <td class="ps" style="padding:18px 24px 8px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td style="font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#1a56db;">🇺🇸 US Crypto ETF Flow</td>
-          <td align="right" style="font-size:13px;color:#8a9abf;">{{ETF_ASOF}} 기준</td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-  <tr>
-    <td class="ps" style="padding:0 24px 10px;font-size:0;line-height:0;">
-      <div class="f3" style="padding-right:6px;">
-        <div style="border:1px solid #c8d8f0;padding:11px 10px;background:#f8fbff;">
-          <div style="font-size:9px;color:#5a7a9a;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:7px;line-height:1.4;">BTC Spot ETF</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:900;letter-spacing:-0.02em;line-height:1.2;{{ETF_BTC_INFLOW_COLOR}}">{{ETF_BTC_INFLOW}}</div>
-          <div style="font-size:9px;color:#5a7a9a;margin-top:3px;line-height:1.4;">일별 순유입</div>
-          <div style="border-top:1px solid #c8d8f0;margin:7px 0;"></div>
-          <div style="font-size:13px;color:#5a7a9a;line-height:1.6;">AUM <b style="color:#0a1628;">{{ETF_BTC_AUM}}</b></div>
-          <div style="font-size:13px;color:#5a7a9a;line-height:1.6;">누적 <b style="color:#0a1628;">{{ETF_BTC_CUM}}</b></div>
-          <div style="font-size:9px;color:#8a9abf;margin-top:2px;line-height:1.4;">{{ETF_BTC_HOLDINGS}}</div>
-        </div>
-      </div><!--
-   --><div class="f3" style="padding-right:6px;">
-        <div style="border:1px solid #c8d8f0;padding:11px 10px;background:#f8fbff;">
-          <div style="font-size:9px;color:#5a7a9a;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:7px;line-height:1.4;">ETH Spot ETF</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:900;letter-spacing:-0.02em;line-height:1.2;{{ETF_ETH_INFLOW_COLOR}}">{{ETF_ETH_INFLOW}}</div>
-          <div style="font-size:9px;color:#5a7a9a;margin-top:3px;line-height:1.4;">일별 순유입</div>
-          <div style="border-top:1px solid #c8d8f0;margin:7px 0;"></div>
-          <div style="font-size:13px;color:#5a7a9a;line-height:1.6;">AUM <b style="color:#0a1628;">{{ETF_ETH_AUM}}</b></div>
-          <div style="font-size:13px;color:#5a7a9a;line-height:1.6;">누적 <b style="color:#0a1628;">{{ETF_ETH_CUM}}</b></div>
-          <div style="font-size:9px;color:#8a9abf;margin-top:2px;line-height:1.4;">{{ETF_ETH_HOLDINGS}}</div>
-        </div>
-      </div><!--
-   --><div class="f3">
-        <div style="border:1px solid #c8d8f0;padding:11px 10px;background:#f8fbff;">
-          <div style="font-size:9px;color:#5a7a9a;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:7px;line-height:1.4;">SOL Spot ETF</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:900;letter-spacing:-0.02em;line-height:1.2;{{ETF_SOL_INFLOW_COLOR}}">{{ETF_SOL_INFLOW}}</div>
-          <div style="font-size:9px;color:#5a7a9a;margin-top:3px;line-height:1.4;">일별 순유입</div>
-          <div style="border-top:1px solid #c8d8f0;margin:7px 0;"></div>
-          <div style="font-size:13px;color:#5a7a9a;line-height:1.6;">AUM <b style="color:#0a1628;">{{ETF_SOL_AUM}}</b></div>
-          <div style="font-size:13px;color:#5a7a9a;line-height:1.6;">누적 <b style="color:#0a1628;">{{ETF_SOL_CUM}}</b></div>
-          <div style="font-size:9px;color:#8a9abf;margin-top:2px;line-height:1.4;">{{ETF_SOL_HOLDINGS}}</div>
-        </div>
+      <div class="etf-card">
+        <div class="etf-name">SOL SPOT</div>
+        <div class="etf-flow up">{{ETF_SOL_INFLOW}}</div>
+        <div class="etf-aum">AUM {{ETF_SOL_AUM}}</div>
       </div>
-    </td>
-  </tr>
-  <tr>
-    <td class="ps" style="padding:0 24px 8px;">
-      <div style="font-size:13px;line-height:1.75;color:#3a4a6a;padding:10px 13px;background:#f0f5ff;border-left:2px solid #1a56db;">{{ETF_COMMENT}}</div>
-    </td>
-  </tr>
-  <tr>
-    <td class="ps" style="padding:0 24px 22px;">
-      <a href="https://data.blockmedia.co.kr/etf.html"
-         style="font-size:13px;font-weight:700;color:#1a56db;letter-spacing:0.06em;border-bottom:1px solid #c8d8f0;padding-bottom:1px;">
-        ETF 전체 현황 보기 →
-      </a>
-    </td>
-  </tr>
+    </div>
 
-  <tr><td><hr style="border:none;border-top:3px solid #0a1628;margin:0;"/></td></tr>
-
-  <!-- ══ 4. 한국 투자자 시그널 ══ -->
-  <tr>
-    <td class="ps" style="padding:18px 24px 8px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td style="font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#1a56db;">🇰🇷 한국 투자자 시그널</td>
-          <td align="right" style="font-size:13px;color:#8a9abf;">업비트 기준 · 24h</td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-
-  <!-- 프리미엄 2단 — Fluid -->
-  <tr>
-    <td class="ps" style="padding:0 24px 4px;">
-      <div style="font-size:13px;font-weight:700;color:#5a7a9a;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;line-height:1.4;">프리미엄 비교</div>
-      <div style="font-size:0;line-height:0;">
-        <div class="f2" style="padding-right:6px;">
-          <div style="background:#0a1628;padding:14px 13px;border-top:2px solid #ff6b35;">
-            <div style="font-size:22px;line-height:1;margin-bottom:6px;">🌶️</div>
-            <div style="font-size:11px;color:#ff9d80;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;line-height:1.4;">김치 프리미엄</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;color:#fff;line-height:1.2;">{{KIMCHI_PREM_PCT}}</div>
-            <div style="font-size:9px;color:#5a7a9a;margin-top:4px;line-height:1.4;">업비트 BTC vs 글로벌</div>
+    <!-- 김치 vs 코인베이스 프리미엄 -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:16px;">
+      <tr>
+        <td width="49%" valign="top" style="background:#0f172a; border-top:4px solid #ff6b35; border-radius:4px; padding:18px 16px;">
+          <div style="font-size:11px; color:#ff9d80; font-weight:700; margin-bottom:6px;">🌶️ KIMCHI PREMIUM</div>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:24px; font-weight:700; color:#dc2626;">{{KIMCHI_PREM_PCT}}</div>
+          <div style="font-size:10px; color:#cbd5e1; margin-top:5px;">Upbit vs Global</div>
+        </td>
+        <td width="2%"></td>
+        <td width="49%" valign="top" style="background:#0f172a; border-top:4px solid #3b82f6; border-radius:4px; padding:18px 16px;">
+          <div style="margin-bottom:8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="24" viewBox="0 0 36 24" style="display:inline-block;vertical-align:middle;border-radius:2px;">
+              <rect width="36" height="24" fill="#B22234"/>
+              <rect y="1.846" width="36" height="1.846" fill="#fff"/><rect y="5.538" width="36" height="1.846" fill="#fff"/>
+              <rect y="9.231" width="36" height="1.846" fill="#fff"/><rect y="12.923" width="36" height="1.846" fill="#fff"/>
+              <rect y="16.615" width="36" height="1.846" fill="#fff"/><rect y="20.308" width="36" height="1.846" fill="#fff"/>
+              <rect width="14.4" height="12.923" fill="#3C3B6E"/>
+              <g fill="#fff">
+                <circle cx="1.2" cy="1.1" r="0.65"/><circle cx="3.6" cy="1.1" r="0.65"/><circle cx="6" cy="1.1" r="0.65"/><circle cx="8.4" cy="1.1" r="0.65"/><circle cx="10.8" cy="1.1" r="0.65"/><circle cx="13.2" cy="1.1" r="0.65"/>
+                <circle cx="2.4" cy="2.5" r="0.65"/><circle cx="4.8" cy="2.5" r="0.65"/><circle cx="7.2" cy="2.5" r="0.65"/><circle cx="9.6" cy="2.5" r="0.65"/><circle cx="12" cy="2.5" r="0.65"/>
+                <circle cx="1.2" cy="3.9" r="0.65"/><circle cx="3.6" cy="3.9" r="0.65"/><circle cx="6" cy="3.9" r="0.65"/><circle cx="8.4" cy="3.9" r="0.65"/><circle cx="10.8" cy="3.9" r="0.65"/><circle cx="13.2" cy="3.9" r="0.65"/>
+                <circle cx="2.4" cy="5.3" r="0.65"/><circle cx="4.8" cy="5.3" r="0.65"/><circle cx="7.2" cy="5.3" r="0.65"/><circle cx="9.6" cy="5.3" r="0.65"/><circle cx="12" cy="5.3" r="0.65"/>
+                <circle cx="1.2" cy="6.7" r="0.65"/><circle cx="3.6" cy="6.7" r="0.65"/><circle cx="6" cy="6.7" r="0.65"/><circle cx="8.4" cy="6.7" r="0.65"/><circle cx="10.8" cy="6.7" r="0.65"/><circle cx="13.2" cy="6.7" r="0.65"/>
+                <circle cx="2.4" cy="8.1" r="0.65"/><circle cx="4.8" cy="8.1" r="0.65"/><circle cx="7.2" cy="8.1" r="0.65"/><circle cx="9.6" cy="8.1" r="0.65"/><circle cx="12" cy="8.1" r="0.65"/>
+                <circle cx="1.2" cy="9.5" r="0.65"/><circle cx="3.6" cy="9.5" r="0.65"/><circle cx="6" cy="9.5" r="0.65"/><circle cx="8.4" cy="9.5" r="0.65"/><circle cx="10.8" cy="9.5" r="0.65"/><circle cx="13.2" cy="9.5" r="0.65"/>
+                <circle cx="2.4" cy="11" r="0.65"/><circle cx="4.8" cy="11" r="0.65"/><circle cx="7.2" cy="11" r="0.65"/><circle cx="9.6" cy="11" r="0.65"/><circle cx="12" cy="11" r="0.65"/>
+                <circle cx="1.2" cy="12.3" r="0.65"/><circle cx="3.6" cy="12.3" r="0.65"/><circle cx="6" cy="12.3" r="0.65"/><circle cx="8.4" cy="12.3" r="0.65"/><circle cx="10.8" cy="12.3" r="0.65"/><circle cx="13.2" cy="12.3" r="0.65"/>
+              </g>
+            </svg>
+            <span style="font-size:11px; color:#93c5fd; font-weight:700; margin-left:6px; vertical-align:middle; letter-spacing:0.06em;">COINBASE PREMIUM</span>
           </div>
-        </div><!--
-     --><div class="f2">
-          <div style="background:#0a1628;padding:14px 13px;border-top:2px solid #3b82f6;">
-            <div style="font-size:22px;line-height:1;margin-bottom:6px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="36" height="24" viewBox="0 0 36 24" style="display:inline-block;vertical-align:middle;border-radius:2px;">
-                <!-- Red and white stripes -->
-                <rect width="36" height="24" fill="#B22234"/>
-                <rect y="1.846" width="36" height="1.846" fill="#fff"/>
-                <rect y="5.538" width="36" height="1.846" fill="#fff"/>
-                <rect y="9.231" width="36" height="1.846" fill="#fff"/>
-                <rect y="12.923" width="36" height="1.846" fill="#fff"/>
-                <rect y="16.615" width="36" height="1.846" fill="#fff"/>
-                <rect y="20.308" width="36" height="1.846" fill="#fff"/>
-                <!-- Blue canton -->
-                <rect width="14.4" height="12.923" fill="#3C3B6E"/>
-                <!-- Stars (simplified 5x4 + 4x5 = 50 stars) -->
-                <g fill="#fff" font-size="2">
-                  <!-- Row 1 -->
-                  <circle cx="1.2" cy="1.1" r="0.65"/>  <circle cx="3.6" cy="1.1" r="0.65"/>  <circle cx="6" cy="1.1" r="0.65"/>  <circle cx="8.4" cy="1.1" r="0.65"/>  <circle cx="10.8" cy="1.1" r="0.65"/>  <circle cx="13.2" cy="1.1" r="0.65"/>
-                  <!-- Row 2 -->
-                  <circle cx="2.4" cy="2.5" r="0.65"/>  <circle cx="4.8" cy="2.5" r="0.65"/>  <circle cx="7.2" cy="2.5" r="0.65"/>  <circle cx="9.6" cy="2.5" r="0.65"/>  <circle cx="12" cy="2.5" r="0.65"/>
-                  <!-- Row 3 -->
-                  <circle cx="1.2" cy="3.9" r="0.65"/>  <circle cx="3.6" cy="3.9" r="0.65"/>  <circle cx="6" cy="3.9" r="0.65"/>  <circle cx="8.4" cy="3.9" r="0.65"/>  <circle cx="10.8" cy="3.9" r="0.65"/>  <circle cx="13.2" cy="3.9" r="0.65"/>
-                  <!-- Row 4 -->
-                  <circle cx="2.4" cy="5.3" r="0.65"/>  <circle cx="4.8" cy="5.3" r="0.65"/>  <circle cx="7.2" cy="5.3" r="0.65"/>  <circle cx="9.6" cy="5.3" r="0.65"/>  <circle cx="12" cy="5.3" r="0.65"/>
-                  <!-- Row 5 -->
-                  <circle cx="1.2" cy="6.7" r="0.65"/>  <circle cx="3.6" cy="6.7" r="0.65"/>  <circle cx="6" cy="6.7" r="0.65"/>  <circle cx="8.4" cy="6.7" r="0.65"/>  <circle cx="10.8" cy="6.7" r="0.65"/>  <circle cx="13.2" cy="6.7" r="0.65"/>
-                  <!-- Row 6 -->
-                  <circle cx="2.4" cy="8.1" r="0.65"/>  <circle cx="4.8" cy="8.1" r="0.65"/>  <circle cx="7.2" cy="8.1" r="0.65"/>  <circle cx="9.6" cy="8.1" r="0.65"/>  <circle cx="12" cy="8.1" r="0.65"/>
-                  <!-- Row 7 -->
-                  <circle cx="1.2" cy="9.5" r="0.65"/>  <circle cx="3.6" cy="9.5" r="0.65"/>  <circle cx="6" cy="9.5" r="0.65"/>  <circle cx="8.4" cy="9.5" r="0.65"/>  <circle cx="10.8" cy="9.5" r="0.65"/>  <circle cx="13.2" cy="9.5" r="0.65"/>
-                  <!-- Row 8 -->
-                  <circle cx="2.4" cy="11" r="0.65"/>  <circle cx="4.8" cy="11" r="0.65"/>  <circle cx="7.2" cy="11" r="0.65"/>  <circle cx="9.6" cy="11" r="0.65"/>  <circle cx="12" cy="11" r="0.65"/>
-                  <!-- Row 9 -->
-                  <circle cx="1.2" cy="12.3" r="0.65"/>  <circle cx="3.6" cy="12.3" r="0.65"/>  <circle cx="6" cy="12.3" r="0.65"/>  <circle cx="8.4" cy="12.3" r="0.65"/>  <circle cx="10.8" cy="12.3" r="0.65"/>  <circle cx="13.2" cy="12.3" r="0.65"/>
-                </g>
-              </svg>
-            </div>
-            <div style="font-size:11px;color:#7eb3ff;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;line-height:1.4;">코인베이스 프리미엄</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;color:#fff;line-height:1.2;">{{CB_PREMIUM_PCT}}</div>
-            <div style="font-size:9px;color:#5a7a9a;margin-top:4px;line-height:1.4;">BTC Coinbase vs Binance</div>
-          </div>
-        </div>
-      </div>
-    </td>
-  </tr>
-  <tr>
-    <td class="ps" style="padding:8px 24px 14px;">
-      <div style="font-size:13px;line-height:1.75;color:#3a4a6a;padding:10px 13px;background:#f0f5ff;border-left:2px solid #1a56db;">{{PREMIUM_COMMENT}}</div>
-    </td>
-  </tr>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:24px; font-weight:700; color:#dc2626;">{{CB_PREMIUM_PCT}}</div>
+          <div style="font-size:10px; color:#cbd5e1; margin-top:5px;">Coinbase vs Binance</div>
+        </td>
+      </tr>
+    </table>
+    <div style="font-size:13px; color:#334155; margin-top:12px; line-height:1.75; background:#f8fafc; padding:12px 16px; border-radius:4px;">{{PREMIUM_COMMENT}}</div>
+  </div>
 
-  <tr><td class="ps" style="padding:0 24px;"><hr style="border:none;border-top:1px solid #dde6f4;margin:0;"/></td></tr>
+    <!-- ⑤ 지금 사도 돼? -->
+  <div class="aas-header">
+    <div>
+      <div class="aas-title">🔎 코생지 — 블록미디어 시그널</div>
+      <div class="aas-sub">과열 / 과매도 · 관심도 변화 요약 (투자 조언 아님)</div>
+    </div>
+    <div class="beta-badge">BETA</div>
+  </div>
+  <div class="section anno" style="padding-top:0;">
+    <div style="margin-top:14px;"><div class="section-question">⑤ 지금 사도 돼? 😎</div></div>
+    <table class="aas-table">
+      <tr>
+        <th>COIN</th><th>SIGNAL</th><th>NOTE</th>
+      </tr>
+      <tr>
+        <td style="font-weight:700;">{{AAS_COIN_1}}</td>
+        <td class="signal-watch">{{AAS_SIGNAL_1}}</td>
+        <td>{{AAS_NOTE_1}}</td>
+      </tr>
+      <tr style="background:#f0f7ff;">
+        <td style="font-weight:700;">{{AAS_COIN_2}}</td>
+        <td class="signal-buy">{{AAS_SIGNAL_2}}</td>
+        <td>{{AAS_NOTE_2}}</td>
+      </tr>
+      <tr>
+        <td style="font-weight:700;">{{AAS_COIN_3}}</td>
+        <td class="signal-watch">{{AAS_SIGNAL_3}}</td>
+        <td>{{AAS_NOTE_3}}</td>
+      </tr>
+    </table>
+  </div>
 
-  <!-- 거래소별 Top3 — Fluid (모바일: 1단) -->
-  <tr>
-    <td class="ps" style="padding:14px 24px 8px;">
-      <div style="font-size:13px;font-weight:700;color:#5a7a9a;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px;line-height:1.4;">거래소별 거래대금 Top3 (24h)</div>
-      <div style="font-size:0;line-height:0;">
-        <div class="fex" style="padding-right:6px;margin-bottom:6px;">
-          <div style="border:1px solid #c8d8f0;padding:10px 11px;">
-            <div style="font-size:9px;font-weight:700;color:#1a56db;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:7px;line-height:1.4;">Upbit</div>
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-              <tr><td style="font-size:13px;font-weight:700;padding:7px 0;border-bottom:1px solid #edf2fc;">{{UPBIT_VOL1_SYM}}</td><td align="right" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#5a7a9a;padding:7px 0;border-bottom:1px solid #edf2fc;">{{UPBIT_VOL1_AMT}}</td></tr>
-              <tr><td style="font-size:13px;font-weight:700;padding:7px 0;border-bottom:1px solid #edf2fc;">{{UPBIT_VOL2_SYM}}</td><td align="right" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#5a7a9a;padding:7px 0;border-bottom:1px solid #edf2fc;">{{UPBIT_VOL2_AMT}}</td></tr>
-              <tr><td style="font-size:13px;font-weight:700;padding:7px 0;">{{UPBIT_VOL3_SYM}}</td><td align="right" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#5a7a9a;padding:7px 0;">{{UPBIT_VOL3_AMT}}</td></tr>
-            </table>
-          </div>
-        </div><!--
-     --><div class="fex" style="padding-right:6px;margin-bottom:6px;">
-          <div style="border:1px solid #c8d8f0;padding:10px 11px;">
-            <div style="font-size:9px;font-weight:700;color:#1a56db;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:7px;line-height:1.4;">Bithumb</div>
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-              <tr><td style="font-size:13px;font-weight:700;padding:7px 0;border-bottom:1px solid #edf2fc;">{{BITHUMB_VOL1_SYM}}</td><td align="right" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#5a7a9a;padding:7px 0;border-bottom:1px solid #edf2fc;">{{BITHUMB_VOL1_AMT}}</td></tr>
-              <tr><td style="font-size:13px;font-weight:700;padding:7px 0;border-bottom:1px solid #edf2fc;">{{BITHUMB_VOL2_SYM}}</td><td align="right" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#5a7a9a;padding:7px 0;border-bottom:1px solid #edf2fc;">{{BITHUMB_VOL2_AMT}}</td></tr>
-              <tr><td style="font-size:13px;font-weight:700;padding:7px 0;">{{BITHUMB_VOL3_SYM}}</td><td align="right" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#5a7a9a;padding:7px 0;">{{BITHUMB_VOL3_AMT}}</td></tr>
-            </table>
-          </div>
-        </div><!--
-     --><div class="fex" style="margin-bottom:6px;">
-          <div style="border:1px solid #c8d8f0;padding:10px 11px;">
-            <div style="font-size:9px;font-weight:700;color:#1a56db;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:7px;line-height:1.4;">Coinone</div>
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-              <tr><td style="font-size:13px;font-weight:700;padding:7px 0;border-bottom:1px solid #edf2fc;">{{COINONE_VOL1_SYM}}</td><td align="right" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#5a7a9a;padding:7px 0;border-bottom:1px solid #edf2fc;">{{COINONE_VOL1_AMT}}</td></tr>
-              <tr><td style="font-size:13px;font-weight:700;padding:7px 0;border-bottom:1px solid #edf2fc;">{{COINONE_VOL2_SYM}}</td><td align="right" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#5a7a9a;padding:7px 0;border-bottom:1px solid #edf2fc;">{{COINONE_VOL2_AMT}}</td></tr>
-              <tr><td style="font-size:13px;font-weight:700;padding:7px 0;">{{COINONE_VOL3_SYM}}</td><td align="right" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#5a7a9a;padding:7px 0;">{{COINONE_VOL3_AMT}}</td></tr>
-            </table>
-          </div>
-        </div>
-      </div>
-    </td>
-  </tr>
+  <!-- CTA -->
+  <div class="cta-section">
+    <a class="cta-btn" href="#">매일 아침 데이터 인사이트 받기 →</a>
+  </div>
 
-  <!-- 업비트 Top/Bottom 2단 — Fluid -->
-  <tr>
-    <td class="ps" style="padding:14px 24px 8px;">
-      <div style="font-size:13px;font-weight:700;color:#5a7a9a;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px;line-height:1.4;">업비트 전체 등락 (24h)</div>
-      <div style="font-size:0;line-height:0;">
-        <div class="f2" style="padding-right:6px;">
-          <div style="border:1px solid #c8d8f0;padding:10px 11px;">
-            <div style="font-size:9px;font-weight:700;color:#0a7c42;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:7px;line-height:1.4;">▲ Top 3</div>
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-              <tr><td style="font-size:13px;font-weight:700;padding:8px 0;border-bottom:1px solid #edf2fc;">{{UPBIT_TOP1_SYMBOL}}</td><td align="right" style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:#0a7c42;padding:8px 0;border-bottom:1px solid #edf2fc;">{{UPBIT_TOP1_CHG}}</td></tr>
-              <tr><td style="font-size:13px;font-weight:700;padding:8px 0;border-bottom:1px solid #edf2fc;">{{UPBIT_TOP2_SYMBOL}}</td><td align="right" style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:#0a7c42;padding:8px 0;border-bottom:1px solid #edf2fc;">{{UPBIT_TOP2_CHG}}</td></tr>
-              <tr><td style="font-size:13px;font-weight:700;padding:8px 0;">{{UPBIT_TOP3_SYMBOL}}</td><td align="right" style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:#0a7c42;padding:8px 0;">{{UPBIT_TOP3_CHG}}</td></tr>
-            </table>
-          </div>
-        </div><!--
-     --><div class="f2">
-          <div style="border:1px solid #c8d8f0;padding:10px 11px;">
-            <div style="font-size:9px;font-weight:700;color:#c81e1e;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:7px;line-height:1.4;">▼ Bottom 3</div>
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-              <tr><td style="font-size:13px;font-weight:700;padding:8px 0;border-bottom:1px solid #edf2fc;">{{UPBIT_BOT1_SYMBOL}}</td><td align="right" style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:#c81e1e;padding:8px 0;border-bottom:1px solid #edf2fc;">{{UPBIT_BOT1_CHG}}</td></tr>
-              <tr><td style="font-size:13px;font-weight:700;padding:8px 0;border-bottom:1px solid #edf2fc;">{{UPBIT_BOT2_SYMBOL}}</td><td align="right" style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:#c81e1e;padding:8px 0;border-bottom:1px solid #edf2fc;">{{UPBIT_BOT2_CHG}}</td></tr>
-              <tr><td style="font-size:13px;font-weight:700;padding:8px 0;">{{UPBIT_BOT3_SYMBOL}}</td><td align="right" style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:#c81e1e;padding:8px 0;">{{UPBIT_BOT3_CHG}}</td></tr>
-            </table>
-          </div>
-        </div>
-      </div>
-    </td>
-  </tr>
-  <tr>
-    <td class="ps" style="padding:8px 24px 22px;">
-      <a href="https://data.blockmedia.co.kr/"
-         style="font-size:13px;font-weight:700;color:#1a56db;letter-spacing:0.06em;border-bottom:1px solid #c8d8f0;padding-bottom:1px;">
-        한국 시장 전체 데이터 →
-      </a>
-    </td>
-  </tr>
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-logo">BLOCKMEDIA</div>
+    <div class="footer-links">
+      <a href="#">수신거부</a>
+      <a href="#">공식 홈페이지</a>
+      <a href="#">데이터 센터</a>
+    </div>
+    <div class="footer-copy">© 2026 블록미디어. All rights reserved.</div>
+  </div>
 
-  <tr><td><hr style="border:none;border-top:3px solid #0a1628;margin:0;"/></td></tr>
 
-  <!-- ══ 5. 트리맵 ══ -->
-  <tr>
-    <td class="ps" style="padding:18px 24px 8px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td style="font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#1a56db;">🧩 Fund Flow Treemap</td>
-          <td align="right"><span style="font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;background:#1a56db;color:#fff;padding:2px 7px;">핵심</span></td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-  <tr>
-    <td class="ps" style="padding:0 24px 8px;">
-      <div style="font-size:13px;color:#3a4a6a;margin-bottom:10px;line-height:1.7;">
-        <b style="color:#0a1628;">해석</b>&nbsp;{{TREEMAP_ONE_LINE}}
-      </div>
-      <a href="https://data.blockmedia.co.kr/" target="_blank">
-        <img src="https://ceciliamyeong.github.io/bm/assets/topcoins_treemap_latest.png"
-             alt="Treemap" width="100%"
-             style="width:100%;max-width:100%;border:1px solid #c8d8f0;display:block;"/>
-      </a>
-      <div style="margin-top:5px;font-size:13px;color:#8a9abf;text-align:center;">{{DASHBOARD_PREVIEW_CAPTION}}</div>
-    </td>
-  </tr>
-  <tr>
-    <td class="ps" style="padding:0 24px 22px;">
-      <a href="https://data.blockmedia.co.kr/"
-         style="font-size:13px;font-weight:700;color:#1a56db;letter-spacing:0.06em;border-bottom:1px solid #c8d8f0;padding-bottom:1px;">
-        트리맵 전체 보기 →
-      </a>
-    </td>
-  </tr>
-
-  <tr><td><hr style="border:none;border-top:1px solid #dde6f4;margin:0;"/></td></tr>
-
-  <!-- ══ 6. 코생지 ══ -->
-  <tr>
-    <td class="ps" style="padding:18px 24px 8px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td style="font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#1a56db;">🔎 코생지</td>
-          <td align="right"><span style="font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#1a56db;border:1px solid #1a56db;padding:1px 6px;">Beta · 참고용</span></td>
-        </tr>
-      </table>
-      <div style="font-size:13px;color:#8a9abf;margin-top:5px;line-height:1.6;">과열 / 과매도 · 관심도 변화 요약 (투자 조언 아님)</div>
-    </td>
-  </tr>
-  <tr>
-    <td class="ps" style="padding:0 24px 22px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-        <thead>
-          <tr>
-            <td style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#1a56db;padding:8px 10px;border-bottom:2px solid #0a1628;">코인</td>
-            <td style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#1a56db;padding:8px 10px;border-bottom:2px solid #0a1628;">시그널</td>
-            <td align="right" style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#1a56db;padding:8px 10px;border-bottom:2px solid #0a1628;">메모</td>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td style="padding:9px 10px;font-size:13px;border-bottom:1px solid #dde6f4;"><b>{{AAS_COIN_1}}</b></td>
-            <td style="padding:9px 10px;font-size:13px;border-bottom:1px solid #dde6f4;"><span style="font-weight:900;color:{{AAS_COLOR_1}};">{{AAS_SIGNAL_1}}</span></td>
-            <td align="right" style="padding:9px 10px;font-size:13px;color:#8a9abf;border-bottom:1px solid #dde6f4;">{{AAS_NOTE_1}}</td>
-          </tr>
-          <tr style="background:#f0f5fc;">
-            <td style="padding:9px 10px;font-size:13px;border-bottom:1px solid #dde6f4;"><b>{{AAS_COIN_2}}</b></td>
-            <td style="padding:9px 10px;font-size:13px;border-bottom:1px solid #dde6f4;"><span style="font-weight:900;color:{{AAS_COLOR_2}};">{{AAS_SIGNAL_2}}</span></td>
-            <td align="right" style="padding:9px 10px;font-size:13px;color:#8a9abf;border-bottom:1px solid #dde6f4;">{{AAS_NOTE_2}}</td>
-          </tr>
-          <tr>
-            <td style="padding:9px 10px;font-size:13px;border-bottom:1px solid #dde6f4;"><b>{{AAS_COIN_3}}</b></td>
-            <td style="padding:9px 10px;font-size:13px;border-bottom:1px solid #dde6f4;"><span style="font-weight:900;color:{{AAS_COLOR_3}};">{{AAS_SIGNAL_3}}</span></td>
-            <td align="right" style="padding:9px 10px;font-size:13px;color:#8a9abf;border-bottom:1px solid #dde6f4;">{{AAS_NOTE_3}}</td>
-          </tr>
-        </tbody>
-      </table>
-      <div style="margin-top:6px;font-size:13px;color:#aaa;line-height:1.6;">* 수치는 자동 생성됩니다. 투자 판단 근거로 사용하지 마세요.</div>
-    </td>
-  </tr>
-
-  <tr><td><hr style="border:none;border-top:3px solid #0a1628;margin:0;"/></td></tr>
-
-  <!-- ══ 7. 뉴스 Top 3 ══ -->
-  <tr>
-    <td class="ps" style="padding:18px 24px 22px;">
-      <div style="font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#1a56db;margin-bottom:14px;line-height:1.4;">📰 Today's Top Stories</div>
-
-      <!-- 뉴스 1 -->
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #dde6f4;">
-        <tr>
-          <td style="vertical-align:top;">
-            <div style="font-size:9px;font-weight:700;color:#1a56db;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:5px;line-height:1.4;">
-              <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#c8d8f0;margin-right:8px;">01</span>{{NEWS1_CATEGORY}}
-            </div>
-            <div style="font-size:14px;font-weight:700;line-height:1.5;margin-bottom:5px;letter-spacing:-0.01em;">
-              <a href="{{NEWS1_LINK}}" style="color:#0a1628;text-decoration:none;">{{TOP_NEWS_1}}</a>
-            </div>
-            <div style="font-size:12px;color:#5a7a9a;line-height:1.6;margin-bottom:7px;">{{NEWS1_EXCERPT}}</div>
-            <a href="{{NEWS1_LINK}}" style="font-size:12px;font-weight:700;color:#1a56db;letter-spacing:0.05em;text-decoration:none;">기사 읽기 →</a>
-          </td>
-        </tr>
-      </table>
-
-      <!-- 뉴스 2 -->
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #dde6f4;">
-        <tr>
-          <td style="vertical-align:top;">
-            <div style="font-size:9px;font-weight:700;color:#1a56db;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:5px;line-height:1.4;">
-              <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#c8d8f0;margin-right:8px;">02</span>{{NEWS2_CATEGORY}}
-            </div>
-            <div style="font-size:14px;font-weight:700;line-height:1.5;margin-bottom:5px;letter-spacing:-0.01em;">
-              <a href="{{NEWS2_LINK}}" style="color:#0a1628;text-decoration:none;">{{TOP_NEWS_2}}</a>
-            </div>
-            <div style="font-size:12px;color:#5a7a9a;line-height:1.6;margin-bottom:7px;">{{NEWS2_EXCERPT}}</div>
-            <a href="{{NEWS2_LINK}}" style="font-size:12px;font-weight:700;color:#1a56db;letter-spacing:0.05em;text-decoration:none;">기사 읽기 →</a>
-          </td>
-        </tr>
-      </table>
-
-      <!-- 뉴스 3 -->
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td style="vertical-align:top;">
-            <div style="font-size:9px;font-weight:700;color:#1a56db;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:5px;line-height:1.4;">
-              <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#c8d8f0;margin-right:8px;">03</span>{{NEWS3_CATEGORY}}
-            </div>
-            <div style="font-size:14px;font-weight:700;line-height:1.5;margin-bottom:5px;letter-spacing:-0.01em;">
-              <a href="{{NEWS3_LINK}}" style="color:#0a1628;text-decoration:none;">{{TOP_NEWS_3}}</a>
-            </div>
-            <div style="font-size:12px;color:#5a7a9a;line-height:1.6;margin-bottom:7px;">{{NEWS3_EXCERPT}}</div>
-            <a href="{{NEWS3_LINK}}" style="font-size:12px;font-weight:700;color:#1a56db;letter-spacing:0.05em;text-decoration:none;">기사 읽기 →</a>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-
-  <tr><td><hr style="border:none;border-top:3px solid #0a1628;margin:0;"/></td></tr>
-
-  <!-- ══ CTA ══ -->
-  <tr>
-    <td class="ps" style="padding:18px 24px 22px;">
-      <a href="https://blockmedia.co.kr"
-         style="display:block;text-align:center;background:#1a56db;color:#fff;font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:14px;margin-bottom:8px;">
-        매일 인사이트 받기 →
-      </a>
-      <div style="font-size:0;line-height:0;">
-        <div style="display:inline-block;width:49%;padding-right:4px;box-sizing:border-box;">
-          <a href="https://blockmedia.co.kr"
-             style="display:block;text-align:center;background:#fff;color:#0a1628;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:10px;border:1px solid #1a56db;">
-            오늘 핵심 뉴스 →
-          </a>
-        </div><!--
-     --><div style="display:inline-block;width:49%;padding-left:4px;box-sizing:border-box;">
-          <a href="https://data.blockmedia.co.kr"
-             style="display:block;text-align:center;background:#fff;color:#0a1628;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:10px;border:1px solid #1a56db;">
-            데이터 대시보드 →
-          </a>
-        </div>
-      </div>
-    </td>
-  </tr>
-
-  <!-- ══ 광고 배너 ══ -->
-  <tr>
-    <td class="ps" style="padding:0 24px 18px;text-align:center;">
-      <div style="font-size:9px;font-weight:700;color:#aaa;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:6px;line-height:1.4;">Advertisement</div>
-      <a href="{{SPONSOR_CLICK_URL}}" target="_blank" style="display:block;">
-        <img src="{{SPONSOR_BANNER_URL}}" alt="Ad" width="100%"
-             style="width:100%;max-width:100%;height:72px;display:block;border:1px solid #c8d8f0;"/>
-      </a>
-    </td>
-  </tr>
-
-  <!-- ══ 푸터 ══ -->
-  <tr>
-    <td style="background:#0a1628;padding:18px 24px 22px;">
-      <p style="font-size:13px;color:#3a5a7a;text-align:center;line-height:1.8;margin:0 0 10px;">
-        본 메일은 구독 신청하셨던 독자님께 발송되었습니다.<br/>
-        수신을 원치 않으실 경우 아래 수신거부를 선택해 주세요.
-      </p>
-      <p style="text-align:center;margin:0 0 12px;">
-        <a href="{{UNSUB_URL}}" style="font-size:13px;color:#3a5a7a;text-decoration:underline;margin:0 7px;">수신거부</a>
-        <span style="color:#1e3a5f;">|</span>
-        <a href="https://blockmedia.co.kr" style="font-size:13px;color:#3a5a7a;text-decoration:underline;margin:0 7px;">블록미디어</a>
-        <span style="color:#1e3a5f;">|</span>
-        <a href="https://data.blockmedia.co.kr" style="font-size:13px;color:#3a5a7a;text-decoration:underline;margin:0 7px;">블록미디어데이터</a>
-        <span style="color:#1e3a5f;">|</span>
-        <a href="https://data.blockmedia.co.kr/etf.html" style="font-size:13px;color:#3a5a7a;text-decoration:underline;margin:0 7px;">ETF Flow</a>
-      </p>
-      <p style="text-align:center;margin:0 0 5px;">
-        <span style="font-family:'IBM Plex Sans',sans-serif;font-size:15px;font-weight:700;color:#5a8fd4;letter-spacing:0.04em;">BLOCKMEDIA</span>
-      </p>
-      <p style="font-size:13px;color:#2a4a6a;text-align:center;margin:0;letter-spacing:0.06em;">© 2026 블록미디어. All rights reserved.</p>
-    </td>
-  </tr>
-
-</table>
-</td></tr>
-</table>
 
 </body>
 </html>
