@@ -1015,6 +1015,7 @@ def build_placeholders() -> dict[str, str]:
         "{{KOSPI_1D}}": kospi_1d,
 
         # News
+        "{{LETTER_DATE}}": datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d"),
         "{{NEWS_HEADLINE}}": news_headline,
         "{{NEWS_ONE_LINER}}": news_one_liner,
         "{{NEWS_ONE_LINER_NOTE}}": news_one_liner_note,
