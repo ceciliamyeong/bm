@@ -413,6 +413,11 @@
     <div class="section-title">
       <span class="dot green"></span> Market Correlation
       <span class="sub">BTC·BM20 vs NASDAQ·KOSPI 상관관계</span>
+      <div class="toolbar">
+        <button class="btn" id="cmp60" onclick="setCmpPeriod(60)">60일</button>
+        <button class="btn active" id="cmp90" onclick="setCmpPeriod(90)">90일</button>
+        <button class="btn" id="cmpall" onclick="setCmpPeriod(0)">전체</button>
+      </div>
     </div>
     <div class="widgets">
       <div class="panel widget">
@@ -609,7 +614,7 @@
     return (b / a) - 1;
   }
 
-  let seriesChart, perfChart, moverChart, btcKospiChart, bm20KospiChart, btcNasdaqChart, bm20NasdaqChart;
+  let seriesChart, perfChart, moverChart, btcKospiChart, bm20KospiChart, btcNasdaqChart, bm20NasdaqChart, uniDonutChart;
   let SERIES = [], BTC_SERIES = [], NASDAQ_SERIES = [], KOSPI_SERIES = [];
 
   function initCharts(){
@@ -620,6 +625,7 @@
     bm20NasdaqChart = echarts.init(qs("#bm20NasdaqChart"));
     btcKospiChart   = echarts.init(qs("#btcKospiChart"));
     bm20KospiChart  = echarts.init(qs("#bm20KospiChart"));
+    uniDonutChart   = echarts.init(qs("#uniDonut"));
   }
 
   async function fetchJson(url){
@@ -689,7 +695,17 @@
     qs("#seriesStatus").textContent = `points: ${data.length}`;
   }
 
+  let currentCmpPeriod = 90;
+
+  function setCmpPeriod(days) {
+    currentCmpPeriod = days;
+    ['cmp60','cmp90','cmpall'].forEach(id => document.getElementById(id).classList.remove('active'));
+    document.getElementById(days === 0 ? 'cmpall' : 'cmp' + days).classList.add('active');
+    renderComparison();
+  }
+
   function renderComparison(){
+    const periodDays = currentCmpPeriod;
     const btcMap  = new Map(BTC_SERIES.map(d => [d.date, d.v]));
     const ndqMap  = new Map(NASDAQ_SERIES.map(d => [d.date, d.v]));
     const kspMap  = new Map(KOSPI_SERIES.map(d => [d.date, d.v]));
@@ -697,9 +713,10 @@
     const isNum   = x => typeof x === "number" && Number.isFinite(x);
 
     function alignedDatesWith(refMap){
-      return SERIES
+      const all = SERIES
         .map(d => d.date)
         .filter(dt => refMap.has(dt) && isNum(refMap.get(dt)) && bm20Map.has(dt) && isNum(bm20Map.get(dt)));
+      return periodDays > 0 ? all.slice(-periodDays) : all;
     }
     function seriesFromMap(dates, map){
       return dates.map(dt => { const v = map.get(dt); return isNum(v) ? Math.round(v) : null; });
@@ -829,14 +846,17 @@
 
     // Universe Table
     if(latest.components && latest.components.length) {
-      const KRW_LISTED = new Set(['BTC','ETH','XRP','BNB','SOL','ADA','DOGE','DOT','AVAX','MATIC','LINK','UNI','ATOM','LTC','ETC','TRX','BCH','NEAR','APT','OP','ARB','SUI','TON','FIL','HBAR']);
+      const KRW_LISTED = new Set(['BTC','ETH','XRP','BNB','SOL','ADA','DOGE','DOT','AVAX','MATIC','LINK','UNI','ATOM','LTC','ETC','TRX','BCH','NEAR','APT','OP','ARB','SUI','TON','FIL','HBAR','ICP','SHIB']);
+
+      const CORE  = new Set(['BTC','ETH']);
+      const FIVE  = new Set(['XRP','USDT','BNB']);
 
       const sorted = [...latest.components].sort((a,b) => b.weight - a.weight);
       const maxW = sorted[0]?.weight || 1;
 
-      function getGroup(sym, w) {
-        if (sym === 'BTC' || sym === 'ETH') return 'Core';
-        if (w >= 0.049) return '5% 그룹';
+      function getGroup(sym) {
+        if (CORE.has(sym)) return 'Core';
+        if (FIVE.has(sym)) return '5% 그룹';
         return 'Others';
       }
       const GROUP_STYLE = {
@@ -861,7 +881,7 @@
       qs('#uniTbody').innerHTML = sorted.map((c, i) => {
         const sym   = c.symbol;
         const w     = c.weight * 100;
-        const group = getGroup(sym, c.weight);
+        const group = getGroup(sym);
         const gStyle = GROUP_STYLE[group];
         const barColor = BAR_COLOR[group];
         const barPct = Math.round((c.weight / maxW) * 100);
