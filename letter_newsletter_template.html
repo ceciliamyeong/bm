@@ -29,6 +29,16 @@
       .pad { padding: 0 16px !important; }
       .stack { display: block !important; width: 100% !important; border: none !important; padding-left: 0 !important; padding-right: 0 !important; }
       .hide-mobile { display: none !important; }
+
+      /* 섹션 구분선 위아래 여백 확보 */
+      tr td .rule-thick { margin-top: 12px !important; margin-bottom: 12px !important; }
+      tr td .rule-thin  { margin-top: 10px !important; margin-bottom: 10px !important; }
+
+      /* 모든 섹션 td 상하 패딩 일괄 확대 */
+      table.wrap tr > td { padding-top: 20px !important; padding-bottom: 20px !important; }
+
+      /* section-label 위 여백 */
+      .section-label { margin-top: 4px !important; margin-bottom: 10px !important; }
     }
   </style>
 </head>
@@ -58,7 +68,7 @@
 
         
         <tr>
-          <td class="pad" style="padding: 36px 24px 0;">
+          <td class="pad" style="padding: 36px 24px 20px;">
             <div class="section-label">{{BM20_ASOF}} · Daily Letter</div>
             <div class="rule-thick"></div>
             <h1 style="font-size: 34px; font-weight: 900; line-height: 1.2; color: #0f172a; margin: 20px 0 14px; letter-spacing: -0.04em;">블록미디어 이메일,<br/>다시 시작합니다</h1>
@@ -70,9 +80,7 @@
         </tr>
 
         
-        <tr>
-          <td class="pad" style="padding: 0 24px 30px;">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f0f7ff; border-left: 4px solid #2563eb;">
+
               <tr>
                 <td style="padding: 16px 20px;">
                   <div style="font-size: 10px; font-weight: 800; color: #2563eb; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 8px;">💡 오늘의 한 줄</div>
@@ -115,7 +123,7 @@
 
         
         <tr>
-          <td class="pad" style="padding: 0 24px 12px;">
+          <td class="pad" style="padding: 20px 24px 12px;">
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
               <tr>
                 <td width="32.5%" class="card-dark" align="center" style="padding: 10px;">
@@ -221,7 +229,7 @@
 
         
         <tr>
-          <td class="pad" style="padding: 24px 24px 0;">
+          <td class="pad" style="padding: 24px 24px 24px;">
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
               <tr>
                 <td class="section-label">🇺🇸 US Crypto ETF Flow</td>
@@ -266,7 +274,7 @@
 
         
         <tr>
-          <td class="pad" style="padding: 24px 24px 0;">
+          <td class="pad" style="padding: 24px 24px 24px;">
             <div class="section-label">🌶️ Premium Comparison</div>
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top: 10px;">
               <tr>
@@ -351,7 +359,7 @@
 
         
         <tr>
-          <td class="pad" style="padding: 0 24px 30px;">
+          <td class="pad" style="padding: 20px 24px 30px;">
             <div class="section-label">📈 Upbit Movers (24h)</div>
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top: 10px;">
               <tr>
@@ -497,7 +505,7 @@
 
         
         <tr>
-          <td class="pad" style="padding: 0 24px 30px;">
+          <td class="pad" style="padding: 20px 24px 30px;">
             <a href="https://blockmedia.co.kr" style="display: block; background-color: #2563eb; color: #ffffff; text-align: center; padding: 16px; font-size: 14px; font-weight: 700; border-radius: 4px; letter-spacing: 0.05em; margin-bottom: 12px;">매일 아침 데이터 인사이트 받기 →</a>
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
               <tr>
@@ -515,7 +523,7 @@
 
         
         <tr>
-          <td class="pad" style="padding: 0 24px 40px; text-align: center;">
+          <td class="pad" style="padding: 20px 24px 40px; text-align: center;">
             <div style="font-size: 11px; font-weight: 700; color: #94a3b8; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 8px;">Advertisement</div>
             <a href="{{SPONSOR_CLICK_URL}}" target="_blank"><img src="{{SPONSOR_BANNER_URL}}" alt="Ad" width="100%" style="border: 1px solid #e2e8f0; border-radius: 4px; height: 80px; object-fit: cover;" /></a>
           </td>
