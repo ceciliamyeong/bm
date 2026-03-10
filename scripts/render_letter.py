@@ -286,37 +286,53 @@ def _strip_html(text: str) -> str:
 def fetch_wp_newsletter_lead() -> dict[str, str]:
     """
     태그 '뉴스레터-리드' (ID: 80405) 최신 포스트 1개에서
-    NEWS_HEADLINE, NEWS_ONE_LINER_NOTE 수집
+    NEWS_HEADLINE, NEWS_ONE_LINER_NOTE 수집.
+    없으면 '뉴스레터' (ID: 28978) 최신 1개로 fallback — 오류 없이 계속 진행.
     """
     FB = {
         "NEWS_HEADLINE": "—",
         "NEWS_ONE_LINER_NOTE": "—",
     }
-    try:
-        tag_id = WP_TAG_ID_NEWSLETTER_LEAD
 
-        res = requests.get(
-            f"{WP_BASE_URL}/posts",
-            params={"tags": tag_id, "per_page": 1, "orderby": "date", "status": "publish"},
-            timeout=10,
-        )
-        res.raise_for_status()
-        posts = res.json()
-
-        if not posts:
-            raise ValueError(f"'{WP_TAG_NEWSLETTER_LEAD}' 태그 발행 포스트가 없습니다. 발행 여부를 확인하세요.")
-
-        post = posts[0]
+    def _parse_post(post: dict) -> dict[str, str]:
         return {
             "NEWS_HEADLINE":       _strip_html(post["title"]["rendered"]),
             "NEWS_ONE_LINER_NOTE": _strip_html(post["content"]["rendered"]),
         }
-    except ValueError as e:
-        print(f"ERROR: {e}")
-        raise
+
+    # 1차: 뉴스레터-리드 시도
+    try:
+        res = requests.get(
+            f"{WP_BASE_URL}/posts",
+            params={"tags": WP_TAG_ID_NEWSLETTER_LEAD, "per_page": 1, "orderby": "date", "status": "publish"},
+            timeout=10,
+        )
+        res.raise_for_status()
+        posts = res.json()
+        if posts:
+            print("INFO: 뉴스레터-리드 포스트 사용")
+            return _parse_post(posts[0])
+        print("WARN: 뉴스레터-리드 포스트 없음 → 뉴스레터 최신 1개로 fallback")
     except Exception as e:
-        print(f"WARN: fetch_wp_newsletter_lead failed: {e}")
-        return FB
+        print(f"WARN: 뉴스레터-리드 fetch 실패: {e} → fallback 시도")
+
+    # 2차: 뉴스레터 최신 1개 fallback
+    try:
+        res = requests.get(
+            f"{WP_BASE_URL}/posts",
+            params={"tags": WP_TAG_ID_NEWSLETTER, "per_page": 1, "orderby": "date", "status": "publish"},
+            timeout=10,
+        )
+        res.raise_for_status()
+        posts = res.json()
+        if posts:
+            print("INFO: 뉴스레터 최신 1개로 헤드라인 대체")
+            return _parse_post(posts[0])
+        print("WARN: 뉴스레터 포스트도 없음 → 기본값 사용")
+    except Exception as e:
+        print(f"WARN: 뉴스레터 fallback fetch 실패: {e}")
+
+    return FB
 
 
 def fetch_wp_newsletter_news() -> list[dict[str, str]]:
