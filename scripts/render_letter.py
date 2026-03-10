@@ -56,6 +56,13 @@ NEWS_ONELINER_TXT = ROOT / "out/latest/news_one_liner.txt"
 NEWS_ONELINER_NOTE_TXT = ROOT / "out/latest/news_one_liner_note.txt"
 TOP_NEWS_JSON = ROOT / "out/latest/top_news_latest.json"
 
+# 워드프레스 설정
+WP_BASE_URL                 = "https://blockmedia.co.kr/wp-json/wp/v2"
+WP_TAG_NEWSLETTER           = "뉴스레터"       # ③ 왜 그랬어? — 기사 3개
+WP_TAG_NEWSLETTER_LEAD      = "뉴스레터-리드"  # ① 어제 시장 어땠어? — 편집자 헤드라인 1개
+WP_TAG_ID_NEWSLETTER        = 28978
+WP_TAG_ID_NEWSLETTER_LEAD   = 80405
+
 OUT = ROOT / "letter.html"
 
 GREEN = "#16a34a"
@@ -245,6 +252,116 @@ def fetch_premium_data(usdkrw: float | None) -> dict[str, str]:
     except Exception as e:
         print(f"WARN: Premium fetch failed: {e}")
         return FB
+
+
+
+# ─────────────────────────────────────────────────────────
+# 워드프레스 REST API: 태그 기반 뉴스 수집
+# ─────────────────────────────────────────────────────────
+
+def _wp_get_tag_id(tag_name: str) -> int | None:
+    """태그 이름으로 워드프레스 태그 ID 조회"""
+    try:
+        res = requests.get(
+            f"{WP_BASE_URL}/tags",
+            params={"search": tag_name, "per_page": 5},
+            timeout=10,
+        )
+        res.raise_for_status()
+        for t in res.json():
+            if t.get("name") == tag_name:
+                return int(t["id"])
+        print(f"WARN: WP tag '{tag_name}' not found")
+    except Exception as e:
+        print(f"WARN: WP tag lookup failed ({tag_name}): {e}")
+    return None
+
+
+def _strip_html(text: str) -> str:
+    """HTML 태그 제거 + 공백 정리"""
+    import re as _re
+    return _re.sub(r"<[^>]+>", "", text or "").strip()
+
+
+def fetch_wp_newsletter_lead() -> dict[str, str]:
+    """
+    태그 '뉴스레터-리드' (ID: 80405) 최신 포스트 1개에서
+    NEWS_HEADLINE, NEWS_ONE_LINER_NOTE 수집
+    """
+    FB = {
+        "NEWS_HEADLINE": "—",
+        "NEWS_ONE_LINER_NOTE": "—",
+    }
+    try:
+        tag_id = WP_TAG_ID_NEWSLETTER_LEAD
+
+        res = requests.get(
+            f"{WP_BASE_URL}/posts",
+            params={"tags": tag_id, "per_page": 1, "orderby": "date", "status": "publish"},
+            timeout=10,
+        )
+        res.raise_for_status()
+        posts = res.json()
+
+        if not posts:
+            raise ValueError(f"'{WP_TAG_NEWSLETTER_LEAD}' 태그 발행 포스트가 없습니다. 발행 여부를 확인하세요.")
+
+        post = posts[0]
+        return {
+            "NEWS_HEADLINE":       _strip_html(post["title"]["rendered"]),
+            "NEWS_ONE_LINER_NOTE": _strip_html(post["content"]["rendered"]),
+        }
+    except ValueError as e:
+        print(f"ERROR: {e}")
+        raise
+    except Exception as e:
+        print(f"WARN: fetch_wp_newsletter_lead failed: {e}")
+        return FB
+
+
+def fetch_wp_newsletter_news() -> list[dict[str, str]]:
+    """
+    태그 '뉴스레터' (ID: 28978) 최신 포스트 3개에서
+    title, excerpt, link, category 수집
+    """
+    empty = {"title": "—", "excerpt": "", "link": "#", "category": ""}
+    try:
+        tag_id = WP_TAG_ID_NEWSLETTER
+
+        res = requests.get(
+            f"{WP_BASE_URL}/posts",
+            params={"tags": tag_id, "per_page": 3, "orderby": "date", "status": "publish", "_embed": 1},
+            timeout=10,
+        )
+        res.raise_for_status()
+        posts = res.json()
+
+        if len(posts) < 3:
+            raise ValueError(f"'{WP_TAG_NEWSLETTER}' 태그 발행 포스트가 {len(posts)}개뿐입니다. 3개 필요.")
+
+        result = []
+        for post in posts[:3]:
+            # 카테고리명 추출 (_embed 사용)
+            try:
+                cats = post.get("_embedded", {}).get("wp:term", [[]])[0]
+                cat_name = cats[0]["name"] if cats else ""
+            except Exception:
+                cat_name = ""
+
+            result.append({
+                "title":    _strip_html(post["title"]["rendered"]),
+                "excerpt":  _strip_html(post["excerpt"]["rendered"]),
+                "link":     post.get("link", "#"),
+                "category": cat_name,
+            })
+        return result
+
+    except ValueError as e:
+        print(f"ERROR: {e}")
+        raise
+    except Exception as e:
+        print(f"WARN: fetch_wp_newsletter_news failed: {e}")
+        return [empty, empty, empty]
 
 def load_etf_summary() -> dict[str, str]:
     """data/etf_summary.json → ETF 플레이스홀더 딕셔너리"""
@@ -779,10 +896,13 @@ def build_placeholders() -> dict[str, str]:
     nasdaq_1d = load_index_series_1d(NASDAQ_JSON)
     kospi_1d  = load_index_series_1d(KOSPI_JSON)
 
-    # News
-    news_one_liner = load_text_first_line(NEWS_ONELINER_TXT)
-    news_one_liner_note = load_text_first_line(NEWS_ONELINER_NOTE_TXT)
-    news3 = load_top_news_3(TOP_NEWS_JSON)
+    # News — 워드프레스 REST API (태그 기반)
+    wp_lead = fetch_wp_newsletter_lead()
+    news_headline        = wp_lead["NEWS_HEADLINE"]
+    news_one_liner_note  = wp_lead["NEWS_ONE_LINER_NOTE"]
+    news_one_liner = load_text_first_line(NEWS_ONELINER_TXT)  # 기존 txt 파일 fallback 유지
+
+    news3 = fetch_wp_newsletter_news()
     top1, top2, top3 = news3[0], news3[1], news3[2]
 
     # Synth lines
@@ -875,6 +995,7 @@ def build_placeholders() -> dict[str, str]:
         "{{KOSPI_1D}}": kospi_1d,
 
         # News
+        "{{NEWS_HEADLINE}}": news_headline,
         "{{NEWS_ONE_LINER}}": news_one_liner,
         "{{NEWS_ONE_LINER_NOTE}}": news_one_liner_note,
         "{{TOP_NEWS_1}}": top1["title"],
