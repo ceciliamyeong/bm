@@ -472,6 +472,9 @@
       </span>
     </div>
 
+    <!-- 섹터 범례 (동적 비중 합산) -->
+    <div id="sectorLegend" style="margin-bottom:14px; border:1px solid var(--border); border-radius:8px; overflow:hidden; font-size:12px;"></div>
+
     <!-- 리밸런싱 예정 배너 -->
     <div style="
       display:flex; align-items:center; gap:10px;
@@ -882,6 +885,56 @@
         '밈':         '#db2777',
         'Others':     '#64748b',
       };
+
+      // 섹터 범례 렌더링
+      const SECTOR_ORDER = ['Core','L1','DeFi/인프라','결제','밈'];
+      const SECTOR_DOT_COLOR = {
+        'Core':       '#2563eb',
+        'L1':         '#7c3aed',
+        'DeFi/인프라': '#16a34a',
+        '결제':       '#ea580c',
+        '밈':         '#db2777',
+      };
+      const SECTOR_TEXT_COLOR = {
+        'Core':       '#1d4ed8',
+        'L1':         '#6d28d9',
+        'DeFi/인프라': '#15803d',
+        '결제':       '#c2410c',
+        '밈':         '#be185d',
+      };
+      const sectorMap = {};
+      sorted.forEach(c => {
+        const g = getGroup(c.symbol);
+        if(!sectorMap[g]) sectorMap[g] = { syms: [], weight: 0 };
+        sectorMap[g].syms.push(c.symbol);
+        sectorMap[g].weight += c.weight;
+      });
+      const legendRows = SECTOR_ORDER.filter(g => sectorMap[g]).map((g, i, arr) => {
+        const isLast = i === arr.length - 1;
+        const d = sectorMap[g];
+        return `<tr style="${isLast ? '' : 'border-bottom:1px solid var(--border);'}">
+          <td style="padding:7px 14px; font-weight:700; color:var(--text1); width:110px">${g}</td>
+          <td style="padding:7px 14px; width:80px; color:${SECTOR_TEXT_COLOR[g]}">
+            <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${SECTOR_DOT_COLOR[g]};margin-right:5px;vertical-align:middle"></span>${
+              g==='Core'?'파랑':g==='L1'?'보라':g==='DeFi/인프라'?'초록':g==='결제'?'주황':'핑크'
+            }
+          </td>
+          <td style="padding:7px 14px; color:var(--text1)">${d.syms.join(', ')}</td>
+          <td style="padding:7px 14px; text-align:right; font-weight:700; color:var(--text1); width:70px">${(d.weight*100).toFixed(1)}%</td>
+        </tr>`;
+      }).join('');
+      qs('#sectorLegend').innerHTML = `
+        <table style="width:100%; border-collapse:collapse; font-size:12px;">
+          <thead>
+            <tr style="background:var(--bg3); border-bottom:1px solid var(--border);">
+              <th style="padding:7px 14px; font-weight:600; color:var(--text2); text-align:left">섹터</th>
+              <th style="padding:7px 14px; font-weight:600; color:var(--text2); text-align:left">색상</th>
+              <th style="padding:7px 14px; font-weight:600; color:var(--text2); text-align:left">종목</th>
+              <th style="padding:7px 14px; font-weight:600; color:var(--text2); text-align:right">비중</th>
+            </tr>
+          </thead>
+          <tbody>${legendRows}</tbody>
+        </table>`;
 
       // KPI 요약
       const top3Sum = sorted.slice(0,3).reduce((s,c) => s + c.weight, 0);
