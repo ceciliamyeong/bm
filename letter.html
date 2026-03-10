@@ -29,6 +29,16 @@
       .pad { padding: 0 16px !important; }
       .stack { display: block !important; width: 100% !important; border: none !important; padding-left: 0 !important; padding-right: 0 !important; }
       .hide-mobile { display: none !important; }
+
+      /* 섹션 구분선 위아래 여백 확보 */
+      tr td .rule-thick { margin-top: 12px !important; margin-bottom: 12px !important; }
+      tr td .rule-thin  { margin-top: 10px !important; margin-bottom: 10px !important; }
+
+      /* 모든 섹션 td 상하 패딩 일괄 확대 */
+      table.wrap tr > td { padding-top: 20px !important; padding-bottom: 20px !important; }
+
+      /* section-label 위 여백 */
+      .section-label { margin-top: 4px !important; margin-bottom: 10px !important; }
     }
   </style>
 </head>
@@ -58,21 +68,19 @@
 
         
         <tr>
-          <td class="pad" style="padding: 36px 24px 0;">
+          <td class="pad" style="padding: 36px 24px 20px;">
             <div class="section-label">2026-03-10 · Daily Letter</div>
             <div class="rule-thick"></div>
             <h1 style="font-size: 34px; font-weight: 900; line-height: 1.2; color: #0f172a; margin: 20px 0 14px; letter-spacing: -0.04em;">블록미디어 이메일,<br/>다시 시작합니다</h1>
             <div class="rule-thin"></div>
             <p style="font-size: 15px; line-height: 1.85; color: #334155; margin: 20px 0; letter-spacing: -0.02em;">
-              안녕하세요, 블록미디어입니다. 지난 1년여간 단순한 뉴스 전달을 넘어 <b style="color:#2563eb;">데이터 중심의 인사이트</b>를 구축하는 데 집중해 왔습니다. 그 결과물을 오늘, <b style="color:#2563eb;">구독자님께 가장 먼저</b> 공개합니다.
+              안녕하세요, 블록미디어는 지난 1년간 돈이 되는 <b style="color:#2563eb;">데이터와 인사이트를</b> 구축하는 데 집중해 왔습니다. 그 결과물을 오늘, <b style="color:#2563eb;">구독자님께 가장 먼저</b> 공개합니다.
             </p>
           </td>
         </tr>
 
         
-        <tr>
-          <td class="pad" style="padding: 0 24px 30px;">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f0f7ff; border-left: 4px solid #2563eb;">
+
               <tr>
                 <td style="padding: 16px 20px;">
                   <div style="font-size: 10px; font-weight: 800; color: #2563eb; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 8px;">💡 오늘의 한 줄</div>
@@ -115,7 +123,7 @@
 
         
         <tr>
-          <td class="pad" style="padding: 0 24px 12px;">
+          <td class="pad" style="padding: 20px 24px 12px;">
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
               <tr>
                 <td width="32.5%" class="card-dark" align="center" style="padding: 10px;">
@@ -221,7 +229,7 @@
 
         
         <tr>
-          <td class="pad" style="padding: 24px 24px 0;">
+          <td class="pad" style="padding: 24px 24px 24px;">
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
               <tr>
                 <td class="section-label">🇺🇸 US Crypto ETF Flow</td>
@@ -266,13 +274,13 @@
 
         
         <tr>
-          <td class="pad" style="padding: 24px 24px 0;">
+          <td class="pad" style="padding: 24px 24px 24px;">
             <div class="section-label">🌶️ Premium Comparison</div>
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top: 10px;">
               <tr>
                 <td width="49%" class="card-dark" style="padding: 18px 16px; border-top: 4px solid #ff6b35;">
                   <div style="font-size: 11px; color: #ff9d80; font-weight: 700; margin-bottom: 6px;">🌶️ KIMCHI PREMIUM</div>
-                  <div class="mono" style="font-size: 24px; font-weight: 700; color: #dc2626;"><span style="color:#dc2626;font-weight:900;">▼0.13%</span></div>
+                  <div class="mono" style="font-size: 24px; font-weight: 700; color: #dc2626;"><span style="color:#dc2626;font-weight:900;">▼0.18%</span></div>
                   <div style="font-size: 10px; color: #cbd5e1; margin-top: 5px;">Upbit vs Global</div>
                 </td>
                 <td width="2%"></td>
@@ -301,12 +309,12 @@
                     </svg>
                     <span style="font-size: 11px; color: #93c5fd; font-weight: 700; margin-left: 6px; vertical-align: middle; letter-spacing: 0.06em;">COINBASE PREMIUM</span>
                   </div>
-                  <div class="mono" style="font-size: 24px; font-weight: 700; color: #dc2626;"><span style="color:#dc2626;font-weight:900;">▼0.15%</span></div>
+                  <div class="mono" style="font-size: 24px; font-weight: 700; color: #dc2626;"><span style="color:#dc2626;font-weight:900;">▼0.20%</span></div>
                   <div style="font-size: 10px; color: #cbd5e1; margin-top: 5px;">Coinbase vs Binance</div>
                 </td>
               </tr>
             </table>
-            <div style="font-size: 13px; line-height: 1.75; color: #334155; padding: 12px 16px; background-color: #f8fafc; margin: 12px 0 24px; border-radius: 4px;">김치 -0.13% / 코인베이스 -0.15% — 중립 구간.</div>
+            <div style="font-size: 13px; line-height: 1.75; color: #334155; padding: 12px 16px; background-color: #f8fafc; margin: 12px 0 24px; border-radius: 4px;">김치 -0.18% / 코인베이스 -0.20% — 중립 구간.</div>
           </td>
         </tr>
 
@@ -351,25 +359,25 @@
 
         
         <tr>
-          <td class="pad" style="padding: 0 24px 30px;">
+          <td class="pad" style="padding: 20px 24px 30px;">
             <div class="section-label">📈 Upbit Movers (24h)</div>
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top: 10px;">
               <tr>
                 <td width="49%" class="card-light" valign="top" style="padding: 14px;">
                   <div style="font-size: 10px; font-weight: 700; color: #16a34a; margin-bottom: 8px; text-transform: uppercase;">▲ Top 3</div>
                   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="font-size: 13px;">
+                    <tr><td style="font-weight:700; padding:6px 0; border-bottom:1px solid #f1f5f9;">FLOW</td><td align="right" class="mono" style="font-weight:700; color:#16a34a;">+12.8%</td></tr>
                     <tr><td style="font-weight:700; padding:6px 0; border-bottom:1px solid #f1f5f9;">EDGE</td><td align="right" class="mono" style="font-weight:700; color:#16a34a;">+10.3%</td></tr>
-                    <tr><td style="font-weight:700; padding:6px 0; border-bottom:1px solid #f1f5f9;">WAXP</td><td align="right" class="mono" style="font-weight:700; color:#16a34a;">+6.9%</td></tr>
-                    <tr><td style="font-weight:700; padding:6px 0;">SXP</td><td align="right" class="mono" style="font-weight:700; color:#16a34a;">+6.2%</td></tr>
+                    <tr><td style="font-weight:700; padding:6px 0;">SXP</td><td align="right" class="mono" style="font-weight:700; color:#16a34a;">+5.9%</td></tr>
                   </table>
                 </td>
                 <td width="2%"></td>
                 <td width="49%" class="card-light" valign="top" style="padding: 14px;">
                   <div style="font-size: 10px; font-weight: 700; color: #dc2626; margin-bottom: 8px; text-transform: uppercase;">▼ Bottom 3</div>
                   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="font-size: 13px;">
-                    <tr><td style="font-weight:700; padding:6px 0; border-bottom:1px solid #f1f5f9;">STEEM</td><td align="right" class="mono" style="font-weight:700; color:#dc2626;">-2.3%</td></tr>
-                    <tr><td style="font-weight:700; padding:6px 0; border-bottom:1px solid #f1f5f9;">ORBS</td><td align="right" class="mono" style="font-weight:700; color:#dc2626;">-2.0%</td></tr>
-                    <tr><td style="font-weight:700; padding:6px 0;">BARD</td><td align="right" class="mono" style="font-weight:700; color:#dc2626;">-1.6%</td></tr>
+                    <tr><td style="font-weight:700; padding:6px 0; border-bottom:1px solid #f1f5f9;">SAHARA</td><td align="right" class="mono" style="font-weight:700; color:#dc2626;">-3.1%</td></tr>
+                    <tr><td style="font-weight:700; padding:6px 0; border-bottom:1px solid #f1f5f9;">ORBS</td><td align="right" class="mono" style="font-weight:700; color:#dc2626;">-2.7%</td></tr>
+                    <tr><td style="font-weight:700; padding:6px 0;">STEEM</td><td align="right" class="mono" style="font-weight:700; color:#dc2626;">-2.5%</td></tr>
                   </table>
                 </td>
               </tr>
@@ -497,7 +505,7 @@
 
         
         <tr>
-          <td class="pad" style="padding: 0 24px 30px;">
+          <td class="pad" style="padding: 20px 24px 30px;">
             <a href="https://blockmedia.co.kr" style="display: block; background-color: #2563eb; color: #ffffff; text-align: center; padding: 16px; font-size: 14px; font-weight: 700; border-radius: 4px; letter-spacing: 0.05em; margin-bottom: 12px;">매일 아침 데이터 인사이트 받기 →</a>
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
               <tr>
@@ -515,7 +523,7 @@
 
         
         <tr>
-          <td class="pad" style="padding: 0 24px 40px; text-align: center;">
+          <td class="pad" style="padding: 20px 24px 40px; text-align: center;">
             <div style="font-size: 11px; font-weight: 700; color: #94a3b8; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 8px;">Advertisement</div>
             <a href="https://www.jpmorgan.com" target="_blank"><img src="https://data.blockmedia.co.kr/assets/banner_jpm.png" alt="Ad" width="100%" style="border: 1px solid #e2e8f0; border-radius: 4px; height: 80px; object-fit: cover;" /></a>
           </td>
