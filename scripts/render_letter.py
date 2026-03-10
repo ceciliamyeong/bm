@@ -38,7 +38,7 @@ from datetime import datetime, timezone, timedelta
 
 ROOT = Path(__file__).resolve().parent.parent
 
-TEMPLATE = ROOT / "letter_newsletter_template_v2.html"  # 블록미디어 공식 뉴스레터 템플릿
+TEMPLATE = ROOT / "letter_newsletter_template.html"  # 블록미디어 공식 뉴스레터 템플릿
 
 BM20_JSON = ROOT / "bm20_latest.json"
 DAILY_CSV = ROOT / "bm20_daily_data_latest.csv"
