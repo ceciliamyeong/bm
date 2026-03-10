@@ -520,7 +520,7 @@
       </div>
 
       <div style="padding:10px 14px; font-size:11px; color:var(--text2); border-top:1px solid var(--border)">
-        * KRW 상장(업비트·빗썸·코인원) 종목은 ×1.3 보정 후 상한 적용. 비중은 룰 기반 확정값.
+        * KRW 상장: 업비트·빗썸·코인원 기준.
       </div>
     </div>
   </section>
@@ -713,10 +713,10 @@
     const bm20Map = new Map(SERIES.map(d => [d.date, d.v]));
     const isNum   = x => typeof x === "number" && Number.isFinite(x);
 
-    function alignedDatesWith(refMap){
-      const all = [...refMap.keys()]
-        .filter(dt => isNum(refMap.get(dt)))
-        .sort();
+    function alignedDatesWith(refMap, extraMap){
+      const refKeys = [...refMap.keys()].filter(dt => isNum(refMap.get(dt)));
+      const extraKeys = extraMap ? [...extraMap.keys()].filter(dt => isNum(extraMap.get(dt))) : [];
+      const all = [...new Set([...refKeys, ...extraKeys])].sort();
       return periodDays > 0 ? all.slice(-periodDays) : all;
     }
     function seriesFromMap(dates, map){
@@ -753,7 +753,7 @@
       ], legend: { bottom: 0, textStyle: { color: '#94a3b8' } } }, true); }
 
     // BM20 vs NASDAQ
-    { const dates = alignedDatesWith(ndqMap);
+    { const dates = alignedDatesWith(ndqMap, bm20Map);
       bm20NasdaqChart.setOption({ ...commonOpt, xAxis: { ...commonOpt.xAxis, data: dates }, yAxis: yAxisPair, series: [
         { name: 'BM20',   type: 'line', data: seriesFromMap(dates, bm20Map), showSymbol: false, connectNulls: true, lineStyle: { color: '#7c3aed', width: 2 }, itemStyle: { color: '#7c3aed' } },
         { name: 'NASDAQ', type: 'line', data: seriesFromMap(dates, ndqMap),  yAxisIndex: 1, showSymbol: false, connectNulls: true, lineStyle: { color: '#2563eb', width: 2 }, itemStyle: { color: '#2563eb' } }
@@ -767,7 +767,7 @@
       ], legend: { bottom: 0, textStyle: { color: '#94a3b8' } } }, true); }
 
     // BM20 vs KOSPI
-    { const dates = alignedDatesWith(kspMap);
+    { const dates = alignedDatesWith(kspMap, bm20Map);
       bm20KospiChart.setOption({ ...commonOpt, xAxis: { ...commonOpt.xAxis, data: dates }, yAxis: yAxisPair, series: [
         { name: 'BM20',  type: 'line', data: seriesFromMap(dates, bm20Map), showSymbol: false, connectNulls: true, lineStyle: { color: '#7c3aed', width: 2 }, itemStyle: { color: '#7c3aed' } },
         { name: 'KOSPI', type: 'line', data: seriesFromMap(dates, kspMap),  yAxisIndex: 1, showSymbol: false, connectNulls: true, lineStyle: { color: '#16a34a', width: 2 }, itemStyle: { color: '#16a34a' } }
@@ -847,7 +847,7 @@
     // Universe Table — bm20_universe.json에서 별도 fetch
     const universe = await fetchJson("bm20_universe.json");
     if(universe && universe.components && universe.components.length) {
-      const KRW_LISTED = new Set(['BTC','ETH','XRP','SOL','ADA','DOGE','DOT','AVAX','MATIC','LINK','UNI','ATOM','LTC','ETC','TRX','BCH','NEAR','APT','OP','ARB','SUI','TON','FIL','HBAR','ICP','SHIB']);
+      const KRW_LISTED = new Set(['BTC','ETH','XRP','USDT','SOL','ADA','DOGE','DOT','AVAX','MATIC','LINK','UNI','ATOM','LTC','ETC','TRX','BCH','NEAR','APT','OP','ARB','SUI','TON','FIL','HBAR','ICP','SHIB']);
 
       const CORE  = new Set(['BTC','ETH']);
       const L1    = new Set(['SOL','ADA','AVAX','TON','NEAR','ICP','DOT']);
