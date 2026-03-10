@@ -714,9 +714,9 @@
     const isNum   = x => typeof x === "number" && Number.isFinite(x);
 
     function alignedDatesWith(refMap){
-      const all = SERIES
-        .map(d => d.date)
-        .filter(dt => refMap.has(dt) && isNum(refMap.get(dt)) && bm20Map.has(dt) && isNum(bm20Map.get(dt)));
+      const all = [...refMap.keys()]
+        .filter(dt => isNum(refMap.get(dt)))
+        .sort();
       return periodDays > 0 ? all.slice(-periodDays) : all;
     }
     function seriesFromMap(dates, map){
@@ -741,7 +741,7 @@
     };
 
     const yAxisPair = [
-      { type: 'value', ...DARK_YAXIS, axisLabel: { ...DARK_YAXIS.axisLabel, formatter: v => Math.round(v).toLocaleString() } },
+      { type: 'value', scale: true, ...DARK_YAXIS, axisLabel: { ...DARK_YAXIS.axisLabel, formatter: v => Math.round(v).toLocaleString() } },
       { type: 'value', position: 'right', scale: true, ...DARK_YAXIS, axisLabel: { ...DARK_YAXIS.axisLabel, formatter: v => Math.round(v).toLocaleString() }, splitLine: { show: false } }
     ];
 
@@ -850,25 +850,37 @@
       const KRW_LISTED = new Set(['BTC','ETH','XRP','SOL','ADA','DOGE','DOT','AVAX','MATIC','LINK','UNI','ATOM','LTC','ETC','TRX','BCH','NEAR','APT','OP','ARB','SUI','TON','FIL','HBAR','ICP','SHIB']);
 
       const CORE  = new Set(['BTC','ETH']);
-      const FIVE  = new Set(['XRP','USDT','BNB']);
+      const L1    = new Set(['SOL','ADA','AVAX','TON','NEAR','ICP','DOT']);
+      const DEFI  = new Set(['BNB','LINK','ATOM','ARB','OP']);
+      const PAY   = new Set(['XRP','LTC','TRX','USDT']);
+      const MEME  = new Set(['DOGE','SHIB']);
 
       const sorted = [...universe.components].sort((a,b) => b.weight - a.weight);
       const maxW = sorted[0]?.weight || 1;
 
       function getGroup(sym) {
-        if (CORE.has(sym)) return 'Core';
-        if (FIVE.has(sym)) return '5% 그룹';
+        if (CORE.has(sym))  return 'Core';
+        if (L1.has(sym))    return 'L1';
+        if (DEFI.has(sym))  return 'DeFi/인프라';
+        if (PAY.has(sym))   return '결제';
+        if (MEME.has(sym))  return '밈';
         return 'Others';
       }
       const GROUP_STYLE = {
-        'Core':    'background:rgba(37,99,235,0.08);color:#1d4ed8',
-        '5% 그룹': 'background:rgba(22,163,74,0.08);color:#15803d',
-        'Others':  'background:rgba(234,88,12,0.08);color:#c2410c',
+        'Core':       'background:rgba(37,99,235,0.08);color:#1d4ed8',
+        'L1':         'background:rgba(124,58,237,0.08);color:#6d28d9',
+        'DeFi/인프라': 'background:rgba(22,163,74,0.08);color:#15803d',
+        '결제':       'background:rgba(234,88,12,0.08);color:#c2410c',
+        '밈':         'background:rgba(219,39,119,0.08);color:#be185d',
+        'Others':     'background:rgba(100,116,139,0.08);color:#475569',
       };
       const BAR_COLOR = {
-        'Core':    '#2563eb',
-        '5% 그룹': '#16a34a',
-        'Others':  '#ea580c',
+        'Core':       '#2563eb',
+        'L1':         '#7c3aed',
+        'DeFi/인프라': '#16a34a',
+        '결제':       '#ea580c',
+        '밈':         '#db2777',
+        'Others':     '#64748b',
       };
 
       // KPI 요약
