@@ -359,15 +359,30 @@ def load_text_first_line(p: Path) -> str:
         return "—"
     return (s.splitlines()[0].strip() or "—")
 
-def load_top_news_3(p: Path) -> tuple[str, str, str]:
+def load_top_news_3(p: Path):
+    """Returns list of 3 dicts: {title, excerpt, link, category}"""
+    empty = {"title": "—", "excerpt": "", "link": "#", "category": ""}
     if not p.exists():
-        return ("—", "—", "—")
-    obj = json.loads(p.read_text(encoding="utf-8"))
-    items = obj.get("items", []) if isinstance(obj, dict) else (obj or [])
-    items = [str(x).strip() for x in items if str(x).strip()]
-    while len(items) < 3:
-        items.append("—")
-    return (items[0], items[1], items[2])
+        return [empty, empty, empty]
+    try:
+        obj = json.loads(p.read_text(encoding="utf-8"))
+        items = obj.get("items", []) if isinstance(obj, dict) else (obj or [])
+        result = []
+        for x in items[:3]:
+            if isinstance(x, dict):
+                result.append({
+                    "title":    x.get("title", "—") or "—",
+                    "excerpt":  x.get("excerpt", "") or "",
+                    "link":     x.get("link", "#") or "#",
+                    "category": x.get("category", "") or "",
+                })
+            elif isinstance(x, str) and x.strip():
+                result.append({**empty, "title": x.strip()})
+        while len(result) < 3:
+            result.append(empty)
+        return result
+    except Exception:
+        return [empty, empty, empty]
 
 # ------------------ formatting helpers ------------------
 
@@ -767,7 +782,8 @@ def build_placeholders() -> dict[str, str]:
     # News
     news_one_liner = load_text_first_line(NEWS_ONELINER_TXT)
     news_one_liner_note = load_text_first_line(NEWS_ONELINER_NOTE_TXT)
-    top1, top2, top3 = load_top_news_3(TOP_NEWS_JSON)
+    news3 = load_top_news_3(TOP_NEWS_JSON)
+    top1, top2, top3 = news3[0], news3[1], news3[2]
 
     # Synth lines
     market_one_line = synth_market_one_line(direction, breadth, krw_total_txt, kimchi_html)
@@ -861,9 +877,18 @@ def build_placeholders() -> dict[str, str]:
         # News
         "{{NEWS_ONE_LINER}}": news_one_liner,
         "{{NEWS_ONE_LINER_NOTE}}": news_one_liner_note,
-        "{{TOP_NEWS_1}}": top1,
-        "{{TOP_NEWS_2}}": top2,
-        "{{TOP_NEWS_3}}": top3,
+        "{{TOP_NEWS_1}}": top1["title"],
+        "{{TOP_NEWS_2}}": top2["title"],
+        "{{TOP_NEWS_3}}": top3["title"],
+        "{{NEWS1_EXCERPT}}":  top1["excerpt"],
+        "{{NEWS2_EXCERPT}}":  top2["excerpt"],
+        "{{NEWS3_EXCERPT}}":  top3["excerpt"],
+        "{{NEWS1_LINK}}":     top1["link"],
+        "{{NEWS2_LINK}}":     top2["link"],
+        "{{NEWS3_LINK}}":     top3["link"],
+        "{{NEWS1_CATEGORY}}": top1["category"],
+        "{{NEWS2_CATEGORY}}": top2["category"],
+        "{{NEWS3_CATEGORY}}": top3["category"],
 
         # Sponsor
         "{{SPONSOR_CLICK_URL}}": sponsor_click,
