@@ -213,46 +213,19 @@ def fetch_premium_data(usdkrw: float | None) -> dict[str, str]:
     FB = {"KIMCHI_PREM_PCT": "—", "CB_PREMIUM_PCT": "—",
           "PREMIUM_COMMENT": "프리미엄 데이터를 가져올 수 없습니다."}
     try:
-        import yfinance as yf
-
-        # 업비트 KRW-BTC 실시간
         upbit_btc_krw = float(
             requests.get("https://api.upbit.com/v1/ticker",
                          params={"markets":"KRW-BTC"}, timeout=10).json()[0]["trade_price"])
-
-        # 글로벌 BTC 기준: 바이낸스 실시간 (smart_kimchi_8h.py, bm20_daily.py 와 동일 기준)
-        btc_usd = None
-        for binance_base in ["https://api.binance.com", "https://data-api.binance.vision"]:
-            try:
-                btc_usd = float(
-                    requests.get(f"{binance_base}/api/v3/ticker/price",
-                                 params={"symbol": "BTCUSDT"}, timeout=10).json()["price"])
-                break
-            except Exception:
-                continue
-        if btc_usd is None:
-            # 바이낸스 실패 시 yfinance 폴백
-            btc_usd = float(yf.Ticker("BTC-USD").fast_info.last_price)
-
-        # 환율: yfinance 1순위 (순수 외환시장, GitHub Actions 안정적)
-        fx = None
-        try:
-            h = yf.Ticker("USDKRW=X").history(period="2d")["Close"].dropna()
-            rate = float(h.iloc[-1])
-            if 900 <= rate <= 2000:
-                fx = rate
-        except Exception:
-            pass
-        if fx is None:
-            fx = usdkrw if (usdkrw and 900 <= usdkrw <= 2000) else 1450.0
-
-        # 코인베이스 프리미엄 (업비트 vs 코인베이스)
+        # Yahoo Finance로 BTC USD 기준가 조회
+        import yfinance as yf
+        yf_btc = yf.Ticker("BTC-USD").fast_info
+        cg_usd = float(yf_btc.last_price)
+        fx = usdkrw if (usdkrw and usdkrw > 100) else 1350.0  # 환율 힌트 없으면 하드코딩 폴백
         cb_usd = float(
             requests.get("https://api.coinbase.com/v2/prices/BTC-USD/spot", timeout=10).json()["data"]["amount"])
-
         upbit_usd  = upbit_btc_krw / fx
-        kimchi_pct = (upbit_usd - btc_usd) / btc_usd * 100
-        cb_pct     = (upbit_usd - cb_usd)  / cb_usd  * 100
+        kimchi_pct = (upbit_usd - cg_usd)  / cg_usd  * 100
+        cb_pct     = (upbit_usd - cb_usd)   / cb_usd  * 100
 
         def _c(v: float) -> str:
             arrow = "▲" if v >= 0 else "▼"
@@ -386,40 +359,15 @@ def load_text_first_line(p: Path) -> str:
         return "—"
     return (s.splitlines()[0].strip() or "—")
 
-def _empty_news() -> dict:
-    return {"title": "—", "excerpt": "", "link": "", "category": "", "thumbnail": ""}
-
-def load_top_news_3(p: Path) -> tuple[str, dict, dict, dict]:
-    """
-    top_news_latest.json 로드.
-    반환: (today_quote, n1, n2, n3)
-      - today_quote: 오늘의 한 줄 (본문 없는 글의 제목)
-      - n1~n3: 뉴스 기사 dict {title, excerpt, link, category, thumbnail}
-    """
+def load_top_news_3(p: Path) -> tuple[str, str, str]:
     if not p.exists():
-        return ("", _empty_news(), _empty_news(), _empty_news())
-    try:
-        obj = json.loads(p.read_text(encoding="utf-8"))
-        today_quote = (obj.get("today_quote") or "").strip()
-        items = obj.get("items", []) if isinstance(obj, dict) else []
-        result = []
-        for item in items[:3]:
-            if isinstance(item, dict):
-                result.append({
-                    "title":     (item.get("title") or "—").strip(),
-                    "excerpt":   (item.get("excerpt") or "").strip(),
-                    "link":      (item.get("link") or "").strip(),
-                    "category":  (item.get("category") or "").strip(),
-                    "thumbnail": (item.get("thumbnail") or "").strip(),
-                })
-            else:
-                result.append(_empty_news())
-        while len(result) < 3:
-            result.append(_empty_news())
-        return (today_quote, result[0], result[1], result[2])
-    except Exception as e:
-        print(f"WARN: load_top_news_3 failed: {e}")
-        return ("", _empty_news(), _empty_news(), _empty_news())
+        return ("—", "—", "—")
+    obj = json.loads(p.read_text(encoding="utf-8"))
+    items = obj.get("items", []) if isinstance(obj, dict) else (obj or [])
+    items = [str(x).strip() for x in items if str(x).strip()]
+    while len(items) < 3:
+        items.append("—")
+    return (items[0], items[1], items[2])
 
 # ------------------ formatting helpers ------------------
 
@@ -431,8 +379,9 @@ def fmt_num(x: float, digits: int = 2) -> str:
 
 def fmt_share_pct(x: float) -> str:
     x = float(x)
-    # accept ratio or pct
-    if abs(x) <= 1.5:
+    # 0~1 비율로 들어오면 100 곱하기 (0.016 같은 경우)
+    # 1~100 범위면 이미 % 단위
+    if abs(x) < 1.0:
         x *= 100.0
     return f"{x:.1f}%"
 
@@ -783,7 +732,10 @@ def build_placeholders() -> dict[str, str]:
             # 이미지 11행의 'k_share_percent' 사용
             v_global = latest_entry.get("k_market", {}).get("k_share_percent")
             if v_global is not None:
-                kr_share_global = fmt_share_pct(float(v_global))
+                v_g = float(v_global)
+                if v_g > 100:   # 이미 % 단위인데 100배가 들어온 경우 (예: 14800 → 148.0%)
+                    v_g /= 100
+                kr_share_global = fmt_share_pct(v_g)
         except Exception:
             pass
 
@@ -815,36 +767,14 @@ def build_placeholders() -> dict[str, str]:
     # News
     news_one_liner = load_text_first_line(NEWS_ONELINER_TXT)
     news_one_liner_note = load_text_first_line(NEWS_ONELINER_NOTE_TXT)
-    today_quote, n1, n2, n3 = load_top_news_3(TOP_NEWS_JSON)
-
-    # today_quote가 있으면 news_one_liner 덮어쓰기
-    if today_quote:
-        news_one_liner = today_quote
-
-    def _thumb_html(url: str, alt: str) -> str:
-        if not url:
-            return ""
-        safe_alt = alt.replace('"', '&quot;')
-        return (
-            f'<img src="{url}" alt="{safe_alt}" width="60" height="60" '
-            f'style="display:block;width:60px;height:60px;object-fit:cover;'
-            f'border-radius:4px;flex-shrink:0;" />'
-        )
-
-    def _link_btn(url: str) -> str:
-        if not url:
-            return ""
-        return (
-            f'<a href="{url}" style="font-size:12px;font-weight:700;color:#1a56db;'
-            f'letter-spacing:0.05em;text-decoration:none;">기사 읽기 →</a>'
-        )
+    top1, top2, top3 = load_top_news_3(TOP_NEWS_JSON)
 
     # Synth lines
     market_one_line = synth_market_one_line(direction, breadth, krw_total_txt, kimchi_html)
     treemap_one_line = synth_treemap_one_line(best3, worst3)
 
     # Sponsor defaults (minimal + safe)
-    sponsor_click = "https://blockmedia.co.kr/kr"
+    sponsor_click = "https://www.jpmorgan.com"
     sponsor_banner = "https://data.blockmedia.co.kr/assets/banner_jpm.png"
     sponsor_copy = ""
 
@@ -931,18 +861,9 @@ def build_placeholders() -> dict[str, str]:
         # News
         "{{NEWS_ONE_LINER}}": news_one_liner,
         "{{NEWS_ONE_LINER_NOTE}}": news_one_liner_note,
-        "{{TOP_NEWS_1}}":      n1["title"],
-        "{{TOP_NEWS_2}}":      n2["title"],
-        "{{TOP_NEWS_3}}":      n3["title"],
-        "{{NEWS1_CATEGORY}}":  n1["category"],
-        "{{NEWS2_CATEGORY}}":  n2["category"],
-        "{{NEWS3_CATEGORY}}":  n3["category"],
-        "{{NEWS1_EXCERPT}}":   n1["excerpt"],
-        "{{NEWS2_EXCERPT}}":   n2["excerpt"],
-        "{{NEWS3_EXCERPT}}":   n3["excerpt"],
-        "{{NEWS1_LINK}}":      n1["link"],
-        "{{NEWS2_LINK}}":      n2["link"],
-        "{{NEWS3_LINK}}":      n3["link"],
+        "{{TOP_NEWS_1}}": top1,
+        "{{TOP_NEWS_2}}": top2,
+        "{{TOP_NEWS_3}}": top3,
 
         # Sponsor
         "{{SPONSOR_CLICK_URL}}": sponsor_click,
