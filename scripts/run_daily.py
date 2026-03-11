@@ -22,7 +22,6 @@ import pandas as pd
 import gspread
 import yfinance as yf
 from typing import Dict, List
-import matplotlib.pyplot as plt
 from google.oauth2.service_account import Credentials
 
 # -------- 설정값 --------
