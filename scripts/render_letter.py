@@ -231,8 +231,8 @@ def fetch_premium_data(usdkrw: float | None) -> dict[str, str]:
         cb_usd = float(
             requests.get("https://api.coinbase.com/v2/prices/BTC-USD/spot", timeout=10).json()["data"]["amount"])
         upbit_usd  = upbit_btc_krw / fx
-        kimchi_pct = (upbit_usd - cg_usd)  / cg_usd  * 100
-        cb_pct     = (upbit_usd - cb_usd)   / cb_usd  * 100
+        kimchi_pct = (upbit_usd - cg_usd) / cg_usd * 100  # 한국 vs 글로벌
+        cb_pct     = (cb_usd - cg_usd) / cg_usd * 100     # 미국(코베) vs 글로벌
 
         def _c(v: float) -> str:
             arrow = "▲" if v >= 0 else "▼"
