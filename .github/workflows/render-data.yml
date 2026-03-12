@@ -95,6 +95,11 @@ jobs:
           set -euo pipefail
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # 1) 원격 변경사항을 먼저 merge로 가져옴 (rebase 충돌 방지)
+          git pull --no-rebase origin main
+
+          # 2) 생성된 파일 스테이징
           git add letter.html \
             out/history/btc_usd_series.json \
             out/history/krw_24h_latest.json \
@@ -106,10 +111,11 @@ jobs:
             assets/topcoins_treemap_latest.png \
             bm20_latest.json bm20_daily_data_latest.csv \
             out/latest/top_news_latest.json || true
+
+          # 3) 변경사항 있을 때만 커밋 & 푸시
           if ! git diff --cached --quiet; then
             DATE=$(TZ=Asia/Seoul date +%F)
             git commit -m "chore: render letter + btc + treemap (${DATE})"
-            git pull --rebase --autostash origin main
             git push origin HEAD:main
           else
             echo "No changes to commit"
