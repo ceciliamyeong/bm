@@ -776,13 +776,18 @@ def synth_treemap_one_line(best3: str, worst3: str) -> str:
 # ------------------ placeholders ------------------
 
 def fetch_aas_data() -> dict[str, str]:
-    """GitHub에서 AAS 데이터를 가져와 실 JSON 키값(대문자 시작)에 맞춰 가공"""
+    """GitHub에서 AAS 데이터를 가져와 실 JSON 키값(대문자 시작)에 맞춰 가공.
+    
+    KST 오늘 날짜로 먼저 시도 → 없으면 어제 날짜로 재시도.
+    (봇 서버가 UTC 기준이라 파일명이 KST 기준 하루 전일 수 있음)
+    """
     kst_now = datetime.now(timezone(timedelta(hours=9)))
-    date_str = kst_now.strftime("%Y-%m-%d")
-    
-    # GitHub Raw URL
-    url = f"https://raw.githubusercontent.com/Blockmedia-DataTeam/AAS-Bot/main/reports/daily/{date_str}/newsletter_aas_top3_{date_str}.json"
-    
+    # KST 오늘, 어제 순서로 시도
+    date_candidates = [
+        kst_now.strftime("%Y-%m-%d"),
+        (kst_now - timedelta(days=1)).strftime("%Y-%m-%d"),
+    ]
+
     ph = {}
     # 기본값 설정 (데이터 호출 실패 시 레이아웃 유지용)
     for i in range(1, 4):
@@ -797,31 +802,39 @@ def fetch_aas_data() -> dict[str, str]:
             f"{{{{AAS_MOMENTUM_{i}}}}}" : "33.4",
         })
 
-    try:
-        r = requests.get(url, timeout=10)
-        r.raise_for_status()
-        data = r.json()
-        
-        for i, item in enumerate(data[:3], 1):
-            # JSON의 실제 키값(Symbol, AAS, 24H(%), Comment) 반영
-            score = float(item.get("AAS", 0))
-            score_pct = min(100, int((score / 3.0) * 100))
-            
-            ph[f"{{{{AAS_COIN_{i}}}}}"] = item.get("Symbol", "—")
-            ph[f"{{{{AAS_SCORE_{i}}}}}"] = f"{score:.2f}"
-            ph[f"{{{{AAS_SCORE_PERCENT_{i}}}}}"] = str(score_pct)
-            ph[f"{{{{AAS_CHG_{i}}}}}"] = f"{float(item.get('24H(%)', 0)):+.2f}"
-            ph[f"{{{{AAS_NOTE_{i}}}}}"] = item.get("Comment", "—")
-            
-            # 기여도 차트용 데이터 (평면 구조 반영)
-            ph[f"{{{{AAS_ONCHAIN_{i}}}}}"] = str(item.get("Onchain", 33.3))
-            ph[f"{{{{AAS_SOCIAL_{i}}}}}"] = str(item.get("Social", 33.3))
-            ph[f"{{{{AAS_MOMENTUM_{i}}}}}"] = str(item.get("Momentum", 33.4))
-            
-        print(f"INFO: AAS data successfully matched for {date_str}")
-    except Exception as e:
-        print(f"WARN: AAS Fetch failed ({url}): {e}")
-        
+    data = None
+    used_date = None
+    for date_str in date_candidates:
+        url = f"https://raw.githubusercontent.com/Blockmedia-DataTeam/AAS-Bot/main/reports/daily/{date_str}/newsletter_aas_top3_{date_str}.json"
+        try:
+            r = requests.get(url, timeout=10)
+            r.raise_for_status()
+            data = r.json()
+            used_date = date_str
+            print(f"INFO: AAS data fetched for {date_str}")
+            break
+        except Exception as e:
+            print(f"WARN: AAS fetch failed for {date_str} ({url}): {e}")
+
+    if data is None:
+        print("WARN: AAS data unavailable for all candidate dates. Using defaults.")
+        return ph
+
+    for i, item in enumerate(data[:3], 1):
+        score = float(item.get("AAS", 0))
+        score_pct = min(100, int((score / 3.0) * 100))
+
+        ph[f"{{{{AAS_COIN_{i}}}}}"] = item.get("Symbol", "—")
+        ph[f"{{{{AAS_SCORE_{i}}}}}"] = f"{score:.2f}"
+        ph[f"{{{{AAS_SCORE_PERCENT_{i}}}}}"] = str(score_pct)
+        ph[f"{{{{AAS_CHG_{i}}}}}"] = f"{float(item.get('24H(%)', 0)):+.2f}"
+        ph[f"{{{{AAS_NOTE_{i}}}}}"] = item.get("Comment", "—")
+
+        # 기여도 차트용 데이터
+        ph[f"{{{{AAS_ONCHAIN_{i}}}}}"] = str(item.get("Onchain", 33.3))
+        ph[f"{{{{AAS_SOCIAL_{i}}}}}"] = str(item.get("Social", 33.3))
+        ph[f"{{{{AAS_MOMENTUM_{i}}}}}"] = str(item.get("Momentum", 33.4))
+
     return ph
 
 def build_placeholders() -> dict[str, str]:
