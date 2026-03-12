@@ -15,6 +15,7 @@ jobs:
     env:
       TZ: Asia/Seoul
       CMC_API_KEY: ${{ secrets.CMC_API_KEY }}
+      AAS_BOT_TOKEN: ${{ secrets.AAS_BOT_TOKEN }}
     steps:
       - name: Checkout main
         uses: actions/checkout@v4
