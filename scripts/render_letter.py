@@ -775,6 +775,40 @@ def synth_treemap_one_line(best3: str, worst3: str) -> str:
 
 # ------------------ placeholders ------------------
 
+def _aas_note_tag(text: str) -> str:
+    """Comment 텍스트에 따라 색깔 태그 HTML 반환.
+    온체인(파랑): 고래 매집, 과매도
+    소셜(주황):   관심 집중, 버즈
+    모멘텀(초록): 추세 추종, 상승 모멘텀
+    """
+    t = text.strip()
+    SOCIAL_KEYWORDS   = ("관심", "버즈", "소셜")
+    MOMENTUM_KEYWORDS = ("추세", "모멘텀", "상승")
+
+    # 이모지 매핑
+    if "고래" in t or "매집" in t:
+        emoji = "🐋 "
+    elif "과매도" in t:
+        emoji = "📉 "
+    elif any(k in t for k in SOCIAL_KEYWORDS):
+        emoji = "🔥 "
+    elif any(k in t for k in MOMENTUM_KEYWORDS):
+        emoji = "🚀 "
+    else:
+        emoji = ""
+
+    # 소셜
+    if any(k in t for k in SOCIAL_KEYWORDS):
+        style = "font-family:'맑은 고딕','Apple SD Gothic Neo',sans-serif;font-size:11px;font-weight:bold;color:#c2410c;background-color:#ffedd5;border:1px solid #fdba74;padding:3px 8px;"
+    # 모멘텀
+    elif any(k in t for k in MOMENTUM_KEYWORDS):
+        style = "font-family:'맑은 고딕','Apple SD Gothic Neo',sans-serif;font-size:11px;font-weight:bold;color:#15803d;background-color:#dcfce7;border:1px solid #86efac;padding:3px 8px;"
+    # 기본 온체인(파랑)
+    else:
+        style = "font-family:'맑은 고딕','Apple SD Gothic Neo',sans-serif;font-size:11px;font-weight:bold;color:#1d4ed8;background-color:#dbeafe;border:1px solid #93c5fd;padding:3px 8px;"
+    return f'<span style="{style}">{emoji}{t}</span>'
+
+
 def fetch_aas_data() -> dict[str, str]:
     """GitHub에서 AAS 데이터를 가져와 실 JSON 키값(대문자 시작)에 맞춰 가공.
     
@@ -797,6 +831,7 @@ def fetch_aas_data() -> dict[str, str]:
             f"{{{{AAS_SCORE_PERCENT_{i}}}}}" : "0",
             f"{{{{AAS_CHG_{i}}}}}" : "0.00",
             f"{{{{AAS_NOTE_{i}}}}}" : "—",
+            f"{{{{AAS_NOTE_TAG_{i}}}}}": _aas_note_tag("—"),
             f"{{{{AAS_ONCHAIN_{i}}}}}" : "33.3",
             f"{{{{AAS_SOCIAL_{i}}}}}" : "33.3",
             f"{{{{AAS_MOMENTUM_{i}}}}}" : "33.4",
@@ -829,11 +864,13 @@ def fetch_aas_data() -> dict[str, str]:
         score = float(item.get("AAS", 0))
         score_pct = min(100, int((score / 3.0) * 100))
 
+        note_text = item.get("Comment", "—")
         ph[f"{{{{AAS_COIN_{i}}}}}"] = item.get("Symbol", "—")
         ph[f"{{{{AAS_SCORE_{i}}}}}"] = f"{score:.2f}"
         ph[f"{{{{AAS_SCORE_PERCENT_{i}}}}}"] = str(score_pct)
         ph[f"{{{{AAS_CHG_{i}}}}}"] = f"{float(item.get('24H(%)', 0)):+.2f}"
-        ph[f"{{{{AAS_NOTE_{i}}}}}"] = item.get("Comment", "—")
+        ph[f"{{{{AAS_NOTE_{i}}}}}"] = note_text
+        ph[f"{{{{AAS_NOTE_TAG_{i}}}}}"] = _aas_note_tag(note_text)
 
         # 기여도 차트용 데이터
         ph[f"{{{{AAS_ONCHAIN_{i}}}}}"] = str(item.get("Onchain", 33.3))
