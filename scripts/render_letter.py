@@ -802,12 +802,17 @@ def fetch_aas_data() -> dict[str, str]:
             f"{{{{AAS_MOMENTUM_{i}}}}}" : "33.4",
         })
 
+    # Private repo 접근용 토큰 (환경변수 AAS_BOT_TOKEN)
+    import os
+    aas_token = os.environ.get("AAS_BOT_TOKEN", "")
+    headers = {"Authorization": f"token {aas_token}"} if aas_token else {}
+
     data = None
     used_date = None
     for date_str in date_candidates:
         url = f"https://raw.githubusercontent.com/Blockmedia-DataTeam/AAS-Bot/main/reports/daily/{date_str}/newsletter_aas_top3_{date_str}.json"
         try:
-            r = requests.get(url, timeout=10)
+            r = requests.get(url, timeout=10, headers=headers)
             r.raise_for_status()
             data = r.json()
             used_date = date_str
@@ -979,4 +984,3 @@ def render() -> None:
 
 if __name__ == "__main__":
     render()
-
