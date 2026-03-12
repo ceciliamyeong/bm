@@ -776,7 +776,7 @@ def synth_treemap_one_line(best3: str, worst3: str) -> str:
 # ------------------ placeholders ------------------
 
 def fetch_aas_data() -> dict[str, str]:
-    """GitHub에서 AAS 데이터를 가져와 새 템플릿 변수에 맞게 가공"""
+    """GitHub에서 AAS 데이터를 가져와 실 JSON 키값(대문자 시작)에 맞춰 가공"""
     kst_now = datetime.now(timezone(timedelta(hours=9)))
     date_str = kst_now.strftime("%Y-%m-%d")
     
@@ -784,7 +784,7 @@ def fetch_aas_data() -> dict[str, str]:
     url = f"https://raw.githubusercontent.com/Blockmedia-DataTeam/AAS-Bot/main/reports/daily/{date_str}/newsletter_aas_top3_{date_str}.json"
     
     ph = {}
-    # 기본값 설정
+    # 기본값 설정 (데이터 호출 실패 시 레이아웃 유지용)
     for i in range(1, 4):
         ph.update({
             f"{{{{AAS_COIN_{i}}}}}" : "—",
@@ -803,23 +803,24 @@ def fetch_aas_data() -> dict[str, str]:
         data = r.json()
         
         for i, item in enumerate(data[:3], 1):
-            score = float(item.get("AAS", 0)) # score -> AAS
+            # JSON의 실제 키값(Symbol, AAS, 24H(%), Comment) 반영
+            score = float(item.get("AAS", 0))
             score_pct = min(100, int((score / 3.0) * 100))
             
-            ph[f"{{{{AAS_COIN_{i}}}}}"] = item.get("Symbol", "—") # coin_symbol -> Symbol
+            ph[f"{{{{AAS_COIN_{i}}}}}"] = item.get("Symbol", "—")
             ph[f"{{{{AAS_SCORE_{i}}}}}"] = f"{score:.2f}"
             ph[f"{{{{AAS_SCORE_PERCENT_{i}}}}}"] = str(score_pct)
-            ph[f"{{{{AAS_CHG_{i}}}}}"] = f"{float(item.get('24H(%)', 0)):+.2f}" # price_change_24h -> 24H(%)
-            ph[f"{{{{AAS_NOTE_{i}}}}}"] = item.get("Comment", "—") # note -> Comment
+            ph[f"{{{{AAS_CHG_{i}}}}}"] = f"{float(item.get('24H(%)', 0)):+.2f}"
+            ph[f"{{{{AAS_NOTE_{i}}}}}"] = item.get("Comment", "—")
             
-            # 기여도 차트용 값 (계층 구조가 아니라 평면 구조임)
+            # 기여도 차트용 데이터 (평면 구조 반영)
             ph[f"{{{{AAS_ONCHAIN_{i}}}}}"] = str(item.get("Onchain", 33.3))
             ph[f"{{{{AAS_SOCIAL_{i}}}}}"] = str(item.get("Social", 33.3))
             ph[f"{{{{AAS_MOMENTUM_{i}}}}}"] = str(item.get("Momentum", 33.4))
-  
+            
         print(f"INFO: AAS data successfully matched for {date_str}")
     except Exception as e:
-        print(f"WARN: AAS Fetch failed: {e}")
+        print(f"WARN: AAS Fetch failed ({url}): {e}")
         
     return ph
 
@@ -841,8 +842,7 @@ def build_placeholders() -> dict[str, str]:
                     btc_1d = (btc_last / btc_prev - 1) * 100.0
                     btc_usd_txt = f"{btc_last:,.0f}"
                     btc_1d_html = colored_change_html(btc_1d, digits=2, wrap_parens=False)
-        except Exception:
-            pass
+        except Exception: pass
 
     # BM20
     asof = bm20.get("asOf") or bm20.get("asof") or bm20.get("date") or bm20.get("timestamp") or ""
@@ -855,113 +855,55 @@ def build_placeholders() -> dict[str, str]:
     if r1d_raw is not None:
         bm20_1d_pct = pct_to_display(r1d_raw)
         bm20_1d_html = colored_change_html(bm20_1d_pct, digits=2, wrap_parens=False)
-        if bm20_1d_pct > 0:
-            direction = "반등"
-        elif bm20_1d_pct < 0:
-            direction = "약세"
+        if bm20_1d_pct > 0: direction = "반등"
+        elif bm20_1d_pct < 0: direction = "약세"
 
     best3, worst3, breadth, up, down = compute_best_worst_breadth(df, n=3)
     move1, move2, move3 = compute_moves_top3(df)
 
-    # Comment chip + comment
-    if bm20_1d_pct is None:
-        comment = f"BM20 보합, {breadth}"
-        comment_chip = f'<span style="font-weight:900;color:{INK};">보합</span>'
-    else:
-        chip_color = GREEN if bm20_1d_pct > 0 else (RED if bm20_1d_pct < 0 else INK)
-        comment_chip = f'<span style="font-weight:900;color:{chip_color};">{direction}</span>'
-        comment = f"BM20 {direction}, {breadth}"
+    # Comment chip
+    chip_color = GREEN if (bm20_1d_pct or 0) > 0 else (RED if (bm20_1d_pct or 0) < 0 else INK)
+    comment_chip = f'<span style="font-weight:900;color:{chip_color};">{direction}</span>'
+    comment = f"BM20 {direction}, {breadth}"
 
-    # Kimchi
+    # Kimchi & KRW
     kimchi_p = bm20.get("kimchi_premium_pct", None)
-    kimchi_html = "—"
-    if kimchi_p is not None:
-        kimchi_pct = float(kimchi_p)
-        kimchi_html = colored_change_html(kimchi_pct, digits=2, wrap_parens=False)
-
+    kimchi_html = colored_change_html(float(kimchi_p)) if kimchi_p is not None else "—"
     usdkrw = (bm20.get("kimchi_meta", {}) or {}).get("usdkrw", None)
     usdkrw_txt = fmt_num(usdkrw, 2) if usdkrw is not None else "—"
 
-    # KRW totals + shares
-    ts_label = krw.get("timestamp_label", "")
     totals = (krw.get("totals", {}) or {})
     combined = totals.get("combined_24h", None)
-    upbit_v = totals.get("upbit_24h", None)
-    bith_v = totals.get("bithumb_24h", None)
-    coin_v = totals.get("coinone_24h", None)
-
-    upbit_share = (float(upbit_v) / float(combined) * 100.0) if (combined and upbit_v is not None) else None
-    bith_share = (float(bith_v) / float(combined) * 100.0) if (combined and bith_v is not None) else None
-    coin_share = (float(coin_v) / float(combined) * 100.0) if (combined and coin_v is not None) else None
-
     krw_total_txt = fmt_krw_big(combined) if combined is not None else "—"
+    
+    upbit_v, bith_v, coin_v = totals.get("upbit_24h"), totals.get("bithumb_24h"), totals.get("coinone_24h")
+    upbit_share = (float(upbit_v)/float(combined)*100) if combined and upbit_v else None
+    bith_share = (float(bith_v)/float(combined)*100) if combined and bith_v else None
+    coin_share = (float(coin_v)/float(combined)*100) if combined and coin_v else None
 
-    # Sentiment 
+    # Sentiment & Korea Signals
     sentiment_label, sentiment_score = ("—", "—")
     hist_obj = load_json_optional(BM20_HISTORY_JSON)
     if hist_obj:
         try:
             latest_entry = hist_obj[-1] if isinstance(hist_obj, list) else hist_obj.get("latest", hist_obj)
             sent_data = latest_entry.get("sentiment", {})
-            label = sent_data.get("status") or sent_data.get("sentiment_label")
+            sentiment_label = str(sent_data.get("status") or sent_data.get("sentiment_label") or "—")
             score = sent_data.get("value") or sent_data.get("sentiment_score")
-            if label: sentiment_label = str(label)
             if score is not None: sentiment_score = f"{float(score):.0f}"
         except Exception: pass
 
-    # Korea signals 
-    xrp_kr_share = "—"
-    xrp_obj = load_json_optional(XRP_KR_SHARE_JSON)
-    if xrp_obj and isinstance(xrp_obj, dict):
-        v_xrp = xrp_obj.get("k_xrp_share_pct_24h")
-        if v_xrp is not None: xrp_kr_share = fmt_share_pct(float(v_xrp))
-
-    kr_share_global = "—"
-    if hist_obj:
-        try:
-            latest_entry = hist_obj[-1] if isinstance(hist_obj, list) else hist_obj.get("latest", hist_obj)
-            v_global = latest_entry.get("k_market", {}).get("k_share_percent")
-            if v_global is not None:
-                v_g = float(v_global)
-                if v_g > 100: v_g /= 100
-                kr_share_global = fmt_share_pct(v_g)
-        except Exception: pass
-
-    k_safety = "—"
-    if isinstance(krw, dict):
-        v_safe = (krw.get("stablecoins") or {}).get("stable_dominance_pct")
-        if v_safe is None:
-            meta = krw.get("meta", {})
-            v_safe = krw.get("k_safety") or meta.get("k_safety") or krw.get("stablecoin_ratio") or meta.get("stablecoin_ratio")
-        if v_safe is not None: k_safety = f"{float(v_safe):.1f}%"
-
-    top10_conc = "—"
-    if isinstance(krw, dict):
-        v_top10 = (krw.get("top10") or {}).get("top10_share_pct")
-        if v_top10 is not None: top10_conc = f"{float(v_top10):.1f}%"
-    if top10_conc == "—": top10_conc = load_krw_snapshots_top10()
-    if top10_conc == "—": top10_conc = compute_top10_concentration(df)
-
-    # NASDAQ / KOSPI
-    nasdaq_1d = load_index_series_1d(NASDAQ_JSON)
-    kospi_1d  = load_index_series_1d(KOSPI_JSON)
-
     # News
     wp_lead = fetch_wp_newsletter_lead()
-    news_headline = wp_lead["NEWS_HEADLINE"]
-    news_one_liner_note = wp_lead["NEWS_ONE_LINER_NOTE"]
-    news_one_liner = load_text_first_line(NEWS_ONELINER_TXT)
-
     news3 = fetch_wp_newsletter_news()
     top1, top2, top3 = news3[0], news3[1], news3[2]
 
-    # Synth lines
-    market_one_line = synth_market_one_line(direction, breadth, krw_total_txt, kimchi_html)
-    treemap_one_line = synth_treemap_one_line(best3, worst3)
+    # Global Index
+    nasdaq_1d = load_index_series_1d(NASDAQ_JSON)
+    kospi_1d  = load_index_series_1d(KOSPI_JSON)
 
-    # URLs
+    # SUBSCRIBE URL
     subscribe_url = "https://blockmedia.co.kr/kr"
-    data_request_url = "https://blockmedia.co.kr/kr"
 
     ph = {
         "{{BM20_LEVEL}}": fmt_level(level) if level is not None else "—",
@@ -974,46 +916,30 @@ def build_placeholders() -> dict[str, str]:
         "{{BTC_1D}}": btc_1d_html,
         "{{SENTIMENT_LABEL}}": sentiment_label,
         "{{SENTIMENT_SCORE}}": sentiment_score,
-        "{{MARKET_ONE_LINE}}": market_one_line,
-        "{{TREEMAP_ONE_LINE}}": treemap_one_line,
-        "{{MOVE_1}}": move1,
-        "{{MOVE_2}}": move2,
-        "{{MOVE_3}}": move3,
+        "{{MARKET_ONE_LINE}}": synth_market_one_line(direction, breadth, krw_total_txt, kimchi_html),
+        "{{TREEMAP_ONE_LINE}}": synth_treemap_one_line(best3, worst3),
+        "{{MOVE_1}}": move1, "{{MOVE_2}}": move2, "{{MOVE_3}}": move3,
         "{{KRW_TOTAL_24H}}": krw_total_txt,
-        "{{KRW_ASOF_KST}}": ts_label if ts_label else (str(asof)[:10] if asof else "—"),
-        "{{UPBIT_SHARE_24H}}": fmt_share_pct(upbit_share) if upbit_share is not None else "—",
-        "{{BITHUMB_SHARE_24H}}": fmt_share_pct(bith_share) if bith_share is not None else "—",
-        "{{COINONE_SHARE_24H}}": fmt_share_pct(coin_share) if coin_share is not None else "—",
-        "{{KR_SHARE_GLOBAL}}": kr_share_global,
-        "{{XRP_KR_SHARE}}": xrp_kr_share,
-        "{{TOP10_CONC_24H}}": top10_conc,
-        "{{K_SAFETY}}": k_safety,
+        "{{KRW_ASOF_KST}}": (str(asof)[:10] if asof else "—"),
+        "{{UPBIT_SHARE_24H}}": fmt_share_pct(upbit_share) if upbit_share else "—",
+        "{{BITHUMB_SHARE_24H}}": fmt_share_pct(bith_share) if bith_share else "—",
+        "{{COINONE_SHARE_24H}}": fmt_share_pct(coin_share) if coin_share else "—",
         "{{NASDAQ_1D}}": nasdaq_1d,
         "{{KOSPI_1D}}": kospi_1d,
         "{{LETTER_DATE}}": datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d"),
-        "{{NEWS_HEADLINE}}": news_headline,
-        "{{NEWS_ONE_LINER}}": news_one_liner,
-        "{{NEWS_ONE_LINER_NOTE}}": news_one_liner_note,
-        "{{TOP_NEWS_1}}": top1["title"],
-        "{{TOP_NEWS_2}}": top2["title"],
-        "{{TOP_NEWS_3}}": top3["title"],
-        "{{NEWS1_EXCERPT}}": top1["excerpt"],
-        "{{NEWS2_EXCERPT}}": top2["excerpt"],
-        "{{NEWS3_EXCERPT}}": top3["excerpt"],
-        "{{NEWS1_LINK}}": top1["link"],
-        "{{NEWS2_LINK}}": top2["link"],
-        "{{NEWS3_LINK}}": top3["link"],
-        "{{NEWS1_CATEGORY}}": top1["category"],
-        "{{NEWS2_CATEGORY}}": top2["category"],
-        "{{NEWS3_CATEGORY}}": top3["category"],
+        "{{NEWS_HEADLINE}}": wp_lead["NEWS_HEADLINE"],
+        "{{NEWS_ONE_LINER_NOTE}}": wp_lead["NEWS_ONE_LINER_NOTE"],
+        "{{TOP_NEWS_1}}": top1["title"], "{{TOP_NEWS_2}}": top2["title"], "{{TOP_NEWS_3}}": top3["title"],
+        "{{NEWS1_EXCERPT}}": top1["excerpt"], "{{NEWS2_EXCERPT}}": top2["excerpt"], "{{NEWS3_EXCERPT}}": top3["excerpt"],
+        "{{NEWS1_LINK}}": top1["link"], "{{NEWS2_LINK}}": top2["link"], "{{NEWS3_LINK}}": top3["link"],
+        "{{NEWS1_CATEGORY}}": top1["category"], "{{NEWS2_CATEGORY}}": top2["category"], "{{NEWS3_CATEGORY}}": top3["category"],
     }
 
-    # AAS 데이터 업데이트
+    # 🚀 AAS 데이터 업데이트 (여기서 BONK, PEPE 데이터가 주입됩니다)
     ph.update(fetch_aas_data())
-    # ETF 데이터 업데이트
-    ph.update(load_etf_summary())
 
-    # 실시간 티커 및 프리미엄
+    # ETF & 실시간 티커 데이터 업데이트
+    ph.update(load_etf_summary())
     usdkrw_f = float(str(usdkrw).replace(",", "")) if usdkrw else None
     for k, v in fetch_yahoo_ticker().items(): ph["{{" + k + "}}"] = v
     for k, v in fetch_upbit_top_bottom(n=3).items(): ph["{{" + k + "}}"] = v
@@ -1021,8 +947,6 @@ def build_placeholders() -> dict[str, str]:
     for k, v in fetch_premium_data(usdkrw_f).items(): ph["{{" + k + "}}"] = v
 
     ph["SUBSCRIBE_URL"] = subscribe_url
-    ph["https://data.blockmedia.co.kr/data-request?utm_source=newsletter&utm_medium=email&utm_campaign=daily_letter&utm_content=request"] = data_request_url
-
     return ph
 
 def render() -> None:
@@ -1030,10 +954,13 @@ def render() -> None:
         raise FileNotFoundError(f"Missing {TEMPLATE}")
     html = TEMPLATE.read_text(encoding="utf-8")
     ph = build_placeholders()
+    # 긴 키부터 치환 (겹침 방지)
     for k in sorted(ph.keys(), key=len, reverse=True):
         html = html.replace(k, str(ph[k]))
+    
     left = sorted(set(re.findall(r"\{\{[A-Z0-9_]+\}\}", html)))
     if left: print("WARN: Unfilled placeholders:", left)
+    
     OUT.write_text(html, encoding="utf-8")
     print(f"OK: wrote {OUT}")
 
