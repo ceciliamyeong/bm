@@ -803,21 +803,24 @@ def fetch_aas_data() -> dict[str, str]:
         data = r.json()
         
         for i, item in enumerate(data[:3], 1):
-            score = float(item.get("score", 0))
+            score = float(item.get("AAS", 0)) # score -> AAS
             score_pct = min(100, int((score / 3.0) * 100))
             
-            ph[f"{{{{AAS_COIN_{i}}}}}"] = item.get("coin_symbol", "—")
+            ph[f"{{{{AAS_COIN_{i}}}}}"] = item.get("Symbol", "—") # coin_symbol -> Symbol
             ph[f"{{{{AAS_SCORE_{i}}}}}"] = f"{score:.2f}"
             ph[f"{{{{AAS_SCORE_PERCENT_{i}}}}}"] = str(score_pct)
-            ph[f"{{{{AAS_CHG_{i}}}}}"] = f"{float(item.get('price_change_24h', 0)):+.2f}"
-            ph[f"{{{{AAS_NOTE_{i}}}}}"] = item.get("note", "—")
+            ph[f"{{{{AAS_CHG_{i}}}}}"] = f"{float(item.get('24H(%)', 0)):+.2f}" # price_change_24h -> 24H(%)
+            ph[f"{{{{AAS_NOTE_{i}}}}}"] = item.get("Comment", "—") # note -> Comment
             
-            contrib = item.get("contribution", {})
-            ph[f"{{{{AAS_ONCHAIN_{i}}}}}"] = str(contrib.get("onchain", 33.3))
-            ph[f"{{{{AAS_SOCIAL_{i}}}}}"] = str(contrib.get("social", 33.3))
-            ph[f"{{{{AAS_MOMENTUM_{i}}}}}"] = str(contrib.get("momentum", 33.4))
-    except:
-        pass
+            # 기여도 차트용 값 (계층 구조가 아니라 평면 구조임)
+            ph[f"{{{{AAS_ONCHAIN_{i}}}}}"] = str(item.get("Onchain", 33.3))
+            ph[f"{{{{AAS_SOCIAL_{i}}}}}"] = str(item.get("Social", 33.3))
+            ph[f"{{{{AAS_MOMENTUM_{i}}}}}"] = str(item.get("Momentum", 33.4))
+  
+        print(f"INFO: AAS data successfully matched for {date_str}")
+    except Exception as e:
+        print(f"WARN: AAS Fetch failed: {e}")
+        
     return ph
 
 def build_placeholders() -> dict[str, str]:
