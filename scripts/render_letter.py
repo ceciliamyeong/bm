@@ -431,24 +431,27 @@ def load_etf_summary() -> dict[str, str]:
         except Exception:
             return "—"
 
-    def _inflow_color(val) -> str:
+    def _inflow_html(val) -> str:
+        """inflow 값을 색깔 span으로 감싸서 반환."""
+        text = _fmt_usd(val)
         try:
             v = float(val)
-            if v > 0:  return f"color:#16a34a;font-weight:900;"
-            if v < 0:  return f"color:#dc2626;font-weight:900;"
+            if v > 0:   color = "#16a34a"
+            elif v < 0: color = "#dc2626"
+            else:        color = "#64748b"
         except Exception:
-            pass
-        return "color:#64748b;"
+            color = "#64748b"
+        return f'<span style="color:{color};font-weight:900;">{text}</span>'
 
     def _parse(coin: str, sym: str) -> dict:
         d = raw.get(coin, {})
         inflow_raw = d.get("dailyNetInflow", None)
         return {
-            f"{{{{ETF_{sym}_INFLOW}}}}":       _fmt_usd(inflow_raw),
+            f"{{{{ETF_{sym}_INFLOW}}}}":       _inflow_html(inflow_raw),
             f"{{{{ETF_{sym}_AUM}}}}":           _fmt_aum(d.get("totalNetAssets")),
             f"{{{{ETF_{sym}_CUM}}}}":           _fmt_usd(d.get("cumNetInflow"), digits=0),
             f"{{{{ETF_{sym}_HOLDINGS}}}}":      _fmt_holdings(d.get("totalTokenHoldings"), sym),
-            f"{{{{ETF_{sym}_INFLOW_COLOR}}}}":  _inflow_color(inflow_raw),
+            f"{{{{ETF_{sym}_INFLOW_COLOR}}}}":  "",
         }
 
     result = {}
