@@ -110,19 +110,19 @@ Q = {
     "2021-Q3": make_weights([
         "cardano","dogecoin","polkadot","usd-coin","uniswap",
         "bitcoin-cash","litecoin","solana","chainlink","matic-network",
-        "terra-luna","shiba-inu","ethereum-classic","theta-token","internet-computer"]),
+        "algorand","shiba-inu","ethereum-classic","theta-token","internet-computer"]),
     "2021-Q4": make_weights([
         "cardano","solana","polkadot","dogecoin","usd-coin",
-        "avalanche-2","terra-luna","shiba-inu","matic-network","chainlink",
+        "avalanche-2","near","shiba-inu","matic-network","chainlink",
         "litecoin","bitcoin-cash","algorand","uniswap","tron"]),
     # ── 2022 ──
     "2022-Q1": make_weights([
-        "solana","cardano","terra-luna","avalanche-2","polkadot",
-        "dogecoin","shiba-inu","matic-network","crypto-com-chain","near",
+        "solana","cardano","avalanche-2","polkadot","near",
+        "dogecoin","shiba-inu","matic-network","crypto-com-chain","fantom",
         "litecoin","tron","chainlink","uniswap","algorand"]),
     "2022-Q2": make_weights([
-        "solana","cardano","terra-luna","avalanche-2","polkadot",
-        "dogecoin","shiba-inu","matic-network","crypto-com-chain","near",
+        "solana","cardano","avalanche-2","polkadot","near",
+        "dogecoin","shiba-inu","matic-network","crypto-com-chain","fantom",
         "tron","litecoin","chainlink","algorand","uniswap"]),
     "2022-Q3": make_weights([
         "usd-coin","cardano","solana","dogecoin","dai",
@@ -189,6 +189,16 @@ Q = {
 # 2. 야후파이낸스 심볼 매핑
 # ══════════════════════════════════════════════════════════════
 
+# 종목별 야후파이낸스 유효 기간 제한
+# (상장폐지, 리디노미네이션, 심볼 교체 등으로 데이터 오염되는 종목)
+COIN_VALID_UNTIL = {
+    "terra-luna":   "2022-05-11",  # LUNA 붕괴일
+    "bittorrent":   "2021-12-31",  # BTT 리디노미네이션
+    "klay-token":   "2023-12-31",  # KLAY 상폐 이슈
+    "huobi-token":  "2023-06-30",  # HT 상폐
+    "theta-token":  "2023-12-31",  # THETA 거래량 급감
+}
+
 YF = {
     "bitcoin":"BTC-USD","ethereum":"ETH-USD","ripple":"XRP-USD",
     "tether":"USDT-USD","binancecoin":"BNB-USD","usd-coin":"USDC-USD",
@@ -199,7 +209,7 @@ YF = {
     "bitcoin-cash":"BCH-USD","stellar":"XLM-USD","uniswap":"UNI-USD",
     "matic-network":"MATIC-USD","internet-computer":"ICP-USD",
     "hedera-hashgraph":"HBAR-USD","sui":"SUI-USD","dai":"DAI-USD",
-    "maker":"MKR-USD","terra-luna":"LUNA-USD","eos":"EOS-USD",
+    "maker":"MKR-USD","eos":"EOS-USD","fantom":"FTM-USD",  # terra-luna 제거 (LUNA 붕괴 후 심볼 오염)
     "neo":"NEO-USD","nem":"XEM-USD","iota":"MIOTA-USD","dash":"DASH-USD",
     "monero":"XMR-USD","tezos":"XTZ-USD","vechain":"VET-USD",
     "ethereum-classic":"ETC-USD","zcash":"ZEC-USD","ontology":"ONT-USD",
@@ -269,22 +279,20 @@ def download_prices(start: str, end: str) -> pd.DataFrame:
 
     # ── 이상치 필터: 전일 대비 +1000% 초과 or -99% 이하 수익률은 NaN 처리 ──
     # LUNA 붕괴 후 LUNA2 교체, 상장폐지 후 재상장 등으로 인한 가격 폭발 방지
-    MAX_DAILY_GAIN = 10.0   # 최대 +1000% (10배)
-    MIN_DAILY_RET  = -0.99  # 최대 -99%
+    MAX_DAILY_GAIN = 2.0    # 최대 +200% (3배) — 크립토 일일 최대 현실적 범위
+    MIN_DAILY_RET  = -0.95  # 최대 -95%
 
     pct_chg = prices.pct_change()
     spike_mask = (pct_chg > MAX_DAILY_GAIN) | (pct_chg < MIN_DAILY_RET)
     if spike_mask.any().any():
         n_spikes = spike_mask.sum().sum()
-        print(f"[WARN] 이상치 {n_spikes}건 감지 → NaN 처리 (LUNA 붕괴, 상폐 후 재상장 등)")
-        # 스파이크 당일 및 이후 연속된 값을 NaN으로 — 해당 종목 전체가 아니라 스파이크 이후 구간만
+        print(f"[WARN] 이상치 {n_spikes}건 감지 → 스파이크 이후 구간 전체 NaN 처리")
         for col in spike_mask.columns:
             spike_dates = spike_mask.index[spike_mask[col]]
             for sd in spike_dates:
-                # 스파이크 당일부터 다음 분기 리밸런싱일까지 NaN
-                # (단순하게: 스파이크 당일 하루만 NaN → 전후 ffill로 처리)
-                prices.loc[sd, col] = np.nan
-                print(f"  {col} spike on {sd.date()}: {pct_chg.loc[sd, col]*100:+.0f}%")
+                # 스파이크 당일부터 끝까지 NaN (완전히 다른 코인으로 교체된 경우 방지)
+                prices.loc[sd:, col] = np.nan
+                print(f"  {col} spike on {sd.date()}: {pct_chg.loc[sd, col]*100:+.0f}% → {sd.date()} 이후 전체 NaN")
 
     # ffill은 하되 bfill은 하지 않음 (미래 가격으로 과거 채우기 방지)
     prices = prices.ffill()
@@ -367,8 +375,13 @@ def run(start_date: str, end_date: str, dry_run: bool = False):
             p0 = prev_prices.get(c, np.nan)
             if not (np.isfinite(p1) and np.isfinite(p0) and p0 > 0 and p1 > 0):
                 continue
+            # 종목 유효 기간 체크
+            valid_until = COIN_VALID_UNTIL.get(c)
+            if valid_until and str(today) > valid_until:
+                continue  # 유효 기간 초과 종목 조용히 제외
+
             coin_ret = p1 / p0 - 1.0
-            if coin_ret > 5.0 or coin_ret < -0.99:
+            if coin_ret > 2.0 or coin_ret < -0.95:
                 print(f"  [SKIP] {c} {today} ret={coin_ret*100:+.0f}% → 이상치 제외")
                 continue
             port_ret += w * coin_ret
