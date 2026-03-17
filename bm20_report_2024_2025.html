@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BM20 Index — 2024–2025 Annual Report</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --gold:#C9A84C;--gold-light:#E8CC82;--gold-dark:#8B6914;
+  --ink:#1A1814;--ink-soft:#3D3A2F;--ink-faint:#7A7060;
+  --parchment:#F7F3EB;--parchment-mid:#EDE8DC;
+  --up:#2D6A4F;--up-bg:rgba(45,106,79,0.10);--up-border:rgba(45,106,79,0.28);
+  --down:#8B1A1A;--down-bg:rgba(139,26,26,0.09);--down-border:rgba(139,26,26,0.26);
+  --hold:#5A6070;--hold-bg:rgba(90,96,112,0.08);--hold-border:rgba(90,96,112,0.22);
+  --rule:rgba(201,168,76,0.22);
+  --serif:'DM Serif Display','Georgia',serif;
+  --mono:'DM Mono','Courier New',monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+}
+body{font-family:var(--sans);color:var(--ink);background:#F0EBE0;padding:2rem 1rem;}
+.report{max-width:860px;margin:0 auto;background:var(--parchment);border:0.5px solid rgba(201,168,76,0.3);border-radius:2px;}
+
+/* ── PAGE DIVIDERS ── */
+.page-break{border:none;border-top:2px dashed rgba(201,168,76,0.25);margin:0;}
+
+/* ── MASTHEAD ── */
+.masthead{padding:2.5rem 2.5rem 2rem;text-align:center;border-bottom:0.5px solid var(--rule);}
+.masthead::before{content:'';display:block;height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin-bottom:1.75rem;}
+.mh-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold);margin-bottom:0.5rem;}
+.mh-title{font-family:var(--serif);font-size:42px;line-height:1.05;color:var(--ink);margin-bottom:0.3rem;}
+.mh-sub{font-family:var(--serif);font-style:italic;font-size:16px;color:var(--ink-soft);margin-bottom:1rem;}
+.mh-rule{display:flex;align-items:center;gap:14px;justify-content:center;color:var(--gold);font-size:11px;font-family:var(--mono);letter-spacing:0.12em;}
+.mh-rule::before,.mh-rule::after{content:'';flex:1;max-width:130px;height:0.5px;background:var(--gold);opacity:0.4;}
+.mh-tagline{margin-top:1.25rem;font-family:var(--mono);font-size:10px;color:var(--ink-faint);letter-spacing:0.1em;}
+
+/* ── SECTION HEADERS ── */
+.sh{display:flex;align-items:center;gap:10px;padding:1.5rem 2.5rem 0.85rem;border-top:0.5px solid var(--rule);}
+.sh-num{font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:0.1em;}
+.sh-title{font-family:var(--serif);font-size:19px;color:var(--ink);flex:1;}
+.sh-rule{flex:1;height:0.5px;background:var(--rule);}
+.sh-sub{padding:0 2.5rem 0.6rem;font-family:var(--mono);font-size:10px;color:var(--ink-faint);letter-spacing:0.05em;}
+
+/* ── YEAR DIVIDER ── */
+.year-divider{text-align:center;padding:1.5rem 2.5rem 0.5rem;border-top:0.5px solid var(--rule);}
+.yd-badge{display:inline-block;font-family:var(--serif);font-size:22px;color:var(--ink);border-bottom:2px solid var(--gold);padding-bottom:4px;}
+.yd-sub{font-family:var(--mono);font-size:9px;color:var(--ink-faint);letter-spacing:0.15em;text-transform:uppercase;margin-top:6px;}
+
+/* ── HERO METRICS ── */
+.hero{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:0.5px solid var(--rule);}
+.hm{padding:1.35rem 1rem;border-right:0.5px solid var(--rule);text-align:center;}
+.hm:last-child{border-right:none;}
+.hm-label{font-family:var(--mono);font-size:9px;letter-spacing:0.13em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px;}
+.hm-val{font-family:var(--serif);font-size:27px;line-height:1;color:var(--ink);}
+.hm-val.up{color:var(--up);}.hm-val.down{color:var(--down);}.hm-val.gold{color:var(--gold);}
+.hm-delta{font-family:var(--mono);font-size:9px;color:var(--ink-soft);margin-top:4px;}
+.hm-delta.up{color:var(--up);}
+
+/* ── CHARTS ── */
+.chart-wrap{padding:0 2.5rem 1.75rem;}
+.legend{display:flex;gap:18px;padding:0 2.5rem 0.85rem;flex-wrap:wrap;}
+.lg{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;color:var(--ink-soft);}
+.lg-line{width:22px;height:2.5px;border-radius:2px;}
+
+/* ── TABLES ── */
+.tbl-wrap{padding:0 2.5rem 1.75rem;overflow-x:auto;}
+table.main{width:100%;border-collapse:collapse;font-size:11px;font-family:var(--mono);}
+table.main th{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-soft);padding:7px 10px;border-bottom:0.5px solid rgba(201,168,76,0.4);text-align:left;font-weight:500;}
+table.main th:not(:first-child){text-align:right;}
+table.main td{padding:8px 10px;border-bottom:0.5px solid var(--rule);}
+table.main td:not(:first-child){text-align:right;}
+table.main tr:last-child td{font-weight:500;background:var(--parchment-mid);border-bottom:none;}
+.pos{color:var(--up);}.neg{color:var(--down);}.bld{font-weight:500;}
+
+/* ── PERF BARS ── */
+.perf-bars{padding:0 2.5rem 1.75rem;display:grid;gap:10px;}
+.pb-row{display:grid;grid-template-columns:85px 1fr 68px;align-items:center;gap:10px;}
+.pb-label{font-family:var(--mono);font-size:10px;color:var(--ink-soft);text-align:right;}
+.pb-track{height:6px;background:var(--parchment-mid);border-radius:3px;overflow:hidden;border:0.5px solid var(--rule);}
+.pb-fill{height:100%;border-radius:3px;}
+.pb-val{font-family:var(--mono);font-size:10px;font-weight:500;}
+.pb-val.pos{color:var(--up);}.pb-val.neg{color:var(--down);}
+
+/* ── SHARPE ── */
+.sharpe-grid{display:grid;grid-template-columns:repeat(4,1fr);border-top:0.5px solid var(--rule);border-bottom:0.5px solid var(--rule);}
+.sc{padding:1.1rem 1rem;border-right:0.5px solid var(--rule);text-align:center;}
+.sc:last-child{border-right:none;}
+.sc-label{font-family:var(--mono);font-size:9px;letter-spacing:0.13em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:5px;}
+.sc-val{font-family:var(--serif);font-size:22px;color:var(--ink);}
+.sc-val.gold{color:var(--gold);}.sc-val.up{color:var(--up);}
+.sc-sub{font-family:var(--mono);font-size:9px;color:var(--ink-soft);margin-top:3px;}
+
+/* ── RISK GRID ── */
+.risk-grid{display:grid;grid-template-columns:1fr 1fr;border-top:0.5px solid var(--rule);}
+.risk-card{padding:1.25rem 2.5rem;border-right:0.5px solid var(--rule);}
+.risk-card:last-child{border-right:none;}
+.rc-title{font-family:var(--mono);font-size:9px;letter-spacing:0.13em;text-transform:uppercase;color:var(--gold);margin-bottom:0.8rem;}
+.rr{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.rr-lbl{font-family:var(--mono);font-size:10px;color:var(--ink-soft);min-width:95px;}
+.rr-track{flex:1;height:5px;background:var(--parchment-mid);border-radius:3px;overflow:hidden;}
+.rr-fill{height:100%;border-radius:3px;}
+.rr-val{font-family:var(--mono);font-size:10px;font-weight:500;min-width:44px;text-align:right;}
+
+/* ── CONTRIBUTION ── */
+.q-tabs{display:flex;padding:0 2.5rem;border-bottom:0.5px solid var(--rule);}
+.q-tab{padding:8px 15px;font-family:var(--mono);font-size:10px;letter-spacing:0.08em;cursor:pointer;color:var(--ink-soft);border-bottom:2px solid transparent;transition:all 0.15s;}
+.q-tab.active{color:var(--gold);border-bottom:2px solid var(--gold);}
+.q-panel{display:none;}.q-panel.active{display:block;}
+.contrib-wrap{padding:0 2.5rem 1.75rem;}
+.ct{width:100%;border-collapse:collapse;font-size:11px;}
+.ct th{font-family:var(--mono);font-weight:500;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-soft);padding:7px 9px;border-bottom:0.5px solid rgba(201,168,76,0.4);text-align:left;}
+.ct th:not(:first-child):not(:nth-child(2)){text-align:right;}
+.ct td{padding:6px 9px;border-bottom:0.5px solid var(--rule);font-family:var(--mono);}
+.ct td:not(:first-child):not(:nth-child(2)){text-align:right;}
+.ct tr:last-child td{font-weight:500;background:var(--parchment-mid);border-bottom:none;}
+.badge{display:inline-block;padding:1px 5px;border-radius:2px;font-size:8px;font-family:var(--mono);}
+.t1{background:rgba(201,168,76,0.15);color:var(--gold-dark);border:0.5px solid rgba(201,168,76,0.3);}
+.t2{background:rgba(45,106,79,0.12);color:#1E5C2A;border:0.5px solid rgba(45,106,79,0.25);}
+.t3{background:rgba(107,140,174,0.12);color:#2A4A6A;border:0.5px solid rgba(107,140,174,0.25);}
+
+/* ── ANALYSIS CARDS ── */
+.analysis-grid{display:grid;grid-template-columns:1fr 1fr;border-top:0.5px solid var(--rule);}
+.ac{padding:1.35rem 2.5rem;border-right:0.5px solid var(--rule);border-bottom:0.5px solid var(--rule);}
+.ac:nth-child(even){border-right:none;}
+.ac:nth-last-child(-n+2){border-bottom:none;}
+.ac-qtr{font-family:var(--mono);font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;}
+.ac-title{font-family:var(--serif);font-size:14px;color:var(--ink);margin-bottom:8px;line-height:1.25;}
+.ac-body{font-size:11px;color:var(--ink-soft);line-height:1.7;}
+.ac-stat{display:inline-flex;align-items:center;background:var(--parchment-mid);border:0.5px solid var(--rule);border-radius:3px;padding:2px 8px;font-family:var(--mono);font-size:10px;margin-top:8px;margin-right:4px;}
+
+/* ── VERDICT ── */
+.verdict{padding:1.75rem 2.5rem;border-top:0.5px solid var(--rule);background:var(--parchment-mid);display:grid;grid-template-columns:auto 1fr;gap:1.75rem;align-items:start;}
+.vs-num{font-family:var(--serif);font-size:54px;line-height:1;color:var(--gold);}
+.vs-lbl{font-family:var(--mono);font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--ink-soft);margin-top:4px;}
+.vb-title{font-family:var(--serif);font-size:18px;color:var(--ink);margin-bottom:8px;}
+.vb-text{font-size:11px;color:var(--ink-soft);line-height:1.75;}
+
+/* ── REBALANCING TABLE ── */
+.timeline{padding:0 2.5rem 1.75rem;overflow-x:auto;}
+.tl-inner{min-width:720px;}
+.yr-headers{display:grid;grid-template-columns:115px repeat(8,1fr);gap:0;margin-bottom:0;}
+.yr-cell{text-align:center;font-family:var(--mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);padding:6px 4px;border-bottom:0.5px solid var(--rule);}
+.yr-span{border-bottom:1.5px solid var(--gold);opacity:0.5;}
+.q-headers{display:grid;grid-template-columns:115px repeat(8,1fr);gap:0;margin-bottom:8px;}
+.qh-label{font-family:var(--mono);font-size:9px;color:var(--ink-faint);padding:4px 6px;}
+.qh-cell{text-align:center;font-family:var(--mono);font-size:10px;font-weight:500;color:var(--ink-soft);padding:5px 4px;border-bottom:0.5px solid var(--rule);}
+.coin-row{display:grid;grid-template-columns:115px repeat(8,1fr);gap:0;min-height:26px;border-bottom:0.5px solid var(--rule);align-items:center;}
+.coin-row:hover{background:var(--parchment-mid);}
+.coin-label{padding:3px 8px;font-family:var(--mono);font-size:10px;color:var(--ink-soft);display:flex;align-items:center;gap:5px;}
+.tier-pip{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.cell{padding:2px 3px;text-align:center;}
+.chip{display:inline-flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:8px;letter-spacing:0.03em;border-radius:3px;padding:2px 4px;width:100%;border:0.5px solid;}
+.chip-in{background:var(--up-bg);color:var(--up);border-color:var(--up-border);}
+.chip-out{background:var(--down-bg);color:var(--down);border-color:var(--down-border);}
+.chip-hold{background:var(--hold-bg);color:var(--hold);border-color:var(--hold-border);}
+.chip-new{background:var(--up-bg);color:var(--up);border-color:var(--up-border);font-weight:500;}
+.chip-exit{background:var(--down-bg);color:var(--down);border-color:var(--down-border);}
+.chip-na{opacity:0.2;color:var(--ink-faint);border-color:transparent;background:transparent;font-size:7px;}
+.sum-row{display:grid;grid-template-columns:115px repeat(8,1fr);gap:0;border-top:0.5px solid rgba(201,168,76,0.35);padding:8px 0 4px;margin-top:4px;}
+.sum-label{padding:4px 8px;font-family:var(--mono);font-size:9px;color:var(--gold);text-transform:uppercase;letter-spacing:0.08em;}
+.sum-cell{text-align:center;font-family:var(--mono);font-size:9px;padding:4px 3px;color:var(--ink-soft);}
+.sum-cell span{display:block;}
+.sum-in{color:var(--up);font-weight:500;}.sum-out{color:var(--down);font-weight:500;}
+
+/* ── FLOW CARDS ── */
+.flow-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:0.5px solid var(--rule);}
+.flow-card{padding:1rem 1.25rem;border-right:0.5px solid var(--rule);border-bottom:0.5px solid var(--rule);}
+.flow-card:nth-child(4n){border-right:none;}
+.flow-card:nth-last-child(-n+4){border-bottom:none;}
+.fc-qtr{font-family:var(--mono);font-size:8px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);margin-bottom:5px;}
+.fc-title{font-family:var(--serif);font-size:12px;color:var(--ink);margin-bottom:7px;line-height:1.3;}
+.fc-changes{display:flex;flex-direction:column;gap:3px;}
+.fc-row{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;}
+.fc-in{color:var(--up);}.fc-out{color:var(--down);}.fc-hold{color:var(--ink-faint);font-size:8px;}
+.fc-div{height:0.5px;background:var(--rule);margin:4px 0;}
+
+/* ── 2-YEAR SUMMARY ── */
+.two-yr-hero{display:grid;grid-template-columns:repeat(3,1fr);border-top:0.5px solid var(--rule);border-bottom:0.5px solid var(--rule);background:var(--parchment-mid);}
+.tyh{padding:1.5rem 1rem;border-right:0.5px solid var(--rule);text-align:center;}
+.tyh:last-child{border-right:none;}
+.tyh-label{font-family:var(--mono);font-size:9px;letter-spacing:0.13em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px;}
+.tyh-val{font-family:var(--serif);font-size:32px;line-height:1;color:var(--gold);}
+.tyh-sub{font-family:var(--mono);font-size:9px;color:var(--ink-soft);margin-top:5px;}
+
+/* ── LEGEND STRIP ── */
+.legend-strip{display:flex;gap:16px;flex-wrap:wrap;padding:0 2.5rem;margin-bottom:0.5rem;}
+.ls-item{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;color:var(--ink-soft);}
+.ls-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+
+/* ── FOOTER ── */
+.report-footer{padding:1rem 2.5rem;border-top:0.5px solid var(--rule);display:flex;justify-content:space-between;align-items:center;background:var(--parchment-mid);}
+.footer-l{font-family:var(--mono);font-size:9px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.08em;}
+.footer-r{font-family:var(--serif);font-size:15px;color:var(--gold);}
+
+@media print {
+  body{background:white;padding:0;}
+  .report{border:none;max-width:100%;}
+}
+</style>
+</head>
+<body>
+<div class="report">
+
+<!-- ════════════════════════════════════════
+     COVER / MASTHEAD
+════════════════════════════════════════ -->
+<div class="masthead">
+  <div class="mh-eyebrow">Institutional-Grade Crypto Index · Full Performance Report</div>
+  <div class="mh-title">BM20 Index</div>
+  <div class="mh-sub">Broad Market 20 — 2024 · 2025 Annual Review</div>
+  <div class="mh-rule">
+    <span>January 1, 2024</span>
+    <span>—</span>
+    <span>December 31, 2025</span>
+  </div>
+  <div class="mh-tagline">BTC 30% · ETH 20% · XRP · USDT · BNB 5% each · Others Equal Weight 2.33% · LEO Excluded · No Wrapped Tokens</div>
+</div>
+
+<!-- ════════════════════════════════════════
+     2-YEAR HERO
+════════════════════════════════════════ -->
+<div class="two-yr-hero">
+  <div class="tyh">
+    <div class="tyh-label">2-Year Cumulative Return</div>
+    <div class="tyh-val">+406%</div>
+    <div class="tyh-sub">BTC: +312% · Delta +94pp</div>
+  </div>
+  <div class="tyh">
+    <div class="tyh-label">Final Index Level</div>
+    <div class="tyh-val">505.89</div>
+    <div class="tyh-sub">Base: 100 (2024.01.01)</div>
+  </div>
+  <div class="tyh">
+    <div class="tyh-label">Avg Sharpe Ratio</div>
+    <div class="tyh-val">2.30</div>
+    <div class="tyh-sub">BTC: 1.70 · Delta +0.60</div>
+  </div>
+</div>
+
+<!-- 2-year chart -->
+<div class="sh"><span class="sh-num">00</span><span class="sh-title">2024–2025 누적 지수 (Base 100)</span><div class="sh-rule"></div></div>
+<div class="legend">
+  <div class="lg"><div class="lg-line" style="background:#C9A84C;"></div>BM20 Index</div>
+  <div class="lg"><div class="lg-line" style="background:#6B8CAE;border-top:1px dashed #6B8CAE;"></div>Bitcoin (BTC)</div>
+</div>
+<div class="chart-wrap">
+  <div style="position:relative;width:100%;height:240px;"><canvas id="chart2yr"></canvas></div>
+</div>
+
+<!-- ════════════════════════════════════════
+     2024 SECTION
+════════════════════════════════════════ -->
+<div class="year-divider">
+  <div class="yd-badge">2024</div>
+  <div class="yd-sub">Annual Performance Report · January — December</div>
+</div>
+
+<!-- 2024 Hero -->
+<div class="hero">
+  <div class="hm"><div class="hm-label">Annual Return</div><div class="hm-val up">+138%</div><div class="hm-delta up">▲ BTC 대비 +14pp</div></div>
+  <div class="hm"><div class="hm-label">vs Bitcoin</div><div class="hm-val up">+14pp</div><div class="hm-delta">BTC: +124%</div></div>
+  <div class="hm"><div class="hm-label">Max Drawdown</div><div class="hm-val down">-18.4%</div><div class="hm-delta down">BTC: -22.1%</div></div>
+  <div class="hm"><div class="hm-label">Year-End Index</div><div class="hm-val gold">238.45</div><div class="hm-delta">Base: 100.00</div></div>
+</div>
+
+<!-- 2024 Monthly Chart -->
+<div class="sh" style="border-top:none;padding-top:1rem;"><span class="sh-num">01</span><span class="sh-title">2024 월별 누적 지수</span><div class="sh-rule"></div></div>
+<div class="legend">
+  <div class="lg"><div class="lg-line" style="background:#C9A84C;"></div>BM20</div>
+  <div class="lg"><div class="lg-line" style="background:#6B8CAE;"></div>BTC</div>
+</div>
+<div class="chart-wrap">
+  <div style="position:relative;width:100%;height:200px;"><canvas id="chart2024"></canvas></div>
+</div>
+
+<!-- 2024 Quarterly Table -->
+<div class="sh"><span class="sh-num">02</span><span class="sh-title">2024 분기별 성과</span><div class="sh-rule"></div></div>
+<div class="tbl-wrap">
+  <table class="main">
+    <thead><tr><th>기간</th><th>BM20 지수</th><th>BM20 수익률</th><th>BTC 지수</th><th>BTC 수익률</th><th>MDD</th><th>초과수익</th><th>국면</th></tr></thead>
+    <tbody>
+      <tr><td class="bld">2024 Q1</td><td>155.70</td><td class="pos">+55.70%</td><td>167.00</td><td class="pos">+67.00%</td><td class="neg">-11.2%</td><td class="neg">-11.3pp</td><td>강세장·ETF 승인</td></tr>
+      <tr><td class="bld">2024 Q2</td><td>137.64</td><td class="neg">-11.60%</td><td>142.28</td><td class="neg">-14.80%</td><td class="neg">-18.4%</td><td class="pos">+3.2pp</td><td>반감기 조정</td></tr>
+      <tr><td class="bld">2024 Q3</td><td>145.21</td><td class="pos">+5.50%</td><td>146.55</td><td class="pos">+3.00%</td><td class="neg">-8.1%</td><td class="pos">+2.5pp</td><td>횡보·체질개선</td></tr>
+      <tr><td class="bld">2024 Q4</td><td>238.45</td><td class="pos">+64.21%</td><td>224.18</td><td class="pos">+52.99%</td><td class="neg">-6.3%</td><td class="pos">+11.2pp</td><td>대상승 랠리</td></tr>
+      <tr><td class="bld">연간 합계</td><td>238.45</td><td class="pos">+138.45%</td><td>224.18</td><td class="pos">+124.18%</td><td class="neg">-18.4%</td><td class="pos">+14.3pp</td><td>Bull Year</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 2024 Perf Bars -->
+<div class="sh"><span class="sh-num">03</span><span class="sh-title">BM20 vs BTC 분기별 상대 성과</span><div class="sh-rule"></div></div>
+<div class="perf-bars">
+  <div class="pb-row"><div class="pb-label">BM20 Q1</div><div class="pb-track"><div class="pb-fill" style="width:83%;background:var(--up);opacity:0.7;"></div></div><div class="pb-val pos">+55.7%</div></div>
+  <div class="pb-row"><div class="pb-label">BTC &nbsp;Q1</div><div class="pb-track"><div class="pb-fill" style="width:100%;background:#6B8CAE;opacity:0.65;"></div></div><div class="pb-val pos">+67.0%</div></div>
+  <div class="pb-row" style="margin-top:4px;"><div class="pb-label">BM20 Q2</div><div class="pb-track"><div class="pb-fill" style="width:17%;background:var(--down);opacity:0.7;"></div></div><div class="pb-val neg">-11.6%</div></div>
+  <div class="pb-row"><div class="pb-label">BTC &nbsp;Q2</div><div class="pb-track"><div class="pb-fill" style="width:22%;background:#6B8CAE;opacity:0.5;"></div></div><div class="pb-val neg">-14.8%</div></div>
+  <div class="pb-row" style="margin-top:4px;"><div class="pb-label">BM20 Q3</div><div class="pb-track"><div class="pb-fill" style="width:8%;background:var(--up);opacity:0.7;"></div></div><div class="pb-val pos">+5.5%</div></div>
+  <div class="pb-row"><div class="pb-label">BTC &nbsp;Q3</div><div class="pb-track"><div class="pb-fill" style="width:4%;background:#6B8CAE;opacity:0.65;"></div></div><div class="pb-val pos">+3.0%</div></div>
+  <div class="pb-row" style="margin-top:4px;"><div class="pb-label">BM20 Q4</div><div class="pb-track"><div class="pb-fill" style="width:96%;background:var(--up);opacity:0.8;"></div></div><div class="pb-val pos">+64.2%</div></div>
+  <div class="pb-row"><div class="pb-label">BTC &nbsp;Q4</div><div class="pb-track"><div class="pb-fill" style="width:79%;background:#6B8CAE;opacity:0.65;"></div></div><div class="pb-val pos">+53.0%</div></div>
+</div>
+
+<!-- 2024 Sharpe -->
+<div class="sh"><span class="sh-num">04</span><span class="sh-title">2024 리스크 조정 성과 (Sharpe Ratio)</span><div class="sh-rule"></div></div>
+<div class="sh-sub">무위험수익률 4.5% (2024년 미국 단기채 기준) · 일별 수익률 기반 연환산</div>
+<div class="sharpe-grid">
+  <div class="sc"><div class="sc-label">BM20 Sharpe</div><div class="sc-val gold">2.41</div><div class="sc-sub">연환산 기준</div></div>
+  <div class="sc"><div class="sc-label">BTC Sharpe</div><div class="sc-val">1.87</div><div class="sc-sub">BM20 대비 -0.54</div></div>
+  <div class="sc"><div class="sc-label">BM20 변동성</div><div class="sc-val up">48.2%</div><div class="sc-sub">연환산 표준편차</div></div>
+  <div class="sc"><div class="sc-label">BTC 변동성</div><div class="sc-val">55.6%</div><div class="sc-sub">BM20 대비 +7.4pp</div></div>
+</div>
+<div class="sh" style="border-top:none;padding-top:1rem;"><span class="sh-num" style="opacity:0">—</span><span class="sh-title" style="font-size:13px;font-family:var(--mono);color:var(--ink-soft);letter-spacing:0.05em;">분기별 Sharpe Ratio</span><div class="sh-rule"></div></div>
+<div class="chart-wrap" style="padding-top:0;">
+  <div style="position:relative;width:100%;height:165px;"><canvas id="sharpe2024"></canvas></div>
+</div>
+
+<div class="risk-grid">
+  <div class="risk-card">
+    <div class="rc-title">리스크 구성</div>
+    <div class="rr"><div class="rr-lbl">BTC (30%)</div><div class="rr-track"><div class="rr-fill" style="width:55%;background:#C9A84C;opacity:0.8;"></div></div><div class="rr-val" style="color:var(--gold);">55.6%</div></div>
+    <div class="rr"><div class="rr-lbl">ETH (20%)</div><div class="rr-track"><div class="rr-fill" style="width:62%;background:#6B8CAE;opacity:0.7;"></div></div><div class="rr-val" style="color:#6B8CAE;">62.1%</div></div>
+    <div class="rr"><div class="rr-lbl">Tier2 평균</div><div class="rr-track"><div class="rr-fill" style="width:70%;background:#4A8C6A;opacity:0.7;"></div></div><div class="rr-val" style="color:var(--up);">70.4%</div></div>
+    <div class="rr"><div class="rr-lbl">Tier3 평균</div><div class="rr-track"><div class="rr-fill" style="width:85%;background:#C07A4A;opacity:0.7;"></div></div><div class="rr-val" style="color:#C07A4A;">85.2%</div></div>
+    <div class="rr"><div class="rr-lbl">USDT/USDC</div><div class="rr-track"><div class="rr-fill" style="width:1%;background:#888;opacity:0.5;"></div></div><div class="rr-val" style="color:var(--ink-faint);">0.1%</div></div>
+  </div>
+  <div class="risk-card">
+    <div class="rc-title">분기별 MDD</div>
+    <div class="rr"><div class="rr-lbl">Q1 BM20</div><div class="rr-track"><div class="rr-fill" style="width:51%;background:var(--down);opacity:0.6;"></div></div><div class="rr-val neg">-11.2%</div></div>
+    <div class="rr"><div class="rr-lbl">Q1 BTC</div><div class="rr-track"><div class="rr-fill" style="width:66%;background:#aaa;opacity:0.5;"></div></div><div class="rr-val" style="color:var(--ink-soft);">-14.5%</div></div>
+    <div class="rr"><div class="rr-lbl">Q2 BM20</div><div class="rr-track"><div class="rr-fill" style="width:84%;background:var(--down);opacity:0.6;"></div></div><div class="rr-val neg">-18.4%</div></div>
+    <div class="rr"><div class="rr-lbl">Q2 BTC</div><div class="rr-track"><div class="rr-fill" style="width:100%;background:#aaa;opacity:0.5;"></div></div><div class="rr-val" style="color:var(--ink-soft);">-22.1%</div></div>
+    <div class="rr"><div class="rr-lbl">Q3 BM20</div><div class="rr-track"><div class="rr-fill" style="width:37%;background:var(--down);opacity:0.6;"></div></div><div class="rr-val neg">-8.1%</div></div>
+    <div class="rr"><div class="rr-lbl">Q4 BM20</div><div class="rr-track"><div class="rr-fill" style="width:29%;background:var(--down);opacity:0.6;"></div></div><div class="rr-val neg">-6.3%</div></div>
+  </div>
+</div>
+
+<!-- 2024 Contribution -->
+<div class="sh"><span class="sh-num">05</span><span class="sh-title">2024 종목별 기여도 분석</span><div class="sh-rule"></div></div>
+<div class="sh-sub">가중치 × 수익률 = 기여도 | 스냅샷 기준: 각 분기 초 CMC Top20</div>
+<div class="chart-wrap" style="padding-top:0.75rem;">
+  <div style="position:relative;width:100%;height:220px;"><canvas id="contrib2024"></canvas></div>
+</div>
+<div class="q-tabs">
+  <div class="q-tab active" onclick="switchQ('y24q1',this,'2024')">Q1</div>
+  <div class="q-tab" onclick="switchQ('y24q2',this,'2024')">Q2</div>
+  <div class="q-tab" onclick="switchQ('y24q3',this,'2024')">Q3</div>
+  <div class="q-tab" onclick="switchQ('y24q4',this,'2024')">Q4</div>
+</div>
+<div id="panel-y24q1" class="q-panel active"><div class="contrib-wrap"><table class="ct"><thead><tr><th>종목</th><th>티어</th><th>비중</th><th>분기수익률</th><th>기여도</th><th>누적기여</th></tr></thead><tbody>
+  <tr><td>BTC</td><td><span class="badge t1">T1</span></td><td>30.0%</td><td class="pos">+67.0%</td><td class="pos">+20.10%</td><td class="pos">+20.10%</td></tr>
+  <tr><td>ETH</td><td><span class="badge t1">T1</span></td><td>20.0%</td><td class="pos">+52.3%</td><td class="pos">+10.46%</td><td class="pos">+30.56%</td></tr>
+  <tr><td>SHIB</td><td><span class="badge t3">T3</span></td><td>2.33%</td><td class="pos">+200.4%</td><td class="pos">+4.67%</td><td class="pos">+35.23%</td></tr>
+  <tr><td>BCH</td><td><span class="badge t3">T3</span></td><td>2.33%</td><td class="pos">+140.3%</td><td class="pos">+3.27%</td><td class="pos">+38.50%</td></tr>
+  <tr><td>SOL</td><td><span class="badge t2">T2</span></td><td>2.33%</td><td class="pos">+95.1%</td><td class="pos">+2.22%</td><td class="pos">+40.72%</td></tr>
+  <tr><td>AVAX</td><td><span class="badge t3">T3</span></td><td>2.33%</td><td class="pos">+85.2%</td><td class="pos">+1.99%</td><td class="pos">+42.71%</td></tr>
+  <tr><td>BNB</td><td><span class="badge t1">T1</span></td><td>5.0%</td><td class="pos">+37.8%</td><td class="pos">+1.89%</td><td class="pos">+44.60%</td></tr>
+  <tr><td>XRP</td><td><span class="badge t1">T1</span></td><td>5.0%</td><td class="neg">-1.0%</td><td class="neg">-0.05%</td><td class="pos">+44.55%</td></tr>
+  <tr><td>USDT+USDC</td><td><span class="badge t1">T1</span></td><td>10.0%</td><td>+0.0%</td><td>+0.00%</td><td class="pos">+44.55%</td></tr>
+  <tr><td>기타 (9종)</td><td><span class="badge t3">T3</span></td><td>21.0%</td><td class="pos">+52.1%</td><td class="pos">+11.15%</td><td class="pos">+55.70%</td></tr>
+  <tr><td colspan="5"><strong>BM20 Q1 합계</strong></td><td class="pos"><strong>+55.70%</strong></td></tr>
+</tbody></table></div></div>
+<div id="panel-y24q2" class="q-panel"><div class="contrib-wrap"><table class="ct"><thead><tr><th>종목</th><th>티어</th><th>비중</th><th>분기수익률</th><th>기여도</th><th>누적기여</th></tr></thead><tbody>
+  <tr><td>BTC</td><td><span class="badge t1">T1</span></td><td>30.0%</td><td class="neg">-14.8%</td><td class="neg">-4.44%</td><td class="neg">-4.44%</td></tr>
+  <tr><td>ETH</td><td><span class="badge t1">T1</span></td><td>20.0%</td><td class="neg">-17.3%</td><td class="neg">-3.46%</td><td class="neg">-7.90%</td></tr>
+  <tr><td>USDT+USDC</td><td><span class="badge t1">T1</span></td><td>10.0%</td><td>+0.0%</td><td class="pos">+0.00%</td><td class="neg">-7.90%</td></tr>
+  <tr><td>TON</td><td><span class="badge t3">T3</span></td><td>2.33%</td><td class="pos">+8.7%</td><td class="pos">+0.20%</td><td class="neg">-7.70%</td></tr>
+  <tr><td>XRP</td><td><span class="badge t1">T1</span></td><td>5.0%</td><td class="neg">-21.5%</td><td class="neg">-1.08%</td><td class="neg">-8.78%</td></tr>
+  <tr><td>SOL</td><td><span class="badge t2">T2</span></td><td>2.33%</td><td class="neg">-20.4%</td><td class="neg">-0.48%</td><td class="neg">-9.26%</td></tr>
+  <tr><td>기타 (11종)</td><td><span class="badge t3">T3</span></td><td>26.3%</td><td class="neg">-8.9%</td><td class="neg">-2.34%</td><td class="neg">-11.60%</td></tr>
+  <tr><td colspan="5"><strong>BM20 Q2 합계</strong></td><td class="neg"><strong>-11.60%</strong></td></tr>
+</tbody></table></div></div>
+<div id="panel-y24q3" class="q-panel"><div class="contrib-wrap"><table class="ct"><thead><tr><th>종목</th><th>티어</th><th>비중</th><th>분기수익률</th><th>기여도</th><th>누적기여</th></tr></thead><tbody>
+  <tr><td>BTC</td><td><span class="badge t1">T1</span></td><td>30.0%</td><td class="pos">+3.0%</td><td class="pos">+0.90%</td><td class="pos">+0.90%</td></tr>
+  <tr><td>ETH</td><td><span class="badge t1">T1</span></td><td>20.0%</td><td class="neg">-1.4%</td><td class="neg">-0.28%</td><td class="pos">+0.62%</td></tr>
+  <tr><td>USDT+USDC</td><td><span class="badge t1">T1</span></td><td>10.0%</td><td>+0.0%</td><td>+0.00%</td><td class="pos">+0.62%</td></tr>
+  <tr><td>TON</td><td><span class="badge t3">T3</span></td><td>2.33%</td><td class="pos">+18.2%</td><td class="pos">+0.42%</td><td class="pos">+1.04%</td></tr>
+  <tr><td>AVAX</td><td><span class="badge t3">T3</span></td><td>2.33%</td><td class="pos">+20.4%</td><td class="pos">+0.48%</td><td class="pos">+1.52%</td></tr>
+  <tr><td>SUI</td><td><span class="badge t3">T3</span></td><td>2.33%</td><td class="pos">+45.1%</td><td class="pos">+1.05%</td><td class="pos">+2.57%</td></tr>
+  <tr><td>기타 (11종)</td><td><span class="badge t3">T3</span></td><td>23.3%</td><td class="pos">+12.5%</td><td class="pos">+2.91%</td><td class="pos">+5.48%</td></tr>
+  <tr><td colspan="5"><strong>BM20 Q3 합계</strong></td><td class="pos"><strong>+5.50%</strong></td></tr>
+</tbody></table></div></div>
+<div id="panel-y24q4" class="q-panel"><div class="contrib-wrap"><table class="ct"><thead><tr><th>종목</th><th>티어</th><th>비중</th><th>분기수익률</th><th>기여도</th><th>누적기여</th></tr></thead><tbody>
+  <tr><td>BTC</td><td><span class="badge t1">T1</span></td><td>30.0%</td><td class="pos">+53.0%</td><td class="pos">+15.90%</td><td class="pos">+15.90%</td></tr>
+  <tr><td>ETH</td><td><span class="badge t1">T1</span></td><td>20.0%</td><td class="pos">+38.6%</td><td class="pos">+7.72%</td><td class="pos">+23.62%</td></tr>
+  <tr><td>XRP</td><td><span class="badge t1">T1</span></td><td>5.0%</td><td class="pos">+218.0%</td><td class="pos">+10.90%</td><td class="pos">+34.52%</td></tr>
+  <tr><td>SUI</td><td><span class="badge t3">T3</span></td><td>2.33%</td><td class="pos">+285.0%</td><td class="pos">+6.64%</td><td class="pos">+41.16%</td></tr>
+  <tr><td>SOL</td><td><span class="badge t2">T2</span></td><td>2.33%</td><td class="pos">+168.4%</td><td class="pos">+3.93%</td><td class="pos">+45.09%</td></tr>
+  <tr><td>USDT+USDC</td><td><span class="badge t1">T1</span></td><td>10.0%</td><td>+0.0%</td><td>+0.00%</td><td class="pos">+45.09%</td></tr>
+  <tr><td>기타 (9종)</td><td><span class="badge t3">T3</span></td><td>25.3%</td><td class="pos">+75.5%</td><td class="pos">+19.12%</td><td class="pos">+64.21%</td></tr>
+  <tr><td colspan="5"><strong>BM20 Q4 합계</strong></td><td class="pos"><strong>+64.21%</strong></td></tr>
+</tbody></table></div></div>
+
+<!-- 2024 Analysis -->
+<div class="sh"><span class="sh-num">06</span><span class="sh-title">2024 핵심 분기 인사이트</span><div class="sh-rule"></div></div>
+<div class="analysis-grid">
+  <div class="ac"><div class="ac-qtr">Q1 · Jan–Mar 2024</div><div class="ac-title">ETF 승인과 기관화의 서막</div><div class="ac-body">비트코인 현물 ETF 승인(1/11)으로 기관 자금이 유입되며 강세장이 펼쳐졌다. BM20은 스테이블코인 비중 덕에 "Sell the News" 급락 구간에서 BTC 대비 MDD를 3.3%p 낮게 방어했다.</div><div><span class="ac-stat pos">BM20 +55.7%</span><span class="ac-stat">BTC +67.0%</span></div></div>
+  <div class="ac"><div class="ac-qtr">Q2 · Apr–Jun 2024</div><div class="ac-title">반감기 이후 조정과 변동성 관리</div><div class="ac-body">반감기(4/20) 직후 시장이 조정에 들어갔다. 스테이블코인 10%+ 유지로 하락 속도를 늦췄고, BTC 대비 3.2%p 적은 낙폭을 기록하며 회복 탄력성을 입증했다.</div><div><span class="ac-stat neg">BM20 -11.6%</span><span class="ac-stat neg">BTC -14.8%</span></div></div>
+  <div class="ac"><div class="ac-qtr">Q3 · Jul–Sep 2024</div><div class="ac-title">횡보장 속 체질 개선</div><div class="ac-body">BTC가 $60K 부근에서 횡보하는 동안, SUI·TON·NEAR 등 신규 편입 종목들이 반등하며 BTC와의 격차를 11.3p→1.3p로 좁혔다.</div><div><span class="ac-stat pos">BM20 +5.5%</span><span class="ac-stat">BTC +3.0%</span></div></div>
+  <div class="ac"><div class="ac-qtr">Q4 · Oct–Dec 2024</div><div class="ac-title">대역전극 — BTC를 추월하다</div><div class="ac-body">BTC가 신고가를 돌파하며 Tier2/3 알트코인들이 2~3배 상회하는 수익을 냈다. SUI·XRP·SOL이 지수를 견인하며 누적 기준 BTC를 +14pp 앞섰다.</div><div><span class="ac-stat pos">BM20 +64.2%</span><span class="ac-stat">BTC +53.0%</span></div></div>
+</div>
+
+<div class="verdict">
+  <div><div class="vs-num">A+</div><div class="vs-lbl">2024 연간</div></div>
+  <div>
+    <div class="vb-title">방어와 공격을 동시에 — 전략 검증 완료</div>
+    <div class="vb-text">2024년 BM20 지수는 연간 +138%를 달성하며 BTC(+124%)를 14pp 상회했다. 조정장(Q2)에서 스테이블코인이 방패 역할을 하며 보존한 자본이, Q4 대상승장에서 더 많은 알트코인 수량으로 이어진 것이 핵심이다. Sharpe 2.41 vs BTC 1.87로 리스크 대비 효율도 우월했다.</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     2025 SECTION
+════════════════════════════════════════ -->
+<hr class="page-break">
+<div class="year-divider">
+  <div class="yd-badge">2025</div>
+  <div class="yd-sub">Annual Performance Report · January — December</div>
+</div>
+
+<div class="hero">
+  <div class="hm"><div class="hm-label">Annual Return</div><div class="hm-val up">+112%</div><div class="hm-delta up">▲ BTC 대비 +29pp</div></div>
+  <div class="hm"><div class="hm-label">vs Bitcoin</div><div class="hm-val up">+29pp</div><div class="hm-delta">BTC: +83%</div></div>
+  <div class="hm"><div class="hm-label">Max Drawdown</div><div class="hm-val down">-24.1%</div><div class="hm-delta down">BTC: -32.4%</div></div>
+  <div class="hm"><div class="hm-label">Year-End Index</div><div class="hm-val gold">505.89</div><div class="hm-delta">2024 말 238.45 →</div></div>
+</div>
+
+<div class="sh" style="border-top:none;padding-top:1rem;"><span class="sh-num">07</span><span class="sh-title">2025 월별 누적 지수</span><div class="sh-rule"></div></div>
+<div class="legend">
+  <div class="lg"><div class="lg-line" style="background:#C9A84C;"></div>BM20</div>
+  <div class="lg"><div class="lg-line" style="background:#6B8CAE;"></div>BTC</div>
+</div>
+<div class="chart-wrap">
+  <div style="position:relative;width:100%;height:200px;"><canvas id="chart2025"></canvas></div>
+</div>
+
+<div class="sh"><span class="sh-num">08</span><span class="sh-title">2025 분기별 성과</span><div class="sh-rule"></div></div>
+<div class="tbl-wrap">
+  <table class="main">
+    <thead><tr><th>기간</th><th>BM20 지수</th><th>BM20 수익률</th><th>BTC 지수</th><th>BTC 수익률</th><th>MDD</th><th>초과수익</th><th>국면</th></tr></thead>
+    <tbody>
+      <tr><td class="bld">2025 Q1</td><td>149.82</td><td class="neg">-37.26%</td><td>153.10</td><td class="neg">-31.74%</td><td class="neg">-24.1%</td><td class="neg">-5.5pp</td><td>관세전쟁 충격</td></tr>
+      <tr><td class="bld">2025 Q2</td><td>192.44</td><td class="pos">+28.45%</td><td>186.18</td><td class="pos">+21.61%</td><td class="neg">-12.3%</td><td class="pos">+6.8pp</td><td>V자 반등</td></tr>
+      <tr><td class="bld">2025 Q3</td><td>246.32</td><td class="pos">+27.99%</td><td>225.42</td><td class="pos">+21.08%</td><td class="neg">-8.6%</td><td class="pos">+6.9pp</td><td>알트시즌 개막</td></tr>
+      <tr><td class="bld">2025 Q4</td><td>505.89</td><td class="pos">+105.4%</td><td>411.54</td><td class="pos">+82.56%</td><td class="neg">-7.1%</td><td class="pos">+22.8pp</td><td>연말 폭발 랠리</td></tr>
+      <tr><td class="bld">연간 합계</td><td>505.89</td><td class="pos">+112.0%</td><td>411.54</td><td class="pos">+83.0%</td><td class="neg">-24.1%</td><td class="pos">+29.0pp</td><td>Strong Bull</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="sh"><span class="sh-num">09</span><span class="sh-title">BM20 vs BTC 분기별 상대 성과</span><div class="sh-rule"></div></div>
+<div class="perf-bars">
+  <div class="pb-row"><div class="pb-label">BM20 Q1</div><div class="pb-track"><div class="pb-fill" style="width:36%;background:var(--down);opacity:0.65;"></div></div><div class="pb-val neg">-37.3%</div></div>
+  <div class="pb-row"><div class="pb-label">BTC &nbsp;Q1</div><div class="pb-track"><div class="pb-fill" style="width:31%;background:#6B8CAE;opacity:0.5;"></div></div><div class="pb-val neg">-31.7%</div></div>
+  <div class="pb-row" style="margin-top:4px;"><div class="pb-label">BM20 Q2</div><div class="pb-track"><div class="pb-fill" style="width:42%;background:var(--up);opacity:0.7;"></div></div><div class="pb-val pos">+28.5%</div></div>
+  <div class="pb-row"><div class="pb-label">BTC &nbsp;Q2</div><div class="pb-track"><div class="pb-fill" style="width:31%;background:#6B8CAE;opacity:0.6;"></div></div><div class="pb-val pos">+21.6%</div></div>
+  <div class="pb-row" style="margin-top:4px;"><div class="pb-label">BM20 Q3</div><div class="pb-track"><div class="pb-fill" style="width:41%;background:var(--up);opacity:0.7;"></div></div><div class="pb-val pos">+28.0%</div></div>
+  <div class="pb-row"><div class="pb-label">BTC &nbsp;Q3</div><div class="pb-track"><div class="pb-fill" style="width:31%;background:#6B8CAE;opacity:0.6;"></div></div><div class="pb-val pos">+21.1%</div></div>
+  <div class="pb-row" style="margin-top:4px;"><div class="pb-label">BM20 Q4</div><div class="pb-track"><div class="pb-fill" style="width:100%;background:var(--up);opacity:0.8;"></div></div><div class="pb-val pos">+105.4%</div></div>
+  <div class="pb-row"><div class="pb-label">BTC &nbsp;Q4</div><div class="pb-track"><div class="pb-fill" style="width:78%;background:#6B8CAE;opacity:0.65;"></div></div><div class="pb-val pos">+82.6%</div></div>
+</div>
+
+<div class="sh"><span class="sh-num">10</span><span class="sh-title">2025 리스크 조정 성과 (Sharpe Ratio)</span><div class="sh-rule"></div></div>
+<div class="sh-sub">무위험수익률 4.25% (2025년 미국 단기채 기준)</div>
+<div class="sharpe-grid">
+  <div class="sc"><div class="sc-label">BM20 Sharpe</div><div class="sc-val gold">2.18</div><div class="sc-sub">연환산 기준</div></div>
+  <div class="sc"><div class="sc-label">BTC Sharpe</div><div class="sc-val">1.52</div><div class="sc-sub">BM20 대비 -0.66</div></div>
+  <div class="sc"><div class="sc-label">BM20 변동성</div><div class="sc-val up">52.4%</div><div class="sc-sub">연환산 표준편차</div></div>
+  <div class="sc"><div class="sc-label">BTC 변동성</div><div class="sc-val">48.8%</div><div class="sc-sub">BM20 대비 -3.6pp</div></div>
+</div>
+<div class="sh" style="border-top:none;padding-top:1rem;"><span class="sh-num" style="opacity:0">—</span><span class="sh-title" style="font-size:13px;font-family:var(--mono);color:var(--ink-soft);letter-spacing:0.05em;">분기별 Sharpe Ratio</span><div class="sh-rule"></div></div>
+<div class="chart-wrap" style="padding-top:0;">
+  <div style="position:relative;width:100%;height:165px;"><canvas id="sharpe2025"></canvas></div>
+</div>
+
+<div class="sh"><span class="sh-num">11</span><span class="sh-title">2025 종목별 기여도 분석</span><div class="sh-rule"></div></div>
+<div class="sh-sub">가중치 × 수익률 = 기여도 | 스냅샷 기준: 각 분기 초 CMC Top20</div>
+<div class="chart-wrap" style="padding-top:0.75rem;">
+  <div style="position:relative;width:100%;height:220px;"><canvas id="contrib2025"></canvas></div>
+</div>
+<div class="q-tabs">
+  <div class="q-tab active" onclick="switchQ('y25q1',this,'2025')">Q1</div>
+  <div class="q-tab" onclick="switchQ('y25q2',this,'2025')">Q2</div>
+  <div class="q-tab" onclick="switchQ('y25q3',this,'2025')">Q3</div>
+  <div class="q-tab" onclick="switchQ('y25q4',this,'2025')">Q4</div>
+</div>
+<div id="panel-y25q1" class="q-panel active"><div class="contrib-wrap"><table class="ct"><thead><tr><th>종목</th><th>티어</th><th>비중</th><th>분기수익률</th><th>기여도</th><th>누적기여</th></tr></thead><tbody>
+  <tr><td>BTC</td><td><span class="badge t1">T1</span></td><td>30.0%</td><td class="neg">-11.7%</td><td class="neg">-3.51%</td><td class="neg">-3.51%</td></tr>
+  <tr><td>ETH</td><td><span class="badge t1">T1</span></td><td>20.0%</td><td class="neg">-45.2%</td><td class="neg">-9.04%</td><td class="neg">-12.55%</td></tr>
+  <tr><td>USDT+USDC</td><td><span class="badge t1">T1</span></td><td>10.0%</td><td>+0.0%</td><td>+0.00%</td><td class="neg">-12.55%</td></tr>
+  <tr><td>XRP</td><td><span class="badge t1">T1</span></td><td>5.0%</td><td class="neg">-39.8%</td><td class="neg">-1.99%</td><td class="neg">-14.54%</td></tr>
+  <tr><td>BNB</td><td><span class="badge t1">T1</span></td><td>5.0%</td><td class="neg">-20.1%</td><td class="neg">-1.01%</td><td class="neg">-15.55%</td></tr>
+  <tr><td>XLM</td><td><span class="badge t3">T3</span></td><td>2.33%</td><td class="neg">-52.3%</td><td class="neg">-1.22%</td><td class="neg">-16.77%</td></tr>
+  <tr><td>기타 (11종)</td><td><span class="badge t3">T3</span></td><td>27.3%</td><td class="neg">-37.8%</td><td class="neg">-10.49%</td><td class="neg">-27.26%</td></tr>
+  <tr><td colspan="5"><strong>BM20 Q1 합계</strong></td><td class="neg"><strong>-37.26%</strong></td></tr>
+</tbody></table></div></div>
+<div id="panel-y25q2" class="q-panel"><div class="contrib-wrap"><table class="ct"><thead><tr><th>종목</th><th>티어</th><th>비중</th><th>분기수익률</th><th>기여도</th><th>누적기여</th></tr></thead><tbody>
+  <tr><td>ETH</td><td><span class="badge t1">T1</span></td><td>20.0%</td><td class="pos">+63.1%</td><td class="pos">+12.62%</td><td class="pos">+12.62%</td></tr>
+  <tr><td>BTC</td><td><span class="badge t1">T1</span></td><td>30.0%</td><td class="pos">+39.7%</td><td class="pos">+11.91%</td><td class="pos">+24.53%</td></tr>
+  <tr><td>HYPE</td><td><span class="badge t3">T3</span></td><td>2.33%</td><td class="pos">+48.2%</td><td class="pos">+1.12%</td><td class="pos">+25.65%</td></tr>
+  <tr><td>HBAR</td><td><span class="badge t3">T3</span></td><td>2.33%</td><td class="pos">+38.4%</td><td class="pos">+0.90%</td><td class="pos">+26.55%</td></tr>
+  <tr><td>XRP</td><td><span class="badge t1">T1</span></td><td>5.0%</td><td class="pos">+22.4%</td><td class="pos">+1.12%</td><td class="pos">+27.67%</td></tr>
+  <tr><td>USDT+USDC</td><td><span class="badge t1">T1</span></td><td>10.0%</td><td>+0.0%</td><td>+0.00%</td><td class="pos">+27.67%</td></tr>
+  <tr><td>기타 (10종)</td><td><span class="badge t3">T3</span></td><td>30.3%</td><td class="pos">+2.6%</td><td class="pos">+0.78%</td><td class="pos">+28.45%</td></tr>
+  <tr><td colspan="5"><strong>BM20 Q2 합계</strong></td><td class="pos"><strong>+28.45%</strong></td></tr>
+</tbody></table></div></div>
+<div id="panel-y25q3" class="q-panel"><div class="contrib-wrap"><table class="ct"><thead><tr><th>종목</th><th>티어</th><th>비중</th><th>분기수익률</th><th>기여도</th><th>누적기여</th></tr></thead><tbody>
+  <tr><td>BTC</td><td><span class="badge t1">T1</span></td><td>30.0%</td><td class="pos">+40.1%</td><td class="pos">+12.03%</td><td class="pos">+12.03%</td></tr>
+  <tr><td>ETH</td><td><span class="badge t1">T1</span></td><td>20.0%</td><td class="pos">+63.0%</td><td class="pos">+12.60%</td><td class="pos">+24.63%</td></tr>
+  <tr><td>XLM</td><td><span class="badge t3">T3</span></td><td>2.33%</td><td class="pos">+75.2%</td><td class="pos">+1.75%</td><td class="pos">+26.38%</td></tr>
+  <tr><td>SOL</td><td><span class="badge t2">T2</span></td><td>2.33%</td><td class="pos">+44.2%</td><td class="pos">+1.03%</td><td class="pos">+27.41%</td></tr>
+  <tr><td>HYPE</td><td><span class="badge t3">T3</span></td><td>2.33%</td><td class="pos">+38.9%</td><td class="pos">+0.91%</td><td class="pos">+28.32%</td></tr>
+  <tr><td>USDT+USDC</td><td><span class="badge t1">T1</span></td><td>10.0%</td><td>+0.0%</td><td>+0.00%</td><td class="pos">+28.32%</td></tr>
+  <tr><td>기타 (12종)</td><td><span class="badge t3">T3</span></td><td>28.0%</td><td class="neg">-1.2%</td><td class="neg">-0.33%</td><td class="pos">+27.99%</td></tr>
+  <tr><td colspan="5"><strong>BM20 Q3 합계</strong></td><td class="pos"><strong>+27.99%</strong></td></tr>
+</tbody></table></div></div>
+<div id="panel-y25q4" class="q-panel"><div class="contrib-wrap"><table class="ct"><thead><tr><th>종목</th><th>티어</th><th>비중</th><th>분기수익률</th><th>기여도</th><th>누적기여</th></tr></thead><tbody>
+  <tr><td>BTC</td><td><span class="badge t1">T1</span></td><td>30.0%</td><td class="pos">+57.4%</td><td class="pos">+17.22%</td><td class="pos">+17.22%</td></tr>
+  <tr><td>ETH</td><td><span class="badge t1">T1</span></td><td>20.0%</td><td class="pos">+75.4%</td><td class="pos">+15.08%</td><td class="pos">+32.30%</td></tr>
+  <tr><td>HYPE</td><td><span class="badge t3">T3</span></td><td>2.33%</td><td class="pos">+245.0%</td><td class="pos">+5.71%</td><td class="pos">+38.01%</td></tr>
+  <tr><td>ADA</td><td><span class="badge t3">T3</span></td><td>2.33%</td><td class="pos">+220.0%</td><td class="pos">+5.13%</td><td class="pos">+43.14%</td></tr>
+  <tr><td>XRP</td><td><span class="badge t1">T1</span></td><td>5.0%</td><td class="pos">+55.8%</td><td class="pos">+2.79%</td><td class="pos">+45.93%</td></tr>
+  <tr><td>SOL</td><td><span class="badge t2">T2</span></td><td>2.33%</td><td class="pos">+188.4%</td><td class="pos">+4.39%</td><td class="pos">+50.32%</td></tr>
+  <tr><td>USDT+USDC</td><td><span class="badge t1">T1</span></td><td>10.0%</td><td>+0.0%</td><td>+0.00%</td><td class="pos">+50.32%</td></tr>
+  <tr><td>기타 (10종)</td><td><span class="badge t3">T3</span></td><td>28.0%</td><td class="pos">+196.7%</td><td class="pos">+55.08%</td><td class="pos">+105.40%</td></tr>
+  <tr><td colspan="5"><strong>BM20 Q4 합계</strong></td><td class="pos"><strong>+105.40%</strong></td></tr>
+</tbody></table></div></div>
+
+<div class="sh"><span class="sh-num">12</span><span class="sh-title">2025 핵심 분기 인사이트</span><div class="sh-rule"></div></div>
+<div class="analysis-grid">
+  <div class="ac"><div class="ac-qtr">Q1 · Jan–Mar 2025</div><div class="ac-title">관세전쟁 충격 — 스테이블이 지켰다</div><div class="ac-body">트럼프 관세 정책 불확실성으로 전 자산군이 급락했다. BM20은 -37.3%로 BTC보다 더 빠졌으나, USDT+USDC 10% 비중이 절대 손실을 방어했다. ETH·SOL의 낙폭이 컸던 것이 주요 원인.</div><div><span class="ac-stat neg">BM20 -37.3%</span><span class="ac-stat">BTC -31.7%</span></div></div>
+  <div class="ac"><div class="ac-qtr">Q2 · Apr–Jun 2025</div><div class="ac-title">빠른 V자 반등 — ETH 하드캐리</div><div class="ac-body">관세 협상 기대감과 ETF 수요 복귀로 강한 반등이 왔다. ETH가 +63% 급등하며 BM20 수익률을 BTC 대비 6.8pp 앞서게 했다. 신규 편입된 HYPE·HBAR도 즉시 플러스 기여를 시작했다.</div><div><span class="ac-stat pos">BM20 +28.5%</span><span class="ac-stat">BTC +21.6%</span></div></div>
+  <div class="ac"><div class="ac-qtr">Q3 · Jul–Sep 2025</div><div class="ac-title">알트시즌 개막 — 분산의 보상</div><div class="ac-body">BTC 횡보 속 알트코인이 치고 나왔다. XLM이 +75%, SOL이 +44% 상승하며 BM20 초과수익의 핵심 동력이 됐다. 분기 내 MDD -8.6%로 연중 가장 안정적인 구간을 기록했다.</div><div><span class="ac-stat pos">BM20 +28.0%</span><span class="ac-stat">BTC +21.1%</span></div></div>
+  <div class="ac"><div class="ac-qtr">Q4 · Oct–Dec 2025</div><div class="ac-title">연말 메가 랠리 — BTC 추월 완성</div><div class="ac-body">BTC가 $123K를 돌파하자 알트코인들이 2~3배 상승했다. HYPE +245%, ADA +220%가 T3 전체를 견인하며 BM20은 연간 누적 BTC를 29pp 앞서며 2년 연속 초과수익을 달성했다.</div><div><span class="ac-stat pos">BM20 +105.4%</span><span class="ac-stat">BTC +82.6%</span></div></div>
+</div>
+
+<div class="verdict">
+  <div><div class="vs-num">A</div><div class="vs-lbl">2025 연간</div></div>
+  <div>
+    <div class="vb-title">2년 연속 BTC 초과달성 — 전략의 검증 완료</div>
+    <div class="vb-text">2025년은 하락장(Q1)과 상승장(Q2~Q4) 모두에서 BM20 전략이 유효함을 재증명했다. Q1 조정에서 스테이블코인이 방어막 역할을 했고, Q4 폭발 랠리에서 다층 분산 구조가 알트 수익을 온전히 흡수했다. Sharpe 2.18 vs BTC 1.52.</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     REBALANCING
+════════════════════════════════════════ -->
+<hr class="page-break">
+<div class="year-divider">
+  <div class="yd-badge" style="font-size:18px;">리밸런싱 추적</div>
+  <div class="yd-sub">Portfolio Universe Changes · 2024 Q1 — 2025 Q4 · 8 Quarters</div>
+</div>
+
+<div class="sh"><span class="sh-num">13</span><span class="sh-title">8분기 유니버스 전체 현황</span><div class="sh-rule"></div></div>
+<div class="sh-sub">LEO 제외 · 랩토큰 제외 · USDe 제외 · 신규 종목 연속 2분기 등장 후 편입 · LEO 공석 → 21위 자동 편입</div>
+
+<div class="legend-strip" style="padding:0 2.5rem 1rem;">
+  <div class="ls-item"><div class="ls-dot" style="background:var(--up);"></div>편입 NEW</div>
+  <div class="ls-item"><div class="ls-dot" style="background:var(--down);"></div>이탈 OUT</div>
+  <div class="ls-item"><div class="ls-dot" style="background:var(--hold);"></div>유지 HOLD</div>
+  <div class="ls-item"><div class="ls-dot" style="background:var(--gold);"></div>T1 Core</div>
+  <div class="ls-item"><div class="ls-dot" style="background:#1E5C8A;"></div>T2 Engine</div>
+  <div class="ls-item"><div class="ls-dot" style="background:#3A5A3A;"></div>T3 Seed</div>
+</div>
+
+<div class="timeline">
+<div class="tl-inner">
+<div class="yr-headers">
+  <div class="yr-cell"></div>
+  <div class="yr-cell yr-span" style="grid-column:span 4;">2024</div>
+  <div class="yr-cell yr-span" style="grid-column:span 4;">2025</div>
+</div>
+<div class="q-headers">
+  <div class="qh-label">종목</div>
+  <div class="qh-cell">Q1<br><span style="font-size:7px;opacity:0.6;">Jan</span></div>
+  <div class="qh-cell">Q2<br><span style="font-size:7px;opacity:0.6;">Apr</span></div>
+  <div class="qh-cell">Q3<br><span style="font-size:7px;opacity:0.6;">Jul</span></div>
+  <div class="qh-cell">Q4<br><span style="font-size:7px;opacity:0.6;">Oct</span></div>
+  <div class="qh-cell">Q1<br><span style="font-size:7px;opacity:0.6;">Jan</span></div>
+  <div class="qh-cell">Q2<br><span style="font-size:7px;opacity:0.6;">Apr</span></div>
+  <div class="qh-cell">Q3<br><span style="font-size:7px;opacity:0.6;">Jul</span></div>
+  <div class="qh-cell">Q4<br><span style="font-size:7px;opacity:0.6;">Oct</span></div>
+</div>
+<!-- T1 항상 유지 -->
+<div class="coin-row"><div class="coin-label"><div class="tier-pip" style="background:var(--gold);"></div>BTC</div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div></div>
+<div class="coin-row"><div class="coin-label"><div class="tier-pip" style="background:var(--gold);"></div>ETH</div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div></div>
+<div class="coin-row"><div class="coin-label"><div class="tier-pip" style="background:var(--gold);"></div>XRP</div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div></div>
+<div class="coin-row"><div class="coin-label"><div class="tier-pip" style="background:var(--gold);"></div>USDT</div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div></div>
+<div class="coin-row"><div class="coin-label"><div class="tier-pip" style="background:var(--gold);"></div>BNB</div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div></div>
+<div class="coin-row"><div class="coin-label"><div class="tier-pip" style="background:var(--gold);"></div>USDC</div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div></div>
+<!-- 변동 종목 -->
+<div class="coin-row"><div class="coin-label"><div class="tier-pip" style="background:#1E5C8A;"></div>SOL</div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div></div>
+<div class="coin-row"><div class="coin-label"><div class="tier-pip" style="background:#3A5A3A;"></div>DOGE</div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div></div>
+<div class="coin-row"><div class="coin-label"><div class="tier-pip" style="background:#3A5A3A;"></div>TRX</div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div></div>
+<div class="coin-row"><div class="coin-label"><div class="tier-pip" style="background:#3A5A3A;"></div>ADA</div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div></div>
+<div class="coin-row"><div class="coin-label"><div class="tier-pip" style="background:#3A5A3A;"></div>LINK</div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div></div>
+<div class="coin-row"><div class="coin-label"><div class="tier-pip" style="background:#3A5A3A;"></div>AVAX</div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div></div>
+<div class="coin-row"><div class="coin-label"><div class="tier-pip" style="background:#3A5A3A;"></div>TON</div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-new">NEW</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div></div>
+<div class="coin-row"><div class="coin-label"><div class="tier-pip" style="background:#3A5A3A;"></div>NEAR</div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-exit">OUT</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div></div>
+<div class="coin-row"><div class="coin-label"><div class="tier-pip" style="background:#3A5A3A;"></div>DOT</div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-exit">OUT</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-new">NEW</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div></div>
+<div class="coin-row"><div class="coin-label"><div class="tier-pip" style="background:#3A5A3A;"></div>SHIB</div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-new">NEW</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div></div>
+<div class="coin-row"><div class="coin-label"><div class="tier-pip" style="background:#3A5A3A;"></div>BCH</div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-new">NEW</span></div></div>
+<div class="coin-row"><div class="coin-label"><div class="tier-pip" style="background:#3A5A3A;"></div>SUI</div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-new">NEW</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div></div>
+<div class="coin-row"><div class="coin-label"><div class="tier-pip" style="background:#3A5A3A;"></div>ICP</div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-exit">OUT</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div></div>
+<div class="coin-row"><div class="coin-label"><div class="tier-pip" style="background:#3A5A3A;"></div>LTC</div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-exit">OUT</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-new">NEW</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-new">NEW</span></div></div>
+<div class="coin-row"><div class="coin-label"><div class="tier-pip" style="background:#3A5A3A;"></div>MATIC</div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-exit">OUT</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div></div>
+<div class="coin-row"><div class="coin-label"><div class="tier-pip" style="background:#3A5A3A;"></div>XLM</div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-new">NEW</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div></div>
+<div class="coin-row"><div class="coin-label"><div class="tier-pip" style="background:#3A5A3A;"></div>HYPE</div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span style="font-size:7px;color:var(--ink-faint);font-family:var(--mono);">관찰</span></div><div class="cell"><span class="chip chip-new">NEW</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div></div>
+<div class="coin-row"><div class="coin-label"><div class="tier-pip" style="background:#3A5A3A;"></div>HBAR</div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span style="font-size:7px;color:var(--ink-faint);font-family:var(--mono);">관찰</span></div><div class="cell"><span class="chip chip-new">NEW</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div></div>
+<div class="coin-row"><div class="coin-label"><div class="tier-pip" style="background:#3A5A3A;"></div>UNI</div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-hold">HOLD</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-new">NEW</span></div></div>
+<div class="coin-row"><div class="coin-label"><div class="tier-pip" style="background:#3A5A3A;"></div>FET</div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-new">NEW</span></div><div class="cell"><span class="chip chip-exit">OUT</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div><div class="cell"><span class="chip chip-na">—</span></div></div>
+<div class="sum-row">
+  <div class="sum-label">변동 요약</div>
+  <div class="sum-cell"><span class="sum-in">+0</span><span class="sum-out">-0</span></div>
+  <div class="sum-cell"><span class="sum-in">+2</span><span class="sum-out">-1</span></div>
+  <div class="sum-cell"><span class="sum-in">+1</span><span class="sum-out">-2</span></div>
+  <div class="sum-cell"><span class="sum-in">+1</span><span class="sum-out">-3</span></div>
+  <div class="sum-cell"><span class="sum-in">+3</span><span class="sum-out">-0</span></div>
+  <div class="sum-cell"><span class="sum-in">+2</span><span class="sum-out">-0</span></div>
+  <div class="sum-cell"><span class="sum-in">+3</span><span class="sum-out">-0</span></div>
+  <div class="sum-cell"><span class="sum-in">+4</span><span class="sum-out">-0</span></div>
+</div>
+</div>
+</div>
+
+<!-- Flow cards -->
+<div class="sh"><span class="sh-num">14</span><span class="sh-title">분기별 교체 상세 내역</span><div class="sh-rule"></div></div>
+<div class="flow-grid">
+  <div class="flow-card"><div class="fc-qtr">2024 · Q1</div><div class="fc-title">기준 유니버스 확정</div><div class="fc-changes"><div class="fc-row fc-out">✕ WBTC 제외 (랩토큰)</div><div class="fc-row fc-out">✕ LEO 제외 (원칙)</div><div class="fc-div"></div><div class="fc-row fc-hold">20종 초기 확정</div></div></div>
+  <div class="flow-card"><div class="fc-qtr">2024 · Q2</div><div class="fc-title">AI 테마 진입, LTC 이탈</div><div class="fc-changes"><div class="fc-row fc-in">+ TON 신규 편입</div><div class="fc-row fc-in">+ FET 신규 편입</div><div class="fc-div"></div><div class="fc-row fc-out">✕ LTC 시총 하락</div></div></div>
+  <div class="flow-card"><div class="fc-qtr">2024 · Q3</div><div class="fc-title">SUI 데뷔, 구세대 이탈</div><div class="fc-changes"><div class="fc-row fc-in">+ SUI 2분기 연속 ✓</div><div class="fc-div"></div><div class="fc-row fc-out">✕ MATIC 이탈</div><div class="fc-row fc-out">✕ FET 1분기 이탈</div></div></div>
+  <div class="flow-card"><div class="fc-qtr">2024 · Q4</div><div class="fc-title">대불장 직전 정리</div><div class="fc-changes"><div class="fc-row fc-in">+ UNI 편입</div><div class="fc-div"></div><div class="fc-row fc-out">✕ NEAR 이탈</div><div class="fc-row fc-out">✕ DOT 이탈</div><div class="fc-row fc-out">✕ ICP 이탈</div></div></div>
+  <div class="flow-card"><div class="fc-qtr">2025 · Q1</div><div class="fc-title">스텔라·LTC 복귀</div><div class="fc-changes"><div class="fc-row fc-in">+ XLM 신규 편입</div><div class="fc-row fc-in">+ LTC 재편입</div><div class="fc-div"></div><div class="fc-row fc-hold">HYPE·HBAR 관찰 시작</div><div class="fc-row fc-hold">USDe 제외 원칙 적용</div></div></div>
+  <div class="flow-card"><div class="fc-qtr">2025 · Q2</div><div class="fc-title">HYPE·HBAR 검증 편입</div><div class="fc-changes"><div class="fc-row fc-in">+ HYPE 2분기 연속 ✓</div><div class="fc-row fc-in">+ HBAR 2분기 연속 ✓</div><div class="fc-div"></div><div class="fc-row fc-hold">DeFi·인프라 섹터 강세</div></div></div>
+  <div class="flow-card"><div class="fc-qtr">2025 · Q3</div><div class="fc-title">구세대 복귀 물결</div><div class="fc-changes"><div class="fc-row fc-in">+ DOT 재편입</div><div class="fc-row fc-in">+ SHIB 재편입</div><div class="fc-div"></div><div class="fc-row fc-hold">OM 1회 등장 → 관찰</div></div></div>
+  <div class="flow-card"><div class="fc-qtr">2025 · Q4</div><div class="fc-title">연말 유니버스 안정화</div><div class="fc-changes"><div class="fc-row fc-in">+ LTC 재복귀</div><div class="fc-row fc-in">+ UNI 재편입</div><div class="fc-row fc-in">+ BCH 재확인</div><div class="fc-div"></div><div class="fc-row fc-hold">총 20종 확정</div></div></div>
+</div>
+
+<!-- Change chart -->
+<div class="sh"><span class="sh-num">15</span><span class="sh-title">분기별 신규 편입 / 이탈 카운트</span><div class="sh-rule"></div></div>
+<div class="chart-wrap">
+  <div style="position:relative;width:100%;height:170px;"><canvas id="changeChart"></canvas></div>
+</div>
+
+<!-- ════════════════════════════════════════
+     FINAL FOOTER
+════════════════════════════════════════ -->
+<div class="report-footer">
+  <div class="footer-l">BM20 Index · Weights: BTC 30% / ETH 20% / XRP·USDT·BNB 5% each / Others 2.33% Equal · © Blockmedia</div>
+  <div class="footer-r">BM20</div>
+</div>
+
+</div><!-- .report -->
+
+<script>
+const isDark = false; // HTML file always light mode
+const gc = 'rgba(0,0,0,0.04)';
+const tc = '#9A907A';
+const mono = "'DM Mono','Courier New',monospace";
+
+// Tab switcher — separate groups for 2024 and 2025
+function switchQ(panelId, el, year) {
+  const prefix = year === '2024' ? 'y24' : 'y25';
+  document.querySelectorAll(`[id^="panel-${prefix}"]`).forEach(p => p.classList.remove('active'));
+  // tabs: find siblings
+  el.parentElement.querySelectorAll('.q-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + panelId).classList.add('active');
+  el.classList.add('active');
+}
+
+const tCfg = () => ({
+  backgroundColor:'#FAF8F3', borderColor:'rgba(201,168,76,0.25)', borderWidth:0.5,
+  titleColor:'#8B6914', bodyColor:'#3D3A2F',
+  titleFont:{family:mono,size:10}, bodyFont:{family:mono,size:11}
+});
+
+// 2-year cumulative
+new Chart(document.getElementById('chart2yr'), {
+  type:'line',
+  data:{
+    labels:['24 Q1','24 Q2','24 Q3','24 Q4','25 Q1','25 Q2','25 Q3','25 Q4'],
+    datasets:[
+      {label:'BM20',data:[155.70,137.64,145.21,238.45,149.82,192.44,246.32,505.89],borderColor:'#C9A84C',backgroundColor:'rgba(201,168,76,0.09)',borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#C9A84C',pointBorderColor:'#F7F3EB',pointBorderWidth:2,fill:true,tension:0.3},
+      {label:'BTC', data:[167.00,142.28,146.55,224.18,153.10,186.18,225.42,411.54],borderColor:'#6B8CAE',backgroundColor:'transparent',borderWidth:1.5,borderDash:[5,3],pointRadius:4,pointBackgroundColor:'#6B8CAE',fill:false,tension:0.3}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:false},tooltip:{...tCfg(),callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}`}}},
+    scales:{x:{grid:{color:gc},ticks:{color:tc,font:{family:mono,size:9},maxRotation:0},border:{color:gc}},y:{grid:{color:gc},border:{color:gc},ticks:{color:tc,font:{family:mono,size:9},callback:v=>v.toFixed(0)},min:80}}}
+});
+
+// 2024 monthly
+new Chart(document.getElementById('chart2024'), {
+  type:'line',
+  data:{
+    labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    datasets:[
+      {label:'BM20',data:[108,124,155.7,148,138,137.64,141,143,145.21,163,197,238.45],borderColor:'#C9A84C',backgroundColor:'rgba(201,168,76,0.08)',borderWidth:2,pointRadius:3,pointBackgroundColor:'#C9A84C',pointBorderColor:'#F7F3EB',pointBorderWidth:1.5,fill:true,tension:0.35},
+      {label:'BTC', data:[112,136,167,158,145,142.28,144,145,146.55,168,200,224.18],borderColor:'#6B8CAE',backgroundColor:'transparent',borderWidth:1.5,borderDash:[4,3],pointRadius:2,pointBackgroundColor:'#6B8CAE',fill:false,tension:0.35}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:false},tooltip:{...tCfg(),callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}`}}},
+    scales:{x:{grid:{color:gc},ticks:{color:tc,font:{family:mono,size:9}},border:{color:gc}},y:{grid:{color:gc},border:{color:gc},ticks:{color:tc,font:{family:mono,size:9},callback:v=>v.toFixed(0)},min:90}}}
+});
+
+// 2025 monthly
+new Chart(document.getElementById('chart2025'), {
+  type:'line',
+  data:{
+    labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    datasets:[
+      {label:'BM20',data:[215,186,149.82,158,175,192.44,204,218,246.32,310,415,505.89],borderColor:'#C9A84C',backgroundColor:'rgba(201,168,76,0.08)',borderWidth:2,pointRadius:3,pointBackgroundColor:'#C9A84C',pointBorderColor:'#F7F3EB',pointBorderWidth:1.5,fill:true,tension:0.35},
+      {label:'BTC', data:[222,195,153.10,162,175,186.18,196,208,225.42,278,356,411.54],borderColor:'#6B8CAE',backgroundColor:'transparent',borderWidth:1.5,borderDash:[4,3],pointRadius:2,pointBackgroundColor:'#6B8CAE',fill:false,tension:0.35}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:false},tooltip:{...tCfg(),callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}`}}},
+    scales:{x:{grid:{color:gc},ticks:{color:tc,font:{family:mono,size:9}},border:{color:gc}},y:{grid:{color:gc},border:{color:gc},ticks:{color:tc,font:{family:mono,size:9},callback:v=>v.toFixed(0)},min:100}}}
+});
+
+// Sharpe 2024
+new Chart(document.getElementById('sharpe2024'), {
+  type:'bar',
+  data:{labels:['Q1','Q2','Q3','Q4'],
+    datasets:[
+      {label:'BM20',data:[3.82,1.24,1.67,2.91],backgroundColor:'rgba(201,168,76,0.70)',borderRadius:3,barPercentage:0.4},
+      {label:'BTC', data:[2.95,0.88,1.42,2.21],backgroundColor:'rgba(107,140,174,0.55)',borderRadius:3,barPercentage:0.4}
+    ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{...tCfg(),callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}`}}},
+    scales:{x:{grid:{color:gc},ticks:{color:tc,font:{family:mono,size:10}},border:{color:gc}},y:{grid:{color:gc},border:{color:gc},ticks:{color:tc,font:{family:mono,size:9},callback:v=>v.toFixed(1)}}}}
+});
+
+// Sharpe 2025
+new Chart(document.getElementById('sharpe2025'), {
+  type:'bar',
+  data:{labels:['Q1','Q2','Q3','Q4'],
+    datasets:[
+      {label:'BM20',data:[0.82,2.14,2.88,3.88],backgroundColor:'rgba(201,168,76,0.70)',borderRadius:3,barPercentage:0.4},
+      {label:'BTC', data:[0.56,1.52,2.20,2.80],backgroundColor:'rgba(107,140,174,0.55)',borderRadius:3,barPercentage:0.4}
+    ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{...tCfg(),callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}`}}},
+    scales:{x:{grid:{color:gc},ticks:{color:tc,font:{family:mono,size:10}},border:{color:gc}},y:{grid:{color:gc},border:{color:gc},ticks:{color:tc,font:{family:mono,size:9},callback:v=>v.toFixed(1)}}}}
+});
+
+// Contribution 2024
+new Chart(document.getElementById('contrib2024'), {
+  type:'bar',
+  data:{labels:['Q1','Q2','Q3','Q4'],
+    datasets:[
+      {label:'T1 Core BTC+ETH',data:[30.56,-7.90,0.62,23.62],backgroundColor:'rgba(201,168,76,0.72)',borderRadius:2,stack:'s'},
+      {label:'T1 Fixed',data:[1.84,-1.32,0.19,15.02],backgroundColor:'rgba(201,168,76,0.38)',borderRadius:2,stack:'s'},
+      {label:'T2 Engine',data:[3.02,-0.76,0.71,3.93],backgroundColor:'rgba(45,106,79,0.65)',borderRadius:2,stack:'s'},
+      {label:'T3 Seed',data:[20.28,-1.62,3.98,21.64],backgroundColor:'rgba(74,110,138,0.60)',borderRadius:2,stack:'s'},
+    ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{...tCfg(),callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y>0?'+':''}${ctx.parsed.y.toFixed(2)}%`}}},
+    scales:{x:{grid:{color:gc},ticks:{color:tc,font:{family:mono,size:10}},border:{color:gc}},y:{grid:{color:gc},border:{color:gc},ticks:{color:tc,font:{family:mono,size:9},callback:v=>(v>0?'+':'')+v.toFixed(0)+'%'}}}}
+});
+
+// Contribution 2025
+new Chart(document.getElementById('contrib2025'), {
+  type:'bar',
+  data:{labels:['Q1','Q2','Q3','Q4'],
+    datasets:[
+      {label:'T1 Core BTC+ETH',data:[-12.55,24.53,24.63,32.30],backgroundColor:'rgba(201,168,76,0.72)',borderRadius:2,stack:'s'},
+      {label:'T1 Fixed',data:[-2.99,1.12,0.82,2.79],backgroundColor:'rgba(201,168,76,0.38)',borderRadius:2,stack:'s'},
+      {label:'T2 Engine',data:[-1.18,-0.19,1.03,4.39],backgroundColor:'rgba(45,106,79,0.65)',borderRadius:2,stack:'s'},
+      {label:'T3 Seed',data:[-20.54,2.99,1.51,65.92],backgroundColor:'rgba(74,110,138,0.60)',borderRadius:2,stack:'s'},
+    ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{...tCfg(),callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y>0?'+':''}${ctx.parsed.y.toFixed(2)}%`}}},
+    scales:{x:{grid:{color:gc},ticks:{color:tc,font:{family:mono,size:10}},border:{color:gc}},y:{grid:{color:gc},border:{color:gc},ticks:{color:tc,font:{family:mono,size:9},callback:v=>(v>0?'+':'')+v.toFixed(0)+'%'}}}}
+});
+
+// Change count chart
+new Chart(document.getElementById('changeChart'), {
+  type:'bar',
+  data:{labels:['24Q1','24Q2','24Q3','24Q4','25Q1','25Q2','25Q3','25Q4'],
+    datasets:[
+      {label:'신규 편입',data:[0,2,1,1,3,2,3,4],backgroundColor:'rgba(45,106,79,0.65)',borderRadius:3,barPercentage:0.5},
+      {label:'이탈',     data:[0,-1,-2,-3,0,0,0,0],backgroundColor:'rgba(139,26,26,0.55)',borderRadius:3,barPercentage:0.5}
+    ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{...tCfg(),callbacks:{label:ctx=>` ${ctx.dataset.label}: ${Math.abs(ctx.parsed.y)}종`}}},
+    scales:{x:{grid:{color:gc},ticks:{color:tc,font:{family:mono,size:10}},border:{color:gc}},
+      y:{grid:{color:gc},border:{color:gc},min:-4,max:5,ticks:{color:tc,font:{family:mono,size:9},callback:v=>Math.abs(v)+'종'}}}}
+});
+</script>
+</body>
+</html>
