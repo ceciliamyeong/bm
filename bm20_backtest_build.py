@@ -177,12 +177,12 @@ Q = {
         "stellar","hedera-hashgraph","polkadot","bitcoin-cash","uniswap"]),
     "2025-Q3": make_weights([
         "solana","usd-coin","tron","dogecoin","cardano",
-        "avalanche-2","sui","chainlink","toncoin","shiba-inu",
-        "stellar","hedera-hashgraph","polkadot","bitcoin-cash","uniswap"]),
+        "sui","bitcoin-cash","chainlink","stellar","avalanche-2",
+        "toncoin","shiba-inu","hedera-hashgraph","uniswap","polkadot"]),
     "2025-Q4": make_weights([
         "solana","usd-coin","dogecoin","tron","cardano",
-        "avalanche-2","sui","chainlink","toncoin","shiba-inu",
-        "stellar","hedera-hashgraph","litecoin","bitcoin-cash","uniswap"]),
+        "hyperliquid","chainlink","sui","avalanche-2","stellar",
+        "bitcoin-cash","hedera-hashgraph","litecoin","shiba-inu","toncoin"]),
 }
 
 # ══════════════════════════════════════════════════════════════
