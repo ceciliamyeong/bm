@@ -97,8 +97,8 @@ jobs:
           git pull --rebase origin main
           git stash pop || true
 
-          git add out/backfill_current_basket.csv
-          git add out/bm20_backtest_series.json || true   # 없으면 무시
+          # ★ out/ 폴더는 절대 커밋하지 않음 — backtest_output/ 만 커밋
+          git add backtest_output/ || true
 
           if ! git diff --cached --quiet; then
             START="${{ inputs.start_date || '2018-01-01' }}"
@@ -106,11 +106,11 @@ jobs:
             if [ -z "${END_D}" ]; then
               END_D=$(TZ=Asia/Seoul date +%F)
             fi
-            git commit -m "feat: BM20 backtest rebuild ${START} ~ ${END_D}"
+            git commit -m "feat: BM20 backtest result ${START} ~ ${END_D} (검증용)"
             git push origin HEAD:main
-            echo "[DONE] 커밋 완료"
+            echo "[DONE] 커밋 완료 — backtest_output/ 에만 저장됨"
           else
-            echo "[INFO] 변경사항 없음 (dry-run 결과와 동일)"
+            echo "[INFO] 변경사항 없음"
           fi
 
       # 결과 요약 출력
