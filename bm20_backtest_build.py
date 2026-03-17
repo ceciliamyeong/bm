@@ -296,7 +296,7 @@ def download_prices(start: str, end: str) -> pd.DataFrame:
 # ══════════════════════════════════════════════════════════════
 
 def run(start_date: str, end_date: str, dry_run: bool = False):
-    out_dir = Path("out")
+    out_dir = Path("backtest_output")
     out_dir.mkdir(exist_ok=True)
 
     prices = download_prices(start_date, end_date)
@@ -415,15 +415,15 @@ def run(start_date: str, end_date: str, dry_run: bool = False):
     bt_json.write_text(json.dumps(series_out, ensure_ascii=False), encoding="utf-8")
     print(f"[SAVED] {bt_json}")
 
-    # ── 저장 2: out/backfill_current_basket.csv (SSOT 교체) ──
-    backfill = out_dir / "backfill_current_basket.csv"
+    # ── 저장 2: out/backfill_current_basket.csv (검증용 — 운영파일 아님) ──
+    backfill = out_dir / "bm20_backtest_backfill.csv"
     with open(backfill, "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["date", "index", "ret"])
         for r in results:
             w.writerow([r["date"], r["level"], r["ret"]])
     print(f"[SAVED] {backfill}  ({len(results)}행)")
-    print("\n[DONE] 백테스트 완료. 다음 bm20_daily.py 실행 시 이 CSV를 SSOT로 사용합니다.")
+    print("\n[DONE] 백테스트 완료. 결과 검증 후 수동으로 out/backfill_current_basket.csv에 복사하세요.")
 
     return results
 
