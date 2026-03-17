@@ -113,19 +113,19 @@ jobs:
             echo "[INFO] 변경사항 없음"
           fi
 
-      # 결과 요약 출력
+      # 결과 요약 출력 (backtest_output/ 기준)
       - name: Print summary
         if: always()
         run: |
           echo "### 백테스트 결과" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          if [ -f "out/bm20_backtest_series.json" ]; then
+          if [ -f "backtest_output/bm20_backtest_series.json" ]; then
             python - << 'PY'
-          import json, os
+          import json
           from pathlib import Path
 
-          data = json.loads(Path("out/bm20_backtest_series.json").read_text())
+          data = json.loads(Path("backtest_output/bm20_backtest_series.json").read_text())
           if not data:
               print("데이터 없음")
           else:
@@ -153,5 +153,5 @@ jobs:
               print(f"\n{summary}")
           PY
           else
-            echo "bm20_backtest_series.json 없음 (dry-run 이거나 오류)"
+            echo "backtest_output/bm20_backtest_series.json 없음 (dry-run은 저장 안 함 — 로그에서 연도별 수익률 확인)"
           fi
