@@ -266,7 +266,28 @@ def download_prices(start: str, end: str) -> pd.DataFrame:
 
     prices = pd.concat(frames, axis=1)
     prices = prices.loc[~prices.index.duplicated(keep="last")]
-    prices = prices.ffill().bfill()
+
+    # ── 이상치 필터: 전일 대비 +1000% 초과 or -99% 이하 수익률은 NaN 처리 ──
+    # LUNA 붕괴 후 LUNA2 교체, 상장폐지 후 재상장 등으로 인한 가격 폭발 방지
+    MAX_DAILY_GAIN = 10.0   # 최대 +1000% (10배)
+    MIN_DAILY_RET  = -0.99  # 최대 -99%
+
+    pct_chg = prices.pct_change()
+    spike_mask = (pct_chg > MAX_DAILY_GAIN) | (pct_chg < MIN_DAILY_RET)
+    if spike_mask.any().any():
+        n_spikes = spike_mask.sum().sum()
+        print(f"[WARN] 이상치 {n_spikes}건 감지 → NaN 처리 (LUNA 붕괴, 상폐 후 재상장 등)")
+        # 스파이크 당일 및 이후 연속된 값을 NaN으로 — 해당 종목 전체가 아니라 스파이크 이후 구간만
+        for col in spike_mask.columns:
+            spike_dates = spike_mask.index[spike_mask[col]]
+            for sd in spike_dates:
+                # 스파이크 당일부터 다음 분기 리밸런싱일까지 NaN
+                # (단순하게: 스파이크 당일 하루만 NaN → 전후 ffill로 처리)
+                prices.loc[sd, col] = np.nan
+                print(f"  {col} spike on {sd.date()}: {pct_chg.loc[sd, col]*100:+.0f}%")
+
+    # ffill은 하되 bfill은 하지 않음 (미래 가격으로 과거 채우기 방지)
+    prices = prices.ffill()
     print(f"[INFO] 다운로드 완료: {prices.shape[0]}일 × {prices.shape[1]}종목")
     return prices
 
@@ -336,7 +357,7 @@ def run(start_date: str, end_date: str, dry_run: bool = False):
             }
             continue
 
-        # 1D 수익률
+        # 1D 수익률 (종목별 -99% ~ +500% 범위 초과 시 제외)
         port_ret = 0.0
         w_used   = 0.0
         for c, w in cur_weights.items():
@@ -346,7 +367,11 @@ def run(start_date: str, end_date: str, dry_run: bool = False):
             p0 = prev_prices.get(c, np.nan)
             if not (np.isfinite(p1) and np.isfinite(p0) and p0 > 0 and p1 > 0):
                 continue
-            port_ret += w * (p1/p0 - 1.0)
+            coin_ret = p1 / p0 - 1.0
+            if coin_ret > 5.0 or coin_ret < -0.99:
+                print(f"  [SKIP] {c} {today} ret={coin_ret*100:+.0f}% → 이상치 제외")
+                continue
+            port_ret += w * coin_ret
             w_used   += w
 
         if w_used < 0.5:
