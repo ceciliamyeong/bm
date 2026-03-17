@@ -197,18 +197,19 @@ COIN_VALID_UNTIL = {
     "klay-token":   "2023-12-31",  # KLAY 상폐 이슈
     "huobi-token":  "2023-06-30",  # HT 상폐
     "theta-token":  "2023-12-31",  # THETA 거래량 급감
+    "matic-network":"2024-09-30",  # POL 리브랜딩 이후 MATIC-USD 데이터 오염 가능
 }
 
 YF = {
     "bitcoin":"BTC-USD","ethereum":"ETH-USD","ripple":"XRP-USD",
     "tether":"USDT-USD","binancecoin":"BNB-USD","usd-coin":"USDC-USD",
-    "solana":"SOL-USD","toncoin":"TON-USD","avalanche-2":"AVAX-USD",
+    "solana":"SOL-USD","toncoin":"TON11419-USD","avalanche-2":"AVAX-USD",
     "chainlink":"LINK-USD","cardano":"ADA-USD","shiba-inu":"SHIB-USD",
     "polkadot":"DOT-USD","dogecoin":"DOGE-USD","tron":"TRX-USD",
     "near":"NEAR-USD","cosmos":"ATOM-USD","litecoin":"LTC-USD",
-    "bitcoin-cash":"BCH-USD","stellar":"XLM-USD","uniswap":"UNI-USD",
+    "bitcoin-cash":"BCH-USD","stellar":"XLM-USD","uniswap":"UNI7083-USD",
     "matic-network":"MATIC-USD","internet-computer":"ICP-USD",
-    "hedera-hashgraph":"HBAR-USD","sui":"SUI-USD","dai":"DAI-USD",
+    "hedera-hashgraph":"HBAR-USD","hyperliquid":"HYPE32196-USD","polygon":"POL28321-USD","sui":"SUI20947-USD","dai":"DAI-USD",
     "maker":"MKR-USD","eos":"EOS-USD","fantom":"FTM-USD",  # terra-luna 제거 (LUNA 붕괴 후 심볼 오염)
     "neo":"NEO-USD","nem":"XEM-USD","iota":"MIOTA-USD","dash":"DASH-USD",
     "monero":"XMR-USD","tezos":"XTZ-USD","vechain":"VET-USD",
