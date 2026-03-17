@@ -1,13 +1,15 @@
-name: Send Letter (after render)
+name: Send Letter (manual)
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows: ["Render Letter (daily)"]
-    types:
-      - completed
+  # 자동 발송 재개 시 아래 주석 해제
+  # workflow_run:
+  #   workflows: ["Render Letter (daily)"]
+  #   types:
+  #     - completed
 jobs:
   send:
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    # 자동 발송 재개 시 아래 조건도 함께 해제
+    # if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     env:
       TZ: Asia/Seoul
