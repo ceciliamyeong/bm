@@ -1,0 +1,157 @@
+name: BM20 Backtest Rebuild
+
+# ★ 수동 실행 전용 — 기존 daily workflow와 완전히 독립
+# ★ 기존 bm20_daily.py 는 절대 수정하지 않음
+# ★ 결과: out/backfill_current_basket.csv 교체
+#          out/bm20_backtest_series.json 저장 (검증용)
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: "백테스트 시작일 (YYYY-MM-DD)"
+        required: false
+        default: "2018-01-01"
+      end_date:
+        description: "백테스트 종료일 (YYYY-MM-DD, 비워두면 오늘)"
+        required: false
+        default: ""
+      dry_run:
+        description: "dry-run (저장 없이 결과만 확인)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+concurrency:
+  group: bm20-backtest-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    env:
+      TZ: Asia/Seoul
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install yfinance pandas numpy
+
+      # 백테스트 스크립트 실행
+      - name: Run backtest
+        env:
+          START_DATE: ${{ inputs.start_date || '2018-01-01' }}
+          END_DATE:   ${{ inputs.end_date }}
+          DRY_RUN:    ${{ inputs.dry_run }}
+        run: |
+          # 종료일 처리 (비어있으면 오늘)
+          if [ -z "${END_DATE}" ]; then
+            END_DATE=$(TZ=Asia/Seoul date +%F)
+          fi
+
+          echo "[INFO] 백테스트 기간: ${START_DATE} ~ ${END_DATE}"
+          echo "[INFO] dry-run: ${DRY_RUN}"
+
+          # out 폴더 확보
+          mkdir -p out
+
+          # dry-run 플래그
+          DRY_FLAG=""
+          if [ "${DRY_RUN}" = "true" ]; then
+            DRY_FLAG="--dry-run"
+          fi
+
+          python bm20_backtest_build.py \
+            --start "${START_DATE}" \
+            --end   "${END_DATE}" \
+            ${DRY_FLAG}
+
+      # dry-run이 아닐 때만 커밋
+      - name: Commit & Push results
+        if: ${{ inputs.dry_run != 'true' }}
+        run: |
+          set -euo pipefail
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin main
+          git stash push -u -m "backtest-autostash" || true
+          git pull --rebase origin main
+          git stash pop || true
+
+          git add out/backfill_current_basket.csv
+          git add out/bm20_backtest_series.json || true   # 없으면 무시
+
+          if ! git diff --cached --quiet; then
+            START="${{ inputs.start_date || '2018-01-01' }}"
+            END_D="${{ inputs.end_date }}"
+            if [ -z "${END_D}" ]; then
+              END_D=$(TZ=Asia/Seoul date +%F)
+            fi
+            git commit -m "feat: BM20 backtest rebuild ${START} ~ ${END_D}"
+            git push origin HEAD:main
+            echo "[DONE] 커밋 완료"
+          else
+            echo "[INFO] 변경사항 없음 (dry-run 결과와 동일)"
+          fi
+
+      # 결과 요약 출력
+      - name: Print summary
+        if: always()
+        run: |
+          echo "### 백테스트 결과" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f "out/bm20_backtest_series.json" ]; then
+            python - << 'PY'
+          import json, os
+          from pathlib import Path
+
+          data = json.loads(Path("out/bm20_backtest_series.json").read_text())
+          if not data:
+              print("데이터 없음")
+          else:
+              first = data[0]
+              last  = data[-1]
+              total = (last["level"] / first["level"] - 1) * 100
+
+              # 연도별 요약
+              by_year = {}
+              for r in data:
+                  y = r["date"][:4]
+                  by_year.setdefault(y, []).append(r["level"])
+
+              summary = f"| 날짜 | BM20 지수 | 연간 수익률 |\n|------|----------|------------|\n"
+              prev = first["level"]
+              for y in sorted(by_year):
+                  yl = by_year[y][-1]
+                  ret = (yl / prev - 1) * 100
+                  summary += f"| {y} | {yl:,.2f} | {ret:+.1f}% |\n"
+                  prev = yl
+
+              print(f"**기간**: {first['date']} ~ {last['date']}")
+              print(f"**최종 지수**: {last['level']:,.2f}")
+              print(f"**총 수익률**: {total:+.1f}%")
+              print(f"\n{summary}")
+          PY
+          else
+            echo "bm20_backtest_series.json 없음 (dry-run 이거나 오류)"
+          fi
