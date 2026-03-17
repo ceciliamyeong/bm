@@ -193,11 +193,12 @@ Q = {
 # (상장폐지, 리디노미네이션, 심볼 교체 등으로 데이터 오염되는 종목)
 COIN_VALID_UNTIL = {
     "terra-luna":   "2022-05-11",  # LUNA 붕괴일
-    "bittorrent":   "2021-12-31",  # BTT 리디노미네이션
     "klay-token":   "2023-12-31",  # KLAY 상폐 이슈
     "huobi-token":  "2023-06-30",  # HT 상폐
     "theta-token":  "2023-12-31",  # THETA 거래량 급감
     "matic-network":"2024-09-30",  # POL 리브랜딩 이후 MATIC-USD 데이터 오염 가능
+    "fantom":        "2023-12-31",  # FTM → FPAD 심볼 교체로 데이터 오염
+    "bittorrent":    "2021-09-30",  # BTT 리디노미네이션 이슈
 }
 
 YF = {
@@ -210,13 +211,12 @@ YF = {
     "bitcoin-cash":"BCH-USD","stellar":"XLM-USD","uniswap":"UNI7083-USD",
     "matic-network":"MATIC-USD","internet-computer":"ICP-USD",
     "hedera-hashgraph":"HBAR-USD","hyperliquid":"HYPE32196-USD","polygon":"POL28321-USD","sui":"SUI20947-USD","dai":"DAI-USD",
-    "maker":"MKR-USD","eos":"EOS-USD","fantom":"FTM-USD",  # terra-luna 제거 (LUNA 붕괴 후 심볼 오염)
+    "maker":"MKR-USD","eos":"EOS-USD","fantom":"FPAD-USD",  # terra-luna 제거 (LUNA 붕괴 후 심볼 오염)
     "neo":"NEO-USD","nem":"XEM-USD","iota":"MIOTA-USD","dash":"DASH-USD",
     "monero":"XMR-USD","tezos":"XTZ-USD","vechain":"VET-USD",
     "ethereum-classic":"ETC-USD","zcash":"ZEC-USD","ontology":"ONT-USD",
     "qtum":"QTUM-USD","lisk":"LSK-USD","icon":"ICX-USD",
     "bitcoin-gold":"BTG-USD","omisego":"OMG-USD","theta-token":"THETA-USD",
-    "filecoin":"FIL-USD","bittorrent":"BTT-USD","klay-token":"KLAY-USD",
     "algorand":"ALGO-USD","crypto-com-chain":"CRO-USD",
     "huobi-token":"HT-USD","fetch-ai":"FET-USD",
 }
@@ -278,24 +278,7 @@ def download_prices(start: str, end: str) -> pd.DataFrame:
     prices = pd.concat(frames, axis=1)
     prices = prices.loc[~prices.index.duplicated(keep="last")]
 
-    # ── 이상치 필터: 전일 대비 +1000% 초과 or -99% 이하 수익률은 NaN 처리 ──
-    # LUNA 붕괴 후 LUNA2 교체, 상장폐지 후 재상장 등으로 인한 가격 폭발 방지
-    MAX_DAILY_GAIN = 2.0    # 최대 +200% (3배) — 크립토 일일 최대 현실적 범위
-    MIN_DAILY_RET  = -0.95  # 최대 -95%
-
-    pct_chg = prices.pct_change()
-    spike_mask = (pct_chg > MAX_DAILY_GAIN) | (pct_chg < MIN_DAILY_RET)
-    if spike_mask.any().any():
-        n_spikes = spike_mask.sum().sum()
-        print(f"[WARN] 이상치 {n_spikes}건 감지 → 스파이크 이후 구간 전체 NaN 처리")
-        for col in spike_mask.columns:
-            spike_dates = spike_mask.index[spike_mask[col]]
-            for sd in spike_dates:
-                # 스파이크 당일부터 끝까지 NaN (완전히 다른 코인으로 교체된 경우 방지)
-                prices.loc[sd:, col] = np.nan
-                print(f"  {col} spike on {sd.date()}: {pct_chg.loc[sd, col]*100:+.0f}% → {sd.date()} 이후 전체 NaN")
-
-    # ffill은 하되 bfill은 하지 않음 (미래 가격으로 과거 채우기 방지)
+    # ffill만 적용 (bfill 제거 - 미래 가격으로 과거 채우기 방지)
     prices = prices.ffill()
     print(f"[INFO] 다운로드 완료: {prices.shape[0]}일 × {prices.shape[1]}종목")
     return prices
@@ -376,14 +359,18 @@ def run(start_date: str, end_date: str, dry_run: bool = False):
             p0 = prev_prices.get(c, np.nan)
             if not (np.isfinite(p1) and np.isfinite(p0) and p0 > 0 and p1 > 0):
                 continue
-            # 종목 유효 기간 체크
+            # 종목 유효 기간 체크 (COIN_VALID_UNTIL 기준)
             valid_until = COIN_VALID_UNTIL.get(c)
             if valid_until and str(today) > valid_until:
                 continue  # 유효 기간 초과 종목 조용히 제외
 
             coin_ret = p1 / p0 - 1.0
-            if coin_ret > 2.0 or coin_ret < -0.95:
-                print(f"  [SKIP] {c} {today} ret={coin_ret*100:+.0f}% → 이상치 제외")
+
+            # 실제로 불가능한 수익률만 필터 (데이터 오염 방지)
+            # DOGE +356%, SHIB 상장일 급등 같은 실제 가격은 허용
+            # +10000% 이상 or -99% 이하만 제외 (완전한 데이터 오염)
+            if not np.isfinite(coin_ret) or coin_ret > 100.0 or coin_ret < -0.99:
+                print(f"  [SKIP] {c} {today} ret={coin_ret*100:+.0f}% → 데이터 오염 제외")
                 continue
             port_ret += w * coin_ret
             w_used   += w
