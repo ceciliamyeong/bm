@@ -30,8 +30,8 @@ from pathlib import Path
 
 # ── 경로 설정 ──────────────────────────────────────────────
 ROOT     = Path(__file__).resolve().parent
-TEMPLATE = ROOT / "aas_brief_template.html"
-OUT      = ROOT / "aas_brief.html"
+TEMPLATE = ROOT.parent / "aas_brief_template.html"
+OUT      = ROOT.parent / "aas_brief.html"
 
 # ── GitHub 설정 ────────────────────────────────────────────
 REPO        = "Blockmedia-DataTeam/AAS-Bot"
