@@ -679,7 +679,22 @@ def load_index_series_1d(path: Path) -> str:
             return "—"
         chg = (curr - prev) / prev * 100
         arrow = "▲" if chg >= 0 else "▼"
-        return f"{arrow}{abs(chg):.2f}%"
+        color = "#16a34a" if chg >= 0 else "#dc2626"
+        return f'<span style="color:{color};font-weight:900;">{arrow}{abs(chg):.2f}%</span>'
+    except Exception:
+        return "—"
+
+def load_index_series_price(path: Path) -> str:
+    """[{date, price}] 배열 마지막 항목의 지수값 반환"""
+    try:
+        import json as _json
+        if not path.exists():
+            return "—"
+        raw = _json.loads(path.read_text(encoding="utf-8"))
+        if not raw:
+            return "—"
+        curr = float(raw[-1]["price"])
+        return f"{curr:,.2f}"
     except Exception:
         return "—"
 
@@ -1017,6 +1032,7 @@ def build_placeholders() -> dict[str, str]:
         "{{BITHUMB_SHARE_24H}}": fmt_share_pct(bith_share) if bith_share else "—",
         "{{COINONE_SHARE_24H}}": fmt_share_pct(coin_share) if coin_share else "—",
         "{{NASDAQ_1D}}": nasdaq_1d,
+        "{{NASDAQ_PRICE}}": load_index_series_price(NASDAQ_JSON),
         "{{KOSPI_1D}}": kospi_1d,
         "{{LETTER_DATE}}": datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d"),
         "{{NEWS_HEADLINE}}": wp_lead["NEWS_HEADLINE"],
@@ -1058,4 +1074,3 @@ def render() -> None:
 
 if __name__ == "__main__":
     render()
-
