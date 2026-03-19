@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AAS Daily Brief</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f0f2f5;
+    --white: #ffffff;
+    --navy: #1a3a6b;
+    --navy-dark: #0f2347;
+    --navy-mid: #1e4a8a;
+    --blue-light: #2563eb;
+    --blue-header: #1d4ed8;
+    --accent-green: #16a34a;
+    --accent-red: #dc2626;
+    --accent-blue: #2563eb;
+    --gold: #d97706;
+    --text-dark: #0f172a;
+    --text-mid: #374151;
+    --text-light: #6b7280;
+    --border: #d1d5db;
+    --row-odd: #f8faff;
+    --row-even: #ffffff;
+    --high-quality-bg: #eff6ff;
+    --high-quality-border: #bfdbfe;
+    --card-shadow: 0 2px 12px rgba(26,58,107,0.10);
+  }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text-dark);
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  .report-wrap {
+    max-width: 820px;
+    margin: 0 auto;
+    background: var(--white);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 32px rgba(26,58,107,0.13);
+  }
+
+  /* ── HEADER ── */
+  .report-header {
+    background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy-mid) 60%, #2563eb 100%);
+    padding: 28px 36px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .report-header::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+  }
+  .report-header::after {
+    content: '';
+    position: absolute;
+    bottom: -30px; left: 30%;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.03);
+  }
+  .logo-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .logo-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo-icon {
+    width: 28px; height: 28px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .logo-text {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: rgba(255,255,255,0.7);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .report-date {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 0.05em;
+  }
+  .report-title {
+    font-size: clamp(18px, 3vw, 26px);
+    font-weight: 900;
+    color: #ffffff;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+  .report-title span {
+    color: #93c5fd;
+  }
+
+  /* ── DASHBOARD CARDS ── */
+  .dashboard-section {
+    background: #f8faff;
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .dashboard-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .dashboard-title::before {
+    content: '';
+    display: inline-block;
+    width: 3px; height: 14px;
+    background: var(--blue-light);
+    border-radius: 2px;
+  }
+  .dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .dash-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    box-shadow: var(--card-shadow);
+  }
+  .dash-card-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-light);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .dash-card-label .ico { font-size: 12px; }
+  .dash-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 12px;
+  }
+  .dash-row:last-child { margin-bottom: 0; }
+  .dash-key { color: var(--text-mid); }
+  .dash-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .val-neg { color: var(--accent-red); }
+  .val-pos { color: var(--accent-green); }
+  .val-blue { color: var(--accent-blue); font-size: 12px; }
+  .val-highlight {
+    color: var(--accent-green);
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  /* ── INSIGHT ── */
+  .insight-section {
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--navy-dark);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::before {
+    content: '';
+    display: inline-block;
+    width: 3px; height: 15px;
+    background: var(--navy);
+    border-radius: 2px;
+  }
+  .insight-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .insight-list li {
+    font-size: 12.5px;
+    color: var(--text-mid);
+    line-height: 1.6;
+    padding-left: 16px;
+    position: relative;
+  }
+  .insight-list li::before {
+    content: '•';
+    position: absolute;
+    left: 4px;
+    color: var(--navy);
+    font-weight: 700;
+  }
+  .insight-list li strong {
+    color: var(--navy-dark);
+    font-weight: 700;
+  }
+  .tag-high {
+    display: inline-block;
+    background: #eff6ff;
+    color: var(--blue-light);
+    border: 1px solid #bfdbfe;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    margin-left: 4px;
+    vertical-align: middle;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* ── TABLE SECTION ── */
+  .table-section {
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .table-section:last-child { border-bottom: none; }
+  .part-label {
+    display: inline-block;
+    background: var(--navy);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+    margin-bottom: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .data-table thead tr {
+    background: linear-gradient(90deg, var(--navy-dark) 0%, var(--navy-mid) 100%);
+  }
+  .data-table thead th {
+    color: white;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 9px 12px;
+    text-align: center;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .data-table thead th:first-child { text-align: center; border-radius: 6px 0 0 0; }
+  .data-table thead th:last-child { border-radius: 0 6px 0 0; }
+
+  .data-table tbody tr:nth-child(odd)  { background: var(--row-odd); }
+  .data-table tbody tr:nth-child(even) { background: var(--row-even); }
+  .data-table tbody tr.high-quality {
+    background: var(--high-quality-bg);
+    border-left: 3px solid var(--blue-light);
+  }
+  .data-table tbody tr:hover { background: #e8f0fe; transition: background 0.15s; }
+
+  .data-table td {
+    padding: 9px 12px;
+    text-align: center;
+    color: var(--text-mid);
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .data-table td.sym {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--navy-dark);
+  }
+  .data-table td.aas-score {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+    color: var(--navy-mid);
+  }
+  .data-table td.price {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-mid);
+  }
+  .data-table td.chg { font-weight: 700; font-family: 'IBM Plex Mono', monospace; }
+  .data-table td.chg.up   { color: var(--accent-green); }
+  .data-table td.chg.dn   { color: var(--accent-red); }
+  .data-table td.rsi-val  { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-mid); }
+
+  .badge-oversold {
+    display: inline-block;
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+    border-radius: 4px;
+    font-size: 9.5px;
+    font-weight: 700;
+    padding: 2px 7px;
+    letter-spacing: 0.04em;
+  }
+  .comment-cell {
+    font-size: 11px;
+    color: var(--text-light);
+    white-space: nowrap;
+    text-align: left;
+  }
+  .comment-cell.strong { color: var(--accent-green); font-weight: 600; }
+
+  /* rank circle */
+  .rank-circle {
+    display: inline-flex;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--navy);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    align-items: center;
+    justify-content: center;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .rank-circle.top { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+
+  /* ── CHARTS SECTION ── */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .chart-box {
+    padding: 20px 24px;
+  }
+  .chart-box:first-child {
+    border-right: 1px solid var(--border);
+  }
+  .chart-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .chart-sublabel {
+    font-size: 9.5px;
+    color: var(--text-light);
+    margin-top: 6px;
+    font-style: italic;
+  }
+
+  /* SVG Bar Chart */
+  .bar-chart-wrap { overflow-x: auto; }
+  svg.bar-chart { display: block; }
+
+  /* AAS Composition Stacked */
+  .comp-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 7px;
+    font-size: 10px;
+  }
+  .comp-coin-label {
+    width: 36px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    color: var(--text-dark);
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+  .comp-bar-outer {
+    flex: 1;
+    height: 14px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    overflow: hidden;
+    display: flex;
+  }
+  .comp-seg { height: 100%; }
+  .seg-onchain   { background: #2563eb; }
+  .seg-social    { background: #f59e0b; }
+  .seg-momentum  { background: #10b981; }
+
+  .comp-legend {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+    font-size: 10px;
+    color: var(--text-mid);
+  }
+  .comp-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* ── BACKTEST ── */
+  .backtest-section {
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+    border-top: 1px solid #bbf7d0;
+    padding: 20px 28px;
+  }
+  .backtest-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #166534;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .backtest-condition {
+    font-size: 11.5px;
+    color: #15803d;
+    margin-bottom: 14px;
+    line-height: 1.6;
+  }
+  .backtest-condition strong { color: #166534; font-weight: 700; }
+  .backtest-stats {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+  }
+  .backtest-stat {
+    text-align: center;
+  }
+  .backtest-stat-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    color: #166534;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .backtest-stat-desc {
+    font-size: 10.5px;
+    color: #4ade80;
+    margin-top: 4px;
+    color: #15803d;
+  }
+  .backtest-divider {
+    width: 1px; height: 40px;
+    background: #86efac;
+  }
+  .backtest-source {
+    font-size: 10px;
+    color: #6b7280;
+    margin-top: 12px;
+  }
+
+  /* ── FOOTER ── */
+  .report-footer {
+    background: #f9fafb;
+    border-top: 1px solid var(--border);
+    padding: 14px 28px;
+    font-size: 10px;
+    color: var(--text-light);
+    line-height: 1.7;
+  }
+
+  @media (max-width: 600px) {
+    body { padding: 8px; }
+    .report-header { padding: 20px 18px; }
+    .dashboard-section, .insight-section, .table-section { padding: 16px 14px; }
+    .dashboard-cards { grid-template-columns: 1fr; }
+    .charts-row { grid-template-columns: 1fr; }
+    .chart-box:first-child { border-right: none; border-bottom: 1px solid var(--border); }
+    .data-table { font-size: 11px; }
+    .data-table td, .data-table th { padding: 7px 6px; }
+    .comment-cell { display: none; }
+    .backtest-section { padding: 16px 14px; }
+    .report-footer { padding: 12px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="report-wrap">
+
+  <!-- HEADER -->
+  <div class="report-header">
+    <div class="logo-row">
+      <div class="logo-badge">
+        <div class="logo-icon">📊</div>
+        <span class="logo-text">BLOCK MEDIA</span>
+      </div>
+      <span class="report-date" id="reportDate">2026-02-05 (목)</span>
+    </div>
+    <div class="report-title">
+      AAS<span>(Alternative-Coin Activity Score)</span> Daily Brief
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="dashboard-section">
+    <div class="dashboard-title">AAS Daily Performance Dashboard</div>
+    <div class="dashboard-cards">
+
+      <div class="dash-card">
+        <div class="dash-card-label"><span class="ico">📉</span> 수익률 종합 (24h Trend)</div>
+        <div class="dash-row">
+          <span class="dash-key">AAS Top 10 평균</span>
+          <span class="dash-val val-neg" id="avgTop10">-1.40%</span>
+        </div>
+        <div class="dash-row">
+          <span class="dash-key">중위 수익률</span>
+          <span class="dash-val val-neg" id="medianReturn">-1.50%</span>
+        </div>
+        <div class="dash-row">
+          <span class="dash-key">1위 제외 평균</span>
+          <span class="dash-val val-neg" id="excl1Return">-1.96%</span>
+        </div>
+      </div>
+
+      <div class="dash-card">
+        <div class="dash-card-label"><span class="ico">🏆</span> 종목 등락 분석</div>
+        <div class="dash-row">
+          <span class="dash-key">Best Performer</span>
+          <span class="dash-val val-pos" id="bestPerformer">OP (+3.6%)</span>
+        </div>
+        <div class="dash-row">
+          <span class="dash-key">Worst Performer</span>
+          <span class="dash-val val-neg" id="worstPerformer">SOL (-5.5%)</span>
+        </div>
+      </div>
+
+      <div class="dash-card">
+        <div class="dash-card-label"><span class="ico">📊</span> 시장 비교 (Alpha)</div>
+        <div class="dash-row">
+          <span class="dash-key">Bitcoin (King)</span>
+          <span class="dash-val val-neg" id="btcReturn">-3.26%</span>
+        </div>
+        <div class="dash-row">
+          <span class="dash-key">Alpha vs BTC</span>
+          <span class="dash-val val-highlight" id="alphaBtc">+1.86%p</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- INSIGHT -->
+  <div class="insight-section">
+    <div class="section-title">Daily Insight</div>
+    <ul class="insight-list" id="insightList">
+      <li><strong>과매도 구간 진입:</strong> 전체 Top 10 종목 중 100%가 RSI 30 이하로 과매도 구간에 진입, 단기 반등 가능성 주목</li>
+      <li><strong>High Quality 종목:</strong> PEPE(1.90), SHIB(1.53), OP(1.48) 등 AAS 1.5 이상 종목은 고래 매집 지속 중 <span class="tag-high">AAS ≥ 1.5</span></li>
+      <li><strong>비트코인 대비 알파:</strong> AAS Top 10 평균이 비트코인 대비 +1.86%p 상회하며 약보합세 시장에서 알트코인 체력 보여줌</li>
+    </ul>
+  </div>
+
+  <!-- PART 1: MAJOR COINS -->
+  <div class="table-section">
+    <div class="part-label">[ Part 1 ] Major Coins</div>
+    <table class="data-table" id="majorTable">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Symbol</th>
+          <th>AAS</th>
+          <th>Price (USD)</th>
+          <th>24H (%)</th>
+          <th>RSI</th>
+          <th>Action</th>
+          <th>Comment</th>
+        </tr>
+      </thead>
+      <tbody id="majorTbody">
+        <!-- JS로 렌더링 -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PART 2: AAS TOP 10 -->
+  <div class="table-section">
+    <div class="part-label">[ Part 2 ] Daily AAS Top 10</div>
+    <table class="data-table" id="top10Table">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Symbol</th>
+          <th>AAS</th>
+          <th>Price (USD)</th>
+          <th>24H (%)</th>
+          <th>RSI</th>
+          <th>Action</th>
+          <th>Comment</th>
+        </tr>
+      </thead>
+      <tbody id="top10Tbody">
+        <!-- JS로 렌더링 -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="charts-row">
+
+    <!-- Bar Chart: AAS Score -->
+    <div class="chart-box">
+      <div class="chart-label">📈 Daily AAS Top 10</div>
+      <div class="bar-chart-wrap">
+        <svg class="bar-chart" id="aasBarChart" viewBox="0 0 340 180" width="100%" xmlns="http://www.w3.org/2000/svg">
+          <!-- JS로 렌더링 -->
+        </svg>
+      </div>
+      <div class="chart-sublabel">* Entry Threshold (0.5) / High Confidence (1.5)</div>
+    </div>
+
+    <!-- Stacked Bar: Composition -->
+    <div class="chart-box">
+      <div class="chart-label">🧩 Daily AAS Composition</div>
+      <div id="compBars">
+        <!-- JS로 렌더링 -->
+      </div>
+      <div class="comp-legend">
+        <div class="comp-legend-item"><div class="legend-dot seg-onchain"></div> On-chain</div>
+        <div class="comp-legend-item"><div class="legend-dot seg-social"></div> Social</div>
+        <div class="comp-legend-item"><div class="legend-dot seg-momentum"></div> Momentum</div>
+      </div>
+      <div class="chart-sublabel">* On-chain / Social / Momentum 비중 분석</div>
+    </div>
+
+  </div>
+
+  <!-- BACKTEST -->
+  <div class="backtest-section">
+    <div class="backtest-title">📊 Historical Backtest</div>
+    <div class="backtest-condition">
+      지난 1년간 <strong>AAS Score 1.1 이상(High Quality)</strong> &amp; <strong>RSI 40 이하</strong> 조건 진입 시,
+    </div>
+    <div class="backtest-stats">
+      <div class="backtest-stat">
+        <div class="backtest-stat-val">72.7%</div>
+        <div class="backtest-stat-desc">7일 후 상승 확률 (승률)</div>
+      </div>
+    </div>
+    <div class="backtest-source">(Data Source: Santiment, CoinGecko, AAS Algorithm Validation)</div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="report-footer">
+    본 리포트는 투자자 참고 정보제공을 목적으로 작성된 자료이며, 투자 판단은 투자자의 책임으로 해야 합니다. 블록미디어는 본 리포트의 정확성과 완전성을 보장하지 않으며, 투자 결과에 대한 책임을 지지 않습니다. AAS(Alternative Coin Activity Score)는 알고리즘 기반 참고 지표이며, 실제 투자 성과를 보장하지 않습니다. 디지털자산 거래는 높은 변동성과 위험을 동반하므로 신중한 투자 판단이 필요합니다.
+  </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// DATA — 실제 운영 시 GitHub JSON fetch로 교체
+// ─────────────────────────────────────────────
+const DATA = {
+  date: "2026-02-05",
+  dayKr: "목",
+  dashboard: {
+    avgTop10: "-1.40%",
+    medianReturn: "-1.50%",
+    excl1Return: "-1.96%",
+    bestPerformer: "OP (+3.6%)",
+    worstPerformer: "SOL (-5.5%)",
+    btcReturn: "-3.26%",
+    alphaBtc: "+1.86%p"
+  },
+  major: [
+    { rank: 9,  sym: "ETH",  aas: 0.93, price: "2,152.09",    chg: -3.4, rsi: 20, action: "OVERSOLD", comment: "과매도 (관심도 유지) 투심 회복 기대" },
+    { rank: 10, sym: "SOL",  aas: 0.86, price: "92.29",        chg: -5.5, rsi: 20, action: "OVERSOLD", comment: "과매도 (관심도 유지) 투심 회복 기대" },
+    { rank: 15, sym: "XRP",  aas: 0.56, price: "1.52",         chg: -3.5, rsi: 17, action: "OVERSOLD", comment: "과매도 (관심도 유지) 투심 회복 기대" },
+  ],
+  top10: [
+    { rank: 1,  sym: "PEPE", aas: 1.90, price: "0.00000000",  chg: +2.4, rsi: 28, action: "OVERSOLD", comment: "과매도 (고래 매집 지속) 강력 매수", highQuality: true },
+    { rank: 2,  sym: "SHIB", aas: 1.53, price: "0.00001000",  chg: -0.5, rsi: 24, action: "OVERSOLD", comment: "과매도 (고래 매집 지속) 강력 매수", highQuality: true },
+    { rank: 3,  sym: "OP",   aas: 1.48, price: "0.21943",     chg: +3.6, rsi: 18, action: "OVERSOLD", comment: "과매도 (고래 매집 지속) 강력 매수", highQuality: true },
+    { rank: 4,  sym: "NEO",  aas: 1.39, price: "3.12",        chg: -1.6, rsi: 30, action: "OVERSOLD", comment: "과매도 (관심도 유지) 투심 회복 기대" },
+    { rank: 5,  sym: "XCN",  aas: 1.33, price: "0.00541000",  chg: -2.2, rsi: 21, action: "OVERSOLD", comment: "과매도 (관심도 유지) 투심 회복 기대" },
+    { rank: 6,  sym: "BONK", aas: 1.20, price: "0.00001000",  chg: -0.7, rsi: 19, action: "OVERSOLD", comment: "과매도 (고래 매집 지속) 강력 매수", highQuality: false },
+    { rank: 7,  sym: "S",    aas: 1.11, price: "0.04804",     chg: -4.7, rsi: 15, action: "OVERSOLD", comment: "과매도 (관심도 유지) 투심 회복 기대" },
+    { rank: 8,  sym: "ATOM", aas: 1.06, price: "2.00",        chg: -1.4, rsi: 24, action: "OVERSOLD", comment: "과매도 (관심도 유지) 투심 회복 기대" },
+    { rank: 9,  sym: "ETH",  aas: 0.93, price: "2,152.09",    chg: -3.4, rsi: 20, action: "OVERSOLD", comment: "과매도 (관심도 유지) 투심 회복 기대" },
+    { rank: 10, sym: "SOL",  aas: 0.86, price: "92.29",       chg: -5.5, rsi: 20, action: "OVERSOLD", comment: "과매도 (관심도 유지) 투심 회복 기대" },
+  ],
+  // 구성 비율 예시 (onchain/social/momentum 합이 100)
+  composition: {
+    "PEPE": { onchain: 55, social: 30, momentum: 15 },
+    "SHIB": { onchain: 48, social: 35, momentum: 17 },
+    "OP":   { onchain: 40, social: 25, momentum: 35 },
+    "NEO":  { onchain: 50, social: 20, momentum: 30 },
+    "XCN":  { onchain: 45, social: 28, momentum: 27 },
+    "BONK": { onchain: 38, social: 40, momentum: 22 },
+    "S":    { onchain: 52, social: 22, momentum: 26 },
+    "ATOM": { onchain: 44, social: 30, momentum: 26 },
+    "ETH":  { onchain: 60, social: 20, momentum: 20 },
+    "SOL":  { onchain: 55, social: 25, momentum: 20 },
+  }
+};
+
+// ─────────────────────────────────────────────
+// RENDER HELPERS
+// ─────────────────────────────────────────────
+function chgClass(v) { return v >= 0 ? 'up' : 'dn'; }
+function chgStr(v)   { return (v >= 0 ? '+' : '') + v.toFixed(1) + '%'; }
+function isStrong(c) { return c.includes('강력 매수'); }
+
+function renderTableRows(data, tbodyId) {
+  const tbody = document.getElementById(tbodyId);
+  tbody.innerHTML = '';
+  data.forEach(row => {
+    const isHQ = row.highQuality;
+    const tr = document.createElement('tr');
+    if (isHQ) tr.classList.add('high-quality');
+    tr.innerHTML = `
+      <td><span class="rank-circle ${row.rank <= 3 ? 'top' : ''}">${row.rank}</span></td>
+      <td class="sym">${row.sym}</td>
+      <td class="aas-score">${row.aas.toFixed(2)}</td>
+      <td class="price">${row.price}</td>
+      <td class="chg ${chgClass(row.chg)}">${chgStr(row.chg)}</td>
+      <td class="rsi-val">${row.rsi}</td>
+      <td><span class="badge-oversold">${row.action}</span></td>
+      <td class="comment-cell ${isStrong(row.comment) ? 'strong' : ''}">${row.comment}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderBarChart() {
+  const svg = document.getElementById('aasBarChart');
+  const items = DATA.top10;
+  const maxAAS = 2.0;
+  const chartH = 140, chartW = 320, padL = 28, padB = 22, padT = 8;
+  const barW = 22, gap = 10;
+  const threshold = 0.5, highConf = 1.5;
+  const scaleY = (v) => chartH - padB - (v / maxAAS) * (chartH - padB - padT);
+
+  let html = '';
+
+  // Threshold line (0.5)
+  const y05 = scaleY(threshold);
+  html += `<line x1="${padL}" y1="${y05}" x2="${chartW + padL}" y2="${y05}" stroke="#d1d5db" stroke-width="1" stroke-dasharray="4,3"/>`;
+  html += `<text x="${padL - 2}" y="${y05 + 3}" font-size="7" fill="#9ca3af" text-anchor="end">0.5</text>`;
+
+  // HighConf line (1.5)
+  const y15 = scaleY(highConf);
+  html += `<line x1="${padL}" y1="${y15}" x2="${chartW + padL}" y2="${y15}" stroke="#93c5fd" stroke-width="1" stroke-dasharray="4,3"/>`;
+  html += `<text x="${padL - 2}" y="${y15 + 3}" font-size="7" fill="#60a5fa" text-anchor="end">1.5</text>`;
+
+  // Bars + line path
+  let linePoints = [];
+  items.forEach((item, i) => {
+    const x = padL + i * (barW + gap);
+    const barH = ((item.aas - 0) / maxAAS) * (chartH - padB - padT);
+    const y = chartH - padB - barH;
+    const isHQ = item.aas >= 1.5;
+    const fill = isHQ ? '#2563eb' : item.aas >= 1.1 ? '#60a5fa' : '#93c5fd';
+    html += `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="3" fill="${fill}" opacity="0.85"/>`;
+    html += `<text x="${x + barW/2}" y="${chartH - padB + 11}" font-size="7.5" fill="#6b7280" text-anchor="middle" font-family="IBM Plex Mono,monospace">${item.sym}</text>`;
+    linePoints.push(`${x + barW/2},${y}`);
+  });
+
+  // Line
+  html += `<polyline points="${linePoints.join(' ')}" fill="none" stroke="#1d4ed8" stroke-width="1.5" stroke-linejoin="round"/>`;
+  linePoints.forEach(pt => {
+    html += `<circle cx="${pt.split(',')[0]}" cy="${pt.split(',')[1]}" r="2.5" fill="#1d4ed8"/>`;
+  });
+
+  // Y axis
+  html += `<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${chartH - padB}" stroke="#e5e7eb" stroke-width="1"/>`;
+
+  svg.innerHTML = html;
+  svg.setAttribute('viewBox', `0 0 ${chartW + padL + 10} ${chartH}`);
+}
+
+function renderComposition() {
+  const wrap = document.getElementById('compBars');
+  const items = DATA.top10.slice(0, 8); // 8개만
+  wrap.innerHTML = items.map(item => {
+    const c = DATA.composition[item.sym] || { onchain:33, social:33, momentum:34 };
+    return `
+      <div class="comp-bar-row">
+        <span class="comp-coin-label">${item.sym}</span>
+        <div class="comp-bar-outer">
+          <div class="comp-seg seg-onchain"  style="width:${c.onchain}%"></div>
+          <div class="comp-seg seg-social"   style="width:${c.social}%"></div>
+          <div class="comp-seg seg-momentum" style="width:${c.momentum}%"></div>
+        </div>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#374151;width:28px;text-align:right;">${item.aas.toFixed(2)}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+function init() {
+  // Date
+  document.getElementById('reportDate').textContent = `${DATA.date} (${DATA.dayKr})`;
+
+  // Dashboard
+  const d = DATA.dashboard;
+  document.getElementById('avgTop10').textContent     = d.avgTop10;
+  document.getElementById('medianReturn').textContent = d.medianReturn;
+  document.getElementById('excl1Return').textContent  = d.excl1Return;
+  document.getElementById('bestPerformer').textContent  = d.bestPerformer;
+  document.getElementById('worstPerformer').textContent = d.worstPerformer;
+  document.getElementById('btcReturn').textContent    = d.btcReturn;
+  document.getElementById('alphaBtc').textContent     = d.alphaBtc;
+
+  // Tables
+  renderTableRows(DATA.major, 'majorTbody');
+  renderTableRows(DATA.top10, 'top10Tbody');
+
+  // Charts
+  renderBarChart();
+  renderComposition();
+}
+
+init();
+
+// ─────────────────────────────────────────────
+// GitHub JSON 연동 예시 (주석 해제 후 사용)
+// ─────────────────────────────────────────────
+// async function loadFromGithub() {
+//   const today = new Date().toISOString().slice(0,10);
+//   const url = `https://raw.githubusercontent.com/Blockmedia-DataTeam/AAS-Bot/main/reports/daily/${today}/newsletter_aas_top3_${today}.json`;
+//   try {
+//     const res = await fetch(url);
+//     const json = await res.json();
+//     // json 구조에 맞게 DATA 업데이트 후 init() 재호출
+//   } catch(e) {
+//     console.warn('GitHub fetch 실패, 로컬 데이터 사용');
+//     init();
+//   }
+// }
+// loadFromGithub();
+</script>
+</body>
+</html>
