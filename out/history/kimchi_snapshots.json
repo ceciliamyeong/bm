@@ -8386,5 +8386,55 @@
         "stable_dominance_pct": 15.224490787109124
       }
     }
+  },
+  {
+    "schema": "smart_kimchi_v2",
+    "timestamp_kst": "2026-03-23T04:36:01+0900",
+    "timestamp_label": "03/23 04:36 KST",
+    "prices": {
+      "upbit": {
+        "KRW-BTC": 102876000.0,
+        "KRW-ETH": 3105000.0,
+        "KRW-XRP": 2085.0,
+        "KRW-USDT": 1503.0
+      },
+      "binance": {
+        "BTCUSDT": 68366.12,
+        "ETHUSDT": 2063.85,
+        "XRPUSDT": 1.3865
+      },
+      "fx": {
+        "USDKRW": 1450.0,
+        "source": "exchangerate.host"
+      }
+    },
+    "kimchi_premium_pct": {
+      "BTC": 3.778,
+      "ETH": 3.757,
+      "XRP": 3.709
+    },
+    "kimchi_delta_pp": {
+      "BTC": 0.292,
+      "ETH": 0.286,
+      "XRP": 0.238
+    },
+    "driver_share_pct": {
+      "BTC": 35.8,
+      "ETH": 35.0,
+      "XRP": 29.2
+    },
+    "diagnostics": {
+      "local_usdt_premium_hint_pct": 3.655
+    },
+    "smart_kimchi": {
+      "type": "Constraint-driven",
+      "rationale": "김프↑ + 거래대금/스테이블 비중 약함 → 구조/제약(차익거래 비활성) 가능성",
+      "score_v1": 68.7,
+      "inputs": {
+        "total_krw_24h": 2036155979194.316,
+        "top10_share_pct": 59.82527689605972,
+        "stable_dominance_pct": 7.66963557899933
+      }
+    }
   }
 ]
