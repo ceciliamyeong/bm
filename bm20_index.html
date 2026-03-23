@@ -493,20 +493,26 @@
           <tr style="border-bottom:1px solid var(--border);">
             <td style="padding:7px 14px; font-weight:700; color:var(--text1)">L1</td>
             <td style="padding:7px 14px; color:#6d28d9"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#7c3aed;margin-right:5px;vertical-align:middle"></span>보라</td>
-            <td style="padding:7px 14px; color:var(--text1)">SOL, ADA, AVAX, TON, NEAR, ICP, DOT</td>
+            <td style="padding:7px 14px; color:var(--text1)">SOL, BNB, ADA, AVAX, TON, SUI, HBAR</td>
             <td style="padding:7px 14px; text-align:right; font-weight:700; color:var(--text1)" id="leg-L1">—</td>
-          </tr>
-          <tr style="border-bottom:1px solid var(--border);">
-            <td style="padding:7px 14px; font-weight:700; color:var(--text1)">DeFi/인프라</td>
-            <td style="padding:7px 14px; color:#15803d"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#16a34a;margin-right:5px;vertical-align:middle"></span>초록</td>
-            <td style="padding:7px 14px; color:var(--text1)">BNB, LINK, ATOM, ARB, OP</td>
-            <td style="padding:7px 14px; text-align:right; font-weight:700; color:var(--text1)" id="leg-DeFi">—</td>
           </tr>
           <tr style="border-bottom:1px solid var(--border);">
             <td style="padding:7px 14px; font-weight:600; color:var(--text1)">결제</td>
             <td style="padding:7px 14px; color:#c2410c"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#ea580c;margin-right:5px;vertical-align:middle"></span>주황</td>
-            <td style="padding:7px 14px; color:var(--text1)">XRP, LTC, TRX, USDT</td>
+            <td style="padding:7px 14px; color:var(--text1)">XRP, LTC, TRX, XLM, BCH</td>
             <td style="padding:7px 14px; text-align:right; font-weight:700; color:var(--text1)" id="leg-Pay">—</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:7px 14px; font-weight:600; color:var(--text1)">스테이블</td>
+            <td style="padding:7px 14px; color:#0f766e"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#14b8a6;margin-right:5px;vertical-align:middle"></span>청록</td>
+            <td style="padding:7px 14px; color:var(--text1)">USDT, USDC</td>
+            <td style="padding:7px 14px; text-align:right; font-weight:700; color:var(--text1)" id="leg-Stable">—</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:7px 14px; font-weight:600; color:var(--text1)">DeFi/신규</td>
+            <td style="padding:7px 14px; color:#15803d"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#16a34a;margin-right:5px;vertical-align:middle"></span>초록</td>
+            <td style="padding:7px 14px; color:var(--text1)">LINK, HYPE</td>
+            <td style="padding:7px 14px; text-align:right; font-weight:700; color:var(--text1)" id="leg-DeFi">—</td>
           </tr>
           <tr>
             <td style="padding:7px 14px; font-weight:600; color:var(--text1)">밈</td>
@@ -518,16 +524,7 @@
       </table>
     </div>
 
-    <!-- 리밸런싱 예정 배너 -->
-    <div style="
-      display:flex; align-items:center; gap:10px;
-      background:rgba(234,88,12,0.06); border:1px solid rgba(234,88,12,0.3);
-      border-radius:8px; padding:10px 14px; margin-bottom:14px;
-      font-size:12px; color:#c2410c;
-    ">
-      <span style="font-size:15px">🔄</span>
-      <div><b style="font-weight:700">2025 Q2 리밸런싱 예정</b> &nbsp;·&nbsp; 4월 중 포트폴리오 재구성 예정입니다. 아래는 현재 운용 중인 유니버스이며, 리밸런싱 후 업데이트됩니다.</div>
-    </div>
+
 
 
   </section>
@@ -856,27 +853,30 @@
     if(universe && universe.components && universe.components.length) {
       const KRW_LISTED = new Set(['BTC','ETH','XRP','USDT','SOL','ADA','DOGE','DOT','AVAX','MATIC','LINK','UNI','ATOM','LTC','ETC','TRX','BCH','NEAR','APT','OP','ARB','SUI','TON','FIL','HBAR','ICP','SHIB']);
 
-      const CORE  = new Set(['BTC','ETH']);
-      const L1    = new Set(['SOL','ADA','AVAX','TON','NEAR','ICP','DOT']);
-      const DEFI  = new Set(['BNB','LINK','ATOM','ARB','OP']);
-      const PAY   = new Set(['XRP','LTC','TRX','USDT']);
-      const MEME  = new Set(['DOGE','SHIB']);
+      const CORE   = new Set(['BTC','ETH']);
+      const L1     = new Set(['SOL','BNB','ADA','AVAX','TON','SUI','HBAR']);
+      const STABLE = new Set(['USDT','USDC']);
+      const DEFI   = new Set(['LINK','HYPE']);
+      const PAY    = new Set(['XRP','LTC','TRX','XLM','BCH']);
+      const MEME   = new Set(['DOGE','SHIB']);
 
       const sorted = [...universe.components].sort((a,b) => b.weight - a.weight);
       const maxW = sorted[0]?.weight || 1;
 
       function getGroup(sym) {
-        if (CORE.has(sym))  return 'Core';
-        if (L1.has(sym))    return 'L1';
-        if (DEFI.has(sym))  return 'DeFi/인프라';
-        if (PAY.has(sym))   return '결제';
-        if (MEME.has(sym))  return '밈';
+        if (CORE.has(sym))   return 'Core';
+        if (L1.has(sym))     return 'L1';
+        if (STABLE.has(sym)) return '스테이블';
+        if (DEFI.has(sym))   return 'DeFi/신규';
+        if (PAY.has(sym))    return '결제';
+        if (MEME.has(sym))   return '밈';
         return 'Others';
       }
       const GROUP_STYLE = {
         'Core':       'background:rgba(37,99,235,0.08);color:#1d4ed8',
         'L1':         'background:rgba(124,58,237,0.08);color:#6d28d9',
-        'DeFi/인프라': 'background:rgba(22,163,74,0.08);color:#15803d',
+        '스테이블':    'background:rgba(20,184,166,0.08);color:#0f766e',
+        'DeFi/신규':  'background:rgba(22,163,74,0.08);color:#15803d',
         '결제':       'background:rgba(234,88,12,0.08);color:#c2410c',
         '밈':         'background:rgba(219,39,119,0.08);color:#be185d',
         'Others':     'background:rgba(100,116,139,0.08);color:#475569',
@@ -884,17 +884,18 @@
       const BAR_COLOR = {
         'Core':       '#2563eb',
         'L1':         '#7c3aed',
-        'DeFi/인프라': '#16a34a',
+        '스테이블':    '#14b8a6',
+        'DeFi/신규':  '#16a34a',
         '결제':       '#ea580c',
         '밈':         '#db2777',
         'Others':     '#64748b',
       };
 
       // 섹터 범례 동적 렌더링
-      const SECTOR_ORDER = ['Core','L1','DeFi/인프라','결제','밈'];
-      const SECTOR_DOT_COLOR = { 'Core':'#2563eb','L1':'#7c3aed','DeFi/인프라':'#16a34a','결제':'#ea580c','밈':'#db2777' };
-      const SECTOR_TEXT_COLOR = { 'Core':'#1d4ed8','L1':'#6d28d9','DeFi/인프라':'#15803d','결제':'#c2410c','밈':'#be185d' };
-      const SECTOR_LABEL = { 'Core':'파랑','L1':'보라','DeFi/인프라':'초록','결제':'주황','밈':'핑크' };
+      const SECTOR_ORDER = ['Core','L1','결제','스테이블','DeFi/신규','밈'];
+      const SECTOR_DOT_COLOR = { 'Core':'#2563eb','L1':'#7c3aed','스테이블':'#14b8a6','DeFi/신규':'#16a34a','결제':'#ea580c','밈':'#db2777' };
+      const SECTOR_TEXT_COLOR = { 'Core':'#1d4ed8','L1':'#6d28d9','스테이블':'#0f766e','DeFi/신규':'#15803d','결제':'#c2410c','밈':'#be185d' };
+      const SECTOR_LABEL = { 'Core':'파랑','L1':'보라','스테이블':'청록','DeFi/신규':'초록','결제':'주황','밈':'핑크' };
 
       const sectorMap = {};
       sorted.forEach(c => {
