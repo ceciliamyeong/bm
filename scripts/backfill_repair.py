@@ -15,7 +15,7 @@ import os
 from pathlib import Path
 from datetime import datetime
 
-ROOT      = Path(__file__).resolve().parent
+ROOT      = Path(__file__).resolve().parents[1]  # scripts/ 상위 = 레포 루트
 OUT_DIR   = ROOT / "out"
 BACKFILL  = OUT_DIR / "backfill_current_basket.csv"
 
