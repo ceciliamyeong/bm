@@ -229,6 +229,9 @@ jobs:
           git checkout --theirs out 2>/dev/null || true
           git checkout --theirs cache 2>/dev/null || true
           git checkout --theirs history 2>/dev/null || true
+          # backfill CSV는 워크플로우 산출물(ours) 보호 -- --theirs out에 덮어씌워지는 것 방지
+          git checkout --ours out/backfill_current_basket.csv 2>/dev/null || true
+          git add out/backfill_current_basket.csv 2>/dev/null || true
 
           # 4) 커밋/푸시 (커밋 메시지는 실행 시각 기준 날짜로 유지)
           DATE=$(TZ=Asia/Seoul date +%F)
