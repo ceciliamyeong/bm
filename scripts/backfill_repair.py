@@ -38,7 +38,12 @@ def calc_ret_from_daily_csv(csv_path: Path) -> float:
         pct = r.get("price_change_pct")
         if w in (None, "") or pct in (None, ""):
             continue
-        ret += float(w) * (float(pct) / 100.0)
+        pct_val = float(pct)
+        # 이상값 클램프: 단일 종목 일간 등락이 +-50% 초과면 0 처리
+        if abs(pct_val) > 50:
+            print(f"[clamp] {r.get("symbol","?")} pct={pct_val:.2f} → 0 (이상값 제외)")
+            pct_val = 0.0
+        ret += float(w) * (pct_val / 100.0)
     return ret
 
 def get_dated_out_dirs() -> list:
@@ -64,6 +69,12 @@ def main():
 
     dated_dirs = get_dated_out_dirs()
     print(f"[info] out/ 날짜 폴더 수: {len(dated_dirs)}")
+
+    # 2026-02-25부터 오염 — 해당일 이후 전부 재계산
+    REPAIR_FROM = "2026-02-25"
+    rows = remove_from_date(rows, REPAIR_FROM)
+    date_to_index = {r["date"]: float(r["index"]) for r in rows}
+    existing_dates = set(date_to_index.keys())
 
     missing = [d for d in dated_dirs if d.name not in existing_dates]
     print(f"[info] 누락 날짜 수: {len(missing)}")
@@ -114,3 +125,11 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+def remove_from_date(rows, from_date):
+    """from_date 이후 행 제거 (재계산용)"""
+    kept = [r for r in rows if r["date"] < from_date]
+    removed = len(rows) - len(kept)
+    print(f"[remove] {from_date} 이후 {removed}개 행 제거")
+    return kept
