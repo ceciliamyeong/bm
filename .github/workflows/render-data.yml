@@ -91,16 +91,6 @@ jobs:
           test -f letter.html
           echo "[OK] rendered letter.html"
 
-      # ── AAS Daily Brief ──────────────────────────────────
-      - name: Render aas_brief.html
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 scripts/render_aas_brief.py
-          test -f aas_brief.html
-          echo "[OK] rendered aas_brief.html"
-      # ────────────────────────────────────────────────────
-
       - name: Commit & Push
         shell: bash
         run: |
@@ -113,7 +103,6 @@ jobs:
 
           # 2) 생성된 파일 스테이징
           git add letter.html \
-            aas_brief.html \
             out/history/btc_usd_series.json \
             out/history/krw_24h_latest.json \
             out/history/krw_24h_snapshots.json \
@@ -128,7 +117,7 @@ jobs:
           # 3) 변경사항 있을 때만 커밋 & 푸시
           if ! git diff --cached --quiet; then
             DATE=$(TZ=Asia/Seoul date +%F)
-            git commit -m "chore: render letter + aas_brief + btc + treemap (${DATE})"
+            git commit -m "chore: render letter + btc + treemap (${DATE})"
             git push origin HEAD:main
           else
             echo "No changes to commit"
