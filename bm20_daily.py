@@ -1038,4 +1038,7 @@ with open(html_path, "w", encoding="utf-8") as f: f.write(html)
 # 마지막 단계: 나스닥 데이터 업데이트 실행
 update_market_indices()
 
+# ================== Market History CSV (append) ==================
+# [여기에 market_history_snippet.py 전체 내용 붙여넣기]
+
 print(f"\n[SUCCESS] 모든 업데이트가 완료되었습니다. ({YMD})")
