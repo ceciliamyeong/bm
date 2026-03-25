@@ -19,7 +19,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install requests
+          pip install requests pandas
 
       - name: Run KRW rolling 24h
         run: |
@@ -31,10 +31,13 @@ jobs:
         env:
           ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
 
-
       - name: Run smart kimchi script
         run: |
           python3 scripts/smart_kimchi_8h.py
+
+      - name: Append korea_daily.csv
+        run: |
+          python3 scripts/append_korea_daily.py
 
       - name: Commit & push outputs
         run: |
@@ -45,11 +48,12 @@ jobs:
           git add out/history/krw_24h_*.json || true
           git add out/history/kimchi_*.json || true
           git add out/history/fx_latest.json || true
-          
+          git add out/history/korea_daily.csv || true
+
           if git diff --cached --quiet; then
             echo "No changes to commit."
             exit 0
           fi
 
-          git commit -m "Update KRW rolling24h [$(date -u)]"
+          git commit -m "Update KRW rolling24h + korea_daily [$(date -u)]"
           git push
