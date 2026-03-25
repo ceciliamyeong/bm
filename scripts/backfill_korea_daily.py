@@ -77,9 +77,9 @@ def aggregate_kimchi(snapshots: list) -> dict:
 
     result = {}
     for date, snaps in by_date.items():
-        btc_vals = [s["kimchi_premium_pct"]["BTC"] for s in snaps if "kimchi_premium_pct" in s]
-        eth_vals = [s["kimchi_premium_pct"]["ETH"] for s in snaps if "kimchi_premium_pct" in s]
-        xrp_vals = [s["kimchi_premium_pct"]["XRP"] for s in snaps if "kimchi_premium_pct" in s]
+        btc_vals = [s["kimchi_premium_pct"]["BTC"] for s in snaps if s.get("kimchi_premium_pct", {}).get("BTC") is not None]
+        eth_vals = [s["kimchi_premium_pct"]["ETH"] for s in snaps if s.get("kimchi_premium_pct", {}).get("ETH") is not None]
+        xrp_vals = [s["kimchi_premium_pct"]["XRP"] for s in snaps if s.get("kimchi_premium_pct", {}).get("XRP") is not None]
 
         # driver는 마지막 스냅샷 기준
         last = snaps[-1]
