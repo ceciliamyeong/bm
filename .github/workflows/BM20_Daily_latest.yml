@@ -153,14 +153,6 @@ jobs:
           PY
 
 
-      # [ONE-TIME] backfill 누락 구간 복구 — 완료 후 이 스텝 삭제
-      - name: Repair backfill (one-time)
-        if: ${{ github.event_name == 'workflow_dispatch' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          python scripts/backfill_repair.py
-
       # 2) out → archive 복사 + archive html 생성(스크립트 내부에서 처리)
       - name: Generate site (latest + archive)
         shell: bash
