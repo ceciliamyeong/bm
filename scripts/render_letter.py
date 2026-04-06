@@ -43,25 +43,17 @@ TEMPLATE = ROOT / "letter_newsletter_template.html"  # 블록미디어 공식 �
 BM20_JSON = ROOT / "bm20_latest.json"
 DAILY_CSV = ROOT / "bm20_daily_data_latest.csv"
 KRW_JSON = ROOT / "out/history/krw_24h_latest.json"
-BTC_JSON = ROOT / "out/history/btc_usd_series.json"  # optional
 
 BM20_HISTORY_JSON = ROOT / "data/bm20_history.json"  # optional
 XRP_KR_SHARE_JSON = ROOT / "out/global/k_xrp_share_24h_latest.json"  # optional
 ETF_JSON          = ROOT / "data/etf_summary.json"  # optional
-KRW_SNAPSHOTS_JSON = ROOT / "out/history/krw_24h_snapshots.json"  # optional
 NASDAQ_JSON       = ROOT / "nasdaq_series.json"  # optional
 KOSPI_JSON        = ROOT / "kospi_series.json"   # optional
 
-NEWS_ONELINER_TXT = ROOT / "out/latest/news_one_liner.txt"
-NEWS_ONELINER_NOTE_TXT = ROOT / "out/latest/news_one_liner_note.txt"
-TOP_NEWS_JSON = ROOT / "out/latest/top_news_latest.json"
-
 # 워드프레스 설정
-WP_BASE_URL                 = "https://blockmedia.co.kr/wp-json/wp/v2"
-WP_TAG_NEWSLETTER           = "뉴스레터"       # ③ 왜 그랬어? — 기사 3개
-WP_TAG_NEWSLETTER_LEAD      = "뉴스레터-리드"  # ① 어제 시장 어땠어? — 편집자 헤드라인 1개
-WP_TAG_ID_NEWSLETTER        = 28978
-WP_TAG_ID_NEWSLETTER_LEAD   = 80405
+WP_BASE_URL               = "https://blockmedia.co.kr/wp-json/wp/v2"
+WP_TAG_ID_NEWSLETTER      = 28978
+WP_TAG_ID_NEWSLETTER_LEAD = 80405
 
 OUT = ROOT / "letter.html"
 
@@ -262,23 +254,6 @@ def fetch_premium_data(usdkrw: float | None) -> dict[str, str]:
 # ─────────────────────────────────────────────────────────
 # 워드프레스 REST API: 태그 기반 뉴스 수집
 # ─────────────────────────────────────────────────────────
-
-def _wp_get_tag_id(tag_name: str) -> int | None:
-    """태그 이름으로 워드프레스 태그 ID 조회"""
-    try:
-        res = requests.get(
-            f"{WP_BASE_URL}/tags",
-            params={"search": tag_name, "per_page": 5},
-            timeout=10,
-        )
-        res.raise_for_status()
-        for t in res.json():
-            if t.get("name") == tag_name:
-                return int(t["id"])
-        print(f"WARN: WP tag '{tag_name}' not found")
-    except Exception as e:
-        print(f"WARN: WP tag lookup failed ({tag_name}): {e}")
-    return None
 
 
 def _strip_html(text: str) -> str:
@@ -529,38 +504,7 @@ def load_json_optional(p: Path) -> Any | None:
         return None
     return json.loads(p.read_text(encoding="utf-8"))
 
-def load_text_first_line(p: Path) -> str:
-    if not p.exists():
-        return "—"
-    s = p.read_text(encoding="utf-8").strip()
-    if not s:
-        return "—"
-    return (s.splitlines()[0].strip() or "—")
 
-def load_top_news_3(p: Path):
-    """Returns list of 3 dicts: {title, excerpt, link, category}"""
-    empty = {"title": "—", "excerpt": "", "link": "#", "category": ""}
-    if not p.exists():
-        return [empty, empty, empty]
-    try:
-        obj = json.loads(p.read_text(encoding="utf-8"))
-        items = obj.get("items", []) if isinstance(obj, dict) else (obj or [])
-        result = []
-        for x in items[:3]:
-            if isinstance(x, dict):
-                result.append({
-                    "title":    x.get("title", "—") or "—",
-                    "excerpt":  x.get("excerpt", "") or "",
-                    "link":     x.get("link", "#") or "#",
-                    "category": x.get("category", "") or "",
-                })
-            elif isinstance(x, str) and x.strip():
-                result.append({**empty, "title": x.strip()})
-        while len(result) < 3:
-            result.append(empty)
-        return result
-    except Exception:
-        return [empty, empty, empty]
 
 # ------------------ formatting helpers ------------------
 
@@ -663,43 +607,9 @@ def compute_moves_top3(df: pd.DataFrame) -> Tuple[str, str, str]:
         moves.append("—")
     return moves[0], moves[1], moves[2]
 
-def compute_top10_concentration(df: pd.DataFrame) -> str:
-    """
-    If CSV has volume columns, compute Top10 volume concentration.
-    Fallback: return "—".
-    """
-    vol_col = None
-    for c in ("volume_24h", "quote_volume_24h", "turnover_24h", "krw_volume_24h"):
-        if c in df.columns:
-            vol_col = c
-            break
-    if not vol_col:
-        return "—"
-    s = pd.to_numeric(df[vol_col], errors="coerce").dropna()
-    if s.empty:
-        return "—"
-    top10 = s.sort_values(ascending=False).head(10).sum()
-    total = s.sum()
-    if total <= 0:
-        return "—"
-    return fmt_share_pct(top10 / total)
 
 # ------------------ index series + krw snapshots helpers ------------------
 
-def load_krw_snapshots_top10() -> str:
-    """out/history/krw_24h_snapshots.json 에서 top10 집중도"""
-    try:
-        import json as _json
-        raw = _json.loads(KRW_SNAPSHOTS_JSON.read_text(encoding="utf-8")) if KRW_SNAPSHOTS_JSON.exists() else None
-        if raw is None:
-            return "—"
-        item = raw[-1] if isinstance(raw, list) else raw
-        pct = item.get("top10", {}).get("top10_share_pct")
-        if pct is not None:
-            return f"{float(pct):.1f}%"
-    except Exception:
-        pass
-    return "—"
 
 
 def load_index_series_1d(path: Path) -> str:
@@ -739,69 +649,7 @@ def load_index_series_price(path: Path) -> str:
 
 # ------------------ sentiment + xrp share helpers ------------------
 
-def extract_sentiment(obj: Any) -> tuple[str, str]:
-    """
-    Extract sentiment label/score from a flexible bm20_history.json shape.
-    Returns (label, score_str)
-    """
-    label = None
-    score = None
 
-    def pick(d: dict, keys: tuple[str, ...]) -> Any | None:
-        for k in keys:
-            if k in d and d.get(k) is not None:
-                return d.get(k)
-        return None
-
-    if isinstance(obj, dict):
-        label = pick(obj, ("sentiment_label", "sentimentLabel", "label", "market_sentiment_label", "sentiment"))
-        score = pick(obj, ("sentiment_score", "sentimentScore", "score", "market_sentiment_score", "sentiment_index"))
-
-        latest = obj.get("latest") if isinstance(obj.get("latest"), dict) else None
-        if latest:
-            if label is None:
-                label = pick(latest, ("sentiment_label", "sentimentLabel", "label", "sentiment"))
-            if score is None:
-                score = pick(latest, ("sentiment_score", "sentimentScore", "score", "sentiment_index"))
-
-        series = obj.get("series")
-        if (label is None or score is None) and isinstance(series, list) and series and isinstance(series[-1], dict):
-            last = series[-1]
-            if label is None:
-                label = pick(last, ("sentiment_label", "sentimentLabel", "label", "sentiment"))
-            if score is None:
-                score = pick(last, ("sentiment_score", "sentimentScore", "score", "sentiment_index"))
-
-    label_txt = str(label).strip() if label is not None else "—"
-    score_txt = "—"
-    if score is not None:
-        try:
-            score_txt = f"{float(score):.0f}"
-        except Exception:
-            score_txt = str(score).strip() or "—"
-    return label_txt, score_txt
-
-def extract_xrp_kr_share(obj: Any) -> str:
-    if not isinstance(obj, dict):
-        return "—"
-
-    def pick(d: dict, keys: tuple[str, ...]) -> Any | None:
-        for k in keys:
-            if k in d and d.get(k) is not None:
-                return d.get(k)
-        return None
-
-    v = pick(obj, ("xrp_kr_share", "xrp_kr_share_pct", "share_pct", "share", "value"))
-    if v is None and isinstance(obj.get("latest"), dict):
-        v = pick(obj["latest"], ("xrp_kr_share", "xrp_kr_share_pct", "share_pct", "share", "value"))
-
-    if v is None:
-        return "—"
-
-    try:
-        return fmt_share_pct(float(v))
-    except Exception:
-        return str(v).strip() or "—"
 
 # ------------------ synthetic one-line interpreters ------------------
 
@@ -973,20 +821,20 @@ def build_placeholders() -> dict[str, str]:
     krw = load_json(KRW_JSON)
     df = load_daily_df()
 
-    # BTC series (optional)
-    btc_usd_txt = "—"
-    btc_1d_html = "—"
-    if BTC_JSON.exists():
-        series = load_json(BTC_JSON)
-        try:
-            if isinstance(series, list) and len(series) >= 2:
-                btc_last = float(series[-1].get("price", series[-1].get("close", 0)))
-                btc_prev = float(series[-2].get("price", series[-2].get("close", 0)))
-                if btc_last and btc_prev:
-                    btc_1d = (btc_last / btc_prev - 1) * 100.0
-                    btc_usd_txt = f"{btc_last:,.0f}"
-                    btc_1d_html = colored_change_html(btc_1d, digits=2, wrap_parens=False)
-        except Exception: pass
+    # BTC 실시간 가격 (fetch_yahoo_ticker에서 가져옴 — btc_usd_series.json 사용 안 함)
+    _ticker = fetch_yahoo_ticker()
+    btc_usd_txt = _ticker.get("TICKER_BTC_PRICE", "—").replace("$", "").replace(",", "")
+    try:
+        btc_usd_txt = f"{float(btc_usd_txt):,.0f}" if btc_usd_txt != "—" else "—"
+    except Exception:
+        btc_usd_txt = "—"
+    _btc_chg_raw = _ticker.get("TICKER_BTC_CHANGE", "—")
+    try:
+        _sign = 1 if "▲" in _btc_chg_raw else -1
+        _val  = float(_btc_chg_raw.replace("▲","").replace("▼","").replace("%",""))
+        btc_1d_html = colored_change_html(_sign * _val, digits=2, wrap_parens=False)
+    except Exception:
+        btc_1d_html = "—"
 
     # BM20
     asof = bm20.get("asOf") or bm20.get("asof") or bm20.get("date") or bm20.get("timestamp") or ""
@@ -1087,7 +935,7 @@ def build_placeholders() -> dict[str, str]:
     # ETF & 실시간 티커 데이터 업데이트
     ph.update(load_etf_summary())
     usdkrw_f = float(str(usdkrw).replace(",", "")) if usdkrw else None
-    for k, v in fetch_yahoo_ticker().items(): ph["{{" + k + "}}"] = v
+    for k, v in _ticker.items(): ph["{{" + k + "}}"] = v
     for k, v in fetch_upbit_top_bottom(n=3).items(): ph["{{" + k + "}}"] = v
     for k, v in fetch_exchange_vol_top3().items(): ph["{{" + k + "}}"] = v
     for k, v in fetch_premium_data(usdkrw_f).items(): ph["{{" + k + "}}"] = v
