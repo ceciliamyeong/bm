@@ -1,0 +1,127 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+fix_kimchi_snapshots.py
+USDKRW=1450 으로 잘못 찍힌 스냅샷을 yfinance 실제 환율로 재계산
+"""
+
+import json
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+import yfinance as yf
+
+KST = timezone(timedelta(hours=9))
+BASE_DIR = Path(__file__).resolve().parent.parent
+KIMCHI_SNAPSHOTS_JSON = BASE_DIR / "out" / "history" / "kimchi_snapshots.json"
+
+
+def kimchi_premium_pct(krw_price: float, usdt_price: float, usdkrw: float) -> float:
+    fair_krw = float(usdt_price) * float(usdkrw)
+    if fair_krw <= 0:
+        return 0.0
+    return (float(krw_price) - fair_krw) / fair_krw * 100.0
+
+
+def fetch_fx_history() -> dict:
+    """yfinance로 04/03~04/07 시간별 환율 가져오기"""
+    ticker = yf.Ticker("USDKRW=X")
+    h = ticker.history(start="2026-04-02", end="2026-04-07", interval="1h")
+    h = h["Close"].dropna()
+
+    # timestamp(UTC) → float 딕셔너리로 변환
+    fx_map = {}
+    for ts, val in h.items():
+        # yfinance는 UTC로 반환
+        if hasattr(ts, 'timestamp'):
+            fx_map[ts.timestamp()] = float(val)
+    return fx_map
+
+
+def find_nearest_rate(fx_map: dict, target_ts: float) -> float:
+    """target_ts(unix)에 가장 가까운 환율 반환"""
+    if not fx_map:
+        return 0.0
+    nearest = min(fx_map.keys(), key=lambda t: abs(t - target_ts))
+    return fx_map[nearest]
+
+
+def run():
+    snapshots = json.loads(KIMCHI_SNAPSHOTS_JSON.read_text(encoding="utf-8"))
+
+    # 수정 대상: USDKRW=1450.0 인 스냅샷
+    targets = [s for s in snapshots if s.get("prices", {}).get("fx", {}).get("USDKRW") == 1450.0]
+    print(f"수정 대상 스냅샷: {len(targets)}개")
+    for t in targets:
+        print(f"  {t['timestamp_label']}")
+
+    if not targets:
+        print("수정할 스냅샷 없음")
+        return
+
+    print("\nyfinance에서 환율 히스토리 가져오는 중...")
+    fx_map = fetch_fx_history()
+    print(f"환율 데이터 포인트: {len(fx_map)}개")
+
+    for snap in snapshots:
+        if snap.get("prices", {}).get("fx", {}).get("USDKRW") != 1450.0:
+            continue
+
+        # 타임스탬프 파싱
+        ts_str = snap["timestamp_kst"]
+        dt = datetime.fromisoformat(ts_str)
+        unix_ts = dt.timestamp()
+
+        # 가장 가까운 환율
+        rate = find_nearest_rate(fx_map, unix_ts)
+        if not (900 <= rate <= 2000):
+            print(f"  [SKIP] {snap['timestamp_label']} 환율 이상: {rate}")
+            continue
+
+        print(f"\n  {snap['timestamp_label']}")
+        print(f"    환율: 1450.0 → {rate:.1f}")
+
+        # 가격
+        prices = snap["prices"]
+        upbit = prices["upbit"]
+        binance = prices["binance"]
+
+        krw_btc = upbit["KRW-BTC"]
+        krw_eth = upbit["KRW-ETH"]
+        krw_xrp = upbit["KRW-XRP"]
+        usdt_btc = binance["BTCUSDT"]
+        usdt_eth = binance["ETHUSDT"]
+        usdt_xrp = binance["XRPUSDT"]
+
+        old_btc = snap["kimchi_premium_pct"]["BTC"]
+        old_eth = snap["kimchi_premium_pct"]["ETH"]
+        old_xrp = snap["kimchi_premium_pct"]["XRP"]
+
+        new_btc = round(kimchi_premium_pct(krw_btc, usdt_btc, rate), 3)
+        new_eth = round(kimchi_premium_pct(krw_eth, usdt_eth, rate), 3)
+        new_xrp = round(kimchi_premium_pct(krw_xrp, usdt_xrp, rate), 3)
+
+        print(f"    BTC: {old_btc} → {new_btc}")
+        print(f"    ETH: {old_eth} → {new_eth}")
+        print(f"    XRP: {old_xrp} → {new_xrp}")
+
+        # 스냅샷 업데이트
+        snap["prices"]["fx"]["USDKRW"] = round(rate, 1)
+        snap["prices"]["fx"]["source"] = "yfinance:USDKRW=X (retrofix)"
+        snap["kimchi_premium_pct"]["BTC"] = new_btc
+        snap["kimchi_premium_pct"]["ETH"] = new_eth
+        snap["kimchi_premium_pct"]["XRP"] = new_xrp
+
+        # delta/driver는 순서 의존성 있어서 재계산 생략 (복잡도 대비 효과 낮음)
+        # smart_kimchi type/score도 생략 (prem_level 변경 미미)
+
+    # 저장
+    KIMCHI_SNAPSHOTS_JSON.write_text(
+        json.dumps(snapshots, ensure_ascii=False, indent=2),
+        encoding="utf-8"
+    )
+    print("\n[OK] kimchi_snapshots.json 저장 완료")
+
+
+if __name__ == "__main__":
+    run()
