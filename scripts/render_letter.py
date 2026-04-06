@@ -828,22 +828,43 @@ def build_placeholders() -> dict[str, str]:
         btc_usd_txt = f"{float(btc_usd_txt):,.0f}" if btc_usd_txt != "—" else "—"
     except Exception:
         btc_usd_txt = "—"
-    # BTC 가격 + 24h 변동률: Yahoo Finance API 직접 호출 (yfinance 라이브러리 버그 우회)
+    # BTC 가격 + 24h 변동률: CMC 1순위 → Yahoo Finance API fallback
+    import os as _os
     try:
-        _yf_url = "https://query1.finance.yahoo.com/v8/finance/chart/BTC-USD"
-        _yf_headers = {"User-Agent": "Mozilla/5.0"}
-        _yf_params = {"interval": "1d", "range": "2d"}
-        _r = requests.get(_yf_url, headers=_yf_headers, params=_yf_params, timeout=10)
+        _cmc_key = _os.getenv("CMC_API_KEY", "")
+        if not _cmc_key:
+            raise ValueError("CMC_API_KEY 없음")
+        _r = requests.get(
+            "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
+            headers={"X-CMC_PRO_API_KEY": _cmc_key},
+            params={"symbol": "BTC", "convert": "USD"},
+            timeout=10,
+        )
         _r.raise_for_status()
-        _meta = _r.json()["chart"]["result"][0]["meta"]
-        _btc_price = float(_meta["regularMarketPrice"])
-        _btc_chg   = float(_meta["regularMarketChangePercent"]) * 100
+        _d = _r.json()["data"]["BTC"]["quote"]["USD"]
+        _btc_price = float(_d["price"])
+        _btc_chg   = float(_d["percent_change_24h"])
         btc_usd_txt = f"{_btc_price:,.0f}"
         btc_1d_html = colored_change_html(_btc_chg, digits=2, wrap_parens=False)
-        print(f"INFO: BTC from Yahoo API — ${_btc_price:,.0f} / {_btc_chg:+.2f}%")
+        print(f"INFO: BTC from CMC — ${_btc_price:,.0f} / {_btc_chg:+.2f}%")
     except Exception as _e:
-        print(f"WARN: Yahoo Finance API BTC fetch failed: {_e}")
-        btc_1d_html = "—"
+        print(f"WARN: CMC BTC fetch failed: {_e} → Yahoo API fallback")
+        try:
+            _yf_url = "https://query1.finance.yahoo.com/v8/finance/chart/BTC-USD"
+            _r2 = requests.get(_yf_url, headers={"User-Agent": "Mozilla/5.0"},
+                               params={"interval": "1d", "range": "5d"}, timeout=10)
+            _r2.raise_for_status()
+            _closes = _r2.json()["chart"]["result"][0]["indicators"]["quote"][0]["close"]
+            _closes = [x for x in _closes if x is not None]
+            _btc_price = float(_closes[-1])
+            _btc_prev  = float(_closes[-2])
+            _btc_chg   = (_btc_price / _btc_prev - 1) * 100 if _btc_prev else 0.0
+            btc_usd_txt = f"{_btc_price:,.0f}"
+            btc_1d_html = colored_change_html(_btc_chg, digits=2, wrap_parens=False)
+            print(f"INFO: BTC from Yahoo API fallback — ${_btc_price:,.0f} / {_btc_chg:+.2f}%")
+        except Exception as _e2:
+            print(f"WARN: Yahoo API BTC fallback failed: {_e2}")
+            btc_1d_html = "—"
 
     # BM20
     asof = bm20.get("asOf") or bm20.get("asof") or bm20.get("date") or bm20.get("timestamp") or ""
