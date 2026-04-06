@@ -205,14 +205,27 @@ jobs:
           except Exception as e:
               print(f"[WARN] FNG fetch failed: {e}")
 
-          # kimchi / usdkrw
+          # kimchi
           kimchi_pct = None
-          usdkrw = None
           kp_path = ROOT / "out" / YMD / f"kimchi_{YMD}.json"
           if kp_path.exists():
               kp = json.loads(kp_path.read_text(encoding="utf-8"))
               kimchi_pct = round(float(kp.get("kimchi_pct", 0)), 4) if kp.get("kimchi_pct") is not None else None
-              usdkrw = round(float(kp.get("usdkrw", 0)), 2) if kp.get("usdkrw") else None
+
+          # usdkrw: Yahoo API 직접 호출 (kimchi 파일은 1450 fallback 가능성 있음)
+          usdkrw = None
+          try:
+              _r = requests.get(
+                  "https://query1.finance.yahoo.com/v8/finance/chart/USDKRW=X",
+                  headers={"User-Agent": "Mozilla/5.0"},
+                  params={"interval": "1d", "range": "2d"}, timeout=10)
+              _r.raise_for_status()
+              usdkrw = round(float(_r.json()["chart"]["result"][0]["meta"]["regularMarketPrice"]), 2)
+              if not (900 <= usdkrw <= 2000):
+                  raise ValueError(f"환율 이상값: {usdkrw}")
+              print(f"[INFO] USDKRW={usdkrw} (Yahoo API)")
+          except Exception as _e:
+              print(f"[WARN] USDKRW fetch failed: {_e}")
 
           # k_share
           k_share_percent = None
@@ -257,7 +270,6 @@ jobs:
                   if col not in df.columns:
                       df[col] = None
               df = df[df["date"] != YMD]
-              import pandas as pd2
               new_row = pd.DataFrame([row], columns=COLUMNS)
               df = pd.concat([df, new_row], ignore_index=True)
           else:
