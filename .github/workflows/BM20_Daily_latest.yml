@@ -335,25 +335,23 @@ jobs:
           # 0) 혹시 모를 중복 실행/경합 대비: 원격 최신 확보
           git fetch origin main
 
-          # 1) 생성된 변경사항을 먼저 스태시(추적안된 파일 포함)
+          # 1) 중요 파일 먼저 백업
+          cp out/backfill_current_basket.csv /tmp/backfill_backup.csv 2>/dev/null || true
+          cp out/history/market_history.csv /tmp/market_history_backup.csv 2>/dev/null || true
+
+          # 2) 생성된 변경사항을 먼저 스태시(추적안된 파일 포함)
           git stash push -u -m "bm20-autostash" || true
 
-          # 2) 원격 main으로 깔끔하게 리베이스 동기화
+          # 3) 원격 main으로 깔끔하게 리베이스 동기화
           git pull --rebase origin main
 
-          # 3) 스태시 복원
+          # 4) 스태시 복원
           git stash pop || true
 
-          # 충돌이 났다면 생성물(out/, cache/, history/)은 워크플로 산출물을 우선 채택
-          git checkout --theirs out 2>/dev/null || true
-          git checkout --theirs cache 2>/dev/null || true
-          git checkout --theirs history 2>/dev/null || true
-          # backfill CSV는 워크플로우 산출물(ours) 보호 -- --theirs out에 덮어씌워지는 것 방지
-          git checkout --ours out/backfill_current_basket.csv 2>/dev/null || true
-          git add out/backfill_current_basket.csv 2>/dev/null || true
-          # market_history.csv도 워크플로우 산출물(ours) 보호
-          git checkout --ours out/history/market_history.csv 2>/dev/null || true
-          git add out/history/market_history.csv 2>/dev/null || true
+          # 5) 백업에서 중요 파일 복원 (원격에 덮어써지는 것 방지)
+          cp /tmp/backfill_backup.csv out/backfill_current_basket.csv 2>/dev/null || true
+          cp /tmp/market_history_backup.csv out/history/market_history.csv 2>/dev/null || true
+          git add out/backfill_current_basket.csv out/history/market_history.csv 2>/dev/null || true
 
           # 4) 커밋/푸시 (커밋 메시지는 실행 시각 기준 날짜로 유지)
           DATE=$(TZ=Asia/Seoul date +%F)
