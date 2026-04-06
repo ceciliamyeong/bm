@@ -828,11 +828,16 @@ def build_placeholders() -> dict[str, str]:
         btc_usd_txt = f"{float(btc_usd_txt):,.0f}" if btc_usd_txt != "—" else "—"
     except Exception:
         btc_usd_txt = "—"
-    _btc_chg_raw = _ticker.get("TICKER_BTC_CHANGE", "—")
+    # TICKER_BTC_CHANGE 형식: "▲1.2%" or "▼1.2%"
+    # fast_info 기반으로 직접 재계산해서 더 안정적으로 처리
     try:
-        _sign = 1 if "▲" in _btc_chg_raw else -1
-        _val  = float(_btc_chg_raw.replace("▲","").replace("▼","").replace("%",""))
-        btc_1d_html = colored_change_html(_sign * _val, digits=2, wrap_parens=False)
+        import yfinance as _yf
+        _btc_info = _yf.Ticker("BTC-USD").fast_info
+        _btc_price = float(_btc_info.last_price)
+        _btc_prev  = float(_btc_info.previous_close)
+        _btc_chg   = (_btc_price - _btc_prev) / _btc_prev * 100 if _btc_prev else 0.0
+        btc_1d_html = colored_change_html(_btc_chg, digits=2, wrap_parens=False)
+        btc_usd_txt = f"{_btc_price:,.0f}"  # 실시간 가격도 여기서 덮어쓰기
     except Exception:
         btc_1d_html = "—"
 
