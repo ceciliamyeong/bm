@@ -773,54 +773,41 @@ if btc7 or eth7: plt.legend(loc="upper left")
 plt.title("BTC & ETH 7일 가격 추세", fontsize=13, loc="left", pad=8)
 plt.ylabel("% (from start)"); plt.tight_layout(); plt.savefig(trend_png, dpi=180); plt.close()
 
-# ================== Index history & returns ==================
+# ================== Returns (backfill_current_basket.csv SSOT 기반) ==================
 HIST_DIR = OUT_DIR / "history"; HIST_DIR.mkdir(parents=True, exist_ok=True)
-HIST_CSV = HIST_DIR / "bm20_index_history.csv"
 
-today_row = {"date": YMD, "index": round(float(bm20_now), 6)}
-if HIST_CSV.exists():
-    hist = pd.read_csv(HIST_CSV, dtype={"date":str})
-    if "date" not in hist.columns or "index" not in hist.columns:
-        raise RuntimeError(f"Invalid history schema: {HIST_CSV}")
-    hist = hist[hist["date"] != YMD]
-    hist = pd.concat([hist, pd.DataFrame([today_row])], ignore_index=True)
-else:
-    hist = pd.DataFrame([today_row])
-hist = hist.sort_values("date").reset_index(drop=True)
-if DAILY_SNAPSHOT:
-    hist.to_csv(HIST_CSV, index=False, encoding="utf-8")
-    print("[OK] History updated (daily snapshot).")
-else:
-    print("[SKIP] Intraday run: history not updated.")
-
-def period_return(days: int):
-    if len(hist) < 2: return None
+# 수익률 계산: rows_ssot (backfill_current_basket.csv) 기반
+def period_return_ssot(days: int):
+    if not rows_ssot or len(rows_ssot) < 2:
+        return None
     try:
         ref_date = (datetime.strptime(YMD, "%Y-%m-%d") - timedelta(days=days)).strftime("%Y-%m-%d")
-        ref_series = hist[hist["date"] <= ref_date]
-        if ref_series.empty: return None
-        ref_idx = float(ref_series.iloc[-1]["index"])
-        cur_idx = float(hist.iloc[-1]["index"])
-        if ref_idx == 0: return None
+        candidates = [r for r in rows_ssot if r["date"] <= ref_date]
+        if not candidates:
+            return None
+        ref_idx = float(candidates[-1]["level"])
+        cur_idx = float(bm20_now)
+        if ref_idx == 0:
+            return None
         return (cur_idx / ref_idx - 1.0) * 100.0
     except Exception:
         return None
 
-RET_1D  = period_return(1)
-RET_7D  = period_return(7)
-RET_30D = period_return(30)
+def level_on_or_before_ssot(yyyymmdd: str):
+    candidates = [r for r in (rows_ssot or []) if r["date"] <= yyyymmdd]
+    return float(candidates[-1]["level"]) if candidates else None
+
+RET_1D  = period_return_ssot(1)
+RET_7D  = period_return_ssot(7)
+RET_30D = period_return_ssot(30)
 
 today_dt = datetime.strptime(YMD, "%Y-%m-%d")
 month_start = today_dt.replace(day=1).strftime("%Y-%m-%d")
 year_start  = today_dt.replace(month=1, day=1).strftime("%Y-%m-%d")
 
-def level_on_or_before(yyyymmdd: str):
-    s = hist[hist["date"] <= yyyymmdd]
-    return None if s.empty else float(s.iloc[-1]["index"])
-
-lvl_month = level_on_or_before(month_start)
-lvl_year  = level_on_or_before(year_start)
-lvl_now   = float(hist.iloc[-1]["index"])
+lvl_month = level_on_or_before_ssot(month_start)
+lvl_year  = level_on_or_before_ssot(year_start)
+lvl_now   = float(bm20_now)
 RET_MTD = None if not lvl_month or lvl_month==0 else (lvl_now/lvl_month - 1)*100
 RET_YTD = None if not lvl_year  or lvl_year==0  else (lvl_now/lvl_year  - 1)*100
 
@@ -894,29 +881,7 @@ LATEST_JSON.write_text(json.dumps(latest_obj, ensure_ascii=False, indent=2), enc
 print(f"[OK] Written: {LATEST_JSON}")
 
 
-# ================== Series JSON (Index history 기반) ==================
-
-series_list = []
-
-try:
-    for _, row in hist.tail(365).iterrows():
-        series_list.append({
-            "date": row["date"],
-            "level": round(float(row["index"]), 6)
-        })
-except Exception as e:
-    print("[WARN] Failed building series:", e)
-
-series_obj = {
-    "updated": YMD,
-    "count": len(series_list),
-    "series": series_list
-}
-
-with open(SERIES_JSON, "w", encoding="utf-8") as f:
-    json.dump(series_obj, f, ensure_ascii=False, indent=2)
-
-print(f"[OK] Written: {SERIES_JSON}")
+# Series JSON은 위에서 rows_ssot 기반으로 이미 저장됨 (중복 저장 제거)
 
 
 # ================== PDF ==================
