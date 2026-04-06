@@ -828,19 +828,37 @@ def build_placeholders() -> dict[str, str]:
         btc_usd_txt = f"{float(btc_usd_txt):,.0f}" if btc_usd_txt != "—" else "—"
     except Exception:
         btc_usd_txt = "—"
-    # BTC 가격 + 24h 변동률: yfinance history(period="2d") 기준
+    # BTC 가격 + 24h 변동률: CoinMarketCap → yfinance fallback
+    import os as _os
     try:
-        import yfinance as _yf
-        _h = _yf.Ticker("BTC-USD").history(period="2d")["Close"].dropna()
-        _btc_price = float(_h.iloc[-1])
-        _btc_prev  = float(_h.iloc[-2])
-        _btc_chg   = (_btc_price / _btc_prev - 1) * 100 if _btc_prev else 0.0
+        _cmc_key = _os.getenv("CMC_API_KEY", "")
+        if not _cmc_key:
+            raise ValueError("CMC_API_KEY 없음")
+        _r = requests.get(
+            "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
+            headers={"X-CMC_PRO_API_KEY": _cmc_key},
+            params={"symbol": "BTC", "convert": "USD"},
+            timeout=10,
+        )
+        _r.raise_for_status()
+        _d = _r.json()["data"]["BTC"]["quote"]["USD"]
+        _btc_price = float(_d["price"])
+        _btc_chg   = float(_d["percent_change_24h"])
         btc_usd_txt = f"{_btc_price:,.0f}"
         btc_1d_html = colored_change_html(_btc_chg, digits=2, wrap_parens=False)
-        print(f"INFO: BTC from yfinance history — ${_btc_price:,.0f} / {_btc_chg:+.2f}%")
+        print(f"INFO: BTC from CMC — ${_btc_price:,.0f} / {_btc_chg:+.2f}%")
     except Exception as _e:
-        print(f"WARN: yfinance BTC history failed: {_e}")
-        btc_1d_html = "—"
+        print(f"WARN: CMC BTC fetch failed: {_e} → yfinance fallback")
+        try:
+            import yfinance as _yf
+            _h = _yf.Ticker("BTC-USD").history(period="2d")["Close"].dropna()
+            _btc_price = float(_h.iloc[-1])
+            _btc_prev  = float(_h.iloc[-2])
+            _btc_chg   = (_btc_price / _btc_prev - 1) * 100 if _btc_prev else 0.0
+            btc_usd_txt = f"{_btc_price:,.0f}"
+            btc_1d_html = colored_change_html(_btc_chg, digits=2, wrap_parens=False)
+        except Exception:
+            btc_1d_html = "—"
 
     # BM20
     asof = bm20.get("asOf") or bm20.get("asof") or bm20.get("date") or bm20.get("timestamp") or ""
