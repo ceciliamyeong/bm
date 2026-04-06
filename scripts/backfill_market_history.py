@@ -24,7 +24,7 @@ import requests
 from pathlib import Path
 from datetime import datetime, timedelta
 
-ROOT     = Path(__file__).resolve().parent
+ROOT     = Path(__file__).resolve().parent.parent  # scripts/ 의 상위 = 레포 루트
 BACKFILL = ROOT / "out" / "backfill_current_basket.csv"
 KIMCHI   = ROOT / "out" / "history" / "kimchi_snapshots.json"
 MARKET   = ROOT / "out" / "history" / "market_history.csv"
