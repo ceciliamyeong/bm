@@ -32,7 +32,7 @@
 
     /* ── Header ── */
     header {
-      background: #0f172a;
+      background: var(--bg2);
       padding: 14px 20px;
       display: flex;
       align-items: center;
@@ -48,10 +48,10 @@
       border-radius: 6px;
       padding: 2px 10px;
       font-size: 12px;
-      color: #93c5fd;
+      color: var(--blue);
       font-weight: 600;
     }
-    .header-meta { font-size: 12px; color: #94a3b8; }
+    .header-meta { font-size: 12px; color: var(--text2); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 
     /* ── Nav ── */
     .top-nav {
@@ -625,7 +625,7 @@ function renderAll(days) {
     } },
     grid: { left: 56, right: 16, top: 16, bottom: 48 },
     xAxis: X_AXIS(dates),
-    yAxis: Y_AXIS('KRW', v => v.toFixed(0)),
+    yAxis: { ...Y_AXIS('KRW', v => v.toFixed(0)), min: 1400, max: 1550 },
     series: [
       { type:'line', smooth:true, symbolSize:3,
          data: data.map(d => { const v = num(d.usdkrw); return (v && v > 0) ? v : null; }),
