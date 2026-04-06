@@ -24,26 +24,40 @@ def kimchi_premium_pct(krw_price: float, usdt_price: float, usdkrw: float) -> fl
 
 
 def fetch_fx_history() -> dict:
-    """yfinance로 02/06~04/07 시간별 환율 가져오기 (전체 이상치 구간 커버)"""
+    """yfinance 일별 환율 (1d 봉 → 날짜별 종가)"""
     ticker = yf.Ticker("USDKRW=X")
-    h = ticker.history(start="2026-02-06", end="2026-04-07", interval="1h")
+    h = ticker.history(start="2026-02-06", end="2026-04-07", interval="1d")
     h = h["Close"].dropna()
 
     fx_map = {}
     for ts, val in h.items():
-        if hasattr(ts, 'timestamp'):
-            fx_map[ts.timestamp()] = float(val)
+        date_str = ts.strftime("%Y-%m-%d")
+        fx_map[date_str] = round(float(val), 2)
+
     print(f"환율 데이터 포인트: {len(fx_map)}개")
+    for d, v in sorted(fx_map.items()):
+        print(f"  {d}: {v}")
     return fx_map
 
 
 def find_nearest_rate(fx_map: dict, target_ts: float) -> float:
+    """타임스탬프 → 날짜 변환 후 해당 날짜 또는 가장 가까운 영업일 환율 반환"""
     if not fx_map:
         return 0.0
-    nearest = min(fx_map.keys(), key=lambda t: abs(t - target_ts))
-    diff_min = abs(nearest - target_ts) / 60
-    print(f"    가장 가까운 환율 포인트: {diff_min:.0f}분 차이")
-    return fx_map[nearest]
+    dt = datetime.fromtimestamp(target_ts, tz=KST)
+    date_str = dt.strftime("%Y-%m-%d")
+
+    if date_str in fx_map:
+        return fx_map[date_str]
+
+    # 주말/공휴일 → 최대 4일 전까지 탐색
+    for delta in range(1, 5):
+        d_prev = (dt - timedelta(days=delta)).strftime("%Y-%m-%d")
+        if d_prev in fx_map:
+            print(f"    [{date_str}] → {d_prev} 환율 사용 (주말/공휴일)")
+            return fx_map[d_prev]
+
+    return 0.0
 
 
 def run():
