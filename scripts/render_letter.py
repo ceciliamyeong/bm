@@ -828,18 +828,29 @@ def build_placeholders() -> dict[str, str]:
         btc_usd_txt = f"{float(btc_usd_txt):,.0f}" if btc_usd_txt != "—" else "—"
     except Exception:
         btc_usd_txt = "—"
-    # TICKER_BTC_CHANGE 형식: "▲1.2%" or "▼1.2%"
-    # fast_info 기반으로 직접 재계산해서 더 안정적으로 처리
+    # BTC 가격 + 24h 변동률: 바이낸스 API (인증 불필요, 정확한 24h 기준)
     try:
-        import yfinance as _yf
-        _btc_info = _yf.Ticker("BTC-USD").fast_info
-        _btc_price = float(_btc_info.last_price)
-        _btc_prev  = float(_btc_info.previous_close)
-        _btc_chg   = (_btc_price - _btc_prev) / _btc_prev * 100 if _btc_prev else 0.0
+        _binance_url = "https://api.binance.com/api/v3/ticker/24hr"
+        _r = requests.get(_binance_url, params={"symbol": "BTCUSDT"}, timeout=10)
+        _r.raise_for_status()
+        _bd = _r.json()
+        _btc_price = float(_bd["lastPrice"])
+        _btc_chg   = float(_bd["priceChangePercent"])
+        btc_usd_txt = f"{_btc_price:,.0f}"
         btc_1d_html = colored_change_html(_btc_chg, digits=2, wrap_parens=False)
-        btc_usd_txt = f"{_btc_price:,.0f}"  # 실시간 가격도 여기서 덮어쓰기
-    except Exception:
-        btc_1d_html = "—"
+        print(f"INFO: BTC from Binance — ${_btc_price:,.0f} / {_btc_chg:+.2f}%")
+    except Exception as _e:
+        print(f"WARN: Binance BTC fetch failed: {_e} → yfinance fallback")
+        try:
+            import yfinance as _yf
+            _btc_info  = _yf.Ticker("BTC-USD").fast_info
+            _btc_price = float(_btc_info.last_price)
+            _btc_prev  = float(_btc_info.previous_close)
+            _btc_chg   = (_btc_price - _btc_prev) / _btc_prev * 100 if _btc_prev else 0.0
+            btc_usd_txt = f"{_btc_price:,.0f}"
+            btc_1d_html = colored_change_html(_btc_chg, digits=2, wrap_parens=False)
+        except Exception:
+            btc_1d_html = "—"
 
     # BM20
     asof = bm20.get("asOf") or bm20.get("asof") or bm20.get("date") or bm20.get("timestamp") or ""
