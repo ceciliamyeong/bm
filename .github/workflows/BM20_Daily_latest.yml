@@ -35,7 +35,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          # cache: "pip"
+          cache: "pip"
 
       - name: Install dependencies
         run: |
@@ -165,6 +165,108 @@ jobs:
           print(f"[backfill] {action} OK: {new_line}")
           PY
 
+
+      # 1.7) backfill 확정 후 market_history.csv append
+      - name: Append market history CSV
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - << 'PY'
+          import json, csv, os, requests, time
+          from pathlib import Path
+          from datetime import datetime, timezone, timedelta
+
+          KST = timezone(timedelta(hours=9))
+          YMD = datetime.now(KST).strftime("%Y-%m-%d")
+          ROOT = Path("/home/runner/work/bm/bm")
+          HIST_DIR = ROOT / "out" / "history"
+          MARKET_HIST_CSV = HIST_DIR / "market_history.csv"
+          BACKFILL = ROOT / "out" / "backfill_current_basket.csv"
+
+          # backfill에서 오늘 레벨/수익률 읽기
+          bm20_level = None
+          bm20_chg_pct = None
+          lines = BACKFILL.read_text(encoding="utf-8").strip().splitlines()
+          for line in reversed(lines):
+              parts = line.strip().split(",")
+              if len(parts) >= 3 and parts[0] == YMD:
+                  bm20_level = round(float(parts[1]), 4)
+                  bm20_chg_pct = round(float(parts[2]) * 100, 4)
+                  break
+
+          # sentiment
+          sentiment_value = None
+          sentiment_label = None
+          try:
+              r = requests.get("https://api.alternative.me/fng/?limit=1&format=json", timeout=10)
+              fng = r.json().get("data", [{}])[0]
+              sentiment_value = int(fng.get("value", 0)) or None
+              sentiment_label = fng.get("value_classification") or None
+          except Exception as e:
+              print(f"[WARN] FNG fetch failed: {e}")
+
+          # kimchi / usdkrw
+          kimchi_pct = None
+          usdkrw = None
+          kp_path = ROOT / "out" / YMD / f"kimchi_{YMD}.json"
+          if kp_path.exists():
+              kp = json.loads(kp_path.read_text(encoding="utf-8"))
+              kimchi_pct = round(float(kp.get("kimchi_pct", 0)), 4) if kp.get("kimchi_pct") is not None else None
+              usdkrw = round(float(kp.get("usdkrw", 0)), 2) if kp.get("usdkrw") else None
+
+          # k_share
+          k_share_percent = None
+          kxrp_path = ROOT / "out" / "global" / "k_xrp_share_24h_latest.json"
+          if kxrp_path.exists():
+              kxrp = json.loads(kxrp_path.read_text(encoding="utf-8"))
+              k_share_percent = round(float(kxrp.get("k_share_pct", 0) or 0), 4) or None
+
+          # btc_dominance
+          btc_dominance = None
+          try:
+              api_key = os.environ.get("CMC_API_KEY", "")
+              if api_key:
+                  r2 = requests.get(
+                      "https://pro-api.coinmarketcap.com/v1/global-metrics/quotes/latest",
+                      headers={"X-CMC_PRO_API_KEY": api_key}, timeout=10)
+                  btc_dominance = round(float(r2.json()["data"]["btc_dominance"]), 2)
+          except Exception as e:
+              print(f"[WARN] btc_dominance failed: {e}")
+
+          COLUMNS = [
+              "date", "bm20_level", "bm20_chg_pct",
+              "sentiment_value", "sentiment_label",
+              "kimchi_pct", "usdkrw", "k_share_percent",
+              "btc_funding_bin", "eth_funding_bin",
+              "btc_funding_byb", "eth_funding_byb",
+              "btc_dominance",
+          ]
+          row = {
+              "date": YMD, "bm20_level": bm20_level, "bm20_chg_pct": bm20_chg_pct,
+              "sentiment_value": sentiment_value, "sentiment_label": sentiment_label,
+              "kimchi_pct": kimchi_pct, "usdkrw": usdkrw, "k_share_percent": k_share_percent,
+              "btc_funding_bin": None, "eth_funding_bin": None,
+              "btc_funding_byb": None, "eth_funding_byb": None,
+              "btc_dominance": btc_dominance,
+          }
+
+          if MARKET_HIST_CSV.exists():
+              import pandas as pd
+              df = pd.read_csv(MARKET_HIST_CSV, dtype={"date": str})
+              for col in COLUMNS:
+                  if col not in df.columns:
+                      df[col] = None
+              df = df[df["date"] != YMD]
+              import pandas as pd2
+              new_row = pd.DataFrame([row], columns=COLUMNS)
+              df = pd.concat([df, new_row], ignore_index=True)
+          else:
+              import pandas as pd
+              df = pd.DataFrame([row], columns=COLUMNS)
+
+          df.to_csv(MARKET_HIST_CSV, index=False, encoding="utf-8")
+          print(f"[OK] market_history.csv → {len(df)}행 (date={YMD}, bm20={bm20_level}, sentiment={sentiment_value}/{sentiment_label})")
+          PY
 
       # 2) out → archive 복사 + archive html 생성(스크립트 내부에서 처리)
       - name: Generate site (latest + archive)
