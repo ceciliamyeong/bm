@@ -578,19 +578,19 @@ def _level_on_or_before(rows, target_ymd: str):
 # 오늘 1D 포트폴리오 수익률(%) 계산: yesterday -> now (weights_map 기준)
 # NOTE: backfill의 실제 드리프트/리밸런싱과 100% 동일하지는 않지만, '400대'로 붕괴하는 문제를 막고
 # 대시보드/뉴스/루트 JSON이 같은 체계(연속지수)로 움직이게 만든다.
+# price_change_pct 기반으로 직접 계산 (CMC에서 이미 정확한 24h 변동률 제공)
 port_ret_1d = 0.0
 denom_ok = True
 for _, row in df.iterrows():
     cid = row["id"]
     w = float(weights_map.get(cid, 0.0))
-    p0 = float(row.get("previous_price") or 0.0)
-    p1 = float(row.get("current_price") or 0.0)
+    pct = row.get("price_change_pct")
     if w == 0:
         continue
-    if p0 <= 0 or p1 <= 0:
+    if pct is None or (isinstance(pct, float) and np.isnan(pct)):
         denom_ok = False
         continue
-    port_ret_1d += w * ((p1 / p0) - 1.0)
+    port_ret_1d += w * (float(pct) / 100.0)
 
 # SSOT series에서 전일 레벨 가져와서 오늘 레벨 계산
 today_ymd = YMD
