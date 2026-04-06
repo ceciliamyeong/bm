@@ -62,19 +62,11 @@ jobs:
           check data/etf_summary.json
           check nasdaq_series.json
           check kospi_series.json
-          check out/history/krw_24h_snapshots.json
           if [ "$MISSING" -gt 0 ]; then
             echo "ERROR: $MISSING file(s) missing"
             exit 1
           fi
           echo "[OK] all inputs exist"
-      - name: Update BTC series (from CSV)
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 scripts/update_btc_series.py
-          test -f out/history/btc_usd_series.json
-          echo "[OK] btc series updated"
       - name: Render Treemap PNG (from CSV)
         shell: bash
         run: |
@@ -82,8 +74,6 @@ jobs:
           python3 scripts/render_treemap_png.py
           test -f assets/topcoins_treemap_latest.png
           echo "[OK] treemap png ready"
-      - name: Fetch Top News from WP
-        run: python scripts/fetch_top_news.py
       - name: Render letter.html
         shell: bash
         run: |
@@ -115,7 +105,6 @@ jobs:
           # 2) 생성된 파일 스테이징
           git add letter.html \
             aas_brief.html \
-            out/history/btc_usd_series.json \
             out/history/krw_24h_latest.json \
             out/history/krw_24h_snapshots.json \
             out/global/k_xrp_share_24h_latest.json \
@@ -123,13 +112,12 @@ jobs:
             data/etf_summary.json \
             nasdaq_series.json kospi_series.json \
             assets/topcoins_treemap_latest.png \
-            bm20_latest.json bm20_daily_data_latest.csv \
-            out/latest/top_news_latest.json || true
+            bm20_latest.json bm20_daily_data_latest.csv || true
 
           # 3) 변경사항 있을 때만 커밋 & 푸시
           if ! git diff --cached --quiet; then
             DATE=$(TZ=Asia/Seoul date +%F)
-            git commit -m "chore: render letter + 코생지 brief + btc + treemap (${DATE})"
+            git commit -m "chore: render letter + 코생지 brief + treemap (${DATE})"
             git push origin HEAD:main
           else
             echo "No changes to commit"
