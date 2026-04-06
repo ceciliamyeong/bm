@@ -337,22 +337,14 @@ def get_kimchi(df):
             if last: return last.get("kimchi_pct"), {**last, "is_cache": True}
             return None, {"dom":dom,"glb":"fallback0","fx":"fixed1450","btc_krw":round(btc_krw,2),"btc_usd":None,"usdkrw":1450.0,"is_cache":True}
 
-    # 환율: Yahoo Finance API 직접 호출 (yfinance 라이브러리 버그 우회)
+    # 환율: yfinance 1순위 (순수 외환시장, GitHub Actions 안정적)
     try:
-        _r = requests.get(
-            "https://query1.finance.yahoo.com/v8/finance/chart/USDKRW=X",
-            headers={"User-Agent": "Mozilla/5.0"},
-            params={"interval": "1d", "range": "2d"},
-            timeout=10,
-        )
-        _r.raise_for_status()
-        usdkrw = float(_r.json()["chart"]["result"][0]["meta"]["regularMarketPrice"])
-        fx = "yahoo_api:USDKRW=X"
+        h = yf.Ticker("USDKRW=X").history(period="2d")
+        usdkrw = float(h["Close"].dropna().iloc[-1])
+        fx = "yfinance:USDKRW=X"
         if not (900 <= usdkrw <= 2000):
-            raise ValueError(f"환율 이상값: {usdkrw}")
-        print(f"[INFO] USDKRW={usdkrw:.2f} (Yahoo API)")
-    except Exception as _e:
-        print(f"[WARN] USDKRW fetch failed: {_e} → 1450 fallback")
+            raise ValueError
+    except Exception:
         usdkrw = 1450.0
         fx = "fixed1450"
     
@@ -1177,7 +1169,7 @@ def _append_market_history():
     )
 
 
-_append_market_history()
+# _append_market_history() → yaml의 별도 스텝에서 실행 (backfill 업데이트 이후)
 
 # ================== Components History CSV (append) ==================
 COMPONENTS_HIST_CSV = HIST_DIR / "components_history.csv"
