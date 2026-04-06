@@ -19,7 +19,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install requests pandas
+          pip install requests pandas yfinance
 
       - name: Run KRW rolling 24h
         run: |
