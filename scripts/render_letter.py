@@ -837,8 +837,7 @@ def build_placeholders() -> dict[str, str]:
         _r.raise_for_status()
         _meta = _r.json()["chart"]["result"][0]["meta"]
         _btc_price = float(_meta["regularMarketPrice"])
-        _btc_prev  = float(_meta["chartPreviousClose"])
-        _btc_chg   = (_btc_price / _btc_prev - 1) * 100 if _btc_prev else 0.0
+        _btc_chg   = float(_meta["regularMarketChangePercent"]) * 100
         btc_usd_txt = f"{_btc_price:,.0f}"
         btc_1d_html = colored_change_html(_btc_chg, digits=2, wrap_parens=False)
         print(f"INFO: BTC from Yahoo API — ${_btc_price:,.0f} / {_btc_chg:+.2f}%")
