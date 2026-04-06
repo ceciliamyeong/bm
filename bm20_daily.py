@@ -583,8 +583,8 @@ denom_ok = True
 for _, row in df.iterrows():
     cid = row["id"]
     w = float(weights_map.get(cid, 0.0))
-    p0 = float(row.get("prev_price") or 0.0)
-    p1 = float(row.get("price") or 0.0)
+    p0 = float(row.get("previous_price") or 0.0)
+    p1 = float(row.get("current_price") or 0.0)
     if w == 0:
         continue
     if p0 <= 0 or p1 <= 0:
