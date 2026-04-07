@@ -136,13 +136,17 @@ def update_market_indices():
     }
 
     print("\n--- 시장 지수 및 비트코인 데이터 업데이트 시작 ---")
+    import datetime as _dt2
+    period1 = int(_dt2.datetime(2018, 1, 1).timestamp())
+    period2 = int(_dt2.datetime.utcnow().timestamp())
+
     for name, symbol in indices.items():
         try:
             url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
             r = requests.get(
                 url,
                 headers={"User-Agent": "Mozilla/5.0"},
-                params={"interval": "1d", "range": "max"},
+                params={"interval": "1d", "period1": period1, "period2": period2},
                 timeout=20,
             )
             r.raise_for_status()
