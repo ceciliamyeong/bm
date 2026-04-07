@@ -258,7 +258,7 @@
       <div class="section-title">
         <span class="dot" style="background:var(--yellow);"></span>
         BM20 vs BTC — 연초 이후 누적 수익률 (YTD)
-        <span class="sub">2026-01-01 = 0% 기준</span>
+        <span class="sub">최근 90일 기준</span>
       </div>
       <div class="panel">
         <!-- KPI -->
@@ -692,66 +692,74 @@ async function loadData() {
 
 
   // ── YTD 데이터 (동적 로딩 — market_history.csv + btc_usd_series.json) ─────
-  const [mhRes, btcRes, bm20Res] = await Promise.all([
-    fetch(`/out/history/market_history.csv?${bust}`),
-    fetch(`/btc_usd_series.json?${bust}`),
-    fetch(`/bm20_series.json?${bust}`),
-  ]);
-  const mhText  = await mhRes.text();
-  const btcJson = await btcRes.json();
-  const bm20Json = await bm20Res.json();
+  let YTD_DATES = [], YTD_BTC = [], YTD_BM20 = [], YTD_BTC_PX = [], YTD_BM20_LV = [], YTD_SENT = [];
 
-  // market_history.csv 파싱
-  const mhRows = parseCSV(mhText).filter(d => d.date);
+  async function loadYTDData() {
+    const bust = Date.now();
+    const DAYS = 90;
 
-  // 올해 1월 1일 기준 필터
-  const thisYear = new Date().getFullYear();
-  const yearStart = `${thisYear}-01-01`;
-  const ytdRows = mhRows.filter(d => d.date >= yearStart);
+    // 1) market_history.csv 로드 (bm20, sentiment, kimchi)
+    const mhRes = await fetch(`/out/history/market_history.csv?${bust}`);
+    const mhText = await mhRes.text();
+    const allRows = parseCSV(mhText).filter(d => d.date && d.bm20_level);
 
-  // btc_usd_series: {date, price}[]
-  const btcMap = {};
-  btcJson.forEach(r => { btcMap[r.date] = r.price; });
+    // 최근 90일 필터
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - DAYS);
+    const cutoffStr = cutoff.toISOString().slice(0, 10);
+    const mhRows = allRows.filter(d => d.date >= cutoffStr);
 
-  // bm20_series: [{date, level}]
-  const bm20Map = {};
-  const bm20List = Array.isArray(bm20Json) ? bm20Json : (bm20Json.series || []);
-  bm20List.forEach(r => { bm20Map[r.date] = r.level; });
+    // 2) btc_usd_series.json 로드 (BTC 가격)
+    const btcRes = await fetch(`/btc_usd_series.json?${bust}`);
+    const btcRaw = await btcRes.json();
+    const btcMap = {};
+    btcRaw.forEach(d => { btcMap[d.date] = d.price; });
 
-  // BTC 연초 기준가
-  const btcBase = btcMap[yearStart] || btcMap[Object.keys(btcMap).filter(d=>d>=yearStart).sort()[0]] || 1;
-  const bm20Base = bm20Map[yearStart] || bm20Map[Object.keys(bm20Map).filter(d=>d>=yearStart).sort()[0]] || 1;
+    // 3) 기준값 (90일 전 첫 날)
+    const baseRow = mhRows[0];
+    const baseDate = baseRow?.date;
+    const btcBase = btcMap[baseDate] || 1;
+    const bm20Base = num(baseRow?.bm20_level) || 1;
 
-  // YTD 배열 생성
-  const YTD_DATES  = ytdRows.map(d => d.date.slice(5));  // MM-DD
-  const YTD_BTC    = ytdRows.map(d => {
-    const px = btcMap[d.date];
-    return px ? +((px/btcBase - 1)*100).toFixed(2) : null;
-  });
-  const YTD_BM20   = ytdRows.map(d => {
-    const lv = bm20Map[d.date] || +d.bm20_level;
-    return lv && bm20Base ? +((lv/bm20Base - 1)*100).toFixed(2) : null;
-  });
-  const YTD_BTC_PX = ytdRows.map(d => btcMap[d.date] || null);
-  const YTD_BM20_LV= ytdRows.map(d => bm20Map[d.date] ? +bm20Map[d.date] : (+d.bm20_level||null));
-  const YTD_SENT   = ytdRows.map(d => d.sentiment_value ? +d.sentiment_value : null);
+    // 4) 배열 구성
+    YTD_DATES = []; YTD_BTC = []; YTD_BM20 = [];
+    YTD_BTC_PX = []; YTD_BM20_LV = []; YTD_SENT = [];
 
+    mhRows.forEach(r => {
+      const date = r.date; // YYYY-MM-DD
+      const mm_dd = date.slice(5); // MM-DD
+      const bm20Lv = num(r.bm20_level);
+      const sentVal = num(r.sentiment_value);
+      const btcPx = btcMap[date] || null;
+
+      YTD_DATES.push(mm_dd);
+      YTD_BM20_LV.push(bm20Lv);
+      YTD_SENT.push(sentVal);
+      YTD_BTC_PX.push(btcPx);
+
+      // 수익률 계산 (90일 첫날 기준)
+      const btcRet = btcPx && btcBase ? ((btcPx / btcBase) - 1) * 100 : null;
+      const bm20Ret = bm20Lv && bm20Base ? ((bm20Lv / bm20Base) - 1) * 100 : null;
+      YTD_BTC.push(btcRet !== null ? Math.round(btcRet * 100) / 100 : null);
+      YTD_BM20.push(bm20Ret !== null ? Math.round(bm20Ret * 100) / 100 : null);
+    });
+  }
 
   function renderYTD() {
     // KPI
-    const lastBtc  = YTD_BTC[YTD_BTC.length-1];
-    const lastBm20 = YTD_BM20[YTD_BM20.length-1];
-    const alpha    = lastBm20 - lastBtc;
+    const lastBtc  = YTD_BTC.filter(v=>v!=null).at(-1);
+    const lastBm20 = YTD_BM20.filter(v=>v!=null).at(-1);
+    const alpha    = (lastBm20 != null && lastBtc != null) ? lastBm20 - lastBtc : null;
     const lastSent = YTD_SENT.filter(v=>v!=null).at(-1);
-    const lastPx   = YTD_BTC_PX[YTD_BTC_PX.length-1];
-    const lastLv   = YTD_BM20_LV[YTD_BM20_LV.length-1];
+    const lastPx   = YTD_BTC_PX.filter(v=>v!=null).at(-1);
+    const lastLv   = YTD_BM20_LV.filter(v=>v!=null).at(-1);
 
     document.getElementById('ytdKpi').innerHTML = [
-      { label:'BTC YTD', val: (lastBtc>=0?'+':'')+lastBtc.toFixed(1)+'%', cls: lastBtc>=0?'up':'dn' },
-      { label:'BM20 YTD', val: (lastBm20>=0?'+':'')+lastBm20.toFixed(1)+'%', cls: lastBm20>=0?'up':'dn' },
-      { label:'Alpha vs BTC', val: (alpha>=0?'+':'')+alpha.toFixed(1)+'%p', cls: alpha>=0?'up':'dn' },
-      { label:'BTC 현재가', val: '$'+lastPx.toLocaleString(), cls:'' },
-      { label:'BM20 레벨', val: lastLv.toFixed(1), cls:'' },
+      { label:'BTC YTD', val: lastBtc!=null?(lastBtc>=0?'+':'')+lastBtc.toFixed(1)+'%':'-', cls: lastBtc>=0?'up':'dn' },
+      { label:'BM20 YTD', val: lastBm20!=null?(lastBm20>=0?'+':'')+lastBm20.toFixed(1)+'%':'-', cls: lastBm20>=0?'up':'dn' },
+      { label:'Alpha vs BTC', val: alpha!=null?(alpha>=0?'+':'')+alpha.toFixed(1)+'%p':'-', cls: alpha>=0?'up':'dn' },
+      { label:'BTC 현재가', val: lastPx?'$'+lastPx.toLocaleString():'-', cls:'' },
+      { label:'BM20 레벨', val: lastLv?lastLv.toFixed(1):'-', cls:'' },
       { label:'공포탐욕', val: lastSent!=null?lastSent.toFixed(0):'-', cls: lastSent<20?'dn':lastSent>60?'up':'' },
     ].map(k=>`<div class="kpi-card"><div class="kpi-label">${k.label}</div><div class="kpi-value ${k.cls}">${k.val}</div></div>`).join('');
 
@@ -762,11 +770,11 @@ async function loadData() {
       tooltip:{ ...TOOLTIP, formatter: params => {
         const i = params[0].dataIndex;
         const btcV = YTD_BTC[i]; const bm20V = YTD_BM20[i];
-        const al = bm20V - btcV;
-        return `<b>${ytdRows[i]?.date ?? YTD_DATES[i]}</b><br/>
-          BTC ${(btcV>=0?'+':'')+btcV.toFixed(2)}%<br/>
-          BM20 ${(bm20V>=0?'+':'')+bm20V.toFixed(2)}%<br/>
-          <span style="color:#22c55e;">Alpha ${(al>=0?'+':'')+al.toFixed(2)}%p</span>`;
+        const al = (btcV!=null&&bm20V!=null) ? bm20V - btcV : null;
+        return `<b>${YTD_DATES[i].length === 5 ? new Date().getFullYear()+"-"+YTD_DATES[i] : YTD_DATES[i]}</b><br/>
+          BTC ${btcV!=null?(btcV>=0?'+':'')+btcV.toFixed(2)+'%':'-'}<br/>
+          BM20 ${bm20V!=null?(bm20V>=0?'+':'')+bm20V.toFixed(2)+'%':'-'}<br/>
+          <span style="color:#22c55e;">Alpha ${al!=null?(al>=0?'+':'')+al.toFixed(2)+'%p':'-'}</span>`;
       } },
       legend:{ top:4, left:0, itemWidth:12, itemHeight:8,
         data:['BTC','BM20'], textStyle:{ color:'#94a3b8', fontSize:11 } },
@@ -795,7 +803,7 @@ async function loadData() {
       backgroundColor:'transparent',
       tooltip:{ ...TOOLTIP, formatter: params => {
         const i = params[0].dataIndex;
-        return `<b>${ytdRows[i]?.date ?? YTD_DATES[i]}</b><br/>공포탐욕 ${YTD_SENT[i]??'-'}`;
+        return `<b>${YTD_DATES[i].length === 5 ? new Date().getFullYear()+"-"+YTD_DATES[i] : YTD_DATES[i]}</b><br/>공포탐욕 ${YTD_SENT[i]??'-'}`;
       } },
       grid:{ left:44, right:16, top:16, bottom:48 },
       xAxis:X_AXIS(YTD_DATES),
@@ -825,7 +833,7 @@ async function loadData() {
       backgroundColor:'transparent',
       tooltip:{ ...TOOLTIP, formatter: params => {
         const i = params[0].dataIndex;
-        return `<b>${ytdRows[i]?.date ?? YTD_DATES[i]}</b><br/>BM20 ${YTD_BM20_LV[i]?.toFixed(1)??'-'}`;
+        return `<b>${YTD_DATES[i].length === 5 ? new Date().getFullYear()+"-"+YTD_DATES[i] : YTD_DATES[i]}</b><br/>BM20 ${YTD_BM20_LV[i]?.toFixed(1)??'-'}`;
       } },
       grid:{ left:52, right:16, top:16, bottom:48 },
       xAxis:X_AXIS(YTD_DATES),
@@ -841,6 +849,7 @@ async function loadData() {
     }, true);
   }
 
+  await loadYTDData();
   renderYTD();
 
     renderAll(currentDays);
@@ -856,157 +865,8 @@ document.querySelectorAll('.range-btn').forEach(btn => {
     btn.classList.add('active');
     currentDays = parseInt(btn.dataset.days) || 0;
 
-  // ── YTD 데이터 (동적 로딩 — market_history.csv + btc_usd_series.json) ─────
-  const [mhRes, btcRes, bm20Res] = await Promise.all([
-    fetch(`/out/history/market_history.csv?${bust}`),
-    fetch(`/btc_usd_series.json?${bust}`),
-    fetch(`/bm20_series.json?${bust}`),
-  ]);
-  const mhText  = await mhRes.text();
-  const btcJson = await btcRes.json();
-  const bm20Json = await bm20Res.json();
-
-  // market_history.csv 파싱
-  const mhRows = parseCSV(mhText).filter(d => d.date);
-
-  // 올해 1월 1일 기준 필터
-  const thisYear = new Date().getFullYear();
-  const yearStart = `${thisYear}-01-01`;
-  const ytdRows = mhRows.filter(d => d.date >= yearStart);
-
-  // btc_usd_series: {date, price}[]
-  const btcMap = {};
-  btcJson.forEach(r => { btcMap[r.date] = r.price; });
-
-  // bm20_series: [{date, level}]
-  const bm20Map = {};
-  const bm20List = Array.isArray(bm20Json) ? bm20Json : (bm20Json.series || []);
-  bm20List.forEach(r => { bm20Map[r.date] = r.level; });
-
-  // BTC 연초 기준가
-  const btcBase = btcMap[yearStart] || btcMap[Object.keys(btcMap).filter(d=>d>=yearStart).sort()[0]] || 1;
-  const bm20Base = bm20Map[yearStart] || bm20Map[Object.keys(bm20Map).filter(d=>d>=yearStart).sort()[0]] || 1;
-
-  // YTD 배열 생성
-  const YTD_DATES  = ytdRows.map(d => d.date.slice(5));  // MM-DD
-  const YTD_BTC    = ytdRows.map(d => {
-    const px = btcMap[d.date];
-    return px ? +((px/btcBase - 1)*100).toFixed(2) : null;
-  });
-  const YTD_BM20   = ytdRows.map(d => {
-    const lv = bm20Map[d.date] || +d.bm20_level;
-    return lv && bm20Base ? +((lv/bm20Base - 1)*100).toFixed(2) : null;
-  });
-  const YTD_BTC_PX = ytdRows.map(d => btcMap[d.date] || null);
-  const YTD_BM20_LV= ytdRows.map(d => bm20Map[d.date] ? +bm20Map[d.date] : (+d.bm20_level||null));
-  const YTD_SENT   = ytdRows.map(d => d.sentiment_value ? +d.sentiment_value : null);
-
-
-  function renderYTD() {
-    // KPI
-    const lastBtc  = YTD_BTC[YTD_BTC.length-1];
-    const lastBm20 = YTD_BM20[YTD_BM20.length-1];
-    const alpha    = lastBm20 - lastBtc;
-    const lastSent = YTD_SENT.filter(v=>v!=null).at(-1);
-    const lastPx   = YTD_BTC_PX[YTD_BTC_PX.length-1];
-    const lastLv   = YTD_BM20_LV[YTD_BM20_LV.length-1];
-
-    document.getElementById('ytdKpi').innerHTML = [
-      { label:'BTC YTD', val: (lastBtc>=0?'+':'')+lastBtc.toFixed(1)+'%', cls: lastBtc>=0?'up':'dn' },
-      { label:'BM20 YTD', val: (lastBm20>=0?'+':'')+lastBm20.toFixed(1)+'%', cls: lastBm20>=0?'up':'dn' },
-      { label:'Alpha vs BTC', val: (alpha>=0?'+':'')+alpha.toFixed(1)+'%p', cls: alpha>=0?'up':'dn' },
-      { label:'BTC 현재가', val: '$'+lastPx.toLocaleString(), cls:'' },
-      { label:'BM20 레벨', val: lastLv.toFixed(1), cls:'' },
-      { label:'공포탐욕', val: lastSent!=null?lastSent.toFixed(0):'-', cls: lastSent<20?'dn':lastSent>60?'up':'' },
-    ].map(k=>`<div class="kpi-card"><div class="kpi-label">${k.label}</div><div class="kpi-value ${k.cls}">${k.val}</div></div>`).join('');
-
-    // 수익률 비교 차트
-    if (!charts.ytd) charts.ytd = echarts.init(document.getElementById('ytdChart'));
-    charts.ytd.setOption({
-      backgroundColor:'transparent',
-      tooltip:{ ...TOOLTIP, formatter: params => {
-        const i = params[0].dataIndex;
-        const btcV = YTD_BTC[i]; const bm20V = YTD_BM20[i];
-        const al = bm20V - btcV;
-        return `<b>${ytdRows[i]?.date ?? YTD_DATES[i]}</b><br/>
-          BTC ${(btcV>=0?'+':'')+btcV.toFixed(2)}%<br/>
-          BM20 ${(bm20V>=0?'+':'')+bm20V.toFixed(2)}%<br/>
-          <span style="color:#22c55e;">Alpha ${(al>=0?'+':'')+al.toFixed(2)}%p</span>`;
-      } },
-      legend:{ top:4, left:0, itemWidth:12, itemHeight:8,
-        data:['BTC','BM20'], textStyle:{ color:'#94a3b8', fontSize:11 } },
-      grid:{ left:54, right:16, top:36, bottom:48 },
-      xAxis:X_AXIS(YTD_DATES),
-      yAxis:Y_AXIS('%', v=>v.toFixed(0)+'%'),
-      series:[
-        { name:'BTC', type:'line', smooth:false, symbolSize:0,
-           data:YTD_BTC,
-           lineStyle:{ color:'#f7931a', width:2 },
-           itemStyle:{ color:'#f7931a' },
-           markLine:{ silent:true, lineStyle:{ color:'#94a3b8', type:'dashed', width:1 },
-             data:[{ yAxis:0 }], label:{ show:false } } },
-        { name:'BM20', type:'line', smooth:false, symbolSize:0,
-           data:YTD_BM20,
-           lineStyle:{ color:'#c9a84c', width:2.5 },
-           itemStyle:{ color:'#c9a84c' },
-           areaStyle:{ color:{ type:'linear',x:0,y:0,x2:0,y2:1,
-             colorStops:[{offset:0,color:'rgba(201,168,76,0.12)'},{offset:1,color:'rgba(201,168,76,0)'}] } } },
-      ]
-    }, true);
-
-    // 공포탐욕
-    if (!charts.sent) charts.sent = echarts.init(document.getElementById('sentChart'));
-    charts.sent.setOption({
-      backgroundColor:'transparent',
-      tooltip:{ ...TOOLTIP, formatter: params => {
-        const i = params[0].dataIndex;
-        return `<b>${ytdRows[i]?.date ?? YTD_DATES[i]}</b><br/>공포탐욕 ${YTD_SENT[i]??'-'}`;
-      } },
-      grid:{ left:44, right:16, top:16, bottom:48 },
-      xAxis:X_AXIS(YTD_DATES),
-      yAxis:{ ...Y_AXIS(''), min:0, max:100,
-        splitNumber:4, axisLabel:{ color:'#94a3b8', fontSize:11 } },
-      visualMap:{ show:false, dimension:1,
-        pieces:[
-          {min:0,  max:25, color:'#ef4444'},
-          {min:25, max:45, color:'#f97316'},
-          {min:45, max:55, color:'#94a3b8'},
-          {min:55, max:75, color:'#22c55e'},
-          {min:75, max:100,color:'#16a34a'},
-        ] },
-      series:[
-        { type:'line', smooth:true, symbolSize:3,
-           data:YTD_SENT,
-           connectNulls:false,
-           lineStyle:{ width:2 },
-           markLine:{ silent:true, lineStyle:{ color:'#f97316', type:'dashed', width:1 },
-             data:[{ yAxis:25, label:{ formatter:'공포', color:'#ef4444', fontSize:10 } }] } },
-      ]
-    }, true);
-
-    // BM20 레벨
-    if (!charts.bm20lv) charts.bm20lv = echarts.init(document.getElementById('bm20LvChart'));
-    charts.bm20lv.setOption({
-      backgroundColor:'transparent',
-      tooltip:{ ...TOOLTIP, formatter: params => {
-        const i = params[0].dataIndex;
-        return `<b>${ytdRows[i]?.date ?? YTD_DATES[i]}</b><br/>BM20 ${YTD_BM20_LV[i]?.toFixed(1)??'-'}`;
-      } },
-      grid:{ left:52, right:16, top:16, bottom:48 },
-      xAxis:X_AXIS(YTD_DATES),
-      yAxis:Y_AXIS('', v=>v.toFixed(0)),
-      series:[
-        { type:'line', smooth:true, symbolSize:0,
-           data:YTD_BM20_LV,
-           lineStyle:{ color:'#c9a84c', width:2 },
-           itemStyle:{ color:'#c9a84c' },
-           areaStyle:{ color:{ type:'linear',x:0,y:0,x2:0,y2:1,
-             colorStops:[{offset:0,color:'rgba(201,168,76,0.15)'},{offset:1,color:'rgba(201,168,76,0)'}] } } },
-      ]
-    }, true);
-  }
-
-  renderYTD();
+  // ── YTD 데이터 (하드코딩 — btc_usd_series + bm20_series) ─────
+  const YTD_DATES   = ["01-01", "01-02", "01-03", "01-04", "01-05", "01-06", "01-07", "01-08", "01-09", "01-10", "01-11", "01-12", "01-13", "01-14", "01-15", "01-16", "01-17", "01-18", "01-19", "01-20", "01-21", "01-22", "01-23", "01-24", "01-25", "01-26", "01-27", "01-28", "01-29", "01-30", "01-31", "02-01", "02-02", "02-03", "02-04", "02-05", "02-06", "02-07", "02-08", "02-09", "02-10", "02-11", "02-12", "02-13", "02-14", "02-15", "02-16", "02-17", "02-18", "02-19", "02-20", "02-21", "02-22", "02-23", "02-24", "02-25", "02-26", "02-27", "02-28", "03-01", "03-02", "03-03", "03-04", "03-05", "03-06", "03-07", "03-08", "03-09", "03-10", "03-11", "03-12", "03-13", "03-14", "03-15", "03-16", "03-17", "03-18", "03-19", "03-20", "03-21", "03-22", "03-23", "03-24", "03-25", "03-26", "03-27", "03-28", "03-29", "03-30"];
 
     renderAll(currentDays);
   });
