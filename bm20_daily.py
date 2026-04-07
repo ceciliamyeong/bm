@@ -126,27 +126,44 @@ def read_json(path: Path):
 
 # ================== Market Indices Helper (BTC, NASDAQ, KOSPI) ==================
 def update_market_indices():
-    import yfinance as yf
-    # 티커 리스트
-    indices = {"btc_usd": "BTC-USD", "nasdaq": "^IXIC", "kospi": "^KS11"}
-    
-    
+    """Yahoo Finance API 직접 호출로 나스닥/코스피/BTC 시리즈 업데이트 (yfinance 라이브러리 우회)"""
+    import datetime as _dt
+
+    indices = {
+        "btc_usd": "BTC-USD",
+        "nasdaq":  "%5EIXIC",   # ^IXIC URL 인코딩
+        "kospi":   "%5EKS11",   # ^KS11 URL 인코딩
+    }
+
     print("\n--- 시장 지수 및 비트코인 데이터 업데이트 시작 ---")
     for name, symbol in indices.items():
         try:
-            # 3월 3일 데이터를 포함하기 위해 종료일을 넉넉히 잡거나 생략합니다.
-            data = yf.download(symbol, start="2018-01-01", progress=False)
-            df = data['Close'].reset_index()
-            df.columns = ['date', 'price']
-            df['date'] = df['date'].dt.strftime('%Y-%m-%d')
-            
-            # 여기서 미리 정수로 반올림하여 저장합니다. (소수점 제거 핵심)
-            df['price'] = df['price'].round(0).astype(int)
-            
-            output_list = df.to_dict(orient='records')
+            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
+            r = requests.get(
+                url,
+                headers={"User-Agent": "Mozilla/5.0"},
+                params={"interval": "1d", "range": "max"},
+                timeout=20,
+            )
+            r.raise_for_status()
+            result = r.json()["chart"]["result"][0]
+            timestamps = result["timestamp"]
+            closes = result["indicators"]["quote"][0]["close"]
+
+            output_list = []
+            for ts, price in zip(timestamps, closes):
+                if price is None:
+                    continue
+                date_str = _dt.datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d")
+                output_list.append({"date": date_str, "price": int(round(price))})
+
+            if not output_list:
+                print(f"[ERR] {name} update failed: empty data")
+                continue
+
             with open(f"{name}_series.json", "w", encoding="utf-8") as f:
                 json.dump(output_list, f, ensure_ascii=False, indent=2)
-            print(f"[OK] {name}_series.json updated to latest.")
+            print(f"[OK] {name}_series.json updated. ({output_list[-1]['date']}, {len(output_list)}개)")
         except Exception as e:
             print(f"[ERR] {name} update failed: {e}")
 
