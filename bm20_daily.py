@@ -138,7 +138,7 @@ def update_market_indices():
     print("\n--- 시장 지수 및 비트코인 데이터 업데이트 시작 ---")
     import datetime as _dt2
     period1 = int(_dt2.datetime(2018, 1, 1).timestamp())
-    period2 = int(_dt2.datetime.utcnow().timestamp())
+    period2 = int((_dt2.datetime.utcnow() + _dt2.timedelta(days=2)).timestamp())
 
     for name, symbol in indices.items():
         try:
@@ -765,22 +765,27 @@ for i, v in enumerate(y):
 plt.title("코인별 퍼포먼스 (1D, USD)", fontsize=13, loc="left", pad=10)
 plt.ylabel("%"); plt.tight_layout(); plt.savefig(bar_png, dpi=180); plt.close()
 
-# B) BTC/ETH 7일 추세 (yfinance)
+# B) BTC/ETH 7일 추세 (Yahoo Finance API 직접 호출)
 def get_pct_series_yf(ticker, days=8):
     try:
-        end = datetime.utcnow().date()
-        start = end - timedelta(days=days+1)
-        h = yf.download(tickers=ticker, start=str(start), end=str(end + timedelta(days=1)),
-                        interval="1d", auto_adjust=True, progress=False)
-        if h is None or h.empty: return []
-        col = "Close" if "Close" in h.columns else ("Adj Close" if "Adj Close" in h.columns else None)
-        if not col: return []
-        s = h[col].dropna().tolist()
-        if not s: return []
-        base = s[0]
-        return [ (v/base - 1.0)*100.0 for v in s ]
+        import datetime as _dt3
+        period1 = int((_dt3.datetime.utcnow() - _dt3.timedelta(days=days+2)).timestamp())
+        period2 = int((_dt3.datetime.utcnow() + _dt3.timedelta(days=1)).timestamp())
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}"
+        r = requests.get(
+            url,
+            headers={"User-Agent": "Mozilla/5.0"},
+            params={"interval": "1d", "period1": period1, "period2": period2},
+            timeout=10,
+        )
+        r.raise_for_status()
+        result = r.json()["chart"]["result"][0]
+        closes = [c for c in result["indicators"]["quote"][0]["close"] if c is not None]
+        if not closes: return []
+        base = closes[0]
+        return [(v / base - 1.0) * 100.0 for v in closes]
     except Exception as e:
-        print(f"[WARN] yfinance trend failed for {ticker}: {e}")
+        print(f"[WARN] trend fetch failed for {ticker}: {e}")
         return []
 
 btc7=get_pct_series_yf("BTC-USD", 8); time.sleep(0.2)
