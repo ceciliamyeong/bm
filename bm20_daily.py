@@ -525,8 +525,6 @@ def _load_series_ssot():
     cand = [
         OUT / "backfill_current_basket.csv",
         ROOT / "backfill_current_basket.csv",
-        ROOT / "bm20_series.json",
-        ROOT / "bm" / "bm20_series.json",
     ]
     for p in cand:
         try:
@@ -870,13 +868,7 @@ latest_obj = {
 }
 
 # series.json
-# series: SSOT 우선(rows_ssot), 없으면 history CSV를 사용
-if 'rows_ssot' in globals() and rows_ssot:
-    series_obj = rows_ssot
-else:
-    series_obj = [{"date": d, "level": float(v)} for d, v in history]
-SERIES_JSON.write_text(json.dumps(series_obj, ensure_ascii=False, indent=2), encoding="utf-8")
-
+# bm20_series.json은 yaml의 별도 스텝에서 backfill 업데이트 후 생성 (여기서 저장 안 함)
 LATEST_JSON.write_text(json.dumps(latest_obj, ensure_ascii=False, indent=2), encoding="utf-8")
 print(f"[OK] Written: {LATEST_JSON}")
 
