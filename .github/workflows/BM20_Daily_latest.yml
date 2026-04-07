@@ -166,6 +166,62 @@ jobs:
           PY
 
 
+      # 1.6) backfill 확정 후 bm20_series.json 재생성
+      - name: Rebuild bm20_series.json from backfill
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - << 'PY'
+          import json
+          from pathlib import Path
+
+          BACKFILL = Path("out/backfill_current_basket.csv")
+          SERIES_JSON = Path("bm20_series.json")
+          LATEST_JSON = Path("bm20_latest.json")
+
+          if not BACKFILL.exists():
+              print("[WARN] backfill_current_basket.csv 없음 → skip")
+              raise SystemExit(0)
+
+          rows = []
+          import csv
+          with BACKFILL.open(encoding="utf-8") as f:
+              reader = csv.DictReader(f)
+              if reader.fieldnames and "date" in reader.fieldnames:
+                  for row in reader:
+                      d = row.get("date","").strip()[:10]
+                      v = row.get("index") or row.get("level")
+                      if d and v:
+                          try:
+                              rows.append({"date": d, "level": round(float(v), 6)})
+                          except:
+                              pass
+              else:
+                  f.seek(0)
+                  for line in f:
+                      parts = line.strip().split(",")
+                      if len(parts) >= 2 and parts[0] != "date":
+                          try:
+                              rows.append({"date": parts[0], "level": round(float(parts[1]), 6)})
+                          except:
+                              pass
+
+          if not rows:
+              print("[WARN] backfill 데이터 없음 → skip")
+              raise SystemExit(0)
+
+          rows.sort(key=lambda x: x["date"])
+          SERIES_JSON.write_text(json.dumps(rows, ensure_ascii=False, indent=2), encoding="utf-8")
+          print(f"[OK] bm20_series.json → {len(rows)}개 ({rows[-1]['date']}, level={rows[-1]['level']})")
+
+          # bm20_latest.json도 최신 레벨로 업데이트
+          if LATEST_JSON.exists():
+              latest = json.loads(LATEST_JSON.read_text(encoding="utf-8"))
+              latest["bm20Level"] = rows[-1]["level"]
+              LATEST_JSON.write_text(json.dumps(latest, ensure_ascii=False, indent=2), encoding="utf-8")
+              print(f"[OK] bm20_latest.json bm20Level → {rows[-1]['level']}")
+          PY
+
       # 1.7) backfill 확정 후 market_history.csv append
       - name: Append market history CSV
         shell: bash
