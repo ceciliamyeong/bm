@@ -219,7 +219,7 @@ def fetch_premium_data(usdkrw: float | None) -> dict[str, str]:
         import yfinance as yf
         yf_btc = yf.Ticker("BTC-USD").fast_info
         cg_usd = float(yf_btc.last_price)
-        fx = usdkrw if (usdkrw and usdkrw > 100) else 1350.0  # 환율 힌트 없으면 하드코딩 폴백
+        fx = usdkrw if (usdkrw and usdkrw > 100) else 1510.0  # 환율 힌트 없으면 하드코딩 폴백
         cb_usd = float(
             requests.get("https://api.coinbase.com/v2/prices/BTC-USD/spot", timeout=10).json()["data"]["amount"])
         upbit_usd  = upbit_btc_krw / fx
