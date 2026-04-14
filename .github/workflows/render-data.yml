@@ -2,7 +2,7 @@ name: Render Letter (daily)
 on:
   workflow_dispatch:
   schedule:
-    # 매일 07:00 KST (22:00 UTC 전날)
+    # 매일 07:00 KST (UTC 22:00)
     - cron: "0 22 * * *"
 permissions:
   contents: write
