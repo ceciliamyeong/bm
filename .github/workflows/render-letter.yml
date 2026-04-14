@@ -16,6 +16,9 @@ jobs:
       TZ: Asia/Seoul
       CMC_API_KEY: ${{ secrets.CMC_API_KEY }}
       AAS_BOT_TOKEN: ${{ secrets.AAS_BOT_TOKEN }}
+      STIBEE_API_KEY:    ${{ secrets.STIBEE_API_KEY }}
+      STIBEE_LIST_ID:    ${{ secrets.STIBEE_LIST_ID }}
+      STIBEE_FROM_EMAIL: ${{ secrets.STIBEE_FROM_EMAIL }}
     steps:
       - name: Checkout main
         uses: actions/checkout@v4
@@ -122,3 +125,10 @@ jobs:
           else
             echo "No changes to commit"
           fi
+
+      - name: Send Newsletter via Stibee
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/send_newsletter.py
+          echo "[OK] newsletter sent"
