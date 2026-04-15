@@ -21,9 +21,9 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      # 1단계: 사용자님의 원화 수집 스크립트 실행 (파일 경로에 맞춰 수정 필요)
+      # 1단계: 사용자님의 원화 수집 스크립트 실행
       - name: Fetch KRW Volume Data
-        run: python scripts/krw_rolling24h_8h.py # 원화 수집 파일명으로 수정하세요
+        run: python scripts/krw_rolling24h_8h.py
 
       # 2단계: 글로벌 데이터 통합 및 히스토리 저장 스크립트 실행
       - name: Run Integrated Update
@@ -31,7 +31,11 @@ jobs:
           CMC_API_KEY: ${{ secrets.CMC_API_KEY }}
         run: python scripts/update_bm20_full.py
 
-      # 3단계: 생성된 모든 JSON 파일들 커밋 및 푸시
+      # 3단계: BM20 지수 레벨/1D 등락률 실시간 갱신 (뉴스레터용)
+      - name: Update BM20 Latest (for newsletter)
+        run: python scripts/update_bm20_latest.py
+
+      # 4단계: 생성된 모든 JSON 파일들 커밋 및 푸시
       - name: Commit and Push Changes
         run: |
           git config --global user.name "github-actions[bot]"
