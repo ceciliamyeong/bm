@@ -77,6 +77,13 @@ jobs:
           python3 scripts/render_treemap_png.py
           test -f assets/topcoins_treemap_latest.png
           echo "[OK] treemap png ready"
+      - name: Update BM20 Latest (for newsletter)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/update_bm20_latest.py
+          echo "[OK] bm20_latest.json refreshed"
+
       - name: Render letter.html
         shell: bash
         run: |
