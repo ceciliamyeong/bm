@@ -2,12 +2,13 @@
 # -*- coding: utf-8 -*-
 """
 update_bm20_latest.py
-뉴스레터 렌더 직전에 실행 — BM20 지수 레벨과 1D 등락률만 빠르게 계산해서
-bm20_latest.json 을 갱신합니다.
+뉴스레터 렌더 직전 실행 — CMC API로 20개 코인 현재가를 가져와
+BM20 지수 레벨과 1D 등락률을 실시간으로 갱신합니다.
 의존: requests (pip install requests)
 """
 
 import json
+import os
 import requests
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -16,82 +17,86 @@ KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parent
 
 # ── BM20 유니버스 & 가중치 ──────────────────────────────────────────
-FIXED = {
-    "BTC-USD": 0.30,
-    "ETH-USD": 0.20,
-    "XRP-USD": 0.05,
-    "USDT-USD": 0.05,
-    "BNB-USD": 0.05,
+WEIGHTS = {
+    "BTC":  0.30,
+    "ETH":  0.20,
+    "XRP":  0.05,
+    "USDT": 0.05,
+    "BNB":  0.05,
+    "SOL":  0.35 / 15,
+    "USDC": 0.35 / 15,
+    "DOGE": 0.35 / 15,
+    "TRX":  0.35 / 15,
+    "ADA":  0.35 / 15,
+    "HYPE": 0.35 / 15,
+    "LINK": 0.35 / 15,
+    "SUI":  0.35 / 15,
+    "AVAX": 0.35 / 15,
+    "XLM":  0.35 / 15,
+    "BCH":  0.35 / 15,
+    "HBAR": 0.35 / 15,
+    "LTC":  0.35 / 15,
+    "SHIB": 0.35 / 15,
+    "TON":  0.35 / 15,
 }
-EQUAL = [
-    "SOL-USD", "USDC-USD", "DOGE-USD", "TRX-USD", "ADA-USD",
-    "HYPE-USD", "LINK-USD", "SUI20947-USD", "AVAX-USD", "XLM-USD",
-    "BCH-USD", "HBAR-USD", "LTC-USD", "SHIB-USD", "TON11419-USD",
-]
-EQUAL_W = round(0.35 / len(EQUAL), 8)
-WEIGHTS = {**FIXED, **{s: EQUAL_W for s in EQUAL}}
 ALL_SYMBOLS = list(WEIGHTS.keys())
 
-# ── Yahoo Finance 가격 조회 ──────────────────────────────────────────
-def fetch_prices(symbols: list[str]) -> dict[str, dict]:
-    """Yahoo Finance v8 API로 현재가 + 전일 종가를 가져옵니다."""
+# ── CMC API 가격 조회 ───────────────────────────────────────────────
+def fetch_cmc_prices(api_key: str) -> dict:
+    """CMC /quotes/latest 로 현재가 + 24h 전 가격 한 번에 가져오기"""
+    symbol_str = ",".join(ALL_SYMBOLS)
+    r = requests.get(
+        "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
+        headers={"X-CMC_PRO_API_KEY": api_key},
+        params={"symbol": symbol_str, "convert": "USD"},
+        timeout=15,
+    )
+    r.raise_for_status()
+    data = r.json().get("data", {})
+    print(f"[INFO] CMC 응답 코인 수: {len(data)}개")
+
     prices = {}
-    for sym in symbols:
-        try:
-            r = requests.get(
-                f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}",
-                headers={"User-Agent": "Mozilla/5.0"},
-                params={"interval": "1d", "range": "5d"},
-                timeout=10,
-            )
-            r.raise_for_status()
-            result = r.json()["chart"]["result"][0]
-            closes = [c for c in result["indicators"]["quote"][0]["close"] if c is not None]
-            if len(closes) >= 2:
-                prices[sym] = {"current": closes[-1], "prev": closes[-2]}
-            elif len(closes) == 1:
-                prices[sym] = {"current": closes[-1], "prev": closes[-1]}
-        except Exception as e:
-            print(f"[WARN] {sym} fetch failed: {e}")
+    for sym, entries in data.items():
+        entry = entries[0] if isinstance(entries, list) else entries
+        quote = entry.get("quote", {}).get("USD", {})
+        price = quote.get("price")
+        chg24 = quote.get("percent_change_24h")
+        if price is None:
+            continue
+        price = float(price)
+        chg24 = float(chg24) if chg24 is not None else 0.0
+        # CMC percent_change_24h 기준으로 24h 전 가격 역산
+        prev_price = price / (1.0 + chg24 / 100.0) if chg24 != -100 else price
+        prices[sym.upper()] = {"current": price, "prev": prev_price}
+
     return prices
 
-# ── BM20 기준값 로드 ─────────────────────────────────────────────────
-def load_base(prices: dict[str, dict]) -> float:
-    """bm20_base.json 에서 기준 포트폴리오 가치를 읽습니다.
-    없으면 현재 포트폴리오 가치를 기준값으로 저장합니다 (지수=100).
-    """
-    base_path = ROOT / "base" / "bm20_base.json"
-    base_path.parent.mkdir(parents=True, exist_ok=True)
-    if base_path.exists():
-        try:
-            return float(json.loads(base_path.read_text())["base_value"])
-        except Exception:
-            pass
-    # 기준값 없으면 현재 포트폴리오 가치로 초기화
-    base_value = sum(
-        WEIGHTS[s] * prices[s]["current"]
-        for s in ALL_SYMBOLS if s in prices
-    )
-    base_path.write_text(
-        json.dumps({"base_value": base_value, "base_date": datetime.now(KST).strftime("%Y-%m-%d")}),
-        encoding="utf-8",
-    )
-    print(f"[INFO] bm20_base.json 초기화: base_value={base_value:.4f}")
-    return base_value
-
-# ── 메인 ─────────────────────────────────────────────────────────────
+# ── 메인 ───────────────────────────────────────────────────────────
 def main():
     now_kst = datetime.now(KST)
     print(f"[START] update_bm20_latest.py — {now_kst.strftime('%Y-%m-%d %H:%M:%S')} KST")
 
-    prices = fetch_prices(ALL_SYMBOLS)
-    if not prices:
-        print("[ERROR] 가격 데이터를 가져오지 못했습니다. 종료.")
+    api_key = os.getenv("CMC_API_KEY", "")
+    if not api_key:
+        print("[ERROR] CMC_API_KEY 없음. 종료.")
         return
 
-    base_value = load_base(prices)
+    # bm20_latest.json 읽기
+    latest_path = ROOT / "bm20_latest.json"
+    try:
+        existing = json.loads(latest_path.read_text(encoding="utf-8"))
+    except Exception:
+        print("[ERROR] bm20_latest.json 읽기 실패. 종료.")
+        return
 
-    # 현재 포트폴리오 가치
+    # CMC 현재가 조회
+    try:
+        prices = fetch_cmc_prices(api_key)
+    except Exception as e:
+        print(f"[ERROR] CMC 가격 조회 실패: {e}. 종료.")
+        return
+
+    # 현재/24h 전 포트폴리오 가치 계산
     curr_value = sum(
         WEIGHTS[s] * prices[s]["current"]
         for s in ALL_SYMBOLS if s in prices
@@ -101,26 +106,58 @@ def main():
         for s in ALL_SYMBOLS if s in prices
     )
 
-    bm20_level = round(curr_value / base_value * 100, 2) if base_value else 0
-    bm20_prev  = round(prev_value / base_value * 100, 2) if base_value else 0
-    ret_1d     = round((bm20_level / bm20_prev - 1) * 100, 4) if bm20_prev else 0
+    if not curr_value or not prev_value:
+        print("[ERROR] 포트폴리오 가치 계산 실패. 종료.")
+        return
 
-    # bm20_latest.json 읽어서 레벨/1D만 덮어쓰기 (나머지 필드 유지)
-    latest_path = ROOT / "bm20_latest.json"
+    # bm20_series.json 마지막 레벨로 base_value 역산 → 레벨 연속성 유지
+    last_level = None
     try:
-        existing = json.loads(latest_path.read_text(encoding="utf-8"))
-    except Exception:
-        existing = {}
+        series_path = ROOT / "bm20_series.json"
+        series = json.loads(series_path.read_text(encoding="utf-8"))
+        if isinstance(series, list):
+            last_level = float(series[-1]["level"])
+            print(f"[INFO] 시리즈 마지막 레벨: {last_level} ({series[-1]['date']})")
+        elif isinstance(series, dict) and "series" in series:
+            s = series["series"]
+            last_level = float(s[-1]["level"])
+            print(f"[INFO] 시리즈 마지막 레벨: {last_level} ({s[-1]['date']})")
+    except Exception as e:
+        print(f"[WARN] bm20_series.json 읽기 실패: {e} → 기존 bm20Level 사용")
+        last_level = existing.get("bm20Level")
 
-    existing["bm20Level"] = bm20_level
-    existing["updatedAt"] = now_kst.strftime("%Y-%m-%dT%H:%M:%S+09:00")
-    existing.setdefault("returns", {})["1D"] = ret_1d
+    if not last_level:
+        print("[ERROR] 기준 레벨을 가져올 수 없습니다. 종료.")
+        return
+
+    # base_value 역산 (시리즈 마지막 레벨 기준)
+    base_value = curr_value / last_level * 100
+
+    # 실시간 레벨: 시리즈 마지막 레벨에서 연속
+    bm20_level = round(curr_value / base_value * 100, 4)  # == last_level
+
+    # 1D: CMC 24h 기준 (정확한 24h 변동)
+    bm20_prev  = round(prev_value / base_value * 100, 4)
+    ret_1d     = round((bm20_level / bm20_prev - 1), 8)
+    point_chg  = round(bm20_level - bm20_prev, 4)
+
+    # bm20_latest.json 갱신
+    existing["bm20Level"]       = bm20_level
+    existing["bm20PrevLevel"]   = bm20_prev
+    existing["bm20PointChange"] = point_chg
+    existing["bm20ChangePct"]   = ret_1d
+    existing["returns"]["1D"]   = ret_1d
+    existing["updatedAt"]       = now_kst.strftime("%Y-%m-%dT%H:%M:%S+09:00")
 
     latest_path.write_text(
-        json.dumps(existing, ensure_ascii=False),
+        json.dumps(existing, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
-    print(f"[OK] bm20_latest.json 갱신 — level={bm20_level}, 1D={ret_1d:+.4f}%")
+    print(f"[OK] bm20_latest.json 갱신 — level={bm20_level}, 1D={ret_1d*100:+.4f}%")
+
+    missing = [s for s in ALL_SYMBOLS if s not in prices]
+    if missing:
+        print(f"[WARN] 가격 없는 코인: {missing}")
 
 if __name__ == "__main__":
     main()
