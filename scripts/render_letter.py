@@ -213,23 +213,30 @@ def fetch_premium_data(usdkrw: float | None) -> dict[str, str]:
         upbit_btc_krw = float(
             requests.get("https://api.upbit.com/v1/ticker",
                          params={"markets": "KRW-BTC"}, timeout=10).json()[0]["trade_price"])
-        # 글로벌 BTC 기준가: Yahoo Finance API 직접 호출 (yfinance 라이브러리보다 안정적)
-        _yf_r = requests.get(
-            "https://query1.finance.yahoo.com/v8/finance/chart/BTC-USD",
-            headers={"User-Agent": "Mozilla/5.0"},
-            params={"interval": "1d", "range": "1d"},
-            timeout=10,
-        )
-        _yf_r.raise_for_status()
-        cg_usd = float(_yf_r.json()["chart"]["result"][0]["meta"]["regularMarketPrice"])
-        print(f"INFO: Premium BTC global = ${cg_usd:,.0f} (Yahoo API)")
+        # 글로벌 BTC 기준가: 바이낸스 (김치·코인베이스 프리미엄 공통 기준)
+        binance_usd = None
+        for _base in ["https://api.binance.com", "https://data-api.binance.vision"]:
+            try:
+                _br = requests.get(
+                    f"{_base}/api/v3/ticker/price",
+                    params={"symbol": "BTCUSDT"},
+                    timeout=10,
+                )
+                _br.raise_for_status()
+                binance_usd = float(_br.json()["price"])
+                print(f"INFO: Premium BTC global = ${binance_usd:,.0f} (Binance)")
+                break
+            except Exception as _be:
+                print(f"WARN: Binance {_base} failed: {_be}")
+        if binance_usd is None:
+            raise RuntimeError("바이낸스 BTC 가격 조회 실패")
         fx = usdkrw if (usdkrw and usdkrw > 100) else 1500.0
         cb_usd = float(
             requests.get("https://api.coinbase.com/v2/prices/BTC-USD/spot",
                          timeout=10).json()["data"]["amount"])
         upbit_usd  = upbit_btc_krw / fx
-        kimchi_pct = (upbit_usd - cg_usd) / cg_usd * 100
-        cb_pct     = (cb_usd   - cg_usd) / cg_usd * 100
+        kimchi_pct = (upbit_usd - binance_usd) / binance_usd * 100   # 한국 vs 바이낸스
+        cb_pct     = (cb_usd   - binance_usd) / binance_usd * 100    # 코인베이스 vs 바이낸스
 
         def _c(v: float) -> str:
             color = GREEN if v >= 0 else RED
