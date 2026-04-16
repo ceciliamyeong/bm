@@ -31,7 +31,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 ROOT     = Path(__file__).resolve().parent
-TEMPLATE = ROOT.parent / "clm_brief_template.html"
+TEMPLATE = ROOT.parent / "aas_brief_template.html"
 OUT      = ROOT.parent / "clm_brief.html"
 
 REPO     = "Blockmedia-DataTeam/AAS-Bot"
