@@ -35,8 +35,6 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/render_aas_brief.py
-          test -f aas_brief.html
-          cp aas_brief.html clm_brief.html
           echo "[OK] rendered clm_brief.html"
 
       - name: Commit & Push
