@@ -1,0 +1,58 @@
+name: Render CLM Brief (manual)
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Seoul
+      AAS_BOT_TOKEN: ${{ secrets.AAS_BOT_TOKEN }}
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas requests
+
+      - name: Render clm_brief.html
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/render_aas_brief.py
+          test -f clm_brief.html
+          echo "[OK] rendered clm_brief.html"
+
+      - name: Commit & Push
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git pull --no-rebase origin main
+
+          git add clm_brief.html || true
+
+          if ! git diff --cached --quiet; then
+            DATE=$(TZ=Asia/Seoul date +%F)
+            git commit -m "chore: render clm_brief only (${DATE})"
+            git push origin HEAD:main
+          else
+            echo "No changes to commit"
+          fi
