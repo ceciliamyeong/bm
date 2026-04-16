@@ -56,7 +56,7 @@ jobs:
             fi
           }
           check letter_newsletter_template.html
-          check aas_brief_template.html
+          check clm_brief_template.html 
           check bm20_latest.json
           check bm20_daily_data_latest.csv
           check out/history/krw_24h_latest.json
@@ -98,8 +98,8 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/render_aas_brief.py
-          test -f aas_brief.html
-          echo "[OK] rendered aas_brief.html"
+          test -f clm_brief.html
+          echo "[OK] rendered clm_brief.html"
       # ────────────────────────────────────────────────────
 
       - name: Commit & Push
@@ -114,7 +114,7 @@ jobs:
 
           # 2) 생성된 파일 스테이징
           git add letter.html \
-            aas_brief.html \
+            clm_brief.html \
             out/history/krw_24h_latest.json \
             out/history/krw_24h_snapshots.json \
             out/global/k_xrp_share_24h_latest.json \
