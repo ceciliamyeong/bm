@@ -82,9 +82,9 @@
   .badge-over    { background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
 
   /* CHARTS */
-  .charts-row { display:grid; grid-template-columns:1fr 1fr; border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+  .charts-row { display:flex; flex-direction:column; border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
   .chart-box { padding:20px 24px; }
-  .chart-box:first-child { border-right:1px solid var(--border); }
+  .chart-box:first-child { border-right:none; border-bottom:1px solid var(--border); }
   .chart-label { font-size:13px; font-weight:700; color:var(--navy); margin-bottom:12px; }
   .chart-sublabel { font-size:11px; color:var(--text-light); margin-top:8px; font-style:italic; }
   .chart-img { width:100%; border-radius:6px; border:1px solid var(--border); }
@@ -142,8 +142,8 @@
       </div>
       <div class="card">
         <div class="card-label">📊 시장 비교 (Alpha)</div>
-        <div class="card-row"><span class="card-key">Bitcoin (King)</span><span class="card-val up">+0.01%</span></div>
-        <div class="card-row"><span class="card-key">Alpha vs BTC</span><span class="card-val up big">+4.50%p</span></div>
+        <div class="card-row"><span class="card-key">Bitcoin (King)</span><span class="card-val up">+0.08%</span></div>
+        <div class="card-row"><span class="card-key">Alpha vs BTC</span><span class="card-val up big">+4.43%p</span></div>
       </div>
     </div>
   </div>
@@ -152,7 +152,7 @@
   <div class="section">
     <div class="section-title">Daily Insight</div>
     <ul class="insight-list">
-      <li><strong>시장 현황:</strong> 코생지 Top 10 평균 수익률 +4.52%, 비트코인 대비 알파 +4.50%p</li>
+      <li><strong>시장 현황:</strong> 코생지 Top 10 평균 수익률 +4.52%, 비트코인 대비 알파 +4.43%p</li>
       <li><strong>High Quality 종목:</strong> ETH, ATOM, SOL 등 코생지 1.5 이상 종목은 고래 매집 지속 중</li>
       <li><strong>RSI 모니터링:</strong> Top 10 중 0종목이 RSI 40 이하 — 단기 변동성 주의</li>
     </ul>
