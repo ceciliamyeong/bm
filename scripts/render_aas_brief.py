@@ -80,17 +80,42 @@ def _comment_class(comment: str) -> str:
 
 
 def _date_candidates() -> list[str]:
+    """KST 07:00 이후면 당일 포함, 이전이면 전날부터 — 최근 4일 후보 반환"""
     kst = timezone(timedelta(hours=9))
-    today = datetime.now(kst).date()
-    return [(today - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(3)]
+    now_kst = datetime.now(kst)
+    # 07:00 이후면 당일 데이터가 올라왔을 가능성 있음
+    if now_kst.hour >= 7:
+        base = now_kst.date()
+    else:
+        base = (now_kst - timedelta(days=1)).date()
+    return [(base - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(4)]
 
 
 def _find_latest_date() -> str | None:
+    """GitHub API로 폴더 목록을 가져와 가장 최신 날짜 반환.
+    KST 07:00 이후라면 당일 폴더가 있는지 우선 확인."""
+    kst = timezone(timedelta(hours=9))
+    now_kst = datetime.now(kst)
+
     try:
         r = requests.get(f"{BASE_API}/reports/daily", headers=_token_headers(), timeout=10)
         r.raise_for_status()
         folders = sorted([i["name"] for i in r.json() if i["type"] == "dir"], reverse=True)
-        return folders[0] if folders else None
+        if not folders:
+            return None
+
+        latest = folders[0]  # 가장 최신 폴더
+
+        # KST 07:00 이전이면 최신 폴더가 당일이어도 아직 업데이트 전일 수 있음
+        # → 그 경우 두 번째 폴더(전날)로 fallback
+        today_str = now_kst.date().strftime("%Y-%m-%d")
+        if now_kst.hour < 7 and latest == today_str and len(folders) > 1:
+            print(f"INFO: KST {now_kst.strftime('%H:%M')} — 07:00 이전, {folders[1]} 사용")
+            return folders[1]
+
+        print(f"INFO: latest folder: {latest}")
+        return latest
+
     except Exception as e:
         print(f"WARN: folder list failed: {e}")
         return None
@@ -213,11 +238,27 @@ def render() -> None:
         avg_top10 = median = excl1 = 0.0
         best_str = worst_str = "—"
 
-    btc_return = 0.0
+    # BTC 수익률: ① CSV → ② CoinGecko API fallback
+    btc_return: float | None = None
     if not df.empty and "BTC" in df["symbol"].values:
         btc_row = df[df["symbol"] == "BTC"]
         if not btc_row.empty:
             btc_return = float(btc_row.iloc[0]["24h"])
+            print(f"INFO: BTC from CSV: {btc_return:.2f}%")
+
+    if btc_return is None:
+        try:
+            cg_url = (
+                "https://api.coingecko.com/api/v3/simple/price"
+                "?ids=bitcoin&vs_currencies=usd&include_24hr_change=true"
+            )
+            cg_r = requests.get(cg_url, timeout=10)
+            cg_r.raise_for_status()
+            btc_return = float(cg_r.json()["bitcoin"]["usd_24h_change"])
+            print(f"INFO: BTC from CoinGecko: {btc_return:.2f}%")
+        except Exception as e:
+            print(f"WARN: BTC CoinGecko 실패: {e}")
+            btc_return = 0.0
 
     alpha_btc = avg_top10 - btc_return
 
@@ -232,10 +273,11 @@ def render() -> None:
     insight2 = f"<strong>High Quality 종목:</strong> {hq_str} 등 코생지 1.5 이상 종목은 고래 매집 지속 중"
     insight3 = f"<strong>RSI 모니터링:</strong> Top 10 중 {oversold}종목이 RSI 40 이하 — 단기 변동성 주의"
 
-    # 9. KST 날짜
+    # 9. 표시 날짜 — 데이터 폴더 날짜와 무관하게 항상 KST 오늘
     kst = timezone(timedelta(hours=9))
-    day_kr = ["월","화","수","목","금","토","일"][datetime.now(kst).weekday()]
-    report_date = f"{date_str} ({day_kr})"
+    today_kst = datetime.now(kst)
+    day_kr = ["월","화","수","목","금","토","일"][today_kst.weekday()]
+    report_date = f"{today_kst.strftime('%Y-%m-%d')} ({day_kr})"
 
     # 10. 플레이스홀더 치환
     ph = {
