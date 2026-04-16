@@ -15,7 +15,7 @@ Inputs (GitHub raw URL — private repo, AAS_BOT_TOKEN 환경변수 필요)
   reports/daily/{date}/newsletter_contribution_top3_{date}.png
 
 Output
-  aas_brief.html
+  clm_brief.html
 """
 
 from __future__ import annotations
@@ -31,8 +31,8 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 ROOT     = Path(__file__).resolve().parent
-TEMPLATE = ROOT.parent / "aas_brief_template.html"
-OUT      = ROOT.parent / "aas_brief.html"
+TEMPLATE = ROOT.parent / "clm_brief_template.html"
+OUT      = ROOT.parent / "clm_brief.html"
 
 REPO     = "Blockmedia-DataTeam/AAS-Bot"
 BRANCH   = "main"
