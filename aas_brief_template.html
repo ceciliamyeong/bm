@@ -82,7 +82,7 @@
   .badge-over    { background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
 
   /* CHARTS */
-  .charts-row { display:flex; flex-direction:column; border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+  .charts-row { display:grid; grid-template-columns:1fr; border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
   .chart-box { padding:20px 24px; }
   .chart-box:first-child { border-right:none; border-bottom:1px solid var(--border); }
   .chart-label { font-size:13px; font-weight:700; color:var(--navy); margin-bottom:12px; }
@@ -101,8 +101,91 @@
   /* FOOTER */
   .footer { background:#f9fafb; border-top:1px solid var(--border); padding:14px 28px; font-size:11px; color:var(--text-light); line-height:1.8; }
 
+  /* ── Global Nav (BM20 스타일 통일) ── */
+  .global-header {
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', Arial, sans-serif;
+  }
+  .global-header .gh-left { display: flex; align-items: center; gap: 12px; }
+  .global-header .site-name {
+    font-size: 15px;
+    font-weight: 800;
+    color: #0f172a;
+    text-decoration: none;
+    letter-spacing: -0.04em;
+  }
+  .global-header .page-badge {
+    background: rgba(236,72,153,0.08);
+    border: 1px solid rgba(236,72,153,0.25);
+    border-radius: 6px;
+    padding: 2px 10px;
+    font-size: 12px;
+    color: #db2777;
+    font-weight: 600;
+  }
+  .global-header .gh-right {
+    font-size: 12px;
+    color: #64748b;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .global-header .gh-right .chip {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    padding: 3px 10px;
+    font-size: 11px;
+    color: #64748b;
+    white-space: nowrap;
+  }
+  .global-header .gh-right .chip b { color: #0f172a; font-weight: 600; }
+
+  /* ── Top Nav ── */
+  nav.top-nav {
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0 20px;
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    position: sticky;
+    top: 49px;
+    z-index: 195;
+    scrollbar-width: none;
+    font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', Arial, sans-serif;
+  }
+  nav.top-nav::-webkit-scrollbar { display: none; }
+  nav.top-nav a {
+    color: #64748b;
+    text-decoration: none;
+    padding: 10px 14px;
+    font-size: 13px;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: color .2s, border-color .2s;
+  }
+  nav.top-nav a:hover { color: #0f172a; }
+  nav.top-nav a.active { color: #db2777; border-bottom-color: #db2777; font-weight: 700; }
+
+  /* 기존 wrap 스타일 조정 */
+  body { padding: 0; background: #f0f2f5; }
+  .wrap { border-radius: 0; box-shadow: none; max-width: 100%; }
+
   @media (max-width:600px) {
-    body { padding:8px; }
+    .global-header { padding: 10px 14px; }
+    nav.top-nav { top: 45px; }
     .header { padding:20px 16px; }
     .section { padding:16px 14px; }
     .cards { grid-template-columns:1fr; }
@@ -111,9 +194,35 @@
     td.cmt { display:none; }
     .footer { padding:12px 14px; }
   }
+
+  /* inner wrap for content width */
+  .content-wrap { max-width: 860px; margin: 0 auto; background: #ffffff; box-shadow: 0 4px 32px rgba(26,58,107,0.13); }
 </style>
 </head>
 <body>
+
+<!-- ── GLOBAL HEADER ── -->
+<header class="global-header">
+  <div class="gh-left">
+    <a href="/index.html" class="site-name">BLOCKMEDIA Data</a>
+    <span class="page-badge">🧠 코생지</span>
+  </div>
+  <div class="gh-right">
+    <span class="chip">UPDATED: <b id="ghUpdated">{{REPORT_DATE}}</b></span>
+  </div>
+</header>
+
+<!-- ── TOP NAV ── -->
+<nav class="top-nav">
+  <a href="/index.html">🇰🇷 KRW Market</a>
+  <a href="/bm20_index.html">📊 BM20 Index</a>
+  <a href="/etf.html">🌐 US ETF Flow</a>
+  <a href="/history.html">📅 History</a>
+  <a href="/letter.html">📰 Letter</a>
+  <a href="/aas_brief.html" class="active">🧠 코생지</a>
+</nav>
+
+<div class="content-wrap">
 <div class="wrap">
 
     <!-- HEADER -->
@@ -208,6 +317,7 @@
     본 리포트는 투자자 참고 정보제공을 목적으로 작성된 자료이며, 투자 판단은 투자자의 책임으로 해야 합니다. 블록미디어는 본 리포트의 정확성과 완전성을 보장하지 않으며, 투자 결과에 대한 책임을 지지 않습니다. 코생지(Coin Liveness Metric)는 알고리즘 기반 참고 지표이며, 실제 투자 성과를 보장하지 않습니다.
   </div>
 
+</div>
 </div>
 </body>
 </html>
