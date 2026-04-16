@@ -240,7 +240,7 @@
     <div class="cards">
       <div class="card">
         <div class="card-label">📉 수익률 종합 (24h Trend)</div>
-        <div class="card-row"><span class="card-key">AAS Top 10 평균</span><span class="card-val {{AVG_TOP10_COLOR}}">{{AVG_TOP10}}</span></div>
+        <div class="card-row"><span class="card-key">코생지 Top 10 평균</span><span class="card-val {{AVG_TOP10_COLOR}}">{{AVG_TOP10}}</span></div>
         <div class="card-row"><span class="card-key">중위 수익률</span><span class="card-val {{MEDIAN_COLOR}}">{{MEDIAN_RETURN}}</span></div>
         <div class="card-row"><span class="card-key">1위 제외 평균</span><span class="card-val {{EXCL1_COLOR}}">{{EXCL1_RETURN}}</span></div>
       </div>
@@ -271,7 +271,7 @@
   <div class="section">
     <div class="part-label">[ Part 1 ] Major Coins</div>
     <table>
-      <thead><tr><th>Rank</th><th>Symbol</th><th>AAS</th><th>Price (USD)</th><th>24H (%)</th><th>RSI</th><th>Action</th><th>Comment</th></tr></thead>
+      <thead><tr><th>Rank</th><th>Symbol</th><th>CLM</th><th>Price (USD)</th><th>24H (%)</th><th>RSI</th><th>Action</th><th>Comment</th></tr></thead>
       <tbody>
         {{MAJOR_ROWS}}
       </tbody>
@@ -282,7 +282,7 @@
   <div class="section">
     <div class="part-label">[ Part 2 ] 코생지 Top 10</div>
     <table>
-      <thead><tr><th>Rank</th><th>Symbol</th><th>AAS</th><th>Price (USD)</th><th>24H (%)</th><th>RSI</th><th>Action</th><th>Comment</th></tr></thead>
+      <thead><tr><th>Rank</th><th>Symbol</th><th>CLM</th><th>Price (USD)</th><th>24H (%)</th><th>RSI</th><th>Action</th><th>Comment</th></tr></thead>
       <tbody>
         {{TOP10_ROWS}}
       </tbody>
@@ -293,12 +293,12 @@
   <div class="charts-row">
     <div class="chart-box">
       <div class="chart-label">📈 코생지 Daily Top 10</div>
-      <img class="chart-img" src="{{SCORE_CHART_URL}}" alt="AAS Score Chart">
+      <img class="chart-img" src="{{SCORE_CHART_URL}}" alt="CLM Score Chart">
       <div class="chart-sublabel">* Entry Threshold (0.5) / High Confidence (1.5)</div>
     </div>
     <div class="chart-box">
       <div class="chart-label">🧩 코생지 Composition (Top 3)</div>
-      <img class="chart-img" src="{{CONTRIB_CHART_URL}}" alt="AAS Contribution Chart">
+      <img class="chart-img" src="{{CONTRIB_CHART_URL}}" alt="CLM Contribution Chart">
       <div class="chart-sublabel">* On-chain / Social / Momentum 비중 분석</div>
     </div>
   </div>
@@ -309,7 +309,7 @@
     <div class="backtest-cond">지난 1년간 <strong>코생지 Score 1.1 이상(High Quality)</strong> &amp; <strong>RSI 40 이하</strong> 조건 진입 시,</div>
     <div class="backtest-val">72.7%</div>
     <div class="backtest-desc">7일 후 상승 확률 (승률)</div>
-    <div class="backtest-src">(Data Source: Santiment, CoinGecko, AAS Algorithm Validation)</div>
+    <div class="backtest-src">(Data Source: Santiment, CoinGecko, CLM Algorithm Validation)</div>
   </div>
 
   <!-- FOOTER -->
