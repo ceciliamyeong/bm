@@ -2,7 +2,7 @@ name: Update ETF Data
 
 on:
   schedule:
-    - cron: '0 20,2,8,14 * * *'  # KST 05:00 / 11:00 / 17:00 / 23:00
+    - cron: '0 4,5,6 * * *'  # KST 13:00 / 14:00 / 15:00
   workflow_dispatch:               # 수동 실행도 가능
 
 jobs:
