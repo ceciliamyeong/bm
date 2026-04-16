@@ -82,9 +82,9 @@
   .badge-over    { background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
 
   /* CHARTS */
-  .charts-row { display:grid; grid-template-columns:1fr 1fr; border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+  .charts-row { display:flex; flex-direction:column; border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
   .chart-box { padding:20px 24px; }
-  .chart-box:first-child { border-right:1px solid var(--border); }
+  .chart-box:first-child { border-right:none; border-bottom:1px solid var(--border); }
   .chart-label { font-size:13px; font-weight:700; color:var(--navy); margin-bottom:12px; }
   .chart-sublabel { font-size:11px; color:var(--text-light); margin-top:8px; font-style:italic; }
   .chart-img { width:100%; border-radius:6px; border:1px solid var(--border); }
