@@ -34,6 +34,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          cp clm_brief_template.html aas_brief_template.html
           python3 scripts/render_aas_brief.py
           test -f clm_brief.html
           echo "[OK] rendered clm_brief.html"
