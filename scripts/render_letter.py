@@ -36,6 +36,8 @@ from datetime import datetime, timezone, timedelta
 ROOT = Path(__file__).resolve().parent.parent
 
 TEMPLATE      = ROOT / "letter_newsletter_template.html"
+TEMPLATE_EN   = ROOT / "letter_newsletter_template_EN.html"
+OUT_EN        = ROOT / "letter_en.html"
 BM20_JSON     = ROOT / "bm20_latest.json"
 DAILY_CSV     = ROOT / "bm20_daily_data_latest.csv"
 KRW_JSON      = ROOT / "out/history/krw_24h_latest.json"
@@ -204,10 +206,12 @@ def fetch_upbit_top_bottom(n: int = 3) -> dict[str, str]:
 
 def fetch_premium_data(usdkrw: float | None) -> dict[str, str]:
     FB = {
-        "KIMCHI_PREM_PCT":  "—",
-        "CB_PREMIUM_PCT":   "—",
-        "PREMIUM_COMMENT":  "프리미엄 데이터를 가져올 수 없습니다.",
-        "PREMIUM_ASOF":     "—",
+        "KIMCHI_PREM_PCT":    "—",
+        "CB_PREMIUM_PCT":     "—",
+        "PREMIUM_COMMENT":    "프리미엄 데이터를 가져올 수 없습니다.",
+        "PREMIUM_COMMENT_EN": "Premium data unavailable.",
+        "PREMIUM_ASOF":       "—",
+        "PREMIUM_ASOF_EN":    "—",
     }
     try:
         upbit_btc_krw = float(
@@ -244,21 +248,27 @@ def fetch_premium_data(usdkrw: float | None) -> dict[str, str]:
             return f'<span style="color:{color};font-weight:900;">{sign}{abs(v):.2f}%</span>'
 
         if kimchi_pct > 1 and cb_pct > 0:
-            comment = "김치·코인베이스 프리미엄 동시 양전 → 글로벌 대비 국내 수요 강세 신호."
+            comment    = "김치·코인베이스 프리미엄 동시 양전 → 글로벌 대비 국내 수요 강세 신호."
+            comment_en = "Both Kimchi and Coinbase premiums positive → strong domestic demand signal vs. global markets."
         elif kimchi_pct > 1 and cb_pct <= 0:
-            comment = "김치 프리미엄 양전, 코인베이스 디스카운트 → 국내 단독 매수세 주의."
+            comment    = "김치 프리미엄 양전, 코인베이스 디스카운트 → 국내 단독 매수세 주의."
+            comment_en = "Kimchi premium positive but Coinbase at discount → isolated Korean buying pressure, caution advised."
         elif kimchi_pct < -0.5:
-            comment = "김치 역프리미엄 → 국내 매도 압력 또는 원화 약세 영향 가능성."
+            comment    = "김치 역프리미엄 → 국내 매도 압력 또는 원화 약세 영향 가능성."
+            comment_en = "Kimchi discount (negative premium) → possible selling pressure in Korea or KRW weakness."
         else:
-            comment = f"김치 {kimchi_pct:+.2f}% / 코인베이스 {cb_pct:+.2f}% — 중립 구간."
+            comment    = f"김치 {kimchi_pct:+.2f}% / 코인베이스 {cb_pct:+.2f}% — 중립 구간."
+            comment_en = f"Kimchi {kimchi_pct:+.2f}% / Coinbase {cb_pct:+.2f}% — neutral range."
 
         kst = datetime.now(timezone(timedelta(hours=9)))
         asof = (f"{kst.month}월 {kst.day}일 "
                 f"{'오전' if kst.hour < 12 else '오후'} "
                 f"{kst.hour if kst.hour <= 12 else kst.hour - 12}시 {kst.minute:02d}분 기준")
+        asof_en = kst.strftime("As of %b %-d, %I:%M %p KST")
 
         return {"KIMCHI_PREM_PCT": _c(kimchi_pct), "CB_PREMIUM_PCT": _c(cb_pct),
-                "PREMIUM_COMMENT": comment, "PREMIUM_ASOF": asof}
+                "PREMIUM_COMMENT": comment, "PREMIUM_COMMENT_EN": comment_en,
+                "PREMIUM_ASOF": asof, "PREMIUM_ASOF_EN": asof_en}
     except Exception as e:
         print(f"WARN: Premium fetch failed: {e}")
         return FB
@@ -614,10 +624,12 @@ def build_placeholders() -> dict[str, str]:
 
     # 프리미엄
     prem = fetch_premium_data(usdkrw_f)
-    ph["{{KIMCHI_PREM_PCT}}"]  = prem.get("KIMCHI_PREM_PCT", "—")
-    ph["{{CB_PREMIUM_PCT}}"]   = prem.get("CB_PREMIUM_PCT", "—")
-    ph["{{PREMIUM_COMMENT}}"]  = prem.get("PREMIUM_COMMENT", "—")
-    ph["{{PREMIUM_ASOF}}"]     = prem.get("PREMIUM_ASOF", "—")
+    ph["{{KIMCHI_PREM_PCT}}"]    = prem.get("KIMCHI_PREM_PCT", "—")
+    ph["{{CB_PREMIUM_PCT}}"]     = prem.get("CB_PREMIUM_PCT", "—")
+    ph["{{PREMIUM_COMMENT}}"]    = prem.get("PREMIUM_COMMENT", "—")
+    ph["{{PREMIUM_ASOF}}"]       = prem.get("PREMIUM_ASOF", "—")
+    ph["{{PREMIUM_COMMENT_EN}}"] = prem.get("PREMIUM_COMMENT_EN", "—")
+    ph["{{PREMIUM_ASOF_EN}}"]    = prem.get("PREMIUM_ASOF_EN", "—")
 
     # ETF
     ph.update(load_etf_summary())
@@ -648,6 +660,23 @@ def render() -> None:
 
     OUT.write_text(html, encoding="utf-8")
     print(f"OK: wrote {OUT}")
+
+    # ── 영문 버전 렌더링 ──
+    if TEMPLATE_EN.exists():
+        html_en = TEMPLATE_EN.read_text(encoding="utf-8")
+        ph_en = ph.copy()
+        ph_en["{{PREMIUM_COMMENT}}"] = ph.get("{{PREMIUM_COMMENT_EN}}", ph.get("{{PREMIUM_COMMENT}}", "—"))
+        ph_en["{{PREMIUM_ASOF}}"]    = ph.get("{{PREMIUM_ASOF_EN}}", ph.get("{{PREMIUM_ASOF}}", "—"))
+        for k in sorted(ph_en.keys(), key=len, reverse=True):
+            html_en = html_en.replace(k, str(ph_en[k]))
+        left_en = [v for v in sorted(set(re.findall(r"\{\{[A-Z0-9_]+\}\}", html_en)))
+                   if v != "{{UNSUB_URL}}"]
+        if left_en:
+            print("WARN: EN unfilled placeholders:", left_en)
+        OUT_EN.write_text(html_en, encoding="utf-8")
+        print(f"OK: wrote {OUT_EN}")
+    else:
+        print(f"WARN: EN template not found at {TEMPLATE_EN}, skipping")
 
 
 if __name__ == "__main__":
