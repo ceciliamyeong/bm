@@ -19,6 +19,7 @@ jobs:
       STIBEE_API_KEY:    ${{ secrets.STIBEE_API_KEY }}
       STIBEE_LIST_ID:    ${{ secrets.STIBEE_LIST_ID }}
       STIBEE_FROM_EMAIL: ${{ secrets.STIBEE_FROM_EMAIL }}
+      STIBEE_LIST_ID_EN: "486277"
     steps:
       - name: Checkout main
         uses: actions/checkout@v4
@@ -114,6 +115,7 @@ jobs:
 
           # 2) 생성된 파일 스테이징
           git add letter.html \
+            letter_en.html \
             clm_brief.html \
             out/history/krw_24h_latest.json \
             out/history/krw_24h_snapshots.json \
