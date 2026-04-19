@@ -20,6 +20,7 @@ jobs:
       STIBEE_LIST_ID:    ${{ secrets.STIBEE_LIST_ID }}
       STIBEE_FROM_EMAIL: ${{ secrets.STIBEE_FROM_EMAIL }}
       STIBEE_LIST_ID_EN: "486277"
+      DEEPL_API_KEY: ${{ secrets.DEEPL_API_KEY }}
     steps:
       - name: Checkout main
         uses: actions/checkout@v4
@@ -93,14 +94,6 @@ jobs:
           test -f letter.html
           echo "[OK] rendered letter.html"
 
-
-      - name: Render letter_en.html
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 scripts/render_letter_en.py
-          test -f letter_en.html
-          echo "[OK] rendered letter_en.html"
       # ── 코생지 Daily Brief ───────────────────────────────
       - name: Render aas_brief.html
         shell: bash
