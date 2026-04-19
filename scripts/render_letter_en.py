@@ -477,7 +477,7 @@ def fetch_aas() -> dict:
         ph.update({
             f"{{{{AAS_COIN_{i}}}}}":          "—",
             f"{{{{AAS_SCORE_{i}}}}}":         "0.00",
-            f"{{{{AAS_SCORE_PERCENT_{i}}}}}\": \"0",
+            f"{{{{AAS_SCORE_PERCENT_{i}}}}}":  "0",
             f"{{{{AAS_CHG_{i}}}}}":           "0.00",
             f"{{{{AAS_NOTE_TAG_{i}}}}}":      _aas_note_tag("—"),
             f"{{{{AAS_BAR_{i}}}}}":           _aas_bar_html(33.3, 33.3, 33.4),
