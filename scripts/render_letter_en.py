@@ -84,6 +84,14 @@ def fmt_krw_vol(val: float) -> str:
     b = val / 100_000_000
     return f"₩{b:.0f}B"
 
+def fmt_usd_vol(val_krw: float, usdkrw: float) -> str:
+    val_usd = val_krw / usdkrw
+    b = val_usd / 1_000_000_000
+    if b >= 1:
+        return f"${b:.2f}B"
+    m = val_usd / 1_000_000
+    return f"${m:.0f}M"
+
 def strip_html(text: str) -> str:
     return re.sub(r"<[^>]+>", "", text or "").strip()
 
@@ -215,7 +223,7 @@ def load_sentiment() -> dict:
 # KRW 거래량 (krw_24h_snapshots.json)
 # ─────────────────────────────────────────────────────────
 
-def load_krw_volume() -> dict:
+def load_krw_volume(usdkrw: float = 1450.0) -> dict:
     FB = {
         "{{KRW_TOTAL_VOL}}":       "—",
         "{{KRW_UPBIT_VOL}}":       "—",
@@ -231,7 +239,7 @@ def load_krw_volume() -> dict:
         rows_html = ""
         for i, item in enumerate(top5[:5]):
             sym    = item["symbol"].replace("KRW-", "")
-            val    = fmt_krw_vol(float(item["value"]))
+            val    = fmt_usd_vol(float(item["value"]), usdkrw)
             border = "border-bottom:1px solid #f1f5f9;" if i < 4 else ""
             rows_html += (
                 f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">'
@@ -244,9 +252,9 @@ def load_krw_volume() -> dict:
             )
 
         return {
-            "{{KRW_TOTAL_VOL}}":       fmt_krw_vol(float(totals.get("combined_24h", 0))),
-            "{{KRW_UPBIT_VOL}}":       fmt_krw_vol(float(totals.get("upbit_24h", 0))),
-            "{{KRW_BITHUMB_VOL}}":     fmt_krw_vol(float(totals.get("bithumb_24h", 0))),
+            "{{KRW_TOTAL_VOL}}":       fmt_usd_vol(float(totals.get("combined_24h", 0)), usdkrw),
+            "{{KRW_UPBIT_VOL}}":       fmt_usd_vol(float(totals.get("upbit_24h", 0)), usdkrw),
+            "{{KRW_BITHUMB_VOL}}":     fmt_usd_vol(float(totals.get("bithumb_24h", 0)), usdkrw),
             "{{KRW_UPBIT_TOP5_ROWS}}": rows_html,
         }
     except Exception as e:
@@ -526,7 +534,7 @@ def build_placeholders() -> dict:
     ph.update(bm20_data)
     ph.update(load_nasdaq())
     ph.update(load_sentiment())
-    ph.update(load_krw_volume())
+    ph.update(load_krw_volume(usdkrw or 1450.0))
     ph.update(fetch_upbit_top_bottom())
     ph.update(fetch_premium(usdkrw))
     ph.update(load_etf())
