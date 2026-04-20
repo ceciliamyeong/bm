@@ -94,6 +94,14 @@ jobs:
           test -f letter.html
           echo "[OK] rendered letter.html"
 
+
+      - name: Render letter_en.html
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/render_letter_en.py
+          test -f letter_en.html
+          echo "[OK] rendered letter_en.html"
       # ── 코생지 Daily Brief ───────────────────────────────
       - name: Render aas_brief.html
         shell: bash
