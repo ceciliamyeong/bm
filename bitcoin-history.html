@@ -524,7 +524,7 @@
   <div id="timeline"></div>
 
   <footer class="page-footer">
-    데이터 출처: CoinGecko API &nbsp;·&nbsp; 차트: TradingView Lightweight Charts &nbsp;·&nbsp; 최종 업데이트: <span id="updateDate"></span>
+    데이터 출처: Binance API · Upbit API &nbsp;·&nbsp; 차트: TradingView Lightweight Charts &nbsp;·&nbsp; 최종 업데이트: <span id="updateDate"></span>
   </footer>
 
 </main>
@@ -758,23 +758,40 @@ function buildTimeline() {
   });
 }
 
-// ── PRICE FETCH ────────────────────────────────────────────────────────
+// ── PRICE FETCH (Binance) ──────────────────────────────────────────────
 async function fetchPrice() {
   try {
-    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd,krw&include_24hr_change=true&include_24hr_high=true&include_24hr_low=true&include_24hr_vol=true');
-    const d = (await r.json()).bitcoin;
-    document.getElementById('p-usd').textContent = '$' + d.usd.toLocaleString('en-US', {maximumFractionDigits:0});
-    document.getElementById('p-krw').textContent = (d.krw/100000000).toFixed(2) + '억 원';
-    document.getElementById('p-high').textContent = '$' + Math.round(d.usd_24h_high).toLocaleString();
-    document.getElementById('p-low').textContent = '$' + Math.round(d.usd_24h_low).toLocaleString();
-    const vol = d.usd_24h_vol;
-    document.getElementById('p-vol').textContent = vol >= 1e9 ? (vol/1e9).toFixed(1)+'B' : (vol/1e6).toFixed(0)+'M';
-    const chg = d.usd_24h_change;
+    const r = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT');
+    const d = await r.json();
+    const price = parseFloat(d.lastPrice);
+    const high  = parseFloat(d.highPrice);
+    const low   = parseFloat(d.lowPrice);
+    const vol   = parseFloat(d.quoteVolume); // USDT 기준 거래량
+    const chg   = parseFloat(d.priceChangePercent);
+
+    // KRW 환산: 업비트 현재가 시도, 실패 시 고정 환율 적용
+    let krwPrice = null;
+    try {
+      const kr = await fetch('https://api.upbit.com/v1/ticker?markets=KRW-BTC');
+      const kd = await kr.json();
+      krwPrice = kd[0].trade_price;
+    } catch(e) {
+      krwPrice = price * 1370; // fallback 환율
+    }
+
+    document.getElementById('p-usd').textContent = '$' + Math.round(price).toLocaleString();
+    document.getElementById('p-krw').textContent = (krwPrice/100000000).toFixed(2) + '억 원';
+    document.getElementById('p-high').textContent = '$' + Math.round(high).toLocaleString();
+    document.getElementById('p-low').textContent  = '$' + Math.round(low).toLocaleString();
+    document.getElementById('p-vol').textContent  = vol >= 1e9 ? (vol/1e9).toFixed(1)+'B' : (vol/1e6).toFixed(0)+'M';
+
     const el = document.getElementById('p-chg');
     el.textContent = (chg>=0?'+':'') + chg.toFixed(2) + '%';
     el.className = 'badge-change ' + (chg>=0?'up':'down');
     el.style.display = 'inline-block';
-  } catch(e) {}
+  } catch(e) {
+    console.error('가격 조회 실패:', e);
+  }
 }
 
 // ── CHART ──────────────────────────────────────────────────────────────
@@ -888,19 +905,53 @@ function showPopup(ev) {
   document.getElementById('eventPopup').style.display = 'block';
 }
 
+// 기간 설정 → 바이낸스 interval + limit 매핑
+function getBinanceParams(days) {
+  if (days === 'max')  return { interval: '1W', limit: 1000 };
+  if (days >= 1825)    return { interval: '3d', limit: 610 };
+  if (days >= 365)     return { interval: '1d', limit: 365 };
+  if (days >= 180)     return { interval: '1d', limit: 180 };
+  if (days >= 90)      return { interval: '4h', limit: 540 };
+  if (days >= 30)      return { interval: '4h', limit: 180 };
+  if (days >= 14)      return { interval: '1h', limit: 336 };
+  return                      { interval: '1h', limit: 168 };
+}
+
 async function loadChart(days, type) {
   document.getElementById('chartLoading').style.display = 'flex';
   document.getElementById('ohlcBar').innerHTML = '';
   document.getElementById('eventPopup').style.display = 'none';
 
   try {
-    const url = days === 'max'
-      ? 'https://api.coingecko.com/api/v3/coins/bitcoin/ohlc?vs_currency=usd&days=max'
-      : `https://api.coingecko.com/api/v3/coins/bitcoin/ohlc?vs_currency=usd&days=${days}`;
-    const raw = await (await fetch(url)).json();
-    const data = raw
-      .map(d => ({ time: Math.floor(d[0]/1000), open: d[1], high: d[2], low: d[3], close: d[4] }))
-      .sort((a,b) => a.time - b.time);
+    const { interval, limit } = getBinanceParams(days);
+
+    // 전체(max) 기간은 여러 번 나눠서 가져옴
+    let allData = [];
+    if (days === 'max') {
+      // 바이낸스는 2017-08 이후 데이터만 있음 — 주봉 1000개면 약 19년치
+      const url = `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&limit=${limit}`;
+      const raw = await (await fetch(url)).json();
+      allData = raw.map(d => ({
+        time: Math.floor(d[0] / 1000),
+        open: parseFloat(d[1]), high: parseFloat(d[2]),
+        low:  parseFloat(d[3]), close: parseFloat(d[4]),
+      }));
+    } else {
+      const startMs = Date.now() - days * 86400 * 1000;
+      const url = `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&startTime=${startMs}&limit=${limit}`;
+      const raw = await (await fetch(url)).json();
+      allData = raw.map(d => ({
+        time: Math.floor(d[0] / 1000),
+        open: parseFloat(d[1]), high: parseFloat(d[2]),
+        low:  parseFloat(d[3]), close: parseFloat(d[4]),
+      }));
+    }
+
+    // 중복 제거 & 정렬
+    const seen = new Set();
+    const data = allData
+      .filter(d => { if (seen.has(d.time)) return false; seen.add(d.time); return true; })
+      .sort((a, b) => a.time - b.time);
 
     if (!lwChart) initChart();
     if (mainSeries) { try { lwChart.removeSeries(mainSeries); } catch(e){} }
@@ -928,6 +979,7 @@ async function loadChart(days, type) {
     applyMarkers(data);
     document.getElementById('chartLoading').style.display = 'none';
   } catch(e) {
+    console.error(e);
     document.getElementById('chartLoading').textContent = '데이터를 불러올 수 없습니다. (API 오류 또는 네트워크 문제)';
   }
 }
