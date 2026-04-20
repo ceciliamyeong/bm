@@ -546,8 +546,24 @@ const TAG = {
 
 // markerDate: YYYY-MM-DD (차트 마커용), price: 당시 종가 표시용
 const EVENTS = [
-  // 2024
-  { year: 2024, markerDate: '2024-01-10', price: '$46,620', tags: ['etf','global'],
+  // 2026
+  { year: 2026, markerDate: '2026-04-20', price: '$84,000', tags: ['global','reg'],
+    title: '중동 호르무즈 해협 긴장 고조 — 비트코인 안전자산 논쟁 재점화',
+    desc: '이란-미국 갈등으로 호르무즈 해협 봉쇄 위협이 고조되며 유가와 글로벌 금융시장이 요동침. 비트코인이 전통적 안전자산(금)과 함께 거론되며 탈중앙 가치 저장 수단으로서의 위상 논쟁이 재점화됨.' },
+
+  // 2025
+  { year: 2025, markerDate: '2025-01-20', price: '$106,000', tags: ['reg','global'],
+    title: '트럼프 대통령 취임 — 친암호화폐 행정부 공식 출범',
+    desc: '비트코인 전략적 비축과 규제 완화를 공약으로 내세운 트럼프 대통령이 취임. 취임 직후 가상자산 규제 완화 행정명령에 서명하고 친암호화폐 인사들을 SEC·CFTC 수장으로 임명하며 미국의 가상자산 정책이 전면 전환됨.' },
+  { year: 2025, markerDate: '2025-03-07', price: '$90,000', tags: ['reg','global'],
+    title: '미국 정부, 비트코인 전략적 비축 행정명령 서명',
+    desc: '트럼프 대통령이 미국 정부 보유 비트코인을 매각하지 않고 전략적으로 비축하는 행정명령에 서명. 정부가 압수한 약 20만 BTC를 국가 준비금으로 지정. 비트코인이 국가 전략 자산으로 공식 인정된 역사적 사건.' },
+  { year: 2025, markerDate: '2025-01-23', price: '$104,000', tags: ['reg','global'],
+    title: '미국 SEC, 가상자산 규제 완화 방향 공식화',
+    desc: '새 SEC 위원장 폴 앳킨스 체제에서 기존 게리 겐슬러 시대의 강경 규제 기조가 전면 철회됨. 다수의 알트코인 ETF 신청 검토가 재개되고 가상자산 기업에 대한 소송이 잇따라 취하되며 미국 가상자산 산업이 급속히 제도권에 편입됨.' },
+  { year: 2025, markerDate: '2025-05-22', price: '$111,000', tags: ['ath'],
+    title: '비트코인 역대 최고가 — 111,000달러 돌파 (피자 데이)',
+    desc: '비트코인 피자 데이(5월 22일)에 비트코인이 111,000달러를 돌파하며 역대 최고가를 경신. 트럼프 행정부의 친암호화폐 정책, 기관 수요 지속, 반감기 이후 공급 감소가 맞물린 결과.' },
     title: '미국 SEC, 비트코인 현물 ETF 11종 동시 승인',
     desc: '블랙록·피델리티·아크인베스트 등 11개 자산운용사의 비트코인 현물 ETF가 SEC 승인을 받아 NYSE Arca·Cboe BZX에서 거래를 시작. 기관 자금 유입의 본격적인 물꼬가 트이며 글로벌 가상자산 시장의 역사적 전환점으로 평가됨.' },
   { year: 2024, markerDate: '2024-03-14', price: '$73,750', tags: ['ath'],
@@ -820,7 +836,7 @@ function buildTimeline() {
     block.innerHTML = `<div class="year-heading">${yr}</div>`;
     const list = document.createElement('div');
     list.className = 'event-list';
-    byYear[yr].forEach(ev => {
+    byYear[yr].sort((a,b) => b.markerDate.localeCompare(a.markerDate)).forEach(ev => {
       const item = document.createElement('div');
       item.className = 'event-item';
       const dateStr = ev.markerDate.replace(/-/g, '.');
