@@ -399,6 +399,7 @@
   .tag-ath     { background: #FAEEDA; color: #854F0B; }
   .tag-tech    { background: #E1F5EE; color: #0F6E56; }
   .tag-korea   { background: #FBEAF0; color: #993556; }
+  .tag-japan   { background: #FEF0F0; color: #C0392B; }
   .tag-global  { background: #F1EFE8; color: #5F5E5A; }
 
   @media (prefers-color-scheme: dark) {
@@ -411,6 +412,7 @@
     .tag-ath     { background: #412402; color: #FAC775; }
     .tag-tech    { background: #04342C; color: #9FE1CB; }
     .tag-korea   { background: #4B1528; color: #F4C0D1; }
+    .tag-japan   { background: #4a1010; color: #f5b7b7; }
     .tag-global  { background: #2C2C2A; color: #B4B2A9; }
   }
 
@@ -541,13 +543,14 @@ const TAG = {
   ath:     { cls: 'tag-ath',     label: '최고가' },
   tech:    { cls: 'tag-tech',    label: '기술' },
   korea:   { cls: 'tag-korea',   label: '한국' },
+  japan:   { cls: 'tag-japan',   label: '일본' },
   global:  { cls: 'tag-global',  label: '글로벌' },
 };
 
 // markerDate: YYYY-MM-DD (차트 마커용), price: 당시 종가 표시용
 const EVENTS = [
   // 2026
-  { year: 2026, markerDate: '2026-04-20', price: '$74,260', tags: ['global','reg'],
+  { year: 2026, markerDate: '2026-04-20', price: '현재가', tags: ['global','reg'],
     title: '중동 호르무즈 해협 긴장 고조 — 비트코인 안전자산 논쟁 재점화',
     desc: '이란-미국 갈등으로 호르무즈 해협 봉쇄 위협이 고조되며 유가와 글로벌 금융시장이 요동침. 비트코인이 전통적 안전자산(금)과 함께 거론되며 탈중앙 가치 저장 수단으로서의 위상 논쟁이 재점화됨.' },
 
@@ -575,6 +578,9 @@ const EVENTS = [
   { year: 2024, markerDate: '2024-04-20', price: '$64,000', tags: ['halving'],
     title: '4번째 반감기 (6.25 BTC → 3.125 BTC)',
     desc: '블록 채굴 보상이 6.25 BTC에서 3.125 BTC로 절반 감소. 반감기 사이클에 따른 상승장 기대감이 이어지며 연말까지 강세장이 지속됨.' },
+  { year: 2024, markerDate: '2024-07-19', price: '$64,000', tags: ['korea','reg'],
+    title: '한국 가상자산 이용자 보호법 시행',
+    desc: '한국 최초의 가상자산 이용자 보호를 위한 독립 법안인 가상자산이용자보호법이 시행. 거래소의 예치금 이자 지급 의무화, 이상거래 감시 체계 구축, 미공개 정보 이용 행위 처벌 등을 규정. 특금법에 이어 한국 가상자산 규제 체계를 한 단계 고도화한 사건.' },
   { year: 2024, markerDate: '2024-11-05', price: '$75,000', tags: ['global','reg'],
     title: '트럼프 미 대선 승리 — 친암호화폐 행정부 출범 기대',
     desc: '도널드 트럼프 전 대통령이 미국 대통령 선거에서 승리. 선거 유세 기간 중 비트코인 전략적 비축과 규제 완화를 공약으로 내세웠으며 당선 직후 비트코인이 75,000달러를 돌파함.' },
@@ -583,9 +589,9 @@ const EVENTS = [
   { year: 2023, markerDate: '2023-03-10', price: '$20,000', tags: ['hack','global'],
     title: '실리콘밸리은행(SVB) 파산 — 금융 시스템 리스크 부각',
     desc: '미국 기술 스타트업의 주거래 은행인 실리콘밸리은행(SVB)이 파산. USDC 디페깅 사태와 맞물려 가상자산 시장에 충격을 주었으나 이후 연준의 긴급 조치로 빠르게 회복됨.' },
-  { year: 2023, markerDate: '2023-06-15', price: '$26,000', tags: ['etf','global'],
-    title: '블랙록, 비트코인 현물 ETF 신청',
-    desc: '세계 최대 자산운용사 블랙록이 SEC에 비트코인 현물 ETF(iShares Bitcoin Trust)를 신청. 이후 다수 운용사가 뒤를 이어 신청하며 기관 투자 문의 확대의 신호탄이 됨.' },
+  { year: 2023, markerDate: '2023-06-15', price: '$25,000', tags: ['etf','global'],
+    title: '블랙록, 비트코인 현물 ETF 신청 — 시장 판도 바꾼 신호탄',
+    desc: '세계 최대 자산운용사 블랙록이 SEC에 비트코인 현물 ETF(iShares Bitcoin Trust)를 신청. 신청 직후 7일 만에 비트코인이 $24,800에서 $30,000 이상으로 급등. 이후 다수 운용사가 뒤를 이어 신청하며 6개월 후 전격 승인으로 이어짐.' },
 
   // 2022
   { year: 2022, markerDate: '2022-02-24', price: '$37,000', tags: ['crash','global'],
@@ -621,8 +627,8 @@ const EVENTS = [
     title: '미국, 비트코인 선물 ETF 최초 승인 (ProShares BITO)',
     desc: '미국 SEC가 비트코인 선물 ETF를 최초로 승인. ProShares BITO가 NYSE Arca에 상장되어 첫날 거래대금이 약 10억 달러에 달함.' },
   { year: 2021, markerDate: '2021-11-10', price: '$68,990', tags: ['ath'],
-    title: '비트코인 역대 최고가(당시) — 68,990달러',
-    desc: '코로나19 이후 대규모 양적완화와 기관 자금 유입이 맞물려 역대 최고가 경신. 국내에서도 8천만 원대를 돌파하며 큰 화제가 됨. 이후 연준 긴축 전환으로 장기 하락세로 전환.' },
+    title: '비트코인 역대 최고가(당시) — 글로벌 $68,990 / 한국 8,200만 원',
+    desc: '코로나19 이후 대규모 양적완화와 기관 자금 유입이 맞물려 역대 최고가 경신. 글로벌 기준 약 $69,000이었으나 한국에서는 김치 프리미엄 영향으로 업비트 기준 8,200만 원(달러 환산 약 $70,000 이상)에 거래되며 국내 투자 열기가 정점에 달함. 이후 연준 긴축 전환으로 장기 하락세로 전환.' },
   { year: 2021, markerDate: '2021-11-14', price: '$65,000', tags: ['tech'],
     title: 'Taproot 업그레이드 활성화',
     desc: 'SegWit 이후 최대 업그레이드인 Taproot가 활성화. 슈노어(Schnorr) 서명·MAST 등 새 기술이 도입되어 프라이버시·스케일링·스마트컨트랙트 기능이 향상됨.' },
@@ -634,9 +640,9 @@ const EVENTS = [
   { year: 2020, markerDate: '2020-03-23', price: '$6,200', tags: ['global'],
     title: '미국 연준, 무제한 양적완화 선언',
     desc: '미국 연준이 자산 매입 한도를 없애는 사상 초유의 무제한 양적완화(QE)를 선언. 2020년 한 해에만 약 3조 달러의 달러가 시장에 공급되며 인플레이션 헤지 수단으로서 비트코인에 대한 관심이 폭발적으로 증가함.' },
-  { year: 2020, markerDate: '2020-05-01', price: '$8,600', tags: ['korea','reg'],
+  { year: 2020, markerDate: '2020-03-05', price: '$8,900', tags: ['korea','reg'],
     title: '특정금융정보법(특금법) 개정안 국회 통과',
-    desc: '가상자산 거래소에 신고 의무와 실명확인 입출금 계정 서비스를 의무화하는 특금법 개정안이 국회를 통과. 미신고 거래소의 영업이 불법이 되며 국내 거래소 구조조정의 계기가 됨.' },
+    desc: '가상자산 거래소에 신고 의무와 실명확인 입출금 계정 서비스를 의무화하는 특금법 개정안이 국회를 통과. 한국 최초로 가상자산을 법률로 정의하고 사업자에게 신고 의무를 부과. 미신고 거래소의 영업이 불법이 되며 이후 2021년 3월 시행을 앞두고 국내 거래소 구조조정이 본격화됨.' },
   { year: 2020, markerDate: '2020-05-11', price: '$8,730', tags: ['halving'],
     title: '3번째 반감기 (12.5 BTC → 6.25 BTC)',
     desc: '블록 채굴 보상이 12.5 BTC에서 6.25 BTC로 절반 감소. 역사적으로 반감기 이후 12~18개월 뒤 최고가를 경신하는 패턴이 반복됐으며, 이번에도 정확히 그 패턴대로 2021년 11월 최고가로 이어짐.' },
@@ -665,7 +671,10 @@ const EVENTS = [
     desc: '뉴욕증권거래소 모회사 ICE(인터컨티넨탈거래소)가 설립한 Bakkt에서 비트코인 선물거래가 시작. CME·CBOE의 기존 선물과 달리 현물 결제 방식을 채택한 최초의 사례.' },
 
   // 2018
-  { year: 2018, markerDate: '2018-01-11', price: '$13,000', tags: ['korea','reg'],
+  { year: 2018, markerDate: '2018-01-11', price: '$13,500', tags: ['korea','reg'],
+    title: '"박상기의 난" — 법무부 장관 거래소 폐쇄 발언',
+    desc: '박상기 법무부 장관이 가상화폐 거래소 폐쇄 가능성을 공개 언급하며 국내 시장이 폭락. 이른바 "박상기의 난"으로 불리는 이 사건으로 김치 프리미엄이 급락하고 국내 투자자들이 극심한 공포에 빠짐. 이후 정부 내 부처 간 엇박자로 혼선이 이어짐.' },
+  { year: 2018, markerDate: '2018-01-19', price: '$11,500', tags: ['korea','reg'],
     title: '한국 가상자산 실명거래제 전면 시행',
     desc: '금융위원회가 가상자산 실명 확인 입출금 서비스를 전면 시행. 본인 명의 은행 계좌를 통해서만 거래소 입출금이 가능해지고 익명 거래가 전면 금지됨.' },
   { year: 2018, markerDate: '2018-01-11', price: '$13,000', tags: ['tech'],
@@ -688,9 +697,12 @@ const EVENTS = [
     desc: '2017년 8월 비트코인에서 분기된 비트코인 캐시(BCH)가 다시 분열해 Bitcoin Cash(ABC)와 Bitcoin SV로 나뉨. 크레이그 라이트와 로저 버 간의 해시워 분쟁이 배경.' },
 
   // 2017
-  { year: 2017, markerDate: '2017-04-01', price: '$1,080', tags: ['japan','reg'],
-    title: '일본 개정 자금결제법 시행 — 가상화폐 거래소 등록제',
-    desc: '아시 최초로 가상화폐를 법률로 규정한 개정 자금결제법이 시행. 거래소는 금융당국에 등록 의무가 부과됨. 이후 특금법으로 발전하여 현재 규제 체계의 기반이 됨.' },
+  { year: 2017, markerDate: '2017-04-01', price: '$1,080', tags: ['global','reg'],
+    title: '일본 개정 자금결제법 시행 — 세계 최초 거래소 등록제 도입',
+    desc: '비트코인을 지불 수단으로 법적으로 인정하고 거래소 등록제를 도입한 일본의 개정 자금결제법이 시행. 세계적으로 가상자산 관련 법안을 가장 빠르게 정비한 사례로 이후 각국 규제의 모델이 됨. 시행 직후 일본발 수요 급증으로 비트코인 가격이 강세를 보임.' },
+  { year: 2017, markerDate: '2017-12-13', price: '$16,500', tags: ['korea','reg'],
+    title: '한국 정부, 가상화폐 긴급 대책 발표 — 최초 규제 도입',
+    desc: '1차 대불장이 절정에 달하던 시기, 한국 정부가 미성년자 거래 금지·금융기관의 가상화폐 보유 금지 등을 포함한 긴급 대책을 발표. 한국이 가상자산에 대한 첫 번째 공식 규제 조치를 취한 사건으로, 이후 2018년 실명거래제와 2021년 특금법 시행으로 이어지는 규제 체계의 출발점이 됨.' },
   { year: 2017, markerDate: '2017-08-01', price: '$2,800', tags: ['tech'],
     title: '비트코인 캐시(BCH) 탄생 — 최초의 하드포크',
     desc: '블록 크기 확장 논쟁 끝에 비트코인 블록체인이 최초로 인위적으로 분기되며 Bitcoin Cash 탄생. 블록 크기가 1MB에서 8MB로 확대됨.' },
@@ -831,31 +843,65 @@ function buildTimeline() {
     if (!byYear[ev.year]) byYear[ev.year] = [];
     byYear[ev.year].push(ev);
   });
-  const years = Object.keys(byYear).sort((a,b) => b-a);
+  // 연도 내림차순 정렬 (숫자로 명시 변환)
+  const years = Object.keys(byYear).map(Number).sort((a,b) => b-a);
   years.forEach(yr => {
     const block = document.createElement('div');
     block.className = 'year-block year-anchor';
     block.id = 'year-' + yr;
-    block.innerHTML = `<div class="year-heading">${yr}</div>`;
+
+    const heading = document.createElement('div');
+    heading.className = 'year-heading';
+    heading.textContent = yr;
+    block.appendChild(heading);
+
     const list = document.createElement('div');
     list.className = 'event-list';
+
     byYear[yr].sort((a,b) => b.markerDate.localeCompare(a.markerDate)).forEach(ev => {
       const item = document.createElement('div');
       item.className = 'event-item';
-      const dateStr = ev.markerDate.replace(/-/g, '.');
-      const tags = (ev.tags||[]).map(t => `<span class="tag ${TAG[t].cls}">${TAG[t].label}</span>`).join('');
-      item.innerHTML = `
-        <div class="event-meta">
-          <div class="event-date">${dateStr}</div>
-          <div class="event-price">${ev.price}</div>
-        </div>
-        <div class="event-body">
-          <div class="event-tags">${tags}</div>
-          <div class="event-title">${ev.title}</div>
-          <div class="event-desc">${ev.desc}</div>
-        </div>`;
+
+      const meta = document.createElement('div');
+      meta.className = 'event-meta';
+      const dateDiv = document.createElement('div');
+      dateDiv.className = 'event-date';
+      dateDiv.textContent = ev.markerDate.replace(/-/g, '.');
+      const priceDiv = document.createElement('div');
+      priceDiv.className = 'event-price';
+      priceDiv.textContent = ev.price;
+      meta.appendChild(dateDiv);
+      meta.appendChild(priceDiv);
+
+      const body = document.createElement('div');
+      body.className = 'event-body';
+
+      const tagsDiv = document.createElement('div');
+      tagsDiv.className = 'event-tags';
+      (ev.tags||[]).forEach(t => {
+        const span = document.createElement('span');
+        span.className = 'tag ' + TAG[t].cls;
+        span.textContent = TAG[t].label;
+        tagsDiv.appendChild(span);
+      });
+
+      const titleDiv = document.createElement('div');
+      titleDiv.className = 'event-title';
+      titleDiv.textContent = ev.title;
+
+      const descDiv = document.createElement('div');
+      descDiv.className = 'event-desc';
+      descDiv.textContent = ev.desc;
+
+      body.appendChild(tagsDiv);
+      body.appendChild(titleDiv);
+      body.appendChild(descDiv);
+
+      item.appendChild(meta);
+      item.appendChild(body);
       list.appendChild(item);
     });
+
     block.appendChild(list);
     container.appendChild(block);
   });
