@@ -571,18 +571,24 @@ const EVENTS = [
   // 2022
   { year: 2022, markerDate: '2022-02-24', price: '$37,000', tags: ['crash','global'],
     title: '러시아, 우크라이나 침공 — 글로벌 금융시장 충격',
-    desc: '러시아가 우크라이나를 침공하며 비트코인을 포함한 금융시장이 급락. 이후 인플레이션 심화로 미국 연준의 급격한 금리 인상이 이어지며 가상자산 시장의 장기 약세를 촉발함.' },
+    desc: '러시아가 우크라이나를 침공하며 비트코인을 포함한 금융시장이 급락. COVID-19로부터의 경제 재개 국면에서 전쟁이 시작되며 급격한 물가 상승이 이어졌고, 미국 연준의 금리 인상·긴축 정책이 연쇄적으로 단행되어 이후 비트코인 폭락의 원인이 됨.' },
   { year: 2022, markerDate: '2022-05-09', price: '$34,000', tags: ['crash','korea'],
     title: '테라·루나 사태 — 알고리즘 스테이블코인 붕괴',
     desc: '한국계 프로젝트 테라폼랩스의 알고리즘 스테이블코인 UST와 LUNA가 연쇄 붕괴. 40조 원 이상의 시총이 증발하고 비트코인 등 전체 시장이 급락. 공동창업자 권도형은 국제 수배 후 체포됨.' },
+  { year: 2022, markerDate: '2022-06-02', price: '$29,000', tags: ['global'],
+    title: 'FTX, 일본 시장 서비스 개시',
+    desc: '세계 최대 거래소 바이낸스에 이은 2위 거래소 FTX가 Quoine(Liquid)을 인수해 금융청 등록 자격을 취득하는 형태로 일본 서비스를 개시. 그러나 같은 해 11월 파산으로 FTX Japan도 서비스를 종료함.' },
   { year: 2022, markerDate: '2022-11-11', price: '$16,800', tags: ['crash','global'],
     title: 'FTX 파산 — 세계 2위 거래소 붕괴',
-    desc: '바하마 기반 세계 2위 거래소 FTX가 유동성 위기로 미국 연방파산법 11조를 신청. 창업자 샘 뱅크먼-프리드(SBF) 체포. FTX Japan도 서비스를 종료하며 한국 투자자들도 피해를 입음.' },
+    desc: '바하마 기반 세계 2위 거래소 FTX가 유동성 위기로 미국 연방파산법 11조를 신청. 창업자 샘 뱅크먼-프리드(SBF) 체포. FTX Japan도 서비스를 종료하며 국내 투자자들도 피해를 입음.' },
 
   // 2021
   { year: 2021, markerDate: '2021-02-08', price: '$46,000', tags: ['adopt','global'],
     title: '테슬라, 비트코인 15억 달러 매입',
-    desc: '테슬라가 약 15억 달러(약 1조 6천억 원) 어치 비트코인 매입을 공시하고 차량 결제도 허용한다고 발표. 기관 투자 트렌드의 상징적 사건으로 기록됨.' },
+    desc: '테슬라가 약 15억 달러(약 1조 6천억 원) 어치 비트코인 매입을 공시하고 차량 결제도 허용한다고 발표. CEO 일론 머스크의 발언 하나하나가 가격 변동에 영향을 미치게 되며, 이후 비트코인 결제 중단 발표·매각 등으로 시장 변동성을 키움.' },
+  { year: 2021, markerDate: '2021-02-17', price: '$52,000', tags: ['adopt','global'],
+    title: '스위스 추크주, 세금 납부 암호화폐 결제 공식 채택',
+    desc: '스위스 추크주가 2021년 2월부터 주 전역에서 납세 수단으로 암호화폐 결제를 공식 채택. 추크시는 2016년 일부 기간 시험적으로 도입한 바 있으며, 이번에 주 전체로 확대됨.' },
   { year: 2021, markerDate: '2021-04-14', price: '$64,804', tags: ['etf','global'],
     title: '코인베이스, 나스닥 직상장 (COIN)',
     desc: '미국 최대 거래소 코인베이스가 가상자산 기업 최초로 나스닥에 직상장(DPO). 시총은 한때 1,000억 달러를 돌파함.' },
@@ -626,14 +632,26 @@ const EVENTS = [
   { year: 2019, markerDate: '2019-05-08', price: '$6,100', tags: ['hack','global'],
     title: '바이낸스 해킹 — 7,000 BTC (약 400억 원) 탈취',
     desc: '세계 최대 거래소 바이낸스에서 7,000 BTC(약 4,500만 달러)가 해킹으로 탈취. 바이낸스는 자체 SAFU 펀드로 피해액 전액을 보전함.' },
+  { year: 2019, markerDate: '2019-09-23', price: '$9,900', tags: ['etf','global'],
+    title: 'Bakkt, 비트코인 현물결제 선물거래 개시',
+    desc: '뉴욕증권거래소 모회사 ICE(인터컨티넨탈거래소)가 설립한 Bakkt에서 비트코인 선물거래가 시작. CME·CBOE의 기존 선물과 달리 현물 결제 방식을 채택한 최초의 사례.' },
 
   // 2018
   { year: 2018, markerDate: '2018-01-11', price: '$13,000', tags: ['korea','reg'],
     title: '한국 가상자산 실명거래제 전면 시행',
     desc: '금융위원회가 가상자산 실명 확인 입출금 서비스를 전면 시행. 본인 명의 은행 계좌를 통해서만 거래소 입출금이 가능해지고 익명 거래가 전면 금지됨.' },
+  { year: 2018, markerDate: '2018-01-11', price: '$13,000', tags: ['tech'],
+    title: 'DMM Bitcoin 서비스 개시',
+    desc: 'FX·증권사업도 운영하는 DMM 그룹이 거래소(판매소)를 설립하고 DMM Bitcoin을 개시. 일본의 대형 인터넷 기업 그룹이 가상자산 시장에 본격 진입한 사례.' },
+  { year: 2018, markerDate: '2018-01-15', price: '$14,000', tags: ['tech'],
+    title: 'Lightning Network 최초 실물 구매',
+    desc: '즉시·무수수료 결제를 가능케 하는 Lightning Network를 이용해 VPN 서비스 업체 TorGuard에서 VPN 라우터를 구매한 사용자가 등장. 세계 최초의 Lightning Network 실물 구매 사례로 기록됨.' },
   { year: 2018, markerDate: '2018-01-26', price: '$11,000', tags: ['hack','global'],
     title: '코인체크 해킹 — NEM 580억 엔 탈취',
-    desc: '일본 최대 거래소 코인체크에서 NEM 약 5억 2,300만 개(580억 엔)가 탈취. 가상자산 역사상 최대 규모 해킹 사건 중 하나로 한국 투자자들도 상당수 피해를 입음.' },
+    desc: '일본 최대 거래소 코인체크에서 NEM 약 5억 2,300만 개(580억 엔)가 탈취. 가상자산 역사상 최대 규모 해킹 사건 중 하나로 국내 투자자들도 상당수 피해를 입음.' },
+  { year: 2018, markerDate: '2018-01-30', price: '$10,000', tags: ['reg','global'],
+    title: 'Facebook, 가상자산 관련 광고 전면 금지',
+    desc: '페이스북이 사기성·위험성이 높다는 이유로 가상자산·ICO·바이너리옵션 관련 광고를 전 세계에서 전면 금지. 이후 같은 해 3월 구글·트위터도 연달아 동일한 조치를 발표함.' },
   { year: 2018, markerDate: '2018-09-14', price: '$6,500', tags: ['hack','korea'],
     title: '빗썸 2차 해킹 — 약 350억 원 규모 가상자산 유출',
     desc: '국내 최대 거래소 빗썸에서 EOS·XRP 등 약 350억 원 상당의 가상자산이 해킹으로 유출. 2017년에 이어 두 번째 대규모 해킹으로 국내 거래소 보안 논란이 재점화됨.' },
@@ -651,11 +669,20 @@ const EVENTS = [
   { year: 2017, markerDate: '2017-08-24', price: '$4,300', tags: ['tech'],
     title: 'SegWit(세그윗) 활성화',
     desc: '비트코인의 서명 데이터를 분리 저장하는 SegWit이 활성화. 이론상 블록 한도가 4MB까지 상승하고 bc1q로 시작하는 새 주소 형식(bech32)도 도입됨.' },
+  { year: 2017, markerDate: '2017-12-10', price: '$15,000', tags: ['etf','global'],
+    title: 'CBOE·CME, 비트코인 선물거래 개시',
+    desc: '세계 최대 선물거래소 CME(시카고상품거래소)와 CBOE(시카고옵션거래소)에서 비트코인 선물거래가 차례로 개시. 월스트리트 주류 금융 시장에 비트코인이 본격 편입된 역사적 사건.' },
   { year: 2017, markerDate: '2017-12-17', price: '$19,783', tags: ['ath'],
     title: '비트코인 역대 최고가(당시) — 19,783달러, 1차 대불장 절정',
     desc: '비트코인·알트코인 전반이 폭등하며 코인 열풍이 한국을 강타. 김치 프리미엄이 30% 이상에 달했으며 \'억대 수익자\'가 주요 미디어 화제가 됨. 이후 80% 이상 급락하며 버블 붕괴.' },
 
   // 2016
+  { year: 2016, markerDate: '2016-03-01', price: '$430', tags: ['adopt','global'],
+    title: 'DMM.com 비트코인 결제 수용 개시',
+    desc: '통판·렌탈 등을 운영하는 종합 사이트 DMM.com이 비트코인 결제를 시작. 일본 대기업의 비트코인 결제 수용 첫 사례. 단, 2018년 1월에 결제 서비스를 종료함.' },
+  { year: 2016, markerDate: '2016-04-27', price: '$450', tags: ['adopt','global'],
+    title: 'Steam, 비트코인 결제 수용 시작',
+    desc: 'PC 게임 다운로드 판매 플랫폼 Steam이 비트코인 결제를 시작. 한국에서도 이용자가 많은 글로벌 플랫폼의 비트코인 결제 도입 사례. 이후 2017년 수수료 문제로 결제 종료.' },
   { year: 2016, markerDate: '2016-07-09', price: '$650', tags: ['halving'],
     title: '2번째 반감기 (25 BTC → 12.5 BTC)',
     desc: '블록 채굴 보상이 25 BTC에서 12.5 BTC로 절반 감소. 이후 2017년 대불장의 기반이 마련됨.' },
@@ -664,19 +691,46 @@ const EVENTS = [
     desc: '당시 세계 최대 거래량의 홍콩 거래소 Bitfinex가 해킹을 당해 약 12만 BTC가 탈취됨. 사건 직후 비트코인 가격이 약 20% 급락.' },
 
   // 2015
+  { year: 2015, markerDate: '2015-01-04', price: '$270', tags: ['hack','global'],
+    title: 'Bitstamp 해킹 — 500만 달러 상당 비트코인 탈취',
+    desc: 'Mt.Gox 폐쇄 이후 최대 규모 거래소였던 Bitstamp가 해킹 피해를 입어 약 500만 달러 상당의 비트코인이 탈취됨.' },
+  { year: 2015, markerDate: '2015-06-03', price: '$230', tags: ['reg','global'],
+    title: '뉴욕주 비트코인 규제 BitLicense 공식 발표',
+    desc: '미국 뉴욕주에서 비트코인 사업을 면허제로 하는 BitLicense가 공식 발표. 면허 취득 비용에 5,000달러를 부과하는 매우 엄격한 내용으로, 많은 비트코인 관련 기업이 뉴욕에서 철수하게 됨.' },
+  { year: 2015, markerDate: '2015-08-15', price: '$265', tags: ['tech'],
+    title: 'Bitcoin XT 릴리스 — 최초의 커뮤니티 분열',
+    desc: '블록 크기 문제로 비트코인 커뮤니티가 분열되며 개발팀 일부가 Bitcoin XT를 릴리스. 이런 형태의 커뮤니티 분열과 새 버전 릴리스는 비트코인 역사상 처음 있는 일이었음.' },
   { year: 2015, markerDate: '2015-08-01', price: '$290', tags: ['global'],
     title: '마운트곡스 전 CEO 마크 카르펠레스 체포',
     desc: '마운트곡스 파산의 주역인 전 CEO 마크 카르펠레스가 계좌 잔고 부정 조작 혐의로 일본 경찰에 체포. 이후 업무상 횡령 혐의로 재체포됨.' },
+  { year: 2015, markerDate: '2015-10-22', price: '$270', tags: ['reg','global'],
+    title: '유럽사법재판소, 비트코인 거래 VAT(부가세) 면제 판결',
+    desc: '유럽사법재판소가 비트코인 매매에 관한 VAT(부가가치세)는 비과세라는 판결을 내림. 이 소식을 계기로 가격이 크게 상승함.' },
+  { year: 2015, markerDate: '2015-12-23', price: '$460', tags: ['tech'],
+    title: 'Bitcoin Unlimited 릴리스',
+    desc: 'Bitcoin XT에 이어 비트코인 포크 버전인 Bitcoin Unlimited가 공개. 이후 Bitcoin Classic과 합류하는 형태로 살아남아 수년 후 Bitcoin Cash 탄생의 기반이 됨.' },
 
   // 2014
   { year: 2014, markerDate: '2014-02-24', price: '$500', tags: ['hack','global'],
     title: '마운트곡스(Mt.Gox) 파산 — 비트코인 85만 개 증발',
     desc: '초기 세계 최대 거래소 마운트곡스가 해킹으로 약 85만 BTC를 도난당한 뒤 파산 신청. 비트코인 역사상 가장 큰 충격 사건으로, 10년에 걸친 법적 공방 끝에 2024년 일부 채권자 변제가 완료됨.' },
+  { year: 2014, markerDate: '2014-07-18', price: '$620', tags: ['adopt','global'],
+    title: '미국 Dell, 비트코인 결제 수용 시작',
+    desc: '미국 Dell이 미국 거주자 한정으로 비트코인 결제를 시작. 세계 주요 IT 기업의 비트코인 결제 수용 사례로서 당시 큰 화제가 됨.' },
+  { year: 2014, markerDate: '2014-12-11', price: '$340', tags: ['adopt','global'],
+    title: '미국 Microsoft, 비트코인 결제 수용 시작',
+    desc: 'Microsoft가 미국 거주자 한정으로 Windows·Xbox 스토어에서 비트코인 결제를 시작. 글로벌 빅테크 기업의 비트코인 결제 도입으로 주목받음.' },
 
   // 2013
+  { year: 2013, markerDate: '2013-03-11', price: '$46', tags: ['tech'],
+    title: '비트코인 버그로 블록체인 분기 발생',
+    desc: '비트코인 버전 0.8.0의 버그로 인해 수 시간 동안 블록체인이 분기되는 사태가 발생. 이 문제는 0.8.1 버전 업데이트로 신속히 수정됨.' },
   { year: 2013, markerDate: '2013-03-16', price: '$47', tags: ['global'],
     title: '키프로스 금융위기 — 비트코인 가치 저장 수단으로 주목',
     desc: '키프로스 금융위기로 은행 예금 강제 과세 조치가 발표되며 비트코인이 탈중앙 가치 저장 수단으로 처음 주목받음. 당시 가격이 일시적으로 266달러까지 상승.' },
+  { year: 2013, markerDate: '2013-03-19', price: '$65', tags: ['global'],
+    title: '세계 최초 비트코인 ATM 서비스 개시',
+    desc: '미국 캘리포니아주 샌디에이고에 세계 최초의 비트코인 ATM이 설치되어 서비스를 시작.' },
   { year: 2013, markerDate: '2013-10-01', price: '$128', tags: ['global'],
     title: '다크웹 마켓 실크로드 운영자 FBI 체포·폐쇄',
     desc: '비트코인을 결제 수단으로 사용하던 불법 마켓 실크로드의 운영자가 FBI에 체포되고 사이트가 폐쇄. 비트코인의 불법 활용 논란이 본격화됨.' },
@@ -685,11 +739,23 @@ const EVENTS = [
     desc: '비트코인이 처음으로 1,000달러를 돌파하며 역대 최고가를 경신한 같은 날, 중국 정부가 금융 기관의 비트코인 거래를 전면 금지한다고 발표. 이후 가격이 급락.' },
 
   // 2012
+  { year: 2012, markerDate: '2012-05-09', price: '$5', tags: ['global'],
+    title: 'FBI 비트코인 관련 내부 보고서 유출',
+    desc: '비트코인이 불법 행위에 사용될 가능성이 높다는 내용의 FBI 내부 자료가 유출. 규제 당국의 비트코인 주시를 처음으로 공론화한 계기가 됨.' },
+  { year: 2012, markerDate: '2012-11-15', price: '$11', tags: ['adopt','global'],
+    title: 'WordPress, 비트코인 결제 수용 시작',
+    desc: 'WordPress가 비트코인 결제를 시작. 당시 최대 규모의 비트코인 결제 수용 사업자가 됨.' },
   { year: 2012, markerDate: '2012-11-28', price: '$12', tags: ['halving'],
     title: '1번째 반감기 (50 BTC → 25 BTC)',
     desc: '비트코인 최초의 반감기. 블록 보상이 50 BTC에서 25 BTC로 감소. 이후 1년여 만에 가격이 1,000달러를 돌파하며 첫 메가 사이클이 시작됨.' },
 
   // 2011
+  { year: 2011, markerDate: '2011-03-06', price: '$0.9', tags: ['global'],
+    title: '마운트곡스, 일본 법인 Tibanne에 매각',
+    desc: 'Mark Karpelès가 운영하는 일본 법인 Tibanne이 마운트곡스를 인수. 사실상 최초의 일본 국내 비트코인 거래소가 됨.' },
+  { year: 2011, markerDate: '2011-04-16', price: '$1.1', tags: ['global'],
+    title: 'TIME지, 비트코인 특집 기사 게재',
+    desc: 'TIME지가 비트코인을 처음으로 특집으로 다룸. 주요 대형 미디어에서 비트코인이 처음으로 소개된 사례가 됨.' },
   { year: 2011, markerDate: '2011-06-12', price: '$30', tags: ['ath'],
     title: '최초의 비트코인 버블 — 일시 31.91달러',
     desc: '미디어 주목으로 급속히 가격이 상승해 일시 31.91달러를 기록. 이후 수개월에 걸쳐 약 2달러까지 급락하며 최초의 버블 붕괴를 경험.' },
@@ -701,9 +767,18 @@ const EVENTS = [
   { year: 2010, markerDate: '2010-05-22', price: '$0.0025', tags: ['tech'],
     title: '비트코인 피자 데이 — 최초의 실물 거래',
     desc: '피자 2판(약 25달러)과 10,000 BTC가 교환됨. 비트코인으로 실물 상품을 구매한 최초의 사례. 해당 10,000 BTC는 현재 가치로 수천억 원에 달함.' },
+  { year: 2010, markerDate: '2010-07-11', price: '$0.07', tags: ['global'],
+    title: 'Slashdot 게재 — 비트코인 대중에 처음 알려지다',
+    desc: '컴퓨터 관련 뉴스 게시판 Slashdot에 비트코인이 게재되며 많은 사람들에게 처음으로 알려지게 됨. 이를 계기로 네트워크 참가자와 가격이 급격히 증가함.' },
   { year: 2010, markerDate: '2010-07-18', price: '$0.08', tags: ['global'],
     title: '비트코인 거래소 마운트곡스(Mt.Gox) 서비스 개시',
     desc: 'Jed McCaleb에 의해 세계 최대 거래소로 성장하게 되는 마운트곡스가 서비스를 시작. 전신은 트레이딩카드게임 Magic: The Gathering의 온라인 교환소였음.' },
+  { year: 2010, markerDate: '2010-08-15', price: '$0.07', tags: ['tech'],
+    title: '비트코인 버그로 1,840억 BTC 위조 사태',
+    desc: '비트코인의 취약점을 이용해 1,840억 BTC가 위조됨. 비트코인 역사상 최악의 보안 사고였지만 개발팀이 신속히 수정 대응하여 영향은 거의 남지 않음.' },
+  { year: 2010, markerDate: '2010-09-18', price: '$0.06', tags: ['tech'],
+    title: '세계 최초 마이닝풀 Slush\'s pool, 채굴 성공',
+    desc: '세계 최초의 마이닝풀 Slush\'s pool이 처음으로 비트코인 채굴에 성공. 이후 마이닝풀 방식이 채굴의 주류가 됨.' },
 
   // 2009
   { year: 2009, markerDate: '2009-01-03', price: '$0', tags: ['tech'],
@@ -766,28 +841,26 @@ async function fetchPrice() {
     const price = parseFloat(d.lastPrice);
     const high  = parseFloat(d.highPrice);
     const low   = parseFloat(d.lowPrice);
-    const vol   = parseFloat(d.quoteVolume); // USDT 기준 거래량
+    const vol   = parseFloat(d.quoteVolume);
     const chg   = parseFloat(d.priceChangePercent);
 
-    // KRW 환산: 업비트 현재가 시도, 실패 시 고정 환율 적용
-    let krwPrice = null;
+    // KRW: 업비트 시도, 실패 시 환율 fallback
+    let krwPrice = price * 1370;
     try {
       const kr = await fetch('https://api.upbit.com/v1/ticker?markets=KRW-BTC');
       const kd = await kr.json();
-      krwPrice = kd[0].trade_price;
-    } catch(e) {
-      krwPrice = price * 1370; // fallback 환율
-    }
+      if (kd && kd[0]) krwPrice = kd[0].trade_price;
+    } catch(e) {}
 
-    document.getElementById('p-usd').textContent = '$' + Math.round(price).toLocaleString();
-    document.getElementById('p-krw').textContent = (krwPrice/100000000).toFixed(2) + '억 원';
+    document.getElementById('p-usd').textContent  = '$' + Math.round(price).toLocaleString();
+    document.getElementById('p-krw').textContent  = (krwPrice/100000000).toFixed(2) + '억 원';
     document.getElementById('p-high').textContent = '$' + Math.round(high).toLocaleString();
     document.getElementById('p-low').textContent  = '$' + Math.round(low).toLocaleString();
     document.getElementById('p-vol').textContent  = vol >= 1e9 ? (vol/1e9).toFixed(1)+'B' : (vol/1e6).toFixed(0)+'M';
 
     const el = document.getElementById('p-chg');
-    el.textContent = (chg>=0?'+':'') + chg.toFixed(2) + '%';
-    el.className = 'badge-change ' + (chg>=0?'up':'down');
+    el.textContent = (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%';
+    el.className = 'badge-change ' + (chg >= 0 ? 'up' : 'down');
     el.style.display = 'inline-block';
   } catch(e) {
     console.error('가격 조회 실패:', e);
@@ -855,47 +928,69 @@ function initChart() {
 
 function dateToUnix(str) { return Math.floor(new Date(str).getTime() / 1000); }
 
+// seriesMarkers 인스턴스 보관 (v4 API)
+let seriesMarkersInstance = null;
+let clickHandlerRegistered = false;
+
 function applyMarkers(data) {
-  if (!mainSeries || !showMarkers) { mainSeries && mainSeries.setMarkers && mainSeries.setMarkers([]); return; }
-  const dataStart = data[0]?.time || 0;
-  const dataEnd   = data[data.length-1]?.time || Infinity;
+  // 기존 마커 제거
+  if (seriesMarkersInstance) {
+    try { seriesMarkersInstance.detachPrimitive ? seriesMarkersInstance.detachPrimitive() : null; } catch(e) {}
+    seriesMarkersInstance = null;
+  }
+
+  if (!mainSeries || !showMarkers || !data.length) return;
+
+  const dataStart = data[0].time;
+  const dataEnd   = data[data.length - 1].time;
+
+  const colorMap = {
+    hack: '#A32D2D', reg: '#185FA5', halving: '#EF9F27',
+    etf: '#7F77DD', adopt: '#3B6D11', crash: '#A32D2D',
+    ath: '#EF9F27', tech: '#0F6E56', korea: '#D4537E', global: '#888780',
+  };
 
   const markers = EVENTS
     .filter(ev => {
       const t = dateToUnix(ev.markerDate);
       return t >= dataStart && t <= dataEnd;
     })
-    .map(ev => {
-      // pick marker color by primary tag
-      const primary = ev.tags[0];
-      const colorMap = {
-        hack: '#A32D2D', reg: '#185FA5', halving: '#854F0B',
-        etf: '#534AB7', adopt: '#3B6D11', crash: '#A32D2D',
-        ath: '#854F0B', tech: '#0F6E56', korea: '#993556', global: '#5F5E5A',
-      };
-      return {
-        time: dateToUnix(ev.markerDate),
-        position: 'aboveBar',
-        color: colorMap[primary] || '#5F5E5A',
-        shape: 'circle',
-        text: '',
-        size: 1,
-        id: ev.markerDate,
-      };
-    })
-    .sort((a,b) => a.time - b.time);
+    .map(ev => ({
+      time: dateToUnix(ev.markerDate),
+      position: 'aboveBar',
+      color: colorMap[ev.tags[0]] || '#888780',
+      shape: 'circle',
+      text: '',
+      size: 1.5,
+    }))
+    .sort((a, b) => a.time - b.time);
 
-  try { mainSeries.setMarkers(markers); } catch(e) {}
+  // v4: createSeriesMarkers, 없으면 구버전 setMarkers fallback
+  try {
+    if (typeof LightweightCharts.createSeriesMarkers === 'function') {
+      seriesMarkersInstance = LightweightCharts.createSeriesMarkers(mainSeries, markers);
+    } else if (typeof mainSeries.setMarkers === 'function') {
+      mainSeries.setMarkers(markers);
+    }
+  } catch(e) {
+    console.warn('마커 적용 실패:', e);
+  }
 
-  // click on marker → popup
-  lwChart.subscribeClick(p => {
-    if (!p.time) return;
-    const matched = EVENTS.find(ev => {
-      const t = dateToUnix(ev.markerDate);
-      return Math.abs(t - p.time) < 86400 * 3;
+  // 클릭 핸들러는 한 번만 등록
+  if (!clickHandlerRegistered) {
+    clickHandlerRegistered = true;
+    lwChart.subscribeClick(p => {
+      if (!p.time) return;
+      // 클릭한 시각과 가장 가까운 이벤트 찾기 (±4일 이내)
+      const TOLERANCE = 86400 * 4;
+      let best = null, bestDiff = Infinity;
+      EVENTS.forEach(ev => {
+        const diff = Math.abs(dateToUnix(ev.markerDate) - p.time);
+        if (diff < TOLERANCE && diff < bestDiff) { bestDiff = diff; best = ev; }
+      });
+      if (best) showPopup(best);
     });
-    if (matched) showPopup(matched);
-  });
+  }
 }
 
 function showPopup(ev) {
@@ -905,16 +1000,37 @@ function showPopup(ev) {
   document.getElementById('eventPopup').style.display = 'block';
 }
 
-// 기간 설정 → 바이낸스 interval + limit 매핑
-function getBinanceParams(days) {
-  if (days === 'max')  return { interval: '1W', limit: 1000 };
-  if (days >= 1825)    return { interval: '3d', limit: 610 };
-  if (days >= 365)     return { interval: '1d', limit: 365 };
-  if (days >= 180)     return { interval: '1d', limit: 180 };
-  if (days >= 90)      return { interval: '4h', limit: 540 };
-  if (days >= 30)      return { interval: '4h', limit: 180 };
-  if (days >= 14)      return { interval: '1h', limit: 336 };
-  return                      { interval: '1h', limit: 168 };
+// 바이낸스 klines 페이지네이션 fetch (limit 1000개씩 여러 번)
+async function fetchBinanceKlines(interval, startMs, endMs) {
+  const allData = [];
+  let from = startMs;
+  while (from < endMs) {
+    const url = `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&startTime=${from}&endTime=${endMs}&limit=1000`;
+    const raw = await (await fetch(url)).json();
+    if (!raw.length) break;
+    raw.forEach(d => allData.push({
+      time:  Math.floor(d[0] / 1000),
+      open:  parseFloat(d[1]),
+      high:  parseFloat(d[2]),
+      low:   parseFloat(d[3]),
+      close: parseFloat(d[4]),
+    }));
+    from = raw[raw.length - 1][0] + 1; // 다음 시작점
+    if (raw.length < 1000) break;      // 마지막 페이지
+  }
+  return allData;
+}
+
+// 기간 → interval + startMs 매핑
+function getChartConfig(days) {
+  const now = Date.now();
+  if (days === 'max')  return { interval: '1w', startMs: new Date('2017-08-01').getTime() };
+  if (days >= 1825)    return { interval: '1d', startMs: now - days * 86400000 };
+  if (days >= 365)     return { interval: '1d', startMs: now - days * 86400000 };
+  if (days >= 180)     return { interval: '4h', startMs: now - days * 86400000 };
+  if (days >= 90)      return { interval: '4h', startMs: now - days * 86400000 };
+  if (days >= 30)      return { interval: '1h', startMs: now - days * 86400000 };
+  return                      { interval: '1h', startMs: now - days * 86400000 };
 }
 
 async function loadChart(days, type) {
@@ -923,35 +1039,17 @@ async function loadChart(days, type) {
   document.getElementById('eventPopup').style.display = 'none';
 
   try {
-    const { interval, limit } = getBinanceParams(days);
-
-    // 전체(max) 기간은 여러 번 나눠서 가져옴
-    let allData = [];
-    if (days === 'max') {
-      // 바이낸스는 2017-08 이후 데이터만 있음 — 주봉 1000개면 약 19년치
-      const url = `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&limit=${limit}`;
-      const raw = await (await fetch(url)).json();
-      allData = raw.map(d => ({
-        time: Math.floor(d[0] / 1000),
-        open: parseFloat(d[1]), high: parseFloat(d[2]),
-        low:  parseFloat(d[3]), close: parseFloat(d[4]),
-      }));
-    } else {
-      const startMs = Date.now() - days * 86400 * 1000;
-      const url = `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&startTime=${startMs}&limit=${limit}`;
-      const raw = await (await fetch(url)).json();
-      allData = raw.map(d => ({
-        time: Math.floor(d[0] / 1000),
-        open: parseFloat(d[1]), high: parseFloat(d[2]),
-        low:  parseFloat(d[3]), close: parseFloat(d[4]),
-      }));
-    }
+    const { interval, startMs } = getChartConfig(days);
+    const endMs = Date.now();
+    const allData = await fetchBinanceKlines(interval, startMs, endMs);
 
     // 중복 제거 & 정렬
     const seen = new Set();
     const data = allData
       .filter(d => { if (seen.has(d.time)) return false; seen.add(d.time); return true; })
       .sort((a, b) => a.time - b.time);
+
+    if (!data.length) throw new Error('데이터 없음');
 
     if (!lwChart) initChart();
     if (mainSeries) { try { lwChart.removeSeries(mainSeries); } catch(e){} }
@@ -1007,8 +1105,15 @@ document.getElementById('btnMarkers').addEventListener('click', function() {
   showMarkers = !showMarkers;
   this.textContent = showMarkers ? '📌 이벤트 마커 ON' : '📌 이벤트 마커 OFF';
   this.classList.toggle('markers-on', showMarkers);
-  if (mainSeries) applyMarkers([]);  // trigger re-apply
-  loadChart(currentDays, currentType);
+  if (!showMarkers && seriesMarkersInstance) {
+    try { seriesMarkersInstance.detachPrimitive ? seriesMarkersInstance.detachPrimitive() : null; } catch(e) {}
+    seriesMarkersInstance = null;
+    if (mainSeries && typeof mainSeries.setMarkers === 'function') {
+      try { mainSeries.setMarkers([]); } catch(e) {}
+    }
+  } else {
+    loadChart(currentDays, currentType);
+  }
 });
 
 document.getElementById('popupClose').addEventListener('click', () => {
