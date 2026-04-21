@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>비트코인 시세 | 블록미디어</title>
+<meta name="description" content="비트코인 실시간 가격 차트와 최신 뉴스">
+<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --bg2: #f7f7f5;
+    --bg3: #f0efec;
+    --text: #1a1a18;
+    --text2: #5f5e5a;
+    --text3: #9a9894;
+    --border: rgba(0,0,0,0.10);
+    --border2: rgba(0,0,0,0.18);
+    --accent: #0f6e56;
+    --up: #3B6D11;
+    --up-bg: #EAF3DE;
+    --down: #A32D2D;
+    --down-bg: #FCEBEB;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111110;
+      --bg2: #1a1a18;
+      --bg3: #222220;
+      --text: #e8e7e3;
+      --text2: #888780;
+      --text3: #555450;
+      --border: rgba(255,255,255,0.08);
+      --border2: rgba(255,255,255,0.15);
+      --accent: #1D9E75;
+      --up: #9FE1CB;
+      --up-bg: #0a2e20;
+      --down: #F7C1C1;
+      --down-bg: #2e0a0a;
+    }
+  }
+
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── HEADER ── */
+  .site-header {
+    border-bottom: 1px solid var(--border);
+    padding: 0 1.5rem;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+  .site-logo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    text-decoration: none;
+    letter-spacing: -0.02em;
+  }
+  .site-logo span { color: var(--accent); }
+  .header-sep { width: 1px; height: 16px; background: var(--border2); }
+  .site-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+  }
+  .nav-link {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 5px 10px;
+    border-radius: 4px;
+    text-decoration: none;
+    color: var(--text2);
+    transition: all 0.12s;
+    white-space: nowrap;
+  }
+  .nav-link:hover { background: var(--bg2); color: var(--text); }
+  .nav-link.active { background: var(--text); color: var(--bg); }
+
+  /* ── LAYOUT ── */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.5rem 1.5rem 3rem;
+  }
+
+  /* ── COIN HEADER ── */
+  .coin-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .coin-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #F7931A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .coin-title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .coin-symbol {
+    font-size: 13px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+    margin-left: 4px;
+  }
+  .coin-price-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .coin-price {
+    font-size: 28px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: -0.03em;
+  }
+  .coin-change {
+    font-size: 15px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 4px;
+  }
+  .coin-change.up { background: var(--up-bg); color: var(--up); }
+  .coin-change.down { background: var(--down-bg); color: var(--down); }
+
+  /* ── KPI STRIP ── */
+  .kpi-strip {
+    display: flex;
+    gap: 0;
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+    flex-wrap: wrap;
+  }
+  .kpi-cell {
+    padding: 0.75rem 1.25rem;
+    border-right: 0.5px solid var(--border);
+    min-width: 0;
+  }
+  .kpi-cell:last-child { border-right: none; }
+  .kpi-label {
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 3px;
+    white-space: nowrap;
+  }
+  .kpi-value {
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+  }
+  .kpi-value.up { color: var(--up); }
+  .kpi-value.down { color: var(--down); }
+
+  /* ── MAIN GRID ── */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 1.25rem;
+    align-items: start;
+  }
+
+  /* ── CHART SECTION ── */
+  .chart-section {}
+  .chart-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .period-btn {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 4px 11px;
+    border-radius: 4px;
+    border: 0.5px solid var(--border2);
+    background: transparent;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .period-btn:hover { background: var(--bg3); color: var(--text); }
+  .period-btn.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  .chart-wrap {
+    position: relative;
+    height: 360px;
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  #lwChart { width: 100%; height: 100%; }
+  .chart-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text3);
+    background: var(--bg);
+    z-index: 10;
+  }
+  .ohlc-bar {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text2);
+    z-index: 20;
+    pointer-events: none;
+    line-height: 1.9;
+  }
+
+  /* TV 배지 */
+  .tv-badge {
+    position: absolute;
+    bottom: 10px;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: 4px;
+    text-decoration: none;
+    color: var(--text2);
+    z-index: 25;
+    transition: all 0.15s;
+  }
+  .tv-badge:hover { background: var(--bg3); }
+  .tv-badge-label {
+    font-size: 9px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .tv-logo { height: 14px; width: auto; color: inherit; }
+
+  /* 기간별 퍼포먼스 */
+  .perf-row {
+    display: flex;
+    gap: 0;
+    margin-top: 8px;
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .perf-cell {
+    flex: 1;
+    padding: 8px 6px;
+    text-align: center;
+    border-right: 0.5px solid var(--border);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .perf-cell:last-child { border-right: none; }
+  .perf-cell:hover { background: var(--bg2); }
+  .perf-cell.active { background: var(--bg3); }
+  .perf-cell-label {
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text3);
+    margin-bottom: 3px;
+  }
+  .perf-cell-val {
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+  }
+  .perf-cell-val.up { color: var(--up); }
+  .perf-cell-val.down { color: var(--down); }
+
+  /* ── NEWS SIDEBAR ── */
+  .news-sidebar {}
+  .news-header {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .news-header a {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 400;
+  }
+  .news-list { display: flex; flex-direction: column; gap: 0; }
+  .news-item {
+    display: flex;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 0.5px solid var(--border);
+    text-decoration: none;
+    color: var(--text);
+    transition: background 0.1s;
+  }
+  .news-item:last-child { border-bottom: none; }
+  .news-item:hover { color: var(--accent); }
+  .news-thumb {
+    width: 64px;
+    height: 48px;
+    border-radius: 4px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: var(--bg3);
+  }
+  .news-thumb-placeholder {
+    width: 64px;
+    height: 48px;
+    border-radius: 4px;
+    background: var(--bg3);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+  .news-body { flex: 1; min-width: 0; }
+  .news-title {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.45;
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .news-date {
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text3);
+  }
+  .news-loading {
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text3);
+    padding: 1rem 0;
+    text-align: center;
+  }
+
+  /* ── FOOTER ── */
+  .page-footer {
+    margin-top: 3rem;
+    padding: 1.5rem 0;
+    border-top: 0.5px solid var(--border);
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .footer-tv-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--text3);
+    text-decoration: none;
+  }
+  .footer-tv-logo:hover { color: var(--text2); }
+  .footer-tv-logo .tv-logo { height: 12px; width: auto; color: inherit; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .site-nav { display: none; }
+  }
+  @media (max-width: 640px) {
+    .container { padding: 1rem 0.75rem 2rem; }
+    .site-header { padding: 0 0.75rem; }
+    .coin-price { font-size: 22px; }
+    .chart-wrap { height: 260px; }
+    .kpi-strip { display: grid; grid-template-columns: 1fr 1fr; }
+    .kpi-cell { border-bottom: 0.5px solid var(--border); }
+    .perf-row { display: grid; grid-template-columns: repeat(4, 1fr); }
+    .tv-badge-label { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a href="https://data.blockmedia.co.kr" class="site-logo">BM<span>.</span>DATA</a>
+  <div class="header-sep"></div>
+  <nav class="site-nav">
+    <a class="nav-link" href="https://data.blockmedia.co.kr/index.html">🇰🇷 KRW Market</a>
+    <a class="nav-link" href="https://data.blockmedia.co.kr/bm20_index.html">📊 BM20 Index</a>
+    <a class="nav-link" href="https://data.blockmedia.co.kr/etf.html">🌐 US ETF Flow</a>
+    <a class="nav-link" href="https://data.blockmedia.co.kr/history.html">₿ BTC 역사</a>
+    <a class="nav-link active" href="https://data.blockmedia.co.kr/btc-chart.html">📈 BTC 시세</a>
+    <a class="nav-link" href="https://data.blockmedia.co.kr/performance.html">📅 Performance</a>
+    <a class="nav-link" href="https://data.blockmedia.co.kr/clm_brief.html">🧠 코생지</a>
+  </nav>
+</header>
+
+<div class="container">
+
+  <!-- COIN HEADER -->
+  <div class="coin-header">
+    <div class="coin-icon">₿</div>
+    <div>
+      <span class="coin-title">비트코인</span>
+      <span class="coin-symbol">BTC</span>
+    </div>
+    <div class="coin-price-wrap" style="margin-left: auto;">
+      <span class="coin-price" id="coinPrice">—</span>
+      <span class="coin-change" id="coinChange" style="display:none"></span>
+    </div>
+  </div>
+
+  <!-- KPI STRIP -->
+  <div class="kpi-strip">
+    <div class="kpi-cell">
+      <div class="kpi-label">KRW 환산</div>
+      <div class="kpi-value" id="kpiKrw">—</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">24H 고가</div>
+      <div class="kpi-value up" id="kpiHigh">—</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">24H 저가</div>
+      <div class="kpi-value down" id="kpiLow">—</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">24H 거래량</div>
+      <div class="kpi-value" id="kpiVol">—</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">김치 프리미엄</div>
+      <div class="kpi-value" id="kpiKimchi">—</div>
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="main-grid">
+
+    <!-- 차트 -->
+    <div class="chart-section">
+      <div class="chart-controls">
+        <button class="period-btn active" data-interval="1m" data-limit="360" data-days="1">24시간</button>
+        <button class="period-btn" data-interval="1h" data-limit="168" data-days="7">7일</button>
+        <button class="period-btn" data-interval="4h" data-limit="180" data-days="30">30일</button>
+        <button class="period-btn" data-interval="1d" data-limit="90" data-days="90">3개월</button>
+        <button class="period-btn" data-interval="1d" data-limit="365" data-days="365">1년</button>
+        <button class="period-btn" data-interval="1w" data-limit="500" data-days="max">전체</button>
+      </div>
+
+      <div class="chart-wrap">
+        <div class="chart-loading" id="chartLoading">차트 데이터 불러오는 중...</div>
+        <div id="lwChart"></div>
+        <div class="ohlc-bar" id="ohlcBar"></div>
+        <a class="tv-badge" href="https://www.tradingview.com" target="_blank" rel="noopener">
+          <span class="tv-badge-label">charts by</span>
+          <svg class="tv-logo" viewBox="0 0 755 129" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="TradingView"><path d="M187.671 101.559H202.504V43.4442H221.909V29.4236H168.469V43.4442H187.671V101.559Z" fill="currentColor"/><path d="M221.931 101.558H235.85V77.2764C235.85 68.8434 240.219 63.7634 246.823 63.7634C249.159 63.7634 250.988 64.1699 253.122 64.8814V50.7589C251.395 50.2509 249.972 50.1494 248.448 50.1494C242.759 50.1494 237.577 53.9084 235.85 58.8869V50.7589H221.931V101.558Z" fill="currentColor"/><path d="M279.837 102.676C286.848 102.676 292.131 99.12 294.467 95.869V101.559H308.387V50.759H294.467V56.4485C292.131 53.1975 286.848 49.6416 279.837 49.6416C266.325 49.6416 255.962 61.8335 255.962 76.1585C255.962 90.484 266.325 102.676 279.837 102.676ZM282.784 89.976C275.062 89.976 269.982 84.185 269.982 76.1585C269.982 68.1325 275.062 62.3415 282.784 62.3415C290.505 62.3415 295.585 68.1325 295.585 76.1585C295.585 84.185 290.505 89.976 282.784 89.976Z" fill="currentColor"/><path d="M341.526 102.676C348.536 102.676 353.819 99.12 356.156 95.869V101.559H370.075V25.3596H356.156V56.4485C353.819 53.1975 348.536 49.6416 341.526 49.6416C328.014 49.6416 317.651 61.8335 317.651 76.1585C317.651 90.484 328.014 102.676 341.526 102.676ZM344.472 89.976C336.751 89.976 331.671 84.185 331.671 76.1585C331.671 68.1325 336.751 62.3415 344.472 62.3415C352.194 62.3415 357.274 68.1325 357.274 76.1585C357.274 84.185 352.194 89.976 344.472 89.976Z" fill="currentColor"/><path d="M389.5 42.4281C394.478 42.4281 398.441 38.4657 398.441 33.5891C398.441 28.7124 394.478 24.75 389.5 24.75C384.725 24.75 380.661 28.7124 380.661 33.5891C380.661 38.4657 384.725 42.4281 389.5 42.4281ZM382.591 101.559H396.51V50.759H382.591V101.559Z" fill="currentColor"/><path d="M408.86 101.559H422.779V76.7685C422.779 67.015 427.554 62.3415 434.056 62.3415C439.847 62.3415 442.997 66.8115 442.997 74.127V101.559H456.916V71.79C456.916 58.582 449.601 49.6416 437.307 49.6416C430.703 49.6416 425.522 52.4865 422.779 56.5505V50.759H408.86V101.559Z" fill="currentColor"/><path d="M492.336 88.3505C485.326 88.3505 479.434 83.0675 479.434 75.346C479.434 67.523 485.326 62.3415 492.336 62.3415C499.346 62.3415 505.24 67.523 505.24 75.346C505.24 83.0675 499.346 88.3505 492.336 88.3505ZM490.711 123.809C506.255 123.809 518.04 115.883 518.04 97.596V50.759H504.12V56.4485C501.38 52.4865 495.893 49.6416 489.39 49.6416C476.081 49.6416 465.413 61.0205 465.413 75.346C465.413 89.5695 476.081 100.949 489.39 100.949C495.893 100.949 501.38 98.0025 504.12 94.243V97.6975C504.12 105.826 498.737 111.617 490.508 111.617C484.818 111.617 479.128 109.686 474.658 105.317L467.039 115.68C472.83 121.268 481.871 123.809 490.711 123.809Z" fill="currentColor"/><path d="M547.47 101.559H560.575L590.445 29.4236H574.19L554.075 79.5116L533.655 29.4236H517.7L547.47 101.559Z" fill="currentColor"/><path d="M603.215 42.4281C608.195 42.4281 612.16 38.4657 612.16 33.5891C612.16 28.7124 608.195 24.75 603.215 24.75C598.44 24.75 594.38 28.7124 594.38 33.5891C594.38 38.4657 598.44 42.4281 603.215 42.4281ZM596.31 101.559H610.23V50.759H596.31V101.559Z" fill="currentColor"/><path d="M646.25 102.676C656.92 102.676 665.045 98.2055 669.82 91.297L659.46 83.5755C657.12 87.1315 652.75 89.976 646.35 89.976C639.645 89.976 633.65 86.217 632.84 79.41H670.835C671.14 77.2765 671.04 75.854 671.04 74.635C671.04 58.074 659.355 49.6416 646.045 49.6416C630.605 49.6416 619.325 61.122 619.325 76.1585C619.325 92.2115 631.11 102.676 646.25 102.676ZM633.345 69.961C634.67 63.7635 640.46 61.122 645.64 61.122C650.82 61.122 655.9 63.8655 657.12 69.961H633.345Z" fill="currentColor"/><path d="M723.185 101.559H737.005L753.77 50.759H738.835L729.285 83.2705L718.92 50.759H708.25L697.99 83.2705L688.34 50.759H673.505L690.37 101.559H704.19L713.635 72.7045L723.185 101.559Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M56.142 101.593H29.4077V56.1445H0V29.4102H56.142V101.593ZM96.2435 45.4508C96.2435 54.3095 89.062 61.4915 80.203 61.4915C71.344 61.4915 64.1625 54.3095 64.1625 45.4508C64.1625 36.5918 71.344 29.4102 80.203 29.4102C89.062 29.4102 96.2435 36.5918 96.2435 45.4508ZM80.203 101.593L110.948 29.4102H143.029L112.284 101.593H80.203Z" fill="currentColor"/></svg>
+        </a>
+      </div>
+
+      <!-- 기간별 퍼포먼스 -->
+      <div class="perf-row" id="perfRow">
+        <div class="perf-cell active" data-perf="1d">
+          <div class="perf-cell-label">1일</div>
+          <div class="perf-cell-val" id="perf1d">—</div>
+        </div>
+        <div class="perf-cell" data-perf="7d">
+          <div class="perf-cell-label">1주</div>
+          <div class="perf-cell-val" id="perf7d">—</div>
+        </div>
+        <div class="perf-cell" data-perf="30d">
+          <div class="perf-cell-label">1달</div>
+          <div class="perf-cell-val" id="perf30d">—</div>
+        </div>
+        <div class="perf-cell" data-perf="180d">
+          <div class="perf-cell-label">6달</div>
+          <div class="perf-cell-val" id="perf180d">—</div>
+        </div>
+        <div class="perf-cell" data-perf="ytd">
+          <div class="perf-cell-label">올해</div>
+          <div class="perf-cell-val" id="perfYtd">—</div>
+        </div>
+        <div class="perf-cell" data-perf="1y">
+          <div class="perf-cell-label">1년</div>
+          <div class="perf-cell-val" id="perf1y">—</div>
+        </div>
+        <div class="perf-cell" data-perf="5y">
+          <div class="perf-cell-label">5년</div>
+          <div class="perf-cell-val" id="perf5y">—</div>
+        </div>
+        <div class="perf-cell" data-perf="all">
+          <div class="perf-cell-label">전체</div>
+          <div class="perf-cell-val" id="perfAll">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 뉴스 사이드바 -->
+    <div class="news-sidebar">
+      <div class="news-header">
+        비트코인 최신 뉴스
+        <a href="https://www.blockmedia.co.kr" target="_blank">더보기 →</a>
+      </div>
+      <div class="news-list" id="newsList">
+        <div class="news-loading">뉴스 불러오는 중...</div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="page-footer">
+    <span>데이터: Binance API · Upbit API</span>
+    <span>·</span>
+    <a class="footer-tv-logo" href="https://www.tradingview.com" target="_blank" rel="noopener">
+      charts by&nbsp;<svg class="tv-logo" viewBox="0 0 755 129" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M187.671 101.559H202.504V43.4442H221.909V29.4236H168.469V43.4442H187.671V101.559Z" fill="currentColor"/><path d="M221.931 101.558H235.85V77.2764C235.85 68.8434 240.219 63.7634 246.823 63.7634C249.159 63.7634 250.988 64.1699 253.122 64.8814V50.7589C251.395 50.2509 249.972 50.1494 248.448 50.1494C242.759 50.1494 237.577 53.9084 235.85 58.8869V50.7589H221.931V101.558Z" fill="currentColor"/><path d="M492.336 88.3505C485.326 88.3505 479.434 83.0675 479.434 75.346C479.434 67.523 485.326 62.3415 492.336 62.3415C499.346 62.3415 505.24 67.523 505.24 75.346C505.24 83.0675 499.346 88.3505 492.336 88.3505ZM490.711 123.809C506.255 123.809 518.04 115.883 518.04 97.596V50.759H504.12V56.4485C501.38 52.4865 495.893 49.6416 489.39 49.6416C476.081 49.6416 465.413 61.0205 465.413 75.346C465.413 89.5695 476.081 100.949 489.39 100.949C495.893 100.949 501.38 98.0025 504.12 94.243V97.6975C504.12 105.826 498.737 111.617 490.508 111.617C484.818 111.617 479.128 109.686 474.658 105.317L467.039 115.68C472.83 121.268 481.871 123.809 490.711 123.809Z" fill="currentColor"/><path d="M547.47 101.559H560.575L590.445 29.4236H574.19L554.075 79.5116L533.655 29.4236H517.7L547.47 101.559Z" fill="currentColor"/><path d="M603.215 42.4281C608.195 42.4281 612.16 38.4657 612.16 33.5891C612.16 28.7124 608.195 24.75 603.215 24.75C598.44 24.75 594.38 28.7124 594.38 33.5891C594.38 38.4657 598.44 42.4281 603.215 42.4281ZM596.31 101.559H610.23V50.759H596.31V101.559Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M56.142 101.593H29.4077V56.1445H0V29.4102H56.142V101.593ZM96.2435 45.4508C96.2435 54.3095 89.062 61.4915 80.203 61.4915C71.344 61.4915 64.1625 54.3095 64.1625 45.4508C64.1625 36.5918 71.344 29.4102 80.203 29.4102C89.062 29.4102 96.2435 36.5918 96.2435 45.4508ZM80.203 101.593L110.948 29.4102H143.029L112.284 101.593H80.203Z" fill="currentColor"/></svg>
+    </a>
+    <span>·</span>
+    <span>뉴스: 블록미디어</span>
+  </footer>
+
+</div>
+
+<script>
+const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+const C = {
+  bg:      isDark ? '#111110' : '#ffffff',
+  grid:    isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)',
+  border:  isDark ? '#333331' : '#e0dfdb',
+  text:    isDark ? '#666564' : '#9a9894',
+  up:      '#3B6D11',
+  down:    '#A32D2D',
+  line:    isDark ? '#1D9E75' : '#0f6e56',
+  fillTop: isDark ? 'rgba(29,158,117,0.18)' : 'rgba(15,110,86,0.10)',
+  fillBot: 'rgba(0,0,0,0)',
+};
+
+let lwChart = null, mainSeries = null;
+let currentInterval = '1m';
+let currentLimit = 360;
+let wsConn = null;
+
+// ── 가격 fetch ────────────────────────────────────────────────
+async function fetchPrice() {
+  try {
+    const [binR, upbitR] = await Promise.allSettled([
+      fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT'),
+      fetch('https://api.upbit.com/v1/ticker?markets=KRW-BTC'),
+    ]);
+
+    let usdPrice = 0, chgPct = 0, high = 0, low = 0, vol = 0, krwPrice = 0;
+
+    if (binR.status === 'fulfilled') {
+      const d = await binR.value.json();
+      usdPrice = parseFloat(d.lastPrice);
+      chgPct   = parseFloat(d.priceChangePercent);
+      high     = parseFloat(d.highPrice);
+      low      = parseFloat(d.lowPrice);
+      vol      = parseFloat(d.quoteVolume);
+    }
+    if (upbitR.status === 'fulfilled') {
+      const d = await upbitR.value.json();
+      krwPrice = d[0]?.trade_price || 0;
+    }
+
+    // 메인 가격
+    document.getElementById('coinPrice').textContent = '$' + Math.round(usdPrice).toLocaleString();
+    const chgEl = document.getElementById('coinChange');
+    chgEl.textContent = (chgPct >= 0 ? '+' : '') + chgPct.toFixed(2) + '%';
+    chgEl.className = 'coin-change ' + (chgPct >= 0 ? 'up' : 'down');
+    chgEl.style.display = 'inline-block';
+
+    // KPI
+    document.getElementById('kpiKrw').textContent = (krwPrice/100000000).toFixed(2) + '억 원';
+    document.getElementById('kpiHigh').textContent = '$' + Math.round(high).toLocaleString();
+    document.getElementById('kpiLow').textContent  = '$' + Math.round(low).toLocaleString();
+    document.getElementById('kpiVol').textContent  = vol >= 1e9 ? (vol/1e9).toFixed(1)+'B' : (vol/1e6).toFixed(0)+'M';
+
+    // 김치 프리미엄
+    if (usdPrice > 0 && krwPrice > 0) {
+      const usdKrw = 1380; // 환율 근사값
+      const kimchi = ((krwPrice / (usdPrice * usdKrw)) - 1) * 100;
+      const kEl = document.getElementById('kpiKimchi');
+      kEl.textContent = (kimchi >= 0 ? '+' : '') + kimchi.toFixed(2) + '%';
+      kEl.className = 'kpi-value ' + (kimchi >= 0 ? 'up' : 'down');
+    }
+
+  } catch(e) { console.error(e); }
+}
+
+// ── 퍼포먼스 fetch ────────────────────────────────────────────
+async function fetchPerformance() {
+  try {
+    const now = Date.now();
+    const intervals = {
+      '1d':   { interval: '1h',  startMs: now - 86400000 },
+      '7d':   { interval: '1d',  startMs: now - 7*86400000 },
+      '30d':  { interval: '1d',  startMs: now - 30*86400000 },
+      '180d': { interval: '1d',  startMs: now - 180*86400000 },
+      '1y':   { interval: '1w',  startMs: now - 365*86400000 },
+      '5y':   { interval: '1w',  startMs: now - 5*365*86400000 },
+    };
+
+    const currentPriceEl = document.getElementById('coinPrice').textContent;
+    const currentPrice = parseFloat(currentPriceEl.replace(/[$,]/g, ''));
+    if (!currentPrice) return;
+
+    // YTD
+    const ytdStart = new Date(new Date().getFullYear(), 0, 1).getTime();
+    const ytdFetch = fetch(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&startTime=${ytdStart}&limit=1`);
+
+    // 전체 (2017-08 기준)
+    const allStart = new Date('2017-08-01').getTime();
+    const allFetch = fetch(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1w&startTime=${allStart}&limit=1`);
+
+    const perfKeys = ['1d','7d','30d','180d','1y','5y'];
+    const fetches = perfKeys.map(k =>
+      fetch(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${intervals[k].interval}&startTime=${intervals[k].startMs}&limit=1`)
+    );
+
+    const [ytdRes, allRes, ...perfRes] = await Promise.all([ytdFetch, allFetch, ...fetches]);
+
+    const calcPerf = async (res, id) => {
+      try {
+        const d = await res.json();
+        if (!d || !d[0]) return;
+        const openPrice = parseFloat(d[0][1]);
+        const pct = ((currentPrice - openPrice) / openPrice) * 100;
+        const el = document.getElementById(id);
+        if (el) {
+          el.textContent = (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
+          el.className = 'perf-cell-val ' + (pct >= 0 ? 'up' : 'down');
+        }
+      } catch(e) {}
+    };
+
+    await Promise.all([
+      calcPerf(ytdRes, 'perfYtd'),
+      calcPerf(allRes, 'perfAll'),
+      ...perfRes.map((r, i) => calcPerf(r, 'perf' + ['1d','7d','30d','180d','1y','5y'][i].replace('d','d').replace('y','y'))),
+    ]);
+
+  } catch(e) { console.error(e); }
+}
+
+// ── 차트 init ─────────────────────────────────────────────────
+function initChart() {
+  const wrap = document.getElementById('lwChart');
+  lwChart = LightweightCharts.createChart(wrap, {
+    width: wrap.clientWidth,
+    height: wrap.clientHeight || 360,
+    layout: { background: { color: C.bg }, textColor: C.text, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 },
+    grid: { vertLines: { color: C.grid }, horzLines: { color: C.grid } },
+    crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+    rightPriceScale: { borderColor: C.border },
+    timeScale: { borderColor: C.border, timeVisible: true },
+    handleScroll: true,
+    handleScale: true,
+  });
+
+  lwChart.subscribeCrosshairMove(p => {
+    const bar = document.getElementById('ohlcBar');
+    if (!p || !p.time || !mainSeries) { bar.innerHTML = ''; return; }
+    const sd = p.seriesData?.get(mainSeries);
+    if (!sd) return;
+    const dt = new Date(p.time * 1000);
+    const dateStr = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+    if (sd.open !== undefined) {
+      bar.innerHTML = `<span style="color:var(--text3)">${dateStr}</span>&nbsp; O&nbsp;<b>$${Math.round(sd.open).toLocaleString()}</b>&nbsp;H&nbsp;<b style="color:#3B6D11">$${Math.round(sd.high).toLocaleString()}</b>&nbsp;L&nbsp;<b style="color:#A32D2D">$${Math.round(sd.low).toLocaleString()}</b>&nbsp;C&nbsp;<b>$${Math.round(sd.close).toLocaleString()}</b>`;
+    } else {
+      bar.innerHTML = `<span style="color:var(--text3)">${dateStr}</span>&nbsp; <b>$${Math.round(sd.value).toLocaleString()}</b>`;
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    lwChart.applyOptions({ width: wrap.clientWidth, height: wrap.clientHeight });
+  });
+}
+
+async function loadChart(interval, limit, days) {
+  document.getElementById('chartLoading').style.display = 'flex';
+  try {
+    let url;
+    if (days === 'max') {
+      url = `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&startTime=${new Date('2017-08-01').getTime()}&limit=1000`;
+    } else {
+      const startMs = Date.now() - days * 86400000;
+      url = `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&startTime=${startMs}&limit=${limit}`;
+    }
+
+    const raw = await (await fetch(url)).json();
+    const data = raw.map(d => ({
+      time:  Math.floor(d[0] / 1000),
+      open:  parseFloat(d[1]),
+      high:  parseFloat(d[2]),
+      low:   parseFloat(d[3]),
+      close: parseFloat(d[4]),
+    })).sort((a,b) => a.time - b.time);
+
+    if (!lwChart) initChart();
+    if (mainSeries) { try { lwChart.removeSeries(mainSeries); } catch(e){} }
+
+    // 1일(1분봉)은 라인, 나머지는 캔들
+    if (interval === '1m') {
+      mainSeries = lwChart.addAreaSeries({
+        lineColor: C.line, topColor: C.fillTop, bottomColor: C.fillBot,
+        lineWidth: 1.5, priceLineVisible: false,
+      });
+      mainSeries.setData(data.map(d => ({ time: d.time, value: d.close })));
+    } else {
+      mainSeries = lwChart.addCandlestickSeries({
+        upColor: C.up, downColor: C.down,
+        borderUpColor: C.up, borderDownColor: C.down,
+        wickUpColor: C.up, wickDownColor: C.down,
+        priceLineVisible: false,
+      });
+      mainSeries.setData(data);
+    }
+
+    lwChart.timeScale().fitContent();
+    document.getElementById('chartLoading').style.display = 'none';
+  } catch(e) {
+    document.getElementById('chartLoading').textContent = '데이터를 불러올 수 없습니다.';
+  }
+}
+
+// ── 뉴스 fetch ────────────────────────────────────────────────
+function timeAgo(dateStr) {
+  const diff = (Date.now() - new Date(dateStr)) / 1000;
+  if (diff < 3600)  return Math.floor(diff/60) + '분 전';
+  if (diff < 86400) return Math.floor(diff/3600) + '시간 전';
+  return Math.floor(diff/86400) + '일 전';
+}
+
+async function fetchNews() {
+  const list = document.getElementById('newsList');
+  try {
+    const r = await fetch('https://www.blockmedia.co.kr/wp-json/wp/v2/posts?coin_tag=56514,56551&per_page=10&orderby=date&_fields=id,title,link,date,featured_media,_links&_embed=wp:featuredmedia');
+    const posts = await r.json();
+
+    if (!posts || !posts.length) {
+      list.innerHTML = '<div class="news-loading">뉴스가 없습니다.</div>';
+      return;
+    }
+
+    list.innerHTML = '';
+    posts.forEach(post => {
+      const item = document.createElement('a');
+      item.className = 'news-item';
+      item.href = post.link;
+      item.target = '_blank';
+      item.rel = 'noopener';
+
+      // 썸네일
+      const thumb = post._embedded?.['wp:featuredmedia']?.[0]?.source_url;
+      const imgEl = thumb
+        ? `<img class="news-thumb" src="${thumb}" alt="" loading="lazy" onerror="this.style.display='none'">`
+        : `<div class="news-thumb-placeholder">₿</div>`;
+
+      const titleText = post.title?.rendered?.replace(/&#\d+;/g, c => String.fromCharCode(c.match(/\d+/)[0])) || '';
+
+      item.innerHTML = `
+        ${imgEl}
+        <div class="news-body">
+          <div class="news-title">${titleText}</div>
+          <div class="news-date">${timeAgo(post.date)}</div>
+        </div>`;
+      list.appendChild(item);
+    });
+  } catch(e) {
+    list.innerHTML = '<div class="news-loading">뉴스를 불러올 수 없습니다.</div>';
+  }
+}
+
+// ── 컨트롤 ────────────────────────────────────────────────────
+document.querySelectorAll('.period-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    const interval = this.dataset.interval;
+    const limit    = parseInt(this.dataset.limit);
+    const days     = this.dataset.days === 'max' ? 'max' : parseInt(this.dataset.days);
+    loadChart(interval, limit, days);
+  });
+});
+
+// ── INIT ──────────────────────────────────────────────────────
+fetchPrice();
+loadChart('1m', 360, 1);
+fetchNews();
+
+// 30초마다 가격 갱신
+setInterval(fetchPrice, 30000);
+// 5분마다 뉴스 갱신
+setInterval(fetchNews, 300000);
+// 가격 로드 후 퍼포먼스 계산
+setTimeout(fetchPerformance, 1500);
+</script>
+
+</body>
+</html>
