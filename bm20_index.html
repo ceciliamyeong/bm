@@ -157,6 +157,15 @@
     /* ── Layout ── */
     main { max-width: 1200px; margin: 0 auto; padding: 24px 16px 48px; }
 
+    @media (max-width: 640px) {
+      main { padding: 16px 8px 48px; }
+      .panel { border-radius: 0; border-left: none; border-right: none; margin-left: -8px; margin-right: -8px; }
+      .chart { height: 260px; }
+      .widget { padding: 10px 12px; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .kpi-value { font-size: 18px; }
+    }
+
     /* ── Section ── */
     /* ── Section ── */
     .section { margin-top: 32px; scroll-margin-top: 110px; }
@@ -646,6 +655,7 @@
       },
       toolbox: {
         right: 10,
+        show: window.innerWidth >= 640,
         iconStyle: { borderColor: '#94a3b8' },
         emphasis: { iconStyle: { borderColor: '#0f172a' } },
         feature: { dataZoom: { yAxisIndex: 'none' }, restore: {}, saveAsImage: {} }
@@ -654,11 +664,12 @@
         { type: 'inside', xAxisIndex: 0 },
         { type: 'slider', xAxisIndex: 0, height: 18, bottom: 25, borderColor: '#e2e8f0', fillerColor: 'rgba(88,166,255,.08)', handleStyle: { color: '#2563eb' }, textStyle: { color: '#94a3b8' } }
       ],
+      grid: { top: 40, bottom: 60, left: '8%', right: '8%' },
       legend: { bottom: 0, textStyle: { color: '#94a3b8' } },
       xAxis: { type: 'category', data: dates, ...DARK_XAXIS },
       yAxis: [
-        { type: 'value', name: 'BM20', ...DARK_YAXIS, axisLabel: { ...DARK_YAXIS.axisLabel, formatter: v => Math.round(v).toLocaleString() } },
-        { type: 'value', name: 'BTC', position: 'right', scale: true, ...DARK_YAXIS, axisLabel: { ...DARK_YAXIS.axisLabel, formatter: v => '$' + Math.round(v).toLocaleString() } }
+        { type: 'value', ...DARK_YAXIS, axisLabel: { ...DARK_YAXIS.axisLabel, formatter: v => Math.round(v).toLocaleString() } },
+        { type: 'value', position: 'right', scale: true, ...DARK_YAXIS, axisLabel: { ...DARK_YAXIS.axisLabel, formatter: v => '$' + Math.round(v).toLocaleString() } }
       ],
       series: [
         { name: 'BM20', type: 'line', data: data.map(d => Math.round(d.v)), smooth: true, showSymbol: false, lineStyle: { color: '#7c3aed', width: 2 }, itemStyle: { color: '#7c3aed' }, areaStyle: { opacity: 0.06, color: '#7c3aed' } },
@@ -708,7 +719,7 @@
           return res;
         }
       },
-      grid: { top: 40, bottom: 40, left: 60, right: 60 },
+      grid: { top: 40, bottom: 40, left: '8%', right: '8%' },
       xAxis: { type: 'category', ...DARK_XAXIS }
     };
 
