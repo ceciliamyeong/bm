@@ -520,13 +520,27 @@
 
   /* ── RESPONSIVE ── */
   @media (max-width: 640px) {
-    .container { padding: 0 1rem; }
-    .price-strip { flex-wrap: wrap; }
+    .container { padding: 0 0.5rem; }
+    .site-header { padding: 0 0.75rem; }
+    .price-strip { flex-wrap: wrap; border-radius: 0; border-left: none; border-right: none; }
     .price-cell { min-width: 50%; border-bottom: 0.5px solid var(--border); }
-    .chart-wrap { height: 280px; }
-    .event-item { grid-template-columns: 80px 1fr; gap: 0 0.75rem; }
-    .page-hero h1 { font-size: 22px; }
+    .chart-wrap {
+      height: calc(100vw * 0.65);
+      border-radius: 0;
+      border-left: none;
+      border-right: none;
+      margin-left: -0.5rem;
+      margin-right: -0.5rem;
+    }
+    .chart-controls { padding: 0 0.25rem; flex-wrap: wrap; gap: 4px; }
+    .event-item { grid-template-columns: 76px 1fr; gap: 0 0.5rem; }
+    .page-hero { padding: 1.25rem 0 1rem; }
+    .page-hero h1 { font-size: 20px; }
+    .page-hero p { font-size: 12px; }
     .site-nav { display: none; }
+    .tv-badge { bottom: 8px; right: 8px; padding: 3px 8px; }
+    .tv-badge-label { display: none; }
+    .tv-badge .tv-logo { height: 12px; }
   }
 </style>
 </head>
@@ -535,12 +549,13 @@
 <header class="site-header">
   <a href="https://data.blockmedia.co.kr" class="site-logo">BM<span>.</span>DATA</a>
   <div class="header-sep"></div>
-  <span class="header-breadcrumb">비트코인 역사 &amp; 가격 추이</span>
   <nav class="site-nav">
     <a class="nav-link" href="https://data.blockmedia.co.kr/index.html">🇰🇷 KRW Market</a>
     <a class="nav-link" href="https://data.blockmedia.co.kr/bm20_index.html">📊 BM20 Index</a>
     <a class="nav-link" href="https://data.blockmedia.co.kr/etf.html">🌐 US ETF Flow</a>
-    <a class="nav-link active" href="https://data.blockmedia.co.kr/bitcoin-history.html">₿ BTC 역사</a>
+    <a class="nav-link active" href="https://data.blockmedia.co.kr/history.html">📅 History</a>
+    <a class="nav-link" href="https://data.blockmedia.co.kr/letter.html">📰 Letter</a>
+    <a class="nav-link" href="https://data.blockmedia.co.kr/clm_brief.html">🧠 코생지</a>
   </nav>
 </header>
 
@@ -1092,7 +1107,7 @@ function initChart() {
   });
 
   window.addEventListener('resize', () => {
-    lwChart.applyOptions({ width: wrap.clientWidth });
+    lwChart.applyOptions({ width: wrap.clientWidth, height: wrap.clientHeight });
   });
 }
 
