@@ -246,13 +246,20 @@
   .ohlc-bar {
     position: absolute;
     top: 10px;
-    left: 12px;
+    left: 50%;
+    transform: translateX(-50%);
     font-size: 11px;
     font-family: 'JetBrains Mono', monospace;
     color: var(--text2);
     z-index: 20;
     pointer-events: none;
     line-height: 1.9;
+    white-space: nowrap;
+    background: var(--bg);
+    padding: 2px 10px;
+    border-radius: 4px;
+    border: 0.5px solid var(--border);
+    opacity: 0.92;
   }
 
   /* TV 배지 */
@@ -590,6 +597,23 @@ let currentInterval = '1m';
 let currentLimit = 360;
 let wsConn = null;
 
+// ── 환율 fetch (키 없는 무료 API, 폴백 포함) ──────────────────
+let cachedUsdKrw = 1480; // 초기 fallback
+
+async function fetchUsdKrw() {
+  try {
+    const r = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json');
+    const d = await r.json();
+    if (d?.usd?.krw) { cachedUsdKrw = d.usd.krw; return d.usd.krw; }
+  } catch(e) {}
+  try {
+    const r = await fetch('https://open.er-api.com/v6/latest/USD');
+    const d = await r.json();
+    if (d?.rates?.KRW) { cachedUsdKrw = d.rates.KRW; return d.rates.KRW; }
+  } catch(e) {}
+  return cachedUsdKrw;
+}
+
 // ── 가격 fetch ────────────────────────────────────────────────
 async function fetchPrice() {
   try {
@@ -628,8 +652,7 @@ async function fetchPrice() {
 
     // 김치 프리미엄
     if (usdPrice > 0 && krwPrice > 0) {
-      const usdKrw = 1380; // 환율 근사값
-      const kimchi = ((krwPrice / (usdPrice * usdKrw)) - 1) * 100;
+      const kimchi = ((krwPrice / (usdPrice * cachedUsdKrw)) - 1) * 100;
       const kEl = document.getElementById('kpiKimchi');
       kEl.textContent = (kimchi >= 0 ? '+' : '') + kimchi.toFixed(2) + '%';
       kEl.className = 'kpi-value ' + (kimchi >= 0 ? 'up' : 'down');
@@ -835,10 +858,12 @@ document.querySelectorAll('.period-btn').forEach(btn => {
 });
 
 // ── INIT ──────────────────────────────────────────────────────
-fetchPrice();
+fetchUsdKrw().then(() => fetchPrice());
 loadChart('1m', 360, 1);
 fetchNews();
 
+// 1시간마다 환율 갱신
+setInterval(fetchUsdKrw, 3600000);
 // 30초마다 가격 갱신
 setInterval(fetchPrice, 30000);
 // 5분마다 뉴스 갱신
