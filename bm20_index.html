@@ -510,6 +510,302 @@
     </a>
   </section>
 
+  <!-- ── PORTFOLIO TIMELINE ── -->
+  <section class="section" id="sec-timeline" style="scroll-margin-top:110px; margin-top:32px;">
+    <div class="section-title">
+      <span class="dot blue"></span> 포트폴리오 변천사
+      <span class="sub">2018 Q1 — 2026 Q2 · 34개 분기 리밸런싱 히스토리</span>
+    </div>
+
+    <style>
+      /* ── Timeline styles ── */
+      .tl-year-header {
+        display: flex; align-items: center; gap: 12px;
+        margin-bottom: 10px; cursor: pointer; user-select: none;
+      }
+      .tl-year-label {
+        font-size: 13px; font-weight: 700; color: var(--text2);
+        letter-spacing: 0.04em; flex-shrink: 0; width: 42px;
+      }
+      .tl-year-line { flex: 1; height: 1px; background: var(--border); }
+      .tl-year-toggle { font-size: 11px; color: var(--text2); transition: transform .2s; }
+      .tl-year-group.collapsed .tl-year-toggle { transform: rotate(-90deg); }
+
+      .tl-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
+        gap: 10px; margin-bottom: 20px;
+        overflow: hidden; transition: max-height .4s ease, opacity .3s;
+      }
+      .tl-year-group.collapsed .tl-grid { max-height: 0 !important; opacity: 0; margin-bottom: 0; }
+
+      .tl-card {
+        background: var(--bg2); border: 1px solid var(--border);
+        border-radius: var(--radius); overflow: hidden;
+        transition: border-color .15s, box-shadow .15s; cursor: pointer;
+      }
+      .tl-card:hover { border-color: rgba(37,99,235,.3); box-shadow: 0 2px 8px rgba(15,23,42,.06); }
+      .tl-card.tl-expanded { border-color: rgba(37,99,235,.35); }
+
+      .tl-card-head {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 11px 14px; border-bottom: 1px solid transparent; transition: border-color .15s;
+      }
+      .tl-card.tl-expanded .tl-card-head { border-bottom-color: var(--border); }
+
+      .tl-qtag { font-size: 13px; font-weight: 700; color: var(--text); font-family: monospace; }
+      .tl-badges { display: flex; gap: 5px; flex-wrap: wrap; }
+      .tl-badge {
+        font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600;
+      }
+      .tl-badge-in   { background: rgba(37,99,235,.08);  color: var(--blue);   border: 1px solid rgba(37,99,235,.2); }
+      .tl-badge-out  { background: rgba(220,38,38,.07);  color: var(--red);    border: 1px solid rgba(220,38,38,.18); }
+      .tl-badge-str  { background: rgba(124,58,237,.08); color: var(--purple); border: 1px solid rgba(124,58,237,.2); }
+
+      .tl-preview { display: flex; gap: 3px; align-items: center; }
+      .tl-tmini {
+        font-size: 9px; padding: 2px 5px; border-radius: 3px;
+        background: var(--bg3); border: 1px solid var(--border);
+        color: var(--text2); font-family: monospace; font-weight: 600;
+      }
+      .tl-tmini.t1 { background: rgba(37,99,235,.08); color: var(--blue); border-color: rgba(37,99,235,.2); }
+      .tl-tmore { font-size: 9px; color: var(--text2); }
+      .tl-expand-icon { color: var(--text2); font-size: 12px; transition: transform .2s; }
+      .tl-card.tl-expanded .tl-expand-icon { transform: rotate(180deg); }
+
+      .tl-body { max-height: 0; overflow: hidden; transition: max-height .35s ease; }
+      .tl-card.tl-expanded .tl-body { max-height: 500px; }
+      .tl-body-inner { padding: 14px; }
+
+      .tl-sec-label {
+        font-size: 10px; color: var(--text2); text-transform: uppercase;
+        letter-spacing: .08em; margin-bottom: 7px; font-weight: 600;
+      }
+
+      .tl-wbar {
+        display: flex; height: 26px; border-radius: 5px; overflow: hidden;
+        gap: 1px; margin-bottom: 10px;
+      }
+      .tl-wseg {
+        display: flex; align-items: center; justify-content: center;
+        font-size: 9px; font-weight: 700; color: rgba(255,255,255,.85);
+        overflow: hidden; white-space: nowrap; transition: opacity .15s;
+      }
+      .tl-wseg:hover { opacity: .82; filter: brightness(1.06); }
+
+      .tl-t3grid { display: flex; flex-wrap: wrap; gap: 5px; }
+      .tl-tok {
+        font-size: 11px; padding: 4px 8px; border-radius: 5px;
+        background: var(--bg3); border: 1px solid var(--border);
+        color: var(--text2); font-family: monospace; transition: all .12s;
+      }
+      .tl-tok:hover { border-color: rgba(37,99,235,.3); color: var(--blue); background: rgba(37,99,235,.04); }
+      .tl-tok.tl-new { background: rgba(37,99,235,.07); border-color: rgba(37,99,235,.25); color: var(--blue); }
+
+      .tl-changes {
+        display: flex; gap: 7px; flex-wrap: wrap;
+        padding-top: 10px; border-top: 1px solid var(--border); margin-top: 10px;
+      }
+      .tl-chi { font-size: 11px; font-family: monospace; }
+      .tl-chi-in  { color: var(--blue); }
+      .tl-chi-out { color: var(--red); }
+      .tl-chi-str { color: var(--purple); }
+
+      .tl-stats {
+        display: grid; grid-template-columns: repeat(3, 1fr);
+        gap: 1px; background: var(--border); border-radius: 5px; overflow: hidden; margin-top: 8px;
+      }
+      .tl-stat { background: var(--bg3); padding: 7px 10px; text-align: center; }
+      .tl-stat-v { font-size: 13px; font-weight: 800; color: var(--text); font-family: monospace; }
+      .tl-stat-l { font-size: 10px; color: var(--text2); margin-top: 2px; }
+
+      @media (max-width: 600px) {
+        .tl-grid { grid-template-columns: 1fr; }
+        .tl-preview { display: none; }
+      }
+    </style>
+
+    <!-- 범례 -->
+    <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:20px; font-size:12px; color:var(--text2);">
+      <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--blue);margin-right:5px;vertical-align:middle;"></span>T1 고정 대형주</span>
+      <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:rgba(100,116,139,.4);margin-right:5px;vertical-align:middle;"></span>T3 균등 편입</span>
+      <span style="color:var(--blue); font-weight:600;">■ 신규 편입</span>
+      <span style="color:var(--red); font-weight:600;">■ 이탈</span>
+    </div>
+
+    <div id="tlTimeline"></div>
+  </section>
+
+  <script>
+  (function(){
+    const DATA = {
+      "2026Q2": ["BTC:0.3","ETH:0.2","USDT:0.05","BNB:0.05","XRP:0.05","SOL:0.05","TRX:0.02","DOGE:0.02","HYPE:0.02","ADA:0.02","BCH:0.02","LINK:0.02","XLM:0.02","LTC:0.02","ZEC:0.02","AVAX:0.02","HBAR:0.02","SHIB:0.02","SUI:0.02","CC:0.02"],
+      "2026Q1": ["BTC:0.32","ETH:0.2","XRP:0.05","USDT:0.05","BNB:0.05","SOL:0.05","TRX:0.02","DOGE:0.02","ADA:0.02","BCH:0.02","LINK:0.02","HYPE:0.02","ZEC:0.02","XLM:0.02","SUI:0.02","LTC:0.02","AVAX:0.02","HBAR:0.02","SHIB:0.02","TON:0.02"],
+      "2025Q4": ["BTC:0.32","ETH:0.2","XRP:0.05","USDT:0.05","BNB:0.05","SOL:0.05","DOGE:0.02","TRX:0.02","ADA:0.02","HYPE:0.02","LINK:0.02","SUI:0.02","AVAX:0.02","XLM:0.02","BCH:0.02","HBAR:0.02","LTC:0.02","SHIB:0.02","TON:0.02","DOT:0.02"],
+      "2025Q3": ["BTC:0.32","ETH:0.2","USDT:0.05","XRP:0.05","BNB:0.05","SOL:0.05","TRX:0.02","DOGE:0.02","ADA:0.02","HYPE:0.02","SUI:0.02","BCH:0.02","LINK:0.02","XLM:0.02","AVAX:0.02","TON:0.02","SHIB:0.02","HBAR:0.02","LTC:0.02","DOT:0.02"],
+      "2025Q2": ["BTC:0.32","ETH:0.2","USDT:0.05","XRP:0.05","BNB:0.05","SOL:0.05","DOGE:0.02","TRX:0.02","ADA:0.02","LINK:0.02","TON:0.02","XLM:0.02","SHIB:0.02","AVAX:0.02","SUI:0.02","HBAR:0.02","DOT:0.02","BCH:0.02","LTC:0.02","HYPE:0.02"],
+      "2025Q1": ["BTC:0.32","ETH:0.2","XRP:0.05","USDT:0.05","SOL:0.05","BNB:0.05","DOGE:0.02","ADA:0.02","TRX:0.02","AVAX:0.02","SUI:0.02","LINK:0.02","TON:0.02","SHIB:0.02","XLM:0.02","DOT:0.02","HBAR:0.02","BCH:0.02","UNI:0.02","LTC:0.02"],
+      "2024Q4": ["BTC:0.32","ETH:0.2","USDT:0.05","BNB:0.05","SOL:0.05","XRP:0.05","DOGE:0.02","TON:0.02","TRX:0.02","ADA:0.02","AVAX:0.02","SHIB:0.02","LINK:0.02","BCH:0.02","DOT:0.02","NEAR:0.02","SUI:0.02","LTC:0.02","TAO:0.02","APT:0.02"],
+      "2024Q3": ["BTC:0.32","ETH:0.2","USDT:0.05","BNB:0.05","SOL:0.05","XRP:0.05","TON:0.02","DOGE:0.02","ADA:0.02","TRX:0.02","AVAX:0.02","SHIB:0.02","DOT:0.02","LINK:0.02","BCH:0.02","NEAR:0.02","MATIC:0.02","LTC:0.02","UNI:0.02","ICP:0.02"],
+      "2024Q2": ["BTC:0.32","ETH:0.2","USDT:0.05","BNB:0.05","SOL:0.05","XRP:0.05","DOGE:0.02","ADA:0.02","TON:0.02","AVAX:0.02","SHIB:0.02","BCH:0.02","DOT:0.02","TRX:0.02","LINK:0.02","MATIC:0.02","ICP:0.02","LTC:0.02","NEAR:0.02","UNI:0.02"],
+      "2024Q1": ["BTC:0.32","ETH:0.2","USDT:0.05","BNB:0.05","SOL:0.05","XRP:0.05","ADA:0.02","AVAX:0.02","DOGE:0.02","TRX:0.02","DOT:0.02","MATIC:0.02","TON:0.02","LINK:0.02","SHIB:0.02","ICP:0.02","LTC:0.02","BCH:0.02","ATOM:0.02","UNI:0.02"],
+      "2023Q4": ["BTC:0.32","ETH:0.2","USDT:0.05","BNB:0.05","SOL:0.05","XRP:0.05","ADA:0.02","DOGE:0.02","TRX:0.02","TON:0.02","MATIC:0.02","DOT:0.02","LTC:0.02","BCH:0.02","LINK:0.02","SHIB:0.02","AVAX:0.02","XLM:0.02","ATOM:0.02","UNI:0.02"],
+      "2023Q3": ["BTC:0.3","ETH:0.2","USDT:0.05","BNB:0.05","SOL:0.05","XRP:0.05","ADA:0.02","DOGE:0.02","LTC:0.02","TRX:0.02","DOT:0.02","MATIC:0.02","BCH:0.02","TON:0.02","AVAX:0.02","SHIB:0.02","LINK:0.02","ATOM:0.02","UNI:0.02","XMR:0.02","XLM:0.02"],
+      "2023Q2": ["BTC:0.32","ETH:0.2","USDT:0.05","BNB:0.05","SOL:0.05","XRP:0.05","ADA:0.02","DOGE:0.02","MATIC:0.02","DOT:0.02","LTC:0.02","SHIB:0.02","TRX:0.02","AVAX:0.02","LINK:0.02","UNI:0.02","ATOM:0.02","XMR:0.02","ETC:0.02","XLM:0.02"],
+      "2023Q1": ["BTC:0.32","ETH:0.2","USDT:0.05","BNB:0.05","SOL:0.05","XRP:0.05","DOGE:0.02","ADA:0.02","MATIC:0.02","LTC:0.02","TRX:0.02","DOT:0.02","SHIB:0.02","UNI:0.02","AVAX:0.02","LINK:0.02","TON:0.02","XMR:0.02","ATOM:0.02","ETC:0.02"],
+      "2022Q4": ["BTC:0.32","ETH:0.2","USDT:0.05","BNB:0.05","SOL:0.05","XRP:0.05","ADA:0.02","DOGE:0.02","DOT:0.02","MATIC:0.02","SHIB:0.02","TRX:0.02","AVAX:0.02","UNI:0.02","LTC:0.02","ETC:0.02","LINK:0.02","ATOM:0.02","XLM:0.02","NEAR:0.02"],
+      "2022Q3": ["BTC:0.32","ETH:0.2","USDT:0.05","BNB:0.05","SOL:0.05","XRP:0.05","ADA:0.02","DOGE:0.02","DOT:0.02","TRX:0.02","SHIB:0.02","AVAX:0.02","MATIC:0.02","UNI:0.02","LTC:0.02","LINK:0.02","XLM:0.02","NEAR:0.02","ATOM:0.02","BCH:0.02"],
+      "2022Q2": ["BTC:0.32","ETH:0.2","USDT:0.05","BNB:0.05","SOL:0.05","XRP:0.05","ADA:0.02","AVAX:0.02","DOT:0.02","DOGE:0.02","SHIB:0.02","MATIC:0.02","NEAR:0.02","ATOM:0.02","UNI:0.02","TRX:0.02","BCH:0.02","ETC:0.02","ALGO:0.02","XLM:0.02"],
+      "2022Q1": ["BTC:0.32","ETH:0.2","BNB:0.05","USDT:0.05","SOL:0.05","XRP:0.05","ADA:0.02","DOT:0.02","AVAX:0.02","DOGE:0.02","SHIB:0.02","MATIC:0.02","UNI:0.02","ALGO:0.02","LTC:0.02","LINK:0.02","NEAR:0.02","BCH:0.02","ATOM:0.02","TRX:0.02"],
+      "2021Q4": ["BTC:0.3","ETH:0.2","XRP:0.05","USDT:0.05","BNB:0.05","ADA:0.0233","SOL:0.0233","USDC:0.0233","DOT:0.0233","DOGE:0.0233","AVAX:0.0233","UNI:0.0233","LINK:0.0233","ALGO:0.0233","LTC:0.0233","BCH:0.0233","MATIC:0.0233","XLM:0.0233","ATOM:0.0233","ICP:0.0233"],
+      "2021Q3": ["BTC:0.3","ETH:0.2","XRP:0.05","USDT:0.05","BNB:0.05","ADA:0.0233","DOGE:0.0233","USDC:0.0233","DOT:0.0233","UNI:0.0233","BCH:0.0233","LTC:0.0233","SOL:0.0233","LINK:0.0233","MATIC:0.0233","ETC:0.0233","THETA:0.0233","ICP:0.0233","XLM:0.0233","VET:0.0233"],
+      "2021Q2": ["BTC:0.3","ETH:0.2","XRP:0.05","USDT:0.05","BNB:0.05","ADA:0.0233","DOT:0.0233","UNI:0.0233","USDC:0.0233","BCH:0.0233","LTC:0.0233","LINK:0.0233","THETA:0.0233","FIL:0.0233","XLM:0.0233","TRX:0.0233","DOGE:0.0233","SOL:0.0233","VET:0.0233","EOS:0.0233"],
+      "2021Q1": ["BTC:0.3","ETH:0.2","XRP:0.05","USDT:0.05","BNB:0.05","LTC:0.0233","DOT:0.0233","BCH:0.0233","ADA:0.0233","LINK:0.0233","USDC:0.0233","XLM:0.0233","EOS:0.0233","THETA:0.0233","TRX:0.0233","XEM:0.0233","VET:0.0233","XMR:0.0233","XTZ:0.0233","UNI:0.0233"],
+      "2020Q4": ["BTC:0.3","ETH:0.2","XRP:0.1","USDT:0.05","BNB:0.05","BCH:0.02","LINK:0.02","DOT:0.02","LTC:0.02","ADA:0.02","EOS:0.02","TRX:0.02","XMR:0.02","XTZ:0.02","XLM:0.02","NEO:0.02","ATOM:0.02","XEM:0.02","UNI:0.02","THETA:0.02"],
+      "2020Q3": ["BTC:0.3","ETH:0.2","XRP:0.1","USDT:0.05","BNB:0.05","BCH:0.02","LTC:0.02","ADA:0.02","EOS:0.02","XTZ:0.02","LINK:0.02","XLM:0.02","TRX:0.02","XMR:0.02","VET:0.02","NEO:0.02","ETC:0.02","MIOTA:0.02","DASH:0.02","ATOM:0.02"],
+      "2020Q2": ["BTC:0.3","ETH:0.2","XRP:0.1","USDT:0.05","BNB:0.05","BCH:0.02","LTC:0.02","EOS:0.02","XTZ:0.02","XMR:0.02","XLM:0.02","TRX:0.02","ADA:0.02","LINK:0.02","ATOM:0.02","DASH:0.02","ETC:0.02","NEO:0.02","MIOTA:0.02","XEM:0.02"],
+      "2020Q1": ["BTC:0.3","ETH:0.2","XRP:0.1","USDT:0.05","BNB:0.05","BCH:0.02","LTC:0.02","EOS:0.02","XMR:0.02","XLM:0.02","TRX:0.02","ADA:0.02","XTZ:0.02","ATOM:0.02","NEO:0.02","LINK:0.02","ETC:0.02","MIOTA:0.02","DASH:0.02","MKR:0.02"],
+      "2019Q4": ["BTC:0.3","ETH:0.2","XRP:0.1","USDT:0.0235","BCH:0.0235","LTC:0.0235","EOS:0.0235","BNB:0.0235","XLM:0.0235","ADA:0.0235","TRX:0.0235","XMR:0.0235","LINK:0.0235","MIOTA:0.0235","DASH:0.0235","XTZ:0.0235","ETC:0.0235","ATOM:0.0235","XEM:0.0235","MKR:0.0235"],
+      "2019Q3": ["BTC:0.3","ETH:0.2","XRP:0.1","LTC:0.0235","BCH:0.0235","EOS:0.0235","BNB:0.0235","USDT:0.0235","TRX:0.0235","ADA:0.0235","XLM:0.0235","XMR:0.0235","DASH:0.0235","NEO:0.0235","LINK:0.0235","MIOTA:0.0235","ATOM:0.0235","ETC:0.0235","XEM:0.0235","MKR:0.0235"],
+      "2019Q2": ["BTC:0.3","ETH:0.2","XRP:0.1","BCH:0.0235","LTC:0.0235","EOS:0.0235","BNB:0.0235","XLM:0.0235","ADA:0.0235","USDT:0.0235","TRX:0.0235","DASH:0.0235","XMR:0.0235","MIOTA:0.0235","ETC:0.0235","NEO:0.0235","MKR:0.0235","ONT:0.0235","XEM:0.0235","ZEC:0.0235"],
+      "2019Q1": ["BTC:0.3","ETH:0.2","XRP:0.1","BCH:0.0235","EOS:0.0235","LTC:0.0235","XLM:0.0235","USDT:0.0235","TRX:0.0235","ADA:0.0235","MIOTA:0.0235","XMR:0.0235","BNB:0.0235","DASH:0.0235","XEM:0.0235","ETC:0.0235","NEO:0.0235","MKR:0.0235","ZEC:0.0235","WAVES:0.0235"],
+      "2018Q4": ["BTC:0.3","ETH:0.2","XRP:0.1","BCH:0.0235","EOS:0.0235","XLM:0.0235","LTC:0.0235","USDT:0.0235","ADA:0.0235","XMR:0.0235","TRX:0.0235","MIOTA:0.0235","DASH:0.0235","BNB:0.0235","NEO:0.0235","ETC:0.0235","XEM:0.0235","XTZ:0.0235","VET:0.0235","DOGE:0.0235"],
+      "2018Q3": ["BTC:0.3","ETH:0.2","XRP:0.1","BCH:0.0235","EOS:0.0235","LTC:0.0235","XLM:0.0235","ADA:0.0235","MIOTA:0.0235","USDT:0.0235","TRX:0.0235","XMR:0.0235","NEO:0.0235","DASH:0.0235","BNB:0.0235","ETC:0.0235","XEM:0.0235","VEN:0.0235","OMG:0.0235","ONT:0.0235"],
+      "2018Q2": ["BTC:0.3","ETH:0.2","XRP:0.1","BCH:0.0235","LTC:0.0235","EOS:0.0235","ADA:0.0235","XLM:0.0235","NEO:0.0235","XMR:0.0235","MIOTA:0.0235","DASH:0.0235","USDT:0.0235","TRX:0.0235","XEM:0.0235","ETC:0.0235","BNB:0.0235","QTUM:0.0235","VEN:0.0235","OMG:0.0235"],
+      "2018Q1": ["BTC:0.3","ETH:0.2","XRP:0.1","BCH:0.0235","ADA:0.0235","XEM:0.0235","LTC:0.0235","TRX:0.0235","XLM:0.0235","MIOTA:0.0235","DASH:0.0235","EOS:0.0235","XMR:0.0235","NEO:0.0235","QTUM:0.0235","BTG:0.0235","ETC:0.0235","LSK:0.0235","ICX:0.0235","NANO:0.0235"],
+    };
+
+    const CMAP = {
+      BTC:'#f7931a',ETH:'#627eea',XRP:'#346aa9',USDT:'#26a17b',BNB:'#f3ba2f',SOL:'#9945ff',
+      ADA:'#0033ad',DOT:'#e6007a',DOGE:'#c3a634',AVAX:'#e84142',MATIC:'#8247e5',LINK:'#375bd2',
+      TRX:'#ef0027',SHIB:'#ffa409',TON:'#0088cc',NEAR:'#00c08b',LTC:'#bfbbbb',BCH:'#8dc351',
+      ATOM:'#2e3148',UNI:'#ff007a',XLM:'#14b6e7',HBAR:'#555555',SUI:'#4ca3ff',HYPE:'#10b981',
+      ZEC:'#f4b728',CC:'#7c3aed',APT:'#06b6d4',TAO:'#16a34a',ICP:'#f15a24',ALGO:'#000000',
+      VET:'#15bdff',ETC:'#669073',XMR:'#ff6600',DASH:'#008de4',NEO:'#58bf00',EOS:'#000000',
+      THETA:'#2ab8e6',MIOTA:'#131f37',MKR:'#1aab9b',WAVES:'#0155ff',ONT:'#32a4be',OMG:'#1a53f0',
+      QTUM:'#2e9ad0',BTG:'#eba809',LSK:'#0d4ea0',ICX:'#1fc5c9',NANO:'#209ce9',VEN:'#15bdff',
+      USDC:'#2775ca',XTZ:'#a6e000',XEM:'#67b2e8',FIL:'#0090ff',VET2:'#15bdff',
+    };
+
+    const QUARTERS = Object.keys(DATA);
+
+    function getT1(q) {
+      const yr = parseInt(q); const qi = parseInt(q.slice(5));
+      if (yr < 2020) return ['BTC','ETH','XRP'];
+      if (yr === 2020) return ['BTC','ETH','XRP','USDT','BNB'];
+      if (yr === 2021) return ['BTC','ETH','XRP','USDT','BNB'];
+      return ['BTC','ETH','XRP','USDT','BNB','SOL'];
+    }
+
+    function syms(q) { return DATA[q].map(x=>x.split(':')[0]); }
+    function prevQ(q) { const i = QUARTERS.indexOf(q); return i < QUARTERS.length-1 ? QUARTERS[i+1] : null; }
+
+    function diff(q) {
+      const p = prevQ(q); if(!p) return {added:[],removed:[],struct:false};
+      const c = syms(q), pv = syms(p);
+      const added = c.filter(s=>!pv.includes(s));
+      const removed = pv.filter(s=>!c.includes(s));
+      const t1c = getT1(q), t1p = getT1(p);
+      const struct = JSON.stringify([...t1c].sort()) !== JSON.stringify([...t1p].sort());
+      return {added, removed, struct};
+    }
+
+    function renderCard(q) {
+      const tokens = DATA[q];
+      const t1 = getT1(q);
+      const t1tok = tokens.filter(t=>t1.includes(t.split(':')[0]));
+      const t3tok = tokens.filter(t=>!t1.includes(t.split(':')[0]));
+      const {added, removed, struct} = diff(q);
+      const p = prevQ(q);
+
+      let badges = '';
+      if(struct) badges += `<span class="tl-badge tl-badge-str">구조변경</span>`;
+      if(added.length) badges += `<span class="tl-badge tl-badge-in">+${added.join(' +')}</span>`;
+      if(removed.length) badges += `<span class="tl-badge tl-badge-out">-${removed.join(' -')}</span>`;
+
+      const preview = t1.slice(0,3).map(s=>`<span class="tl-tmini t1">${s}</span>`).join('') +
+        `<span class="tl-tmore">+${tokens.length-3}</span>`;
+
+      const wbar = tokens.map(t=>{
+        const [sym,w] = t.split(':'); const wf=parseFloat(w); const pct=(wf*100).toFixed(1);
+        const isT1=t1.includes(sym); const col=CMAP[sym]||'#94a3b8';
+        const lbl = pct>=4?sym:(pct>=2.5?sym.slice(0,3):'');
+        return `<div class="tl-wseg" style="width:${pct}%;background:${col};opacity:${isT1?1:.75}" title="${sym} ${pct}%">${lbl}</div>`;
+      }).join('');
+
+      const t3html = t3tok.map(t=>{
+        const sym=t.split(':')[0]; const isNew=added.includes(sym);
+        return `<span class="tl-tok${isNew?' tl-new':''}">${sym}</span>`;
+      }).join('');
+
+      let changes='';
+      if(added.length||removed.length||struct){
+        const addH=added.map(s=>`<span class="tl-chi tl-chi-in">▲${s}</span>`).join('');
+        const remH=removed.map(s=>`<span class="tl-chi tl-chi-out">▼${s}</span>`).join('');
+        const strH=struct?`<span class="tl-chi tl-chi-str">⚡구조변경</span>`:'';
+        changes=`<div class="tl-changes">${strH}${addH}${remH}</div>`;
+      }
+
+      const t1w=t1tok.reduce((a,t)=>a+parseFloat(t.split(':')[1]),0);
+      const t3w=t3tok[0]?parseFloat(t3tok[0].split(':')[1])*100:2;
+      const chgCount=added.length>0?'+'+added.length:(removed.length>0?'-'+removed.length:'—');
+
+      return `
+        <div class="tl-card" onclick="this.classList.toggle('tl-expanded')">
+          <div class="tl-card-head">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span class="tl-qtag">${q}</span>
+              <div class="tl-badges">${badges}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="tl-preview">${preview}</div>
+              <span class="tl-expand-icon">▾</span>
+            </div>
+          </div>
+          <div class="tl-body">
+            <div class="tl-body-inner">
+              <div class="tl-sec-label">비중 구성</div>
+              <div class="tl-wbar">${wbar}</div>
+              <div class="tl-sec-label">T3 종목 (${t3tok.length}개 · ~${t3w.toFixed(2)}%)</div>
+              <div class="tl-t3grid">${t3html}</div>
+              ${changes}
+              <div class="tl-stats">
+                <div class="tl-stat"><div class="tl-stat-v">${tokens.length}</div><div class="tl-stat-l">총 종목수</div></div>
+                <div class="tl-stat"><div class="tl-stat-v">${(t1w*100).toFixed(0)}%</div><div class="tl-stat-l">T1 비중</div></div>
+                <div class="tl-stat"><div class="tl-stat-v">${chgCount}</div><div class="tl-stat-l">변경종목</div></div>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function render(){
+      const years={};
+      QUARTERS.forEach(q=>{ const yr=q.slice(0,4); if(!years[yr])years[yr]=[]; years[yr].push(q); });
+      const tl=document.getElementById('tlTimeline');
+
+      Object.keys(years).sort((a,b)=>b-a).forEach(yr=>{
+        const qs=years[yr];
+        const grp=document.createElement('div');
+        grp.className='tl-year-group';
+        grp.innerHTML=`<div class="tl-year-header" onclick="this.closest('.tl-year-group').classList.toggle('collapsed')">
+          <span class="tl-year-label">${yr}</span>
+          <div class="tl-year-line"></div>
+          <span class="tl-year-toggle">▾</span>
+        </div>`;
+        const grid=document.createElement('div');
+        grid.className='tl-grid';
+        grid.innerHTML=qs.map(renderCard).join('');
+        grp.appendChild(grid);
+        tl.appendChild(grp);
+        requestAnimationFrame(()=>{ grid.style.maxHeight=grid.scrollHeight+'px'; });
+      });
+    }
+
+    render();
+  })();
+  </script>
+
 </main>
 
 <!-- ── Sub-nav scroll active ── -->
