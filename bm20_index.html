@@ -535,9 +535,8 @@
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
         gap: 10px; margin-bottom: 20px;
-        overflow: hidden; transition: max-height .4s ease, opacity .3s;
       }
-      .tl-year-group.collapsed .tl-grid { max-height: 0 !important; opacity: 0; margin-bottom: 0; }
+      .tl-year-group.collapsed .tl-grid { display: none; }
 
       .tl-card {
         background: var(--bg2); border: 1px solid var(--border);
@@ -751,7 +750,7 @@
       const chgCount=added.length>0?'+'+added.length:(removed.length>0?'-'+removed.length:'—');
 
       return `
-        <div class="tl-card" onclick="tlToggleCard(this)">
+        <div class="tl-card" onclick="this.classList.toggle('tl-expanded')">
           <div class="tl-card-head">
             <div style="display:flex;align-items:center;gap:10px;">
               <span class="tl-qtag">${q}</span>
@@ -779,17 +778,6 @@
         </div>`;
     }
 
-    function tlToggleCard(card) {
-      card.classList.toggle('tl-expanded');
-      // 카드 펼침/접힘 후 부모 그리드 높이 재계산 (애니메이션 완료 후)
-      const grid = card.closest('.tl-grid');
-      if (grid) {
-        setTimeout(() => {
-          grid.style.maxHeight = grid.scrollHeight + 'px';
-        }, 380); // transition 시간(350ms) + 여유
-      }
-    }
-
     function render(){
       const years={};
       QUARTERS.forEach(q=>{ const yr=q.slice(0,4); if(!years[yr])years[yr]=[]; years[yr].push(q); });
@@ -809,9 +797,6 @@
         grid.innerHTML=qs.map(renderCard).join('');
         grp.appendChild(grid);
         tl.appendChild(grp);
-        requestAnimationFrame(()=>{ requestAnimationFrame(()=>{
-          grid.style.maxHeight = (grid.scrollHeight || 2000) + 'px';
-        }); });
       });
     }
 
