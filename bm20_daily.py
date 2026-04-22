@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 # ===================== BM20 Daily — Yahoo Finance (Final, Blockmedia rules) =====================
 # 목적: CoinGecko 없이도 리포트(out/YYYY-MM-DD) 생성. 가중치는
-#   BTC 30% / ETH 20% / XRP 5% / USDT 5% / BNB 5% / SOL 5% / 나머지 15종 = 30% 균등
+#   BTC 32% / ETH 20% / XRP 5% / USDT 5% / BNB 5% / SOL 5% / 나머지 14종 × 2% 균등
 # - 가격/등락률/7일 추세: yfinance
-# - 김치 프리미엄: Upbit KRW-BTC vs (BTC-USD * USDKRW from exchangerate.host), 폴백 1450
-# - 펀딩비: Binance/Bybit (API 실패 시 전일 캐시)
+# - 김치 프리미엄: Upbit KRW-BTC vs (BTC-USD * USDKRW from exchangerate.host), 폴백 1480
 # - 산출물: TXT, CSV, PNGs(bar/trend), PDF, HTML
 # - 분기 리밸런싱 훅: 1/4/7/10월 1일 감지 구조 포함(현재 유니버스 고정이면 결과 동일)
 # - 지수 기준: 최초 기준일 2018-01-01, 시작점 100 (base/bm20_base.json 캐시)
@@ -176,40 +175,16 @@ def update_market_indices():
 # ================== Universe & Mapping ==================
 BEST_COUNT, WORST_COUNT = 3, 3
 
-# 고정 6종 + 균등 15종(총 21)
+# 고정 6종 + 균등 14종(총 20)
 BM20_IDS = [
     # 고정 가중 6종 (T1)
     "bitcoin","ethereum","ripple","tether","binancecoin","solana",
-    # 균등 15종 (2026 Q2 CMC 스냅샷 기반) — 총 21종
+    # 균등 14종 (2026 Q2 CMC 스냅샷 기반) — 총 20종
     "dogecoin","tron","hyperliquid","cardano","bitcoin-cash",
     "chainlink","stellar","litecoin","zcash","avalanche-2",
-    "hedera-hashgraph","shiba-inu","sui","canton","toncoin",
+    "hedera-hashgraph","shiba-inu","sui","canton",
 ]
 
-# TON 야후 심볼 자동 탐지(환경마다 TON-USD / TON11419-USD 다를 수 있음)
-def _yf_resolve(default_symbol, fallback_list):
-    """여러 심볼 중 유효한 데이터를 가진 첫 번째 심볼을 반환합니다."""
-    for t in [default_symbol] + fallback_list:
-        try:
-            # 매우 짧은 기간 데이터를 받아와서 존재하는지 확인
-            h = yf.download(t, period="1d", interval="1d", progress=False)
-            if h is not None and not h.empty:
-                return t
-        except Exception:
-            continue
-    return default_symbol
-
-
-def _yf_ton_symbol():
-    for t in ["TON-USD", "TON11419-USD"]:
-        try:
-            h = yf.download(t, period="5d", interval="1d", progress=False)
-            if h is not None and not h.empty:
-                return t
-        except Exception:
-            pass
-    return "TON-USD"
-    
 YF_MAP = {
     "bitcoin":"BTC-USD",
     "ethereum":"ETH-USD",
@@ -229,7 +204,6 @@ YF_MAP = {
     "hedera-hashgraph":"HBAR-USD",
     "litecoin":"LTC-USD",
     "shiba-inu":"SHIB-USD",
-    "toncoin":"TON11419-USD",
     "zcash":"ZEC-USD",
     "canton":"CC37263-USD",
 }
@@ -239,7 +213,7 @@ SYMBOL_MAP = {
     "solana":"SOL","dogecoin":"DOGE","tron":"TRX","cardano":"ADA",
     "hyperliquid":"HYPE","chainlink":"LINK","sui":"SUI","avalanche-2":"AVAX",
     "stellar":"XLM","bitcoin-cash":"BCH","hedera-hashgraph":"HBAR",
-    "litecoin":"LTC","shiba-inu":"SHIB","toncoin":"TON",
+    "litecoin":"LTC","shiba-inu":"SHIB",
     "zcash":"ZEC","canton":"CC",
 }
 
@@ -252,7 +226,7 @@ CMC_SYMBOL_MAP = {
     "cardano": "ADA", "hyperliquid": "HYPE", "chainlink": "LINK",
     "sui": "SUI", "avalanche-2": "AVAX", "stellar": "XLM",
     "bitcoin-cash": "BCH", "hedera-hashgraph": "HBAR",
-    "litecoin": "LTC", "shiba-inu": "SHIB", "toncoin": "TON",
+    "litecoin": "LTC", "shiba-inu": "SHIB",
     "zcash": "ZEC", "canton": "CC",
 }
 
@@ -319,7 +293,6 @@ def fetch_yf_prices(ids):
 # ================== Kimchi premium ==================
 CACHE = OUT_DIR / "cache"; CACHE.mkdir(exist_ok=True)
 KP_CACHE = CACHE / "kimchi_last.json"
-FD_CACHE = CACHE / "funding_last.json"
 
 def _get(url, params=None, retry=5, timeout=12, headers=None):
     headers = headers or {"User-Agent":"BM20/1.0"}
@@ -340,7 +313,7 @@ def get_kimchi(df):
     except Exception:
         last = read_json(KP_CACHE)
         if last: return last.get("kimchi_pct"), {**last, "is_cache": True}
-        return None, {"dom":"fallback0","glb":"yf","fx":"fixed1450","btc_krw":None,"btc_usd":None,"usdkrw":1450.0,"is_cache":True}
+        return None, {"dom":"fallback0","glb":"yf","fx":"fixed1480","btc_krw":None,"btc_usd":None,"usdkrw":1480.0,"is_cache":True}
 
     # 글로벌 BTC 기준: 바이낸스 실시간 (smart_kimchi_8h.py 와 동일 기준)
     btc_usd = None; glb = None
@@ -359,7 +332,7 @@ def get_kimchi(df):
         except Exception:
             last = read_json(KP_CACHE)
             if last: return last.get("kimchi_pct"), {**last, "is_cache": True}
-            return None, {"dom":dom,"glb":"fallback0","fx":"fixed1450","btc_krw":round(btc_krw,2),"btc_usd":None,"usdkrw":1450.0,"is_cache":True}
+            return None, {"dom":dom,"glb":"fallback0","fx":"fixed1480","btc_krw":round(btc_krw,2),"btc_usd":None,"usdkrw":1480.0,"is_cache":True}
 
     # 환율: Yahoo Finance API 직접 호출 (yfinance 라이브러리 버그 우회)
     try:
@@ -376,9 +349,9 @@ def get_kimchi(df):
             raise ValueError(f"환율 이상값: {usdkrw}")
         print(f"[INFO] USDKRW={usdkrw:.2f} (Yahoo API)")
     except Exception as _e:
-        print(f"[WARN] USDKRW fetch failed: {_e} → 1450 fallback")
-        usdkrw = 1450.0
-        fx = "fixed1450"
+        print(f"[WARN] USDKRW fetch failed: {_e} → 1480 fallback")
+        usdkrw = 1480.0
+        fx = "fixed1480"
     
     kp = ((btc_krw / usdkrw) - btc_usd) / btc_usd * 100
     meta = {
@@ -409,56 +382,27 @@ def _get_try(url, params=None, timeout=12, retry=5, headers=None):
             time.sleep(0.5*(i+1))
     return None
 
-def get_binance_funding(symbol="BTCUSDT"):
-    domains = ["https://fapi.binance.com", "https://fapi1.binance.com", "https://fapi2.binance.com"]
-    for d in domains:
-        j = _get_try(f"{d}/fapi/v1/premiumIndex", {"symbol":symbol})
-        if isinstance(j, dict) and j.get("lastFundingRate") is not None:
-            try: return float(j["lastFundingRate"])*100.0
-            except: pass
-        if isinstance(j, list) and j and j[0].get("lastFundingRate") is not None:
-            try: return float(j[0]["lastFundingRate"])*100.0
-            except: pass
-    for d in domains:
-        j = _get_try(f"{d}/fapi/v1/fundingRate", {"symbol":symbol, "limit":1})
-        if isinstance(j, list) and j:
-            try: return float(j[0]["fundingRate"])*100.0
-            except: pass
-    return None
-
-def get_bybit_funding(symbol="BTCUSDT"):
-    j = _get_try("https://api.bybit.com/v5/market/tickers", {"category":"linear","symbol":symbol})
-    try:
-        lst = j.get("result",{}).get("list",[])
-        if lst and lst[0].get("fundingRate") is not None:
-            return float(lst[0]["fundingRate"])*100.0
-    except: pass
-    return None
-
-def fp(v, dash_text="중"):
-    return dash_text if (v is None or (isinstance(v,float) and np.isnan(v))) else f"{float(v):.4f}%"
-
 # ================== Main Data Build ==================
 # 1) Prices
 df = fetch_yf_prices(BM20_IDS)
 
-# 2) Weights (고정 5종 + 균등 15종) + 분기 리밸런싱 훅
+# 2) Weights (고정 6종 BTC 0.32 + 균등 14종 × 0.02) + 분기 리밸런싱 훅
 FIXED_WEIGHTS = {
-    "bitcoin": 0.30,
+    "bitcoin": 0.32,
     "ethereum": 0.20,
     "ripple":  0.05,
     "tether":  0.05,
     "binancecoin": 0.05,
     "solana":  0.05,
 }
-fixed_sum = sum(FIXED_WEIGHTS.values())  # 0.70
+fixed_sum = sum(FIXED_WEIGHTS.values())  # 0.72
 
 def compute_equal_rest_weights(ids_all: list[str]) -> dict[str, float]:
     ids_remain = [cid for cid in ids_all if cid not in FIXED_WEIGHTS]
-    n = len(ids_remain)  # 기대값 15
-    if n != 15:
-        print(f"[WARN] Remaining count = {n} (expected 15). Check BM20_IDS membership.")
-    w_rest = (1.0 - fixed_sum) / max(1, n)
+    n = len(ids_remain)  # 기대값 14
+    if n != 14:
+        print(f"[WARN] Remaining count = {n} (expected 14). Check BM20_IDS membership.")
+    w_rest = (1.0 - fixed_sum) / max(1, n)  # 0.28 / 14 = 0.02
     w = {cid: FIXED_WEIGHTS.get(cid, w_rest) for cid in ids_all}
     s = sum(w.values())
     if abs(s - 1.0) > 1e-12:
@@ -665,7 +609,7 @@ num_down= int((df["price_change_pct"]<0).sum())
 best = df.sort_values("price_change_pct", ascending=False).head(BEST_COUNT).reset_index(drop=True)
 worst= df.sort_values("price_change_pct", ascending=True ).head(WORST_COUNT).reset_index(drop=True)
 
-# ================== Kimchi & funding ==================
+# ================== Kimchi premium ==================
 kimchi_pct, kp_meta = get_kimchi(df)
 kp_is_cache = bool(kp_meta.get("is_cache")) if kp_meta else False
 # 12시간 이상 캐시면 '구캐시' 표시
@@ -673,28 +617,6 @@ if kp_is_cache and kp_meta and (time.time() - kp_meta.get("ts", 0) > 12*3600):
     kp_is_cache = True
 kp_text_base = fmt_pct(kimchi_pct, 2) if kimchi_pct is not None else "잠정(전일)"
 kp_text = kp_text_base + (" (캐시)" if kp_is_cache else "")
-
-btc_f_bin_live = get_binance_funding("BTCUSDT"); time.sleep(0.2)
-eth_f_bin_live = get_binance_funding("ETHUSDT"); time.sleep(0.2)
-btc_f_byb_live = get_bybit_funding("BTCUSDT");   time.sleep(0.2)
-eth_f_byb_live = get_bybit_funding("ETHUSDT")
-
-last_fd = read_json(FD_CACHE) or {}
-bin_cache_used = False; byb_cache_used = False
-
-btc_f_bin = btc_f_bin_live or last_fd.get("btc_f_bin"); bin_cache_used |= (btc_f_bin_live is None and btc_f_bin is not None)
-eth_f_bin = eth_f_bin_live or last_fd.get("eth_f_bin"); bin_cache_used |= (eth_f_bin_live is None and eth_f_bin is not None)
-btc_f_byb = btc_f_byb_live or last_fd.get("btc_f_byb"); byb_cache_used |= (btc_f_byb_live is None and btc_f_byb is not None)
-eth_f_byb = eth_f_byb_live or last_fd.get("eth_f_byb"); byb_cache_used |= (eth_f_byb_live is None and eth_f_byb is not None)
-
-write_json(FD_CACHE, {"btc_f_bin":btc_f_bin, "eth_f_bin":eth_f_bin, "btc_f_byb":btc_f_byb, "eth_f_byb":eth_f_byb})
-
-bin_suffix = " (캐시)" if bin_cache_used else ""
-byb_suffix = " (캐시)" if byb_cache_used else ""
-
-BIN_TEXT = f"BTC {fp(btc_f_bin)} / ETH {fp(eth_f_bin)}{bin_suffix}"
-BYB_TEXT = (None if (btc_f_byb is None and eth_f_byb is None)
-            else f"BTC {fp(btc_f_byb)} / ETH {fp(eth_f_byb)}{byb_suffix}")
 
 # ================== News (Best/Worst 표현) ==================
 def build_news_editorial():
@@ -728,14 +650,13 @@ def build_news_editorial():
 
     kp_side = "국내 거래소가 해외 대비 소폭 할인되어" if (kimchi_pct is not None and kimchi_pct<0) else "국내 거래소가 소폭 할증되어"
     kp_line = f"국내외 가격 차이를 나타내는 김치 프리미엄은 {fmt_pct(kimchi_pct,2)}로{(' (캐시)' if kp_is_cache else '')}, {kp_side} 거래됐다."
-    fund_line = f"바이낸스 기준 펀딩비는 {BIN_TEXT}" + ("" if BYB_TEXT is None else f", 바이빗은 {BYB_TEXT}") + "로 집계됐다."
 
     body = " ".join([
         f"BM20 지수가 {YMD} 전일 대비 {pct(bm20_chg)} {trend_word}해 {num2(bm20_now)}포인트를 기록했다.",
         breadth,
         best_line, worst_line,
         btc_line, eth_line,
-        kp_line, fund_line
+        kp_line
     ])
     return title, body
 
@@ -953,10 +874,7 @@ metrics = [
     ["상승/하락",   f"{num_up} / {num_down}"],
     ["수익률(1D/7D/30D/MTD/YTD)", f"{pct_fmt(RET_1D)} / {pct_fmt(RET_7D)} / {pct_fmt(RET_30D)} / {pct_fmt(RET_MTD)} / {pct_fmt(RET_YTD)}"],
     ["김치 프리미엄", kp_text],
-    ["펀딩비(Binance)", BIN_TEXT],
 ]
-if BYB_TEXT:
-    metrics.append(["펀딩비(Bybit)", BYB_TEXT])
 mt = Table(metrics, colWidths=[5.0*cm, 11.0*cm]); style_table_basic(mt)
 story += [card([mt]), Spacer(1, 0.45*cm)]
 
@@ -1034,7 +952,7 @@ html = html_tpl.render(
     num_up=num_up, num_down=num_down,
     ret_1d=pct_fmt(RET_1D), ret_7d=pct_fmt(RET_7D), ret_30d=pct_fmt(RET_30D),
     ret_mtd=pct_fmt(RET_MTD), ret_ytd=pct_fmt(RET_YTD),
-    kp_text=kp_text, bin_text=BIN_TEXT, byb_text=BYB_TEXT,
+    kp_text=kp_text,
     best=[{"sym":r["sym"], "pct": f"{r['price_change_pct']:+.2f}%"} for _,r in best.iterrows() if not np.isnan(r["price_change_pct"])],
     worst=[{"sym":r["sym"], "pct": f"{r['price_change_pct']:+.2f}%"} for _,r in worst.iterrows() if not np.isnan(r["price_change_pct"])],
     bar_png=os.path.basename(bar_png), trend_png=os.path.basename(trend_png),
@@ -1076,8 +994,6 @@ def _append_market_history():
       date, bm20_level, bm20_chg_pct,
       sentiment_value, sentiment_label,
       kimchi_pct, usdkrw, k_share_percent,
-      btc_funding_bin, eth_funding_bin,
-      btc_funding_byb, eth_funding_byb,
       btc_dominance
     """
     btc_dominance = _get_btc_dominance_cmc()
@@ -1107,9 +1023,6 @@ def _append_market_history():
     except Exception as e:
         print(f"[WARN] k_share fetch failed: {e}")
 
-    # ── funding rates ───────────────────────────────────────────────
-    # btc_f_bin, eth_f_bin, btc_f_byb, eth_f_byb 는 스크립트 상단에서
-    # 이미 계산됨 (없으면 None)
     def _safe_round(v, n=6):
         try:
             return round(float(v), n) if v is not None else None
@@ -1121,8 +1034,6 @@ def _append_market_history():
         "date", "bm20_level", "bm20_chg_pct",
         "sentiment_value", "sentiment_label",
         "kimchi_pct", "usdkrw", "k_share_percent",
-        "btc_funding_bin", "eth_funding_bin",
-        "btc_funding_byb", "eth_funding_byb",
         "btc_dominance",
     ]
 
@@ -1135,10 +1046,6 @@ def _append_market_history():
         "kimchi_pct":       round(float(kimchi_pct), 4) if kimchi_pct is not None else None,
         "usdkrw":           round(float(kp_meta.get("usdkrw", 0)), 2) if kp_meta else None,
         "k_share_percent":  k_share_percent,
-        "btc_funding_bin":  _safe_round(btc_f_bin),
-        "eth_funding_bin":  _safe_round(eth_f_bin),
-        "btc_funding_byb":  _safe_round(btc_f_byb),
-        "eth_funding_byb":  _safe_round(eth_f_byb),
         "btc_dominance":    btc_dominance,
     }
 
