@@ -6,6 +6,7 @@
 <title>비트코인 시세 | 블록미디어</title>
 <meta name="description" content="비트코인 실시간 가격 차트와 최신 뉴스">
 <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
 
@@ -433,6 +434,92 @@
     .kpi-cell { border-bottom: 0.5px solid var(--border); }
     .perf-row { display: grid; grid-template-columns: repeat(4, 1fr); }
     .tv-badge-label { display: none; }
+  }
+
+  /* ── ETF FLOW SECTION ── */
+  .etf-section {
+    margin-top: 2rem;
+    border-top: 0.5px solid var(--border);
+    padding-top: 1.5rem;
+  }
+  .etf-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .etf-title {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .etf-source {
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text3);
+  }
+  .etf-kpi-row {
+    display: flex;
+    gap: 0;
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+  }
+  .etf-kpi-cell {
+    flex: 1;
+    padding: 0.75rem 1.25rem;
+    border-right: 0.5px solid var(--border);
+  }
+  .etf-kpi-cell:last-child { border-right: none; }
+  .etf-kpi-label {
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 3px;
+  }
+  .etf-kpi-value {
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+  }
+  .etf-kpi-value.up   { color: var(--up); }
+  .etf-kpi-value.down { color: var(--down); }
+  .etf-kpi-date {
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text3);
+    margin-top: 2px;
+  }
+  .etf-chart-wrap {
+    position: relative;
+    height: 200px;
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg);
+    padding: 12px 12px 8px;
+  }
+  .etf-chart-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text3);
+  }
+  @media (max-width: 640px) {
+    .etf-kpi-row { display: grid; grid-template-columns: 1fr 1fr; }
+    .etf-kpi-cell { border-bottom: 0.5px solid var(--border); }
+    .etf-chart-wrap { height: 160px; }
   }
 </style>
 </head>
