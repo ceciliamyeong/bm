@@ -978,17 +978,25 @@ setInterval(fetchPrice,     30000);  // 30초마다 가격
 setInterval(fetchNews,     300000);  // 5분마다 뉴스
 setTimeout(fetchPerformance, 1500);
 
-// ETF는 하루 1회 데이터 — 오후 2시(14:00 KST)에 갱신
+// ETF는 하루 2회 갱신 — 14:00 (1차), 15:10 (지연 대비 2차)
 (function scheduleEtfRefresh() {
-  const now = new Date();
-  const next = new Date();
-  next.setHours(14, 0, 0, 0); // 오늘 14:00
-  if (now >= next) next.setDate(next.getDate() + 1); // 이미 지났으면 내일
-  const msUntil = next - now;
-  setTimeout(() => {
-    loadEtfFlow();
-    setInterval(loadEtfFlow, 24 * 60 * 60 * 1000); // 이후 24시간마다
-  }, msUntil);
+  const TIMES = [
+    { h: 14, m:  0 },
+    { h: 15, m: 10 },
+  ];
+  function msUntil(h, m) {
+    const now  = new Date();
+    const next = new Date();
+    next.setHours(h, m, 0, 0);
+    if (now >= next) next.setDate(next.getDate() + 1); // 이미 지났으면 내일
+    return next - now;
+  }
+  TIMES.forEach(({ h, m }) => {
+    function schedule() {
+      setTimeout(() => { loadEtfFlow(); schedule(); }, msUntil(h, m));
+    }
+    schedule();
+  });
 })();
 </script>
 
