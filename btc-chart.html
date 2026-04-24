@@ -124,11 +124,7 @@
     font-size: 18px;
     flex-shrink: 0;
   }
-  .coin-title {
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-  }
+  .coin-title { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
   .coin-symbol {
     font-size: 13px;
     color: var(--text3);
@@ -154,7 +150,7 @@
     padding: 3px 10px;
     border-radius: 4px;
   }
-  .coin-change.up { background: var(--up-bg); color: var(--up); }
+  .coin-change.up   { background: var(--up-bg);   color: var(--up); }
   .coin-change.down { background: var(--down-bg); color: var(--down); }
 
   /* ── KPI STRIP ── */
@@ -189,7 +185,7 @@
     font-family: 'JetBrains Mono', monospace;
     white-space: nowrap;
   }
-  .kpi-value.up { color: var(--up); }
+  .kpi-value.up   { color: var(--up); }
   .kpi-value.down { color: var(--down); }
 
   /* ── MAIN GRID ── */
@@ -201,7 +197,6 @@
   }
 
   /* ── CHART SECTION ── */
-  .chart-section {}
   .chart-controls {
     display: flex;
     align-items: center;
@@ -220,7 +215,7 @@
     cursor: pointer;
     transition: all 0.12s;
   }
-  .period-btn:hover { background: var(--bg3); color: var(--text); }
+  .period-btn:hover  { background: var(--bg3); color: var(--text); }
   .period-btn.active { background: var(--text); color: var(--bg); border-color: var(--text); }
 
   .chart-wrap {
@@ -262,8 +257,6 @@
     border: 0.5px solid var(--border);
     opacity: 0.92;
   }
-
-  /* TV 배지 */
   .tv-badge {
     position: absolute;
     bottom: 10px;
@@ -307,7 +300,7 @@
     transition: background 0.1s;
   }
   .perf-cell:last-child { border-right: none; }
-  .perf-cell:hover { background: var(--bg2); }
+  .perf-cell:hover  { background: var(--bg2); }
   .perf-cell.active { background: var(--bg3); }
   .perf-cell-label {
     font-size: 10px;
@@ -320,11 +313,10 @@
     font-family: 'JetBrains Mono', monospace;
     font-weight: 600;
   }
-  .perf-cell-val.up { color: var(--up); }
+  .perf-cell-val.up   { color: var(--up); }
   .perf-cell-val.down { color: var(--down); }
 
   /* ── NEWS SIDEBAR ── */
-  .news-sidebar {}
   .news-header {
     font-size: 15px;
     font-weight: 700;
@@ -355,16 +347,14 @@
   .news-item:last-child { border-bottom: none; }
   .news-item:hover { color: var(--accent); }
   .news-thumb {
-    width: 64px;
-    height: 48px;
+    width: 64px; height: 48px;
     border-radius: 4px;
     object-fit: cover;
     flex-shrink: 0;
     background: var(--bg3);
   }
   .news-thumb-placeholder {
-    width: 64px;
-    height: 48px;
+    width: 64px; height: 48px;
     border-radius: 4px;
     background: var(--bg3);
     flex-shrink: 0;
@@ -395,45 +385,6 @@
     color: var(--text3);
     padding: 1rem 0;
     text-align: center;
-  }
-
-  /* ── FOOTER ── */
-  .page-footer {
-    margin-top: 3rem;
-    padding: 1.5rem 0;
-    border-top: 0.5px solid var(--border);
-    font-size: 11px;
-    color: var(--text3);
-    font-family: 'JetBrains Mono', monospace;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-  .footer-tv-logo {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    color: var(--text3);
-    text-decoration: none;
-  }
-  .footer-tv-logo:hover { color: var(--text2); }
-  .footer-tv-logo .tv-logo { height: 12px; width: auto; color: inherit; }
-
-  /* ── RESPONSIVE ── */
-  @media (max-width: 900px) {
-    .main-grid { grid-template-columns: 1fr; }
-    .site-nav { display: none; }
-  }
-  @media (max-width: 640px) {
-    .container { padding: 1rem 0.75rem 2rem; }
-    .site-header { padding: 0 0.75rem; }
-    .coin-price { font-size: 22px; }
-    .chart-wrap { height: 260px; }
-    .kpi-strip { display: grid; grid-template-columns: 1fr 1fr; }
-    .kpi-cell { border-bottom: 0.5px solid var(--border); }
-    .perf-row { display: grid; grid-template-columns: repeat(4, 1fr); }
-    .tv-badge-label { display: none; }
   }
 
   /* ── ETF FLOW SECTION ── */
@@ -516,7 +467,44 @@
     font-family: 'JetBrains Mono', monospace;
     color: var(--text3);
   }
+
+  /* ── FOOTER ── */
+  .page-footer {
+    margin-top: 3rem;
+    padding: 1.5rem 0;
+    border-top: 0.5px solid var(--border);
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .footer-tv-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--text3);
+    text-decoration: none;
+  }
+  .footer-tv-logo:hover { color: var(--text2); }
+  .footer-tv-logo .tv-logo { height: 12px; width: auto; color: inherit; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .site-nav  { display: none; }
+  }
   @media (max-width: 640px) {
+    .container   { padding: 1rem 0.75rem 2rem; }
+    .site-header { padding: 0 0.75rem; }
+    .coin-price  { font-size: 22px; }
+    .chart-wrap  { height: 260px; }
+    .kpi-strip   { display: grid; grid-template-columns: 1fr 1fr; }
+    .kpi-cell    { border-bottom: 0.5px solid var(--border); }
+    .perf-row    { display: grid; grid-template-columns: repeat(4, 1fr); }
+    .tv-badge-label { display: none; }
     .etf-kpi-row { display: grid; grid-template-columns: 1fr 1fr; }
     .etf-kpi-cell { border-bottom: 0.5px solid var(--border); }
     .etf-chart-wrap { height: 160px; }
@@ -604,38 +592,14 @@
 
       <!-- 기간별 퍼포먼스 -->
       <div class="perf-row" id="perfRow">
-        <div class="perf-cell active" data-perf="1d">
-          <div class="perf-cell-label">1일</div>
-          <div class="perf-cell-val" id="perf1d">—</div>
-        </div>
-        <div class="perf-cell" data-perf="7d">
-          <div class="perf-cell-label">1주</div>
-          <div class="perf-cell-val" id="perf7d">—</div>
-        </div>
-        <div class="perf-cell" data-perf="30d">
-          <div class="perf-cell-label">1달</div>
-          <div class="perf-cell-val" id="perf30d">—</div>
-        </div>
-        <div class="perf-cell" data-perf="180d">
-          <div class="perf-cell-label">6달</div>
-          <div class="perf-cell-val" id="perf180d">—</div>
-        </div>
-        <div class="perf-cell" data-perf="ytd">
-          <div class="perf-cell-label">올해</div>
-          <div class="perf-cell-val" id="perfYtd">—</div>
-        </div>
-        <div class="perf-cell" data-perf="1y">
-          <div class="perf-cell-label">1년</div>
-          <div class="perf-cell-val" id="perf1y">—</div>
-        </div>
-        <div class="perf-cell" data-perf="5y">
-          <div class="perf-cell-label">5년</div>
-          <div class="perf-cell-val" id="perf5y">—</div>
-        </div>
-        <div class="perf-cell" data-perf="all">
-          <div class="perf-cell-label">전체</div>
-          <div class="perf-cell-val" id="perfAll">—</div>
-        </div>
+        <div class="perf-cell active" data-perf="1d"><div class="perf-cell-label">1일</div><div class="perf-cell-val" id="perf1d">—</div></div>
+        <div class="perf-cell" data-perf="7d"><div class="perf-cell-label">1주</div><div class="perf-cell-val" id="perf7d">—</div></div>
+        <div class="perf-cell" data-perf="30d"><div class="perf-cell-label">1달</div><div class="perf-cell-val" id="perf30d">—</div></div>
+        <div class="perf-cell" data-perf="180d"><div class="perf-cell-label">6달</div><div class="perf-cell-val" id="perf180d">—</div></div>
+        <div class="perf-cell" data-perf="ytd"><div class="perf-cell-label">올해</div><div class="perf-cell-val" id="perfYtd">—</div></div>
+        <div class="perf-cell" data-perf="1y"><div class="perf-cell-label">1년</div><div class="perf-cell-val" id="perf1y">—</div></div>
+        <div class="perf-cell" data-perf="5y"><div class="perf-cell-label">5년</div><div class="perf-cell-val" id="perf5y">—</div></div>
+        <div class="perf-cell" data-perf="all"><div class="perf-cell-label">전체</div><div class="perf-cell-val" id="perfAll">—</div></div>
       </div>
     </div>
 
@@ -652,8 +616,39 @@
 
   </div>
 
+  <!-- ── ETF FLOW SECTION ── -->
+  <div class="etf-section">
+    <div class="etf-header">
+      <span class="etf-title">🏦 현물 BTC ETF 자금 흐름 (최근 30일)</span>
+      <span class="etf-source">DATA: SoSoValue</span>
+    </div>
+
+    <div class="etf-kpi-row">
+      <div class="etf-kpi-cell">
+        <div class="etf-kpi-label">당일 순유입</div>
+        <div class="etf-kpi-value" id="etfDaily">—</div>
+        <div class="etf-kpi-date" id="etfDailyDate"></div>
+      </div>
+      <div class="etf-kpi-cell">
+        <div class="etf-kpi-label">누적 순유입</div>
+        <div class="etf-kpi-value" id="etfCum">—</div>
+        <div class="etf-kpi-date">출시 이후</div>
+      </div>
+      <div class="etf-kpi-cell">
+        <div class="etf-kpi-label">총 AUM</div>
+        <div class="etf-kpi-value" id="etfAum">—</div>
+        <div class="etf-kpi-date" id="etfAumDate"></div>
+      </div>
+    </div>
+
+    <div class="etf-chart-wrap">
+      <div class="etf-chart-loading" id="etfChartLoading">ETF 데이터 불러오는 중...</div>
+      <canvas id="etfFlowChart"></canvas>
+    </div>
+  </div>
+
   <footer class="page-footer">
-    <span>데이터: Binance API · Upbit API</span>
+    <span>데이터: Binance API · Upbit API · SoSoValue</span>
     <span>·</span>
     <a class="footer-tv-logo" href="https://www.tradingview.com" target="_blank" rel="noopener">
       charts by&nbsp;<svg class="tv-logo" viewBox="0 0 755 129" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M187.671 101.559H202.504V43.4442H221.909V29.4236H168.469V43.4442H187.671V101.559Z" fill="currentColor"/><path d="M221.931 101.558H235.85V77.2764C235.85 68.8434 240.219 63.7634 246.823 63.7634C249.159 63.7634 250.988 64.1699 253.122 64.8814V50.7589C251.395 50.2509 249.972 50.1494 248.448 50.1494C242.759 50.1494 237.577 53.9084 235.85 58.8869V50.7589H221.931V101.558Z" fill="currentColor"/><path d="M492.336 88.3505C485.326 88.3505 479.434 83.0675 479.434 75.346C479.434 67.523 485.326 62.3415 492.336 62.3415C499.346 62.3415 505.24 67.523 505.24 75.346C505.24 83.0675 499.346 88.3505 492.336 88.3505ZM490.711 123.809C506.255 123.809 518.04 115.883 518.04 97.596V50.759H504.12V56.4485C501.38 52.4865 495.893 49.6416 489.39 49.6416C476.081 49.6416 465.413 61.0205 465.413 75.346C465.413 89.5695 476.081 100.949 489.39 100.949C495.893 100.949 501.38 98.0025 504.12 94.243V97.6975C504.12 105.826 498.737 111.617 490.508 111.617C484.818 111.617 479.128 109.686 474.658 105.317L467.039 115.68C472.83 121.268 481.871 123.809 490.711 123.809Z" fill="currentColor"/><path d="M547.47 101.559H560.575L590.445 29.4236H574.19L554.075 79.5116L533.655 29.4236H517.7L547.47 101.559Z" fill="currentColor"/><path d="M603.215 42.4281C608.195 42.4281 612.16 38.4657 612.16 33.5891C612.16 28.7124 608.195 24.75 603.215 24.75C598.44 24.75 594.38 28.7124 594.38 33.5891C594.38 38.4657 598.44 42.4281 603.215 42.4281ZM596.31 101.559H610.23V50.759H596.31V101.559Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M56.142 101.593H29.4077V56.1445H0V29.4102H56.142V101.593ZM96.2435 45.4508C96.2435 54.3095 89.062 61.4915 80.203 61.4915C71.344 61.4915 64.1625 54.3095 64.1625 45.4508C64.1625 36.5918 71.344 29.4102 80.203 29.4102C89.062 29.4102 96.2435 36.5918 96.2435 45.4508ZM80.203 101.593L110.948 29.4102H143.029L112.284 101.593H80.203Z" fill="currentColor"/></svg>
@@ -680,13 +675,10 @@ const C = {
 };
 
 let lwChart = null, mainSeries = null;
-let currentInterval = '1m';
-let currentLimit = 360;
-let wsConn = null;
+let etfFlowChart = null;
 
-// ── 환율 fetch (키 없는 무료 API, 폴백 포함) ──────────────────
-let cachedUsdKrw = 1480; // 초기 fallback
-
+// ── 환율 ─────────────────────────────────────────────────────
+let cachedUsdKrw = 1480;
 async function fetchUsdKrw() {
   try {
     const r = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json');
@@ -701,16 +693,14 @@ async function fetchUsdKrw() {
   return cachedUsdKrw;
 }
 
-// ── 가격 fetch ────────────────────────────────────────────────
+// ── 가격 ─────────────────────────────────────────────────────
 async function fetchPrice() {
   try {
     const [binR, upbitR] = await Promise.allSettled([
       fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT'),
       fetch('https://api.upbit.com/v1/ticker?markets=KRW-BTC'),
     ]);
-
     let usdPrice = 0, chgPct = 0, high = 0, low = 0, vol = 0, krwPrice = 0;
-
     if (binR.status === 'fulfilled') {
       const d = await binR.value.json();
       usdPrice = parseFloat(d.lastPrice);
@@ -723,101 +713,75 @@ async function fetchPrice() {
       const d = await upbitR.value.json();
       krwPrice = d[0]?.trade_price || 0;
     }
-
-    // 메인 가격
     document.getElementById('coinPrice').textContent = '$' + Math.round(usdPrice).toLocaleString();
     const chgEl = document.getElementById('coinChange');
     chgEl.textContent = (chgPct >= 0 ? '+' : '') + chgPct.toFixed(2) + '%';
     chgEl.className = 'coin-change ' + (chgPct >= 0 ? 'up' : 'down');
     chgEl.style.display = 'inline-block';
-
-    // KPI
-    document.getElementById('kpiKrw').textContent = (krwPrice/100000000).toFixed(2) + '억 원';
+    document.getElementById('kpiKrw').textContent  = (krwPrice/100000000).toFixed(2) + '억 원';
     document.getElementById('kpiHigh').textContent = '$' + Math.round(high).toLocaleString();
     document.getElementById('kpiLow').textContent  = '$' + Math.round(low).toLocaleString();
     document.getElementById('kpiVol').textContent  = vol >= 1e9 ? (vol/1e9).toFixed(1)+'B' : (vol/1e6).toFixed(0)+'M';
-
-    // 김치 프리미엄
     if (usdPrice > 0 && krwPrice > 0) {
       const kimchi = ((krwPrice / (usdPrice * cachedUsdKrw)) - 1) * 100;
       const kEl = document.getElementById('kpiKimchi');
       kEl.textContent = (kimchi >= 0 ? '+' : '') + kimchi.toFixed(2) + '%';
       kEl.className = 'kpi-value ' + (kimchi >= 0 ? 'up' : 'down');
     }
-
   } catch(e) { console.error(e); }
 }
 
-// ── 퍼포먼스 fetch ────────────────────────────────────────────
+// ── 퍼포먼스 ─────────────────────────────────────────────────
 async function fetchPerformance() {
   try {
     const now = Date.now();
     const intervals = {
-      '1d':   { interval: '1h',  startMs: now - 86400000 },
-      '7d':   { interval: '1d',  startMs: now - 7*86400000 },
-      '30d':  { interval: '1d',  startMs: now - 30*86400000 },
-      '180d': { interval: '1d',  startMs: now - 180*86400000 },
-      '1y':   { interval: '1w',  startMs: now - 365*86400000 },
-      '5y':   { interval: '1w',  startMs: now - 5*365*86400000 },
+      '1d':   { interval: '1h', startMs: now - 86400000 },
+      '7d':   { interval: '1d', startMs: now - 7*86400000 },
+      '30d':  { interval: '1d', startMs: now - 30*86400000 },
+      '180d': { interval: '1d', startMs: now - 180*86400000 },
+      '1y':   { interval: '1w', startMs: now - 365*86400000 },
+      '5y':   { interval: '1w', startMs: now - 5*365*86400000 },
     };
-
-    const currentPriceEl = document.getElementById('coinPrice').textContent;
-    const currentPrice = parseFloat(currentPriceEl.replace(/[$,]/g, ''));
+    const currentPrice = parseFloat(document.getElementById('coinPrice').textContent.replace(/[$,]/g, ''));
     if (!currentPrice) return;
-
-    // YTD
     const ytdStart = new Date(new Date().getFullYear(), 0, 1).getTime();
-    const ytdFetch = fetch(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&startTime=${ytdStart}&limit=1`);
-
-    // 전체 (2017-08 기준)
     const allStart = new Date('2017-08-01').getTime();
-    const allFetch = fetch(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1w&startTime=${allStart}&limit=1`);
-
     const perfKeys = ['1d','7d','30d','180d','1y','5y'];
-    const fetches = perfKeys.map(k =>
-      fetch(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${intervals[k].interval}&startTime=${intervals[k].startMs}&limit=1`)
-    );
-
-    const [ytdRes, allRes, ...perfRes] = await Promise.all([ytdFetch, allFetch, ...fetches]);
-
+    const [ytdRes, allRes, ...perfRes] = await Promise.all([
+      fetch(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&startTime=${ytdStart}&limit=1`),
+      fetch(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1w&startTime=${allStart}&limit=1`),
+      ...perfKeys.map(k => fetch(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${intervals[k].interval}&startTime=${intervals[k].startMs}&limit=1`)),
+    ]);
     const calcPerf = async (res, id) => {
       try {
         const d = await res.json();
         if (!d || !d[0]) return;
-        const openPrice = parseFloat(d[0][1]);
-        const pct = ((currentPrice - openPrice) / openPrice) * 100;
+        const pct = ((currentPrice - parseFloat(d[0][1])) / parseFloat(d[0][1])) * 100;
         const el = document.getElementById(id);
-        if (el) {
-          el.textContent = (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
-          el.className = 'perf-cell-val ' + (pct >= 0 ? 'up' : 'down');
-        }
+        if (el) { el.textContent = (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%'; el.className = 'perf-cell-val ' + (pct >= 0 ? 'up' : 'down'); }
       } catch(e) {}
     };
-
     await Promise.all([
       calcPerf(ytdRes, 'perfYtd'),
       calcPerf(allRes, 'perfAll'),
-      ...perfRes.map((r, i) => calcPerf(r, 'perf' + ['1d','7d','30d','180d','1y','5y'][i].replace('d','d').replace('y','y'))),
+      ...perfRes.map((r, i) => calcPerf(r, 'perf' + perfKeys[i])),
     ]);
-
   } catch(e) { console.error(e); }
 }
 
-// ── 차트 init ─────────────────────────────────────────────────
+// ── 차트 ─────────────────────────────────────────────────────
 function initChart() {
   const wrap = document.getElementById('lwChart');
   lwChart = LightweightCharts.createChart(wrap, {
-    width: wrap.clientWidth,
-    height: wrap.clientHeight || 360,
+    width: wrap.clientWidth, height: wrap.clientHeight || 360,
     layout: { background: { color: C.bg }, textColor: C.text, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 },
     grid: { vertLines: { color: C.grid }, horzLines: { color: C.grid } },
     crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
     rightPriceScale: { borderColor: C.border },
     timeScale: { borderColor: C.border, timeVisible: true },
-    handleScroll: true,
-    handleScale: true,
+    handleScroll: true, handleScale: true,
   });
-
   lwChart.subscribeCrosshairMove(p => {
     const bar = document.getElementById('ohlcBar');
     if (!p || !p.time || !mainSeries) { bar.innerHTML = ''; return; }
@@ -831,10 +795,7 @@ function initChart() {
       bar.innerHTML = `<span style="color:var(--text3)">${dateStr}</span>&nbsp; <b>$${Math.round(sd.value).toLocaleString()}</b>`;
     }
   });
-
-  window.addEventListener('resize', () => {
-    lwChart.applyOptions({ width: wrap.clientWidth, height: wrap.clientHeight });
-  });
+  window.addEventListener('resize', () => { lwChart.applyOptions({ width: wrap.clientWidth, height: wrap.clientHeight }); });
 }
 
 async function loadChart(interval, limit, days) {
@@ -844,39 +805,19 @@ async function loadChart(interval, limit, days) {
     if (days === 'max') {
       url = `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&startTime=${new Date('2017-08-01').getTime()}&limit=1000`;
     } else {
-      const startMs = Date.now() - days * 86400000;
-      url = `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&startTime=${startMs}&limit=${limit}`;
+      url = `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&startTime=${Date.now() - days*86400000}&limit=${limit}`;
     }
-
     const raw = await (await fetch(url)).json();
-    const data = raw.map(d => ({
-      time:  Math.floor(d[0] / 1000),
-      open:  parseFloat(d[1]),
-      high:  parseFloat(d[2]),
-      low:   parseFloat(d[3]),
-      close: parseFloat(d[4]),
-    })).sort((a,b) => a.time - b.time);
-
+    const data = raw.map(d => ({ time: Math.floor(d[0]/1000), open: parseFloat(d[1]), high: parseFloat(d[2]), low: parseFloat(d[3]), close: parseFloat(d[4]) })).sort((a,b) => a.time - b.time);
     if (!lwChart) initChart();
     if (mainSeries) { try { lwChart.removeSeries(mainSeries); } catch(e){} }
-
-    // 1일(1분봉)은 라인, 나머지는 캔들
     if (interval === '1m') {
-      mainSeries = lwChart.addAreaSeries({
-        lineColor: C.line, topColor: C.fillTop, bottomColor: C.fillBot,
-        lineWidth: 1.5, priceLineVisible: false,
-      });
+      mainSeries = lwChart.addAreaSeries({ lineColor: C.line, topColor: C.fillTop, bottomColor: C.fillBot, lineWidth: 1.5, priceLineVisible: false });
       mainSeries.setData(data.map(d => ({ time: d.time, value: d.close })));
     } else {
-      mainSeries = lwChart.addCandlestickSeries({
-        upColor: C.up, downColor: C.down,
-        borderUpColor: C.up, borderDownColor: C.down,
-        wickUpColor: C.up, wickDownColor: C.down,
-        priceLineVisible: false,
-      });
+      mainSeries = lwChart.addCandlestickSeries({ upColor: C.up, downColor: C.down, borderUpColor: C.up, borderDownColor: C.down, wickUpColor: C.up, wickDownColor: C.down, priceLineVisible: false });
       mainSeries.setData(data);
     }
-
     lwChart.timeScale().fitContent();
     document.getElementById('chartLoading').style.display = 'none';
   } catch(e) {
@@ -884,7 +825,7 @@ async function loadChart(interval, limit, days) {
   }
 }
 
-// ── 뉴스 fetch ────────────────────────────────────────────────
+// ── 뉴스 ─────────────────────────────────────────────────────
 function timeAgo(dateStr) {
   const diff = (Date.now() - new Date(dateStr)) / 1000;
   if (diff < 3600)  return Math.floor(diff/60) + '분 전';
@@ -897,12 +838,7 @@ async function fetchNews() {
   try {
     const r = await fetch('https://www.blockmedia.co.kr/wp-json/wp/v2/posts?coin_tag=56514,56551&per_page=10&orderby=date&_fields=id,title,link,date,featured_media,_links&_embed=wp:featuredmedia');
     const posts = await r.json();
-
-    if (!posts || !posts.length) {
-      list.innerHTML = '<div class="news-loading">뉴스가 없습니다.</div>';
-      return;
-    }
-
+    if (!posts || !posts.length) { list.innerHTML = '<div class="news-loading">뉴스가 없습니다.</div>'; return; }
     list.innerHTML = '';
     posts.forEach(post => {
       const item = document.createElement('a');
@@ -910,21 +846,12 @@ async function fetchNews() {
       item.href = post.link;
       item.target = '_blank';
       item.rel = 'noopener';
-
-      // 썸네일
       const thumb = post._embedded?.['wp:featuredmedia']?.[0]?.source_url;
       const imgEl = thumb
         ? `<img class="news-thumb" src="${thumb}" alt="" loading="lazy" onerror="this.style.display='none'">`
         : `<div class="news-thumb-placeholder">₿</div>`;
-
       const titleText = post.title?.rendered?.replace(/&#\d+;/g, c => String.fromCharCode(c.match(/\d+/)[0])) || '';
-
-      item.innerHTML = `
-        ${imgEl}
-        <div class="news-body">
-          <div class="news-title">${titleText}</div>
-          <div class="news-date">${timeAgo(post.date)}</div>
-        </div>`;
+      item.innerHTML = `${imgEl}<div class="news-body"><div class="news-title">${titleText}</div><div class="news-date">${timeAgo(post.date)}</div></div>`;
       list.appendChild(item);
     });
   } catch(e) {
@@ -932,31 +859,137 @@ async function fetchNews() {
   }
 }
 
-// ── 컨트롤 ────────────────────────────────────────────────────
+// ── ETF Flow ─────────────────────────────────────────────────
+function fmtFlow(val) {
+  if (val == null || isNaN(val)) return '—';
+  const m = val / 1e6;
+  const abs = Math.abs(m);
+  const sign = m >= 0 ? '+' : '-';
+  return abs >= 1000 ? sign + '$' + (abs/1000).toFixed(2) + 'B' : sign + '$' + abs.toFixed(0) + 'M';
+}
+function fmtB(val) {
+  if (val == null || isNaN(val)) return '—';
+  return (val >= 0 ? '' : '-') + '$' + (Math.abs(val)/1e9).toFixed(2) + 'B';
+}
+
+async function loadEtfFlow() {
+  try {
+    const [mRes, hRes] = await Promise.allSettled([
+      fetch('data/etf_btc_metrics.json'),
+      fetch('data/etf_btc_history.json'),
+    ]);
+
+    // KPI
+    if (mRes.status === 'fulfilled' && mRes.value.ok) {
+      const m = await mRes.value.json();
+      const daily = m.dailyNetInflow?.value;
+      const dailyEl = document.getElementById('etfDaily');
+      if (daily != null) {
+        dailyEl.textContent = fmtFlow(daily);
+        dailyEl.className = 'etf-kpi-value ' + (daily >= 0 ? 'up' : 'down');
+      }
+      document.getElementById('etfDailyDate').textContent = m.dailyNetInflow?.lastUpdateDate || '';
+      document.getElementById('etfCum').textContent = fmtB(m.cumNetInflow?.value);
+      document.getElementById('etfAum').textContent = fmtB(m.totalNetAssets?.value);
+      document.getElementById('etfAumDate').textContent = m.totalNetAssets?.lastUpdateDate || '';
+    }
+
+    // 막대차트
+    if (hRes.status === 'fulfilled' && hRes.value.ok) {
+      const h = await hRes.value.json();
+      const recent = [...(h.data || [])].sort((a,b) => a.date.localeCompare(b.date)).slice(-30);
+      const labels = recent.map(d => d.date.slice(5));
+      const flows  = recent.map(d => +(d.totalNetInflow / 1e6).toFixed(2));
+
+      document.getElementById('etfChartLoading').style.display = 'none';
+
+      const ctx = document.getElementById('etfFlowChart').getContext('2d');
+      if (etfFlowChart) etfFlowChart.destroy();
+      etfFlowChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: '일별 순유입 ($M)',
+            data: flows,
+            backgroundColor: flows.map(v => v >= 0 ? 'rgba(59,109,17,0.5)' : 'rgba(163,45,45,0.5)'),
+            borderColor:      flows.map(v => v >= 0 ? '#3B6D11' : '#A32D2D'),
+            borderWidth: 1,
+            borderRadius: 2,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => {
+                  const v = ctx.parsed.y;
+                  return ` ${v >= 0 ? '+' : ''}$${v.toFixed(0)}M`;
+                },
+              },
+            },
+          },
+          scales: {
+            x: {
+              grid: { color: C.grid },
+              ticks: { font: { family: "'JetBrains Mono', monospace", size: 10 }, color: C.text, maxRotation: 0, maxTicksLimit: 10 },
+            },
+            y: {
+              grid: { color: C.grid },
+              ticks: {
+                font: { family: "'JetBrains Mono', monospace", size: 10 },
+                color: C.text,
+                callback: v => (v >= 0 ? '+' : '') + '$' + v + 'M',
+              },
+            },
+          },
+        },
+      });
+    } else {
+      document.getElementById('etfChartLoading').textContent = 'ETF 데이터를 불러올 수 없습니다.';
+    }
+  } catch(e) {
+    console.error('ETF flow error:', e);
+    document.getElementById('etfChartLoading').textContent = 'ETF 데이터를 불러올 수 없습니다.';
+  }
+}
+
+// ── 컨트롤 ───────────────────────────────────────────────────
 document.querySelectorAll('.period-btn').forEach(btn => {
   btn.addEventListener('click', function() {
     document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
     this.classList.add('active');
-    const interval = this.dataset.interval;
-    const limit    = parseInt(this.dataset.limit);
-    const days     = this.dataset.days === 'max' ? 'max' : parseInt(this.dataset.days);
-    loadChart(interval, limit, days);
+    loadChart(this.dataset.interval, parseInt(this.dataset.limit), this.dataset.days === 'max' ? 'max' : parseInt(this.dataset.days));
   });
 });
 
-// ── INIT ──────────────────────────────────────────────────────
+// ── INIT ─────────────────────────────────────────────────────
 fetchUsdKrw().then(() => fetchPrice());
 loadChart('1m', 360, 1);
 fetchNews();
+loadEtfFlow();
 
-// 1시간마다 환율 갱신
-setInterval(fetchUsdKrw, 3600000);
-// 30초마다 가격 갱신
-setInterval(fetchPrice, 30000);
-// 5분마다 뉴스 갱신
-setInterval(fetchNews, 300000);
-// 가격 로드 후 퍼포먼스 계산
+setInterval(fetchUsdKrw,  3600000);  // 1시간마다 환율
+setInterval(fetchPrice,     30000);  // 30초마다 가격
+setInterval(fetchNews,     300000);  // 5분마다 뉴스
 setTimeout(fetchPerformance, 1500);
+
+// ETF는 하루 1회 데이터 — 오후 2시(14:00 KST)에 갱신
+(function scheduleEtfRefresh() {
+  const now = new Date();
+  const next = new Date();
+  next.setHours(14, 0, 0, 0); // 오늘 14:00
+  if (now >= next) next.setDate(next.getDate() + 1); // 이미 지났으면 내일
+  const msUntil = next - now;
+  setTimeout(() => {
+    loadEtfFlow();
+    setInterval(loadEtfFlow, 24 * 60 * 60 * 1000); // 이후 24시간마다
+  }, msUntil);
+})();
 </script>
 
 </body>
