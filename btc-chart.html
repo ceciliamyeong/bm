@@ -601,6 +601,35 @@
         <div class="perf-cell" data-perf="5y"><div class="perf-cell-label">5년</div><div class="perf-cell-val" id="perf5y">—</div></div>
         <div class="perf-cell" data-perf="all"><div class="perf-cell-label">전체</div><div class="perf-cell-val" id="perfAll">—</div></div>
       </div>
+
+      <!-- ── ETF FLOW SECTION ── -->
+      <div class="etf-section">
+        <div class="etf-header">
+          <span class="etf-title">🏦 현물 BTC ETF 자금 흐름 (최근 30일)</span>
+          <span class="etf-source">DATA: SoSoValue</span>
+        </div>
+        <div class="etf-kpi-row">
+          <div class="etf-kpi-cell">
+            <div class="etf-kpi-label">당일 순유입</div>
+            <div class="etf-kpi-value" id="etfDaily">—</div>
+            <div class="etf-kpi-date" id="etfDailyDate"></div>
+          </div>
+          <div class="etf-kpi-cell">
+            <div class="etf-kpi-label">누적 순유입</div>
+            <div class="etf-kpi-value" id="etfCum">—</div>
+            <div class="etf-kpi-date">출시 이후</div>
+          </div>
+          <div class="etf-kpi-cell">
+            <div class="etf-kpi-label">총 AUM</div>
+            <div class="etf-kpi-value" id="etfAum">—</div>
+            <div class="etf-kpi-date" id="etfAumDate"></div>
+          </div>
+        </div>
+        <div class="etf-chart-wrap">
+          <div class="etf-chart-loading" id="etfChartLoading">ETF 데이터 불러오는 중...</div>
+          <canvas id="etfFlowChart"></canvas>
+        </div>
+      </div>
     </div>
 
     <!-- 뉴스 사이드바 -->
@@ -614,37 +643,6 @@
       </div>
     </div>
 
-  </div>
-
-  <!-- ── ETF FLOW SECTION ── -->
-  <div class="etf-section">
-    <div class="etf-header">
-      <span class="etf-title">🏦 현물 BTC ETF 자금 흐름 (최근 30일)</span>
-      <span class="etf-source">DATA: SoSoValue</span>
-    </div>
-
-    <div class="etf-kpi-row">
-      <div class="etf-kpi-cell">
-        <div class="etf-kpi-label">당일 순유입</div>
-        <div class="etf-kpi-value" id="etfDaily">—</div>
-        <div class="etf-kpi-date" id="etfDailyDate"></div>
-      </div>
-      <div class="etf-kpi-cell">
-        <div class="etf-kpi-label">누적 순유입</div>
-        <div class="etf-kpi-value" id="etfCum">—</div>
-        <div class="etf-kpi-date">출시 이후</div>
-      </div>
-      <div class="etf-kpi-cell">
-        <div class="etf-kpi-label">총 AUM</div>
-        <div class="etf-kpi-value" id="etfAum">—</div>
-        <div class="etf-kpi-date" id="etfAumDate"></div>
-      </div>
-    </div>
-
-    <div class="etf-chart-wrap">
-      <div class="etf-chart-loading" id="etfChartLoading">ETF 데이터 불러오는 중...</div>
-      <canvas id="etfFlowChart"></canvas>
-    </div>
   </div>
 
   <footer class="page-footer">
