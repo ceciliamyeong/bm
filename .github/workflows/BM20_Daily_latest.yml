@@ -2,8 +2,8 @@ name: BM20 Daily_latest
 
 on:
   schedule:
-    - cron: "30 20 * * *"   # 05:30 KST (UTC 20:30)
-    - cron: "30 7  * * *"   # 16:30 KST (UTC 07:30)
+    - cron: "0 22 * * *"    # 07:00 KST (UTC 22:00)
+    
   workflow_dispatch:
     inputs:
       target_date:
