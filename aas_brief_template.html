@@ -197,6 +197,9 @@
 
   /* inner wrap for content width */
   .content-wrap { max-width: 860px; margin: 0 auto; background: #ffffff; box-shadow: 0 4px 32px rgba(26,58,107,0.13); }
+
+  /* CLM 매트릭스 차트 툴팁 */
+  #clmTip { position: absolute; display: none; pointer-events: none; z-index: 30; }
 </style>
 </head>
 <body>
@@ -292,9 +295,182 @@
   <!-- CHARTS -->
   <div class="charts-row">
     <div class="chart-box">
-      <div class="chart-label">📈 코생지 Daily Top 10</div>
-      <img class="chart-img" src="{{SCORE_CHART_URL}}" alt="CLM Score Chart">
-      <div class="chart-sublabel">* Entry Threshold (0.5) / High Confidence (1.5)</div>
+      <div class="chart-label">📈 코생지 포지셔닝 매트릭스</div>
+
+      <!-- 범례 -->
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:#374151">
+          <span style="width:10px;height:10px;border-radius:2px;background:rgba(29,158,117,0.82);display:inline-block;border:1px solid #0F6E56"></span>Best zone
+        </span>
+        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:#374151">
+          <span style="width:10px;height:10px;border-radius:2px;background:rgba(55,138,221,0.82);display:inline-block;border:1px solid #185FA5"></span>Watch zone
+        </span>
+        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:#374151">
+          <span style="width:10px;height:10px;border-radius:2px;background:rgba(186,117,23,0.82);display:inline-block;border:1px solid #854F0B"></span>Dead zone
+        </span>
+        <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:#374151">
+          <span style="width:10px;height:10px;border-radius:2px;background:rgba(226,75,74,0.82);display:inline-block;border:1px solid #A32D2D"></span>Exit zone
+        </span>
+        <span style="font-size:10px;color:#6b7280;margin-left:auto">버블=거래량</span>
+      </div>
+
+      <!-- 툴팁 -->
+      <div id="clmTip" style="position:absolute;display:none;pointer-events:none;background:#fff;border:1px solid #d1d5db;border-radius:8px;padding:8px 12px;font-size:11px;color:#0f172a;z-index:30;min-width:120px;box-shadow:0 2px 8px rgba(26,58,107,0.12)"></div>
+
+      <!-- 차트 -->
+      <div style="position:relative;width:100%;height:300px;">
+        <canvas id="clmMatrixChart" aria-label="CLM 포지셔닝 매트릭스"></canvas>
+      </div>
+
+      <!-- 존 설명 카드 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px;">
+        <div style="background:rgba(29,158,117,0.07);border:1px solid rgba(29,158,117,0.25);border-radius:5px;padding:6px 8px;">
+          <div style="font-size:10px;font-weight:700;color:#085041">Best zone</div>
+          <div style="font-size:10px;color:#0F6E56">CLM↑ + RSI↓ → 진입 고려</div>
+        </div>
+        <div style="background:rgba(55,138,221,0.07);border:1px solid rgba(55,138,221,0.25);border-radius:5px;padding:6px 8px;">
+          <div style="font-size:10px;font-weight:700;color:#0C447C">Watch zone</div>
+          <div style="font-size:10px;color:#185FA5">CLM↑ + RSI↑ → 모멘텀 추세</div>
+        </div>
+        <div style="background:rgba(186,117,23,0.07);border:1px solid rgba(186,117,23,0.25);border-radius:5px;padding:6px 8px;">
+          <div style="font-size:10px;font-weight:700;color:#412402">Dead zone</div>
+          <div style="font-size:10px;color:#633806">CLM↓ + RSI↓ → 관심 밖</div>
+        </div>
+        <div style="background:rgba(226,75,74,0.07);border:1px solid rgba(226,75,74,0.25);border-radius:5px;padding:6px 8px;">
+          <div style="font-size:10px;font-weight:700;color:#501313">Exit zone</div>
+          <div style="font-size:10px;color:#A32D2D">CLM↓ + RSI↑ → 과매수 주의</div>
+        </div>
+      </div>
+
+      <div class="chart-sublabel">* X = RSI (저평가←→과매수) &nbsp;·&nbsp; Y = CLM Score &nbsp;·&nbsp; 구분선: RSI 50 / CLM 1.5</div>
+
+      <!-- Chart.js 로드 및 렌더링 -->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+      <script>
+      (function() {
+        var CLM_COINS = {{CLM_MATRIX_DATA}};
+
+        var zoneColor = {
+          best:  { bg: 'rgba(29,158,117,0.82)',  bd: 'rgba(15,110,86,1)' },
+          watch: { bg: 'rgba(55,138,221,0.82)',  bd: 'rgba(24,95,165,1)' },
+          dead:  { bg: 'rgba(186,117,23,0.82)',  bd: 'rgba(133,79,11,1)' },
+          exit:  { bg: 'rgba(226,75,74,0.82)',   bd: 'rgba(163,45,45,1)' }
+        };
+        var zoneLabel = { best:'Best zone', watch:'Watch zone', dead:'Dead zone', exit:'Exit zone' };
+        var zoneTextColor = { best:'#085041', watch:'#0C447C', dead:'#412402', exit:'#501313' };
+
+        var RSI_MID = 50, CLM_MID = 1.5;
+
+        var quadBgPlugin = {
+          id: 'quadBg',
+          beforeDraw: function(chart) {
+            var ctx = chart.ctx;
+            var ca = chart.chartArea;
+            var xs = chart.scales.x, ys = chart.scales.y;
+            var mx = xs.getPixelForValue(RSI_MID);
+            var my = ys.getPixelForValue(CLM_MID);
+            ctx.save();
+            var quads = [
+              { x1:ca.left, y1:ca.top,    x2:mx,       y2:my,        bg:'rgba(29,158,117,0.10)', label:'Best zone',  lc:'#085041' },
+              { x1:mx,      y1:ca.top,    x2:ca.right,  y2:my,        bg:'rgba(55,138,221,0.10)', label:'Watch zone', lc:'#0C447C' },
+              { x1:ca.left, y1:my,        x2:mx,        y2:ca.bottom, bg:'rgba(186,117,23,0.10)', label:'Dead zone',  lc:'#412402' },
+              { x1:mx,      y1:my,        x2:ca.right,  y2:ca.bottom, bg:'rgba(226,75,74,0.10)',  label:'Exit zone',  lc:'#501313' }
+            ];
+            quads.forEach(function(q) {
+              ctx.fillStyle = q.bg;
+              ctx.fillRect(q.x1, q.y1, q.x2 - q.x1, q.y2 - q.y1);
+              ctx.fillStyle = q.lc;
+              ctx.font = '500 10px -apple-system, sans-serif';
+              ctx.textAlign = 'left';
+              ctx.textBaseline = 'top';
+              ctx.fillText(q.label, q.x1 + 6, q.y1 + 5);
+            });
+            ctx.strokeStyle = 'rgba(100,100,100,0.22)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 4]);
+            ctx.beginPath(); ctx.moveTo(mx, ca.top); ctx.lineTo(mx, ca.bottom); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(ca.left, my); ctx.lineTo(ca.right, my); ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.restore();
+          }
+        };
+
+        var labelPlugin = {
+          id: 'labels',
+          afterDatasetsDraw: function(chart) {
+            var ctx = chart.ctx;
+            ctx.save();
+            CLM_COINS.forEach(function(c, i) {
+              var meta = chart.getDatasetMeta(0);
+              var el = meta.data[i];
+              if (!el) return;
+              var pos = el.getProps(['x','y'], true);
+              ctx.font = '500 10px -apple-system, sans-serif';
+              ctx.fillStyle = 'rgba(255,255,255,0.96)';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(c.sym, pos.x, pos.y);
+            });
+            ctx.restore();
+          }
+        };
+
+        var chart = new Chart(document.getElementById('clmMatrixChart'), {
+          type: 'bubble',
+          data: {
+            datasets: [{
+              data: CLM_COINS.map(function(c) { return { x: c.rsi, y: c.clm, r: Math.max(11, c.vol * 28) }; }),
+              backgroundColor: CLM_COINS.map(function(c) { return zoneColor[c.zone].bg; }),
+              borderColor:     CLM_COINS.map(function(c) { return zoneColor[c.zone].bd; }),
+              borderWidth: 1.5,
+              hoverBorderWidth: 2.5
+            }]
+          },
+          plugins: [quadBgPlugin, labelPlugin],
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { top: 8, right: 12, bottom: 4, left: 4 } },
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            scales: {
+              x: {
+                min: 25, max: 80,
+                title: { display: true, text: 'RSI  (← 저평가  /  과매수 →)', font: { size: 10 }, color: '#6b7280' },
+                grid: { color: 'rgba(0,0,0,0.04)' },
+                ticks: { font: { size: 10 }, color: '#6b7280', stepSize: 10 }
+              },
+              y: {
+                min: 0.5, max: 2.5,
+                title: { display: true, text: 'CLM Score', font: { size: 10 }, color: '#6b7280' },
+                grid: { color: 'rgba(0,0,0,0.04)' },
+                ticks: { font: { size: 10 }, color: '#6b7280', callback: function(v) { return v.toFixed(1); } }
+              }
+            },
+            onHover: function(evt, elements, ch) {
+              var tip = document.getElementById('clmTip');
+              if (!elements.length) { tip.style.display = 'none'; return; }
+              var idx = elements[0].index;
+              var c = CLM_COINS[idx];
+              var el = ch.getDatasetMeta(0).data[idx];
+              var pos = el.getProps(['x','y'], true);
+              var wrap = ch.canvas.parentElement.getBoundingClientRect();
+              var rect = ch.canvas.getBoundingClientRect();
+              tip.innerHTML = '<div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:3px">' + c.sym + '</div>'
+                + '<div style="display:flex;justify-content:space-between;gap:10px;color:#6b7280;font-size:10px"><span>CLM</span><span>' + c.clm.toFixed(2) + '</span></div>'
+                + '<div style="display:flex;justify-content:space-between;gap:10px;color:#6b7280;font-size:10px"><span>RSI</span><span>' + c.rsi + '</span></div>'
+                + '<div style="margin-top:4px;font-size:10px;font-weight:700;color:' + zoneTextColor[c.zone] + '">' + zoneLabel[c.zone] + '</div>';
+              var tx = rect.left - wrap.left + pos.x + 14;
+              var ty = rect.top  - wrap.top  + pos.y - 70;
+              if (tx + 130 > wrap.width) tx = rect.left - wrap.left + pos.x - 145;
+              if (ty < 0) ty = 4;
+              tip.style.left = tx + 'px';
+              tip.style.top  = ty + 'px';
+              tip.style.display = 'block';
+            }
+          }
+        });
+      })();
+      </script>
     </div>
     <div class="chart-box">
       <div class="chart-label">🧩 코생지 Composition (Top 3)</div>
