@@ -55,7 +55,8 @@
 
   /* TABLE */
   .part-label { display:inline-block; background:var(--navy); color:white; font-size:11px; font-weight:700; padding:4px 12px; border-radius:4px; letter-spacing:0.05em; margin-bottom:14px; font-family:'IBM Plex Mono',monospace; }
-  table { width:100%; border-collapse:collapse; font-size:13px; }
+  .table-wrap { width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  table { width:100%; min-width:560px; border-collapse:collapse; font-size:13px; table-layout:fixed; }
   thead tr { background: linear-gradient(90deg, var(--navy-dark) 0%, var(--navy-mid) 100%); }
   thead th { color:white; font-size:12px; font-weight:700; padding:11px 10px; text-align:center; white-space:nowrap; }
   thead th:first-child { border-radius:6px 0 0 0; } thead th:last-child { border-radius:0 6px 0 0; }
@@ -192,6 +193,7 @@
     .charts-row { grid-template-columns:1fr; }
     .chart-box:first-child { border-right:none; border-bottom:1px solid var(--border); }
     td.cmt { display:none; }
+    table { min-width:560px; }
     .footer { padding:12px 14px; }
   }
 
@@ -218,7 +220,6 @@
   <a href="/bm20_index.html">📊 BM20 Index</a>
   <a href="/etf.html">🌐 US ETF Flow</a>
   <a href="/history.html">📅 History</a>
-  <a href="/letter.html">📰 Letter</a>
   <a href="/clm_brief.html" class="active">🧠 코생지</a>
 </nav>
 
@@ -251,8 +252,8 @@
       </div>
       <div class="card">
         <div class="card-label">📊 시장 비교 (Alpha)</div>
-        <div class="card-row"><span class="card-key">Bitcoin (King)</span><span class="card-val dn">-0.91%</span></div>
-        <div class="card-row"><span class="card-key">Alpha vs BTC</span><span class="card-val up big">+2.07%p</span></div>
+        <div class="card-row"><span class="card-key">Bitcoin (King)</span><span class="card-val up">+0.41%</span></div>
+        <div class="card-row"><span class="card-key">Alpha vs BTC</span><span class="card-val up big">+0.74%p</span></div>
       </div>
     </div>
   </div>
@@ -261,7 +262,7 @@
   <div class="section">
     <div class="section-title">Daily Insight</div>
     <ul class="insight-list">
-      <li><strong>시장 현황:</strong> 코생지 Top 10 평균 수익률 +1.15%, 비트코인 대비 알파 +2.07%p</li>
+      <li><strong>시장 현황:</strong> 코생지 Top 10 평균 수익률 +1.15%, 비트코인 대비 알파 +0.74%p</li>
       <li><strong>High Quality 종목:</strong> STABLE, ATOM, TRX, ETH 등 코생지 1.5 이상 종목은 고래 매집 지속 중</li>
       <li><strong>RSI 모니터링:</strong> Top 10 중 0종목이 RSI 40 이하 — 단기 변동성 주의</li>
     </ul>
@@ -270,6 +271,7 @@
   <!-- PART 1: MAJOR COINS -->
   <div class="section">
     <div class="part-label">[ Part 1 ] Major Coins</div>
+    <div class="table-wrap">
     <table>
       <thead><tr><th>Rank</th><th>Symbol</th><th>CLM</th><th>Price (USD)</th><th>24H (%)</th><th>RSI</th><th>Action</th><th>Comment</th></tr></thead>
       <tbody>
@@ -306,11 +308,13 @@
     </tr>
       </tbody>
     </table>
+    </div>
   </div>
 
   <!-- PART 2: TOP 10 -->
   <div class="section">
     <div class="part-label">[ Part 2 ] 코생지 Top 10</div>
+    <div class="table-wrap">
     <table>
       <thead><tr><th>Rank</th><th>Symbol</th><th>CLM</th><th>Price (USD)</th><th>24H (%)</th><th>RSI</th><th>Action</th><th>Comment</th></tr></thead>
       <tbody>
@@ -417,6 +421,7 @@
     </tr>
       </tbody>
     </table>
+    </div>
   </div>
 
   <!-- CHARTS -->
