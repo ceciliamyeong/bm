@@ -1175,23 +1175,25 @@
     if(universe && universe.components && universe.components.length) {
       const KRW_LISTED = new Set(['BTC','ETH','XRP','USDT','SOL','ADA','DOGE','DOT','AVAX','MATIC','LINK','UNI','ATOM','LTC','ETC','TRX','BCH','NEAR','APT','OP','ARB','SUI','TON','FIL','HBAR','ICP','SHIB']);
 
-      const CORE   = new Set(['BTC','ETH']);
-      const L1     = new Set(['SOL','BNB','ADA','AVAX','TON','SUI','HBAR']);
-      const STABLE = new Set(['USDT']);
-      const DEFI   = new Set(['LINK','HYPE']);
-      const PAY    = new Set(['XRP','LTC','TRX','XLM','BCH']);
-      const MEME   = new Set(['DOGE','SHIB']);
+      const CORE    = new Set(['BTC','ETH']);
+      const L1      = new Set(['SOL','BNB','ADA','AVAX','TON','SUI','HBAR']);
+      const STABLE  = new Set(['USDT']);
+      const DEFI    = new Set(['LINK','HYPE','CC']);
+      const PAY     = new Set(['XRP','LTC','TRX','XLM','BCH']);
+      const MEME    = new Set(['DOGE','SHIB']);
+      const PRIVACY = new Set(['ZEC']);
 
       const sorted = [...universe.components].sort((a,b) => b.weight - a.weight);
       const maxW = sorted[0]?.weight || 1;
 
       function getGroup(sym) {
-        if (CORE.has(sym))   return 'Core';
-        if (L1.has(sym))     return 'L1';
-        if (STABLE.has(sym)) return '스테이블';
-        if (DEFI.has(sym))   return 'DeFi/신규';
-        if (PAY.has(sym))    return '결제';
-        if (MEME.has(sym))   return '밈';
+        if (CORE.has(sym))    return 'Core';
+        if (L1.has(sym))      return 'L1';
+        if (STABLE.has(sym))  return '스테이블';
+        if (DEFI.has(sym))    return 'DeFi/신규';
+        if (PAY.has(sym))     return '결제';
+        if (MEME.has(sym))    return '밈';
+        if (PRIVACY.has(sym)) return '프라이버시';
         return 'Others';
       }
       const GROUP_STYLE = {
@@ -1201,6 +1203,7 @@
         'DeFi/신규':  'background:rgba(22,163,74,0.08);color:#15803d',
         '결제':       'background:rgba(234,88,12,0.08);color:#c2410c',
         '밈':         'background:rgba(219,39,119,0.08);color:#be185d',
+        '프라이버시': 'background:rgba(100,116,139,0.08);color:#334155',
         'Others':     'background:rgba(100,116,139,0.08);color:#475569',
       };
       const BAR_COLOR = {
@@ -1210,14 +1213,15 @@
         'DeFi/신규':  '#16a34a',
         '결제':       '#ea580c',
         '밈':         '#db2777',
+        '프라이버시': '#475569',
         'Others':     '#64748b',
       };
 
       // 섹터 범례 동적 렌더링
-      const SECTOR_ORDER = ['Core','L1','결제','스테이블','DeFi/신규','밈'];
-      const SECTOR_DOT_COLOR = { 'Core':'#2563eb','L1':'#7c3aed','스테이블':'#14b8a6','DeFi/신규':'#16a34a','결제':'#ea580c','밈':'#db2777' };
-      const SECTOR_TEXT_COLOR = { 'Core':'#1d4ed8','L1':'#6d28d9','스테이블':'#0f766e','DeFi/신규':'#15803d','결제':'#c2410c','밈':'#be185d' };
-      const SECTOR_LABEL = { 'Core':'파랑','L1':'보라','스테이블':'청록','DeFi/신규':'초록','결제':'주황','밈':'핑크' };
+      const SECTOR_ORDER = ['Core','L1','결제','스테이블','DeFi/신규','밈','프라이버시'];
+      const SECTOR_DOT_COLOR = { 'Core':'#2563eb','L1':'#7c3aed','스테이블':'#14b8a6','DeFi/신규':'#16a34a','결제':'#ea580c','밈':'#db2777','프라이버시':'#475569' };
+      const SECTOR_TEXT_COLOR = { 'Core':'#1d4ed8','L1':'#6d28d9','스테이블':'#0f766e','DeFi/신규':'#15803d','결제':'#c2410c','밈':'#be185d','프라이버시':'#334155' };
+      const SECTOR_LABEL = { 'Core':'파랑','L1':'보라','스테이블':'청록','DeFi/신규':'초록','결제':'주황','밈':'핑크','프라이버시':'회색' };
 
       const sectorMap = {};
       sorted.forEach(c => {
