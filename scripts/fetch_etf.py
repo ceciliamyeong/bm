@@ -79,19 +79,15 @@ def main():
     for coin, etf_type in ETF_TYPES.items():
         print(f"\n--- {coin.upper()} ({etf_type}) ---")
 
-        # 현재 메트릭
+        # 현재 메트릭 fetch (저장은 히스토리 처리 후에)
+        metrics = None
         try:
             metrics = fetch_current_metrics(etf_type)
-            save_json(f"data/etf_{coin}_metrics.json", {
-                "updatedAt": updated_at,
-                "type": etf_type,
-                **metrics
-            })
-            # 요약용
+            # 요약용 (cumNetInflow는 히스토리 블록에서 덮어씀)
             all_summary[coin] = {
                 "totalNetAssets": metrics.get("totalNetAssets", {}).get("value"),
                 "dailyNetInflow": metrics.get("dailyNetInflow", {}).get("value"),
-                "cumNetInflow": None,
+                "cumNetInflow": None,  # 히스토리 블록에서 덮어씀
                 "dailyTotalValueTraded": metrics.get("dailyTotalValueTraded", {}).get("value"),
                 "totalTokenHoldings": metrics.get("totalTokenHoldings", {}).get("value"),
                 "lastUpdateDate": metrics.get("dailyNetInflow", {}).get("lastUpdateDate"),
@@ -124,7 +120,22 @@ def main():
                 "type": etf_type,
                 "data": merged_records
             })
-            all_summary[coin]["cumNetInflow"] = merged_records[-1].get("cumNetInflow") if merged_records else None  # ← 추가
+
+            # history 마지막 레코드의 cumNetInflow로 덮어쓰기 (API값 오류 우회)
+            cum_from_history = merged_records[-1].get("cumNetInflow") if merged_records else None
+            all_summary[coin]["cumNetInflow"] = cum_from_history
+
+            # metrics JSON도 history 기준값으로 저장
+            if metrics is not None and cum_from_history is not None:
+                metrics["cumNetInflow"]["value"] = str(cum_from_history)
+            if metrics is not None:
+                save_json(f"data/etf_{coin}_metrics.json", {
+                    "updatedAt": updated_at,
+                    "type": etf_type,
+                    **metrics
+                })
+                print(f"  누적 순유입: ${cum_from_history/1e9:.2f}B (history 기준)")
+
             print(f"  히스토리: {prev_count}일 → {len(merged_records)}일 (+ {len(merged_records) - prev_count}일 추가)")
         except Exception as e:
             print(f"  ❌ history 실패: {e}")
