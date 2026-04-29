@@ -91,7 +91,7 @@ def main():
             all_summary[coin] = {
                 "totalNetAssets": metrics.get("totalNetAssets", {}).get("value"),
                 "dailyNetInflow": metrics.get("dailyNetInflow", {}).get("value"),
-                "cumNetInflow": metrics.get("cumNetInflow", {}).get("value"),
+                "cumNetInflow": None,
                 "dailyTotalValueTraded": metrics.get("dailyTotalValueTraded", {}).get("value"),
                 "totalTokenHoldings": metrics.get("totalTokenHoldings", {}).get("value"),
                 "lastUpdateDate": metrics.get("dailyNetInflow", {}).get("lastUpdateDate"),
@@ -120,10 +120,11 @@ def main():
             merged_records = sorted(merged.values(), key=lambda x: x["date"])
 
             save_json(hist_path, {
-                "updatedAt": updated_at,
-                "type": etf_type,
-                "data": merged_records
+            "updatedAt": updated_at,
+            "type": etf_type,
+            "data": merged_records
             })
+            all_summary[coin]["cumNetInflow"] = merged_records[-1].get("cumNetInflow") if merged_records else None  # ← 추가
             print(f"  히스토리: {prev_count}일 → {len(merged_records)}일 (+ {len(merged_records) - prev_count}일 추가)")
         except Exception as e:
             print(f"  ❌ history 실패: {e}")
