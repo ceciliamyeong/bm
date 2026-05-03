@@ -23,10 +23,6 @@ jobs:
       TZ: Asia/Seoul
       CMC_API_KEY: ${{ secrets.CMC_API_KEY }}
       AAS_BOT_TOKEN: ${{ secrets.AAS_BOT_TOKEN }}
-      STIBEE_API_KEY:    ${{ secrets.STIBEE_API_KEY }}
-      STIBEE_LIST_ID:    ${{ secrets.STIBEE_LIST_ID }}
-      STIBEE_FROM_EMAIL: ${{ secrets.STIBEE_FROM_EMAIL }}
-      STIBEE_LIST_ID_EN: "486277"
       DEEPL_API_KEY: ${{ secrets.DEEPL_API_KEY }}
 
     steps:
