@@ -1,36 +1,5 @@
 [
   {
-    "schema": "smart_kimchi_v1",
-    "timestamp_kst": "2026-02-06T16:52:20+0900",
-    "timestamp_label": "02/06 16:52 KST",
-    "prices": {
-      "upbit": {
-        "KRW-BTC": 96374000.0,
-        "KRW-ETH": 2825000.0,
-        "KRW-USDT": 1487.0
-      },
-      "binance": {
-        "BTCUSDT": 64801.99,
-        "ETHUSDT": 1898.55
-      }
-    },
-    "kimchi_premium_pct": {
-      "BTC": 0.014,
-      "ETH": 0.066,
-      "COMBO": 0.029
-    },
-    "smart_kimchi": {
-      "type": "Neutral",
-      "rationale": "뚜렷한 과열/제약 신호가 약함",
-      "score_v1": 65.1,
-      "inputs": {
-        "total_krw_24h": 10201902163545.39,
-        "top10_share_pct": 80.37773145317637,
-        "stable_dominance_pct": 9.075966027532527
-      }
-    }
-  },
-  {
     "schema": "smart_kimchi_v2",
     "timestamp_kst": "2026-02-06T21:12:52+0900",
     "timestamp_label": "02/06 21:12 KST",
@@ -13477,6 +13446,56 @@
         "total_krw_24h": 2159104606220.6067,
         "top10_share_pct": 59.01451040362362,
         "stable_dominance_pct": 8.354709937509044
+      }
+    }
+  },
+  {
+    "schema": "smart_kimchi_v2",
+    "timestamp_kst": "2026-05-04T21:24:14+0900",
+    "timestamp_label": "05/04 21:24 KST",
+    "prices": {
+      "upbit": {
+        "KRW-BTC": 116936000.0,
+        "KRW-ETH": 3467000.0,
+        "KRW-XRP": 2067.0,
+        "KRW-USDT": 1481.0
+      },
+      "binance": {
+        "BTCUSDT": 78949.59,
+        "ETHUSDT": 2340.74,
+        "XRPUSDT": 1.3961
+      },
+      "fx": {
+        "USDKRW": 1484.8,
+        "source": "exchangerate.host"
+      }
+    },
+    "kimchi_premium_pct": {
+      "BTC": -0.246,
+      "ETH": -0.245,
+      "XRP": -0.286
+    },
+    "kimchi_delta_pp": {
+      "BTC": 0.35,
+      "ETH": 0.465,
+      "XRP": 0.38
+    },
+    "driver_share_pct": {
+      "BTC": 29.3,
+      "ETH": 38.9,
+      "XRP": 31.8
+    },
+    "diagnostics": {
+      "local_usdt_premium_hint_pct": -0.256
+    },
+    "smart_kimchi": {
+      "type": "Neutral",
+      "rationale": "뚜렷한 과열/제약 신호가 약함",
+      "score_v1": 48.7,
+      "inputs": {
+        "total_krw_24h": 2437923032023.3765,
+        "top10_share_pct": 57.050001865220835,
+        "stable_dominance_pct": 9.351857488649847
       }
     }
   }
