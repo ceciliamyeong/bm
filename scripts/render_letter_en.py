@@ -45,9 +45,9 @@ SNAPSHOTS_JSON = ROOT / "out/history/krw_24h_snapshots.json"
 BM20_HIST_JSON = ROOT / "data/bm20_history.json"
 ETF_JSON       = ROOT / "data/etf_summary.json"
 
-WP_BASE_URL               = "https://blockmedia.co.kr/wp-json/wp/v2"
-WP_TAG_ID_NEWSLETTER      = 28978
-WP_TAG_ID_NEWSLETTER_LEAD = 80405
+WP_BASE_URL                  = "https://blockmedia.co.kr/wp-json/wp/v2"
+WP_CAT_ID_NATIONAL_POLICY   = 78598   # 국내 정책
+WP_CAT_ID_GLOBAL_POLICY     = 16604   # 해외 정책
 
 DEEPL_API_KEY = os.getenv("DEEPL_API_KEY", "")
 AAS_BOT_TOKEN = os.getenv("AAS_BOT_TOKEN", "")
@@ -396,7 +396,9 @@ def load_etf() -> dict:
 # 워드프레스 뉴스
 # ─────────────────────────────────────────────────────────
 
-def fetch_news_lead() -> dict:
+def fetch_news_lead() -> tuple[dict, int | None]:
+    """국내정책 우선, 없으면 해외정책에서 최신 1건을 헤드라인으로.
+    Returns (placeholders_dict, lead_post_id). lead_post_id는 뉴스 리스트 중복 제거에 사용."""
     FB = {"{{NEWS_HEADLINE}}": "—", "{{NEWS_ONE_LINER_NOTE}}": "—"}
     def _parse(post: dict) -> dict:
         excerpt = strip_html(post["excerpt"]["rendered"])
@@ -406,40 +408,51 @@ def fetch_news_lead() -> dict:
             "{{NEWS_HEADLINE}}":       strip_html(post["title"]["rendered"]),
             "{{NEWS_ONE_LINER_NOTE}}": excerpt,
         }
-    for tag_id in [WP_TAG_ID_NEWSLETTER_LEAD, WP_TAG_ID_NEWSLETTER]:
+    for cat_id in [WP_CAT_ID_NATIONAL_POLICY, WP_CAT_ID_GLOBAL_POLICY]:
         try:
             res = requests.get(f"{WP_BASE_URL}/posts",
-                               params={"tags": tag_id, "per_page": 1,
-                                       "orderby": "date", "status": "publish"},
+                               params={"categories": cat_id, "per_page": 1,
+                                       "orderby": "date", "order": "desc",
+                                       "status": "publish",
+                                       "_fields": "id,title,excerpt"},
                                timeout=10)
             res.raise_for_status()
             posts = res.json()
             if posts:
-                return _parse(posts[0])
+                print(f"INFO: news lead from category {cat_id}")
+                return _parse(posts[0]), posts[0]["id"]
         except Exception as e:
-            print(f"WARN: WP lead fetch failed (tag {tag_id}): {e}")
-    return FB
+            print(f"WARN: WP lead fetch failed (category {cat_id}): {e}")
+    return FB, None
 
-def fetch_news_list() -> list[dict]:
+def fetch_news_list(exclude_id: int | None = None) -> list[dict]:
+    """국내정책 우선으로 최신순 수집, 부족하면 해외정책으로 보완해 총 3건 반환.
+    exclude_id: 헤드라인으로 이미 사용된 포스트 ID → 뉴스 리스트에서 제외."""
     empty = {"title": "—", "excerpt": "", "link": "#", "category": ""}
-    try:
-        res = requests.get(f"{WP_BASE_URL}/posts",
-                           params={"tags": WP_TAG_ID_NEWSLETTER, "per_page": 3,
-                                   "orderby": "date", "status": "publish",
-                                   "_embed": 1,
-                                   "_fields": "id,title,excerpt,link,_embedded,meta"},
-                           timeout=10)
-        res.raise_for_status()
-        posts = res.json()
-        if len(posts) < 3:
-            raise ValueError(f"Only {len(posts)} posts found")
+    CAT_LABELS = {
+        WP_CAT_ID_NATIONAL_POLICY: "National Policy",
+        WP_CAT_ID_GLOBAL_POLICY:   "Global Policy",
+    }
+
+    def _fetch_from_cat(cat_id: int, per_page: int) -> list[dict]:
+        params: dict = {"categories": cat_id, "per_page": per_page,
+                        "orderby": "date", "order": "desc",
+                        "status": "publish",
+                        "_fields": "id,title,excerpt,link,meta"}
+        if exclude_id:
+            params["exclude"] = exclude_id
+        try:
+            res = requests.get(f"{WP_BASE_URL}/posts",
+                               params=params,
+                               timeout=10)
+            res.raise_for_status()
+            posts = res.json()
+        except Exception as e:
+            print(f"WARN: WP news fetch failed (category {cat_id}): {e}")
+            return []
+
         result = []
-        for post in posts[:3]:
-            try:
-                cats     = post.get("_embedded", {}).get("wp:term", [[]])[0]
-                cat_name = cats[0]["name"] if cats else ""
-            except Exception:
-                cat_name = ""
+        for post in posts:
             meta    = post.get("meta", {}) or {}
             summary = meta.get("bm_post_summary", "")
             if not summary:
@@ -450,12 +463,23 @@ def fetch_news_list() -> list[dict]:
                 "title":    strip_html(post["title"]["rendered"]),
                 "excerpt":  summary,
                 "link":     post.get("link", "#"),
-                "category": cat_name,
+                "category": CAT_LABELS[cat_id],
             })
         return result
-    except Exception as e:
-        print(f"WARN: WP news list failed: {e}")
-        return [empty, empty, empty]
+
+    # 국내정책 우선 수집
+    collected: list[dict] = _fetch_from_cat(WP_CAT_ID_NATIONAL_POLICY, 3)
+
+    # 부족하면 해외정책으로 보완
+    if len(collected) < 3:
+        needed = 3 - len(collected)
+        collected += _fetch_from_cat(WP_CAT_ID_GLOBAL_POLICY, needed)
+
+    # 여전히 3건 미만이면 빈 슬롯으로 채움
+    while len(collected) < 3:
+        collected.append(empty)
+
+    return collected[:3]
 
 
 # ─────────────────────────────────────────────────────────
@@ -541,8 +565,8 @@ def build_placeholders() -> dict:
     ph.update(fetch_aas())
 
     # 뉴스
-    lead = fetch_news_lead()
-    news = fetch_news_list()
+    lead, lead_id = fetch_news_lead()
+    news = fetch_news_list(exclude_id=lead_id)
     ph["{{NEWS_HEADLINE}}"]       = lead["{{NEWS_HEADLINE}}"]
     ph["{{NEWS_ONE_LINER_NOTE}}"] = lead["{{NEWS_ONE_LINER_NOTE}}"]
     for i, n in enumerate(news[:3], 1):
