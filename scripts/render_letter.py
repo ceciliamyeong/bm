@@ -44,9 +44,10 @@ ETF_JSON      = ROOT / "data/etf_summary.json"         # optional
 OUT           = ROOT / "letter.html"
 
 # 워드프레스 설정
-WP_BASE_URL               = "https://blockmedia.co.kr/wp-json/wp/v2"
-WP_TAG_ID_NEWSLETTER      = 28978
-WP_TAG_ID_NEWSLETTER_LEAD = 80405
+WP_BASE_URL              = "https://blockmedia.co.kr/wp-json/wp/v2"
+WP_CAT_ID_MARKET         = 10136   # 마켓
+WP_CAT_ID_DIGITAL_ASSET  = 24547   # 디지털 자산
+WP_CAT_ID_FINANCE        = 24548   # 금융·증권
 
 GREEN = "#16a34a"
 RED   = "#dc2626"
@@ -272,7 +273,9 @@ def _strip_html(text: str) -> str:
     return re.sub(r"<[^>]+>", "", text or "").strip()
 
 
-def fetch_wp_newsletter_lead() -> dict[str, str]:
+def fetch_wp_newsletter_lead() -> tuple[dict[str, str], int | None]:
+    """마켓 카테고리 최신 1건을 헤드라인으로 가져온다.
+    Returns (placeholders_dict, lead_post_id). lead_post_id는 뉴스 리스트 중복 제거에 사용."""
     FB = {"NEWS_HEADLINE": "—", "NEWS_ONE_LINER_NOTE": "—"}
 
     def _parse(post: dict) -> dict[str, str]:
@@ -284,95 +287,75 @@ def fetch_wp_newsletter_lead() -> dict[str, str]:
             "NEWS_ONE_LINER_NOTE": excerpt,
         }
 
-    # 1차: 뉴스레터-리드
     try:
         res = requests.get(
             f"{WP_BASE_URL}/posts",
-            params={"tags": WP_TAG_ID_NEWSLETTER_LEAD, "per_page": 1,
-                    "orderby": "date", "status": "publish"},
+            params={"categories": WP_CAT_ID_MARKET, "per_page": 1,
+                    "orderby": "date", "order": "desc", "status": "publish",
+                    "_fields": "id,title,excerpt"},
             timeout=10,
         )
         res.raise_for_status()
         posts = res.json()
         if posts:
-            print("INFO: 뉴스레터-리드 포스트 사용")
-            return _parse(posts[0])
-        print("WARN: 뉴스레터-리드 없음 → fallback")
+            print(f"INFO: 헤드라인 — 마켓 카테고리 포스트 사용 (id={posts[0]['id']})")
+            return _parse(posts[0]), posts[0]["id"]
     except Exception as e:
-        print(f"WARN: 뉴스레터-리드 fetch 실패: {e}")
+        print(f"WARN: 마켓 카테고리 헤드라인 fetch 실패: {e}")
 
-    # 2차: 뉴스레터 최신 1개 fallback
-    try:
-        res = requests.get(
-            f"{WP_BASE_URL}/posts",
-            params={"tags": WP_TAG_ID_NEWSLETTER, "per_page": 1,
-                    "orderby": "date", "status": "publish"},
-            timeout=10,
-        )
-        res.raise_for_status()
-        posts = res.json()
-        if posts:
-            print("INFO: 뉴스레터 최신 1개로 헤드라인 대체")
-            return _parse(posts[0])
-    except Exception as e:
-        print(f"WARN: 뉴스레터 fallback fetch 실패: {e}")
-
-    return FB
+    return FB, None
 
 
-def fetch_wp_newsletter_news() -> list[dict[str, str]]:
+def fetch_wp_newsletter_news(exclude_id: int | None = None) -> list[dict[str, str]]:
+    """디지털자산·금융·증권 카테고리에서 최신순 총 3건 반환.
+    exclude_id: 헤드라인으로 이미 사용된 포스트 ID → 뉴스 리스트에서 제외."""
     empty = {"title": "—", "excerpt": "", "link": "#", "category": ""}
-    try:
-        res = requests.get(
-            f"{WP_BASE_URL}/posts",
-            params={"tags": WP_TAG_ID_NEWSLETTER, "per_page": 3,
-                    "orderby": "date", "status": "publish",
-                    "_embed": 1, "_fields": "id,title,excerpt,link,_embedded,meta"},
-            timeout=10,
-        )
-        res.raise_for_status()
-        posts = res.json()
-        if len(posts) < 3:
-            raise ValueError(f"뉴스레터 태그 발행 포스트가 {len(posts)}개뿐. 3개 필요.")
+    CAT_LABELS = {
+        WP_CAT_ID_DIGITAL_ASSET: "디지털자산",
+        WP_CAT_ID_FINANCE:       "금융·증권",
+    }
 
-        def _get_summary(post: dict) -> str:
-            meta = post.get("meta", {}) or {}
-            summary = meta.get("bm_post_summary", "")
-            if summary and summary.strip():
-                s = summary.strip()
-                return s[:150].rstrip() + "…" if len(s) > 150 else s
-            try:
-                r2 = requests.get(f"{WP_BASE_URL}/posts/{post['id']}",
-                                   params={"_fields": "meta"}, timeout=8)
-                summary2 = (r2.json().get("meta", {}) or {}).get("bm_post_summary", "")
-                if summary2 and summary2.strip():
-                    s2 = summary2.strip()
-                    return s2[:150].rstrip() + "…" if len(s2) > 150 else s2
-            except Exception as e:
-                print(f"WARN: bm_post_summary 개별요청 실패 (post {post.get('id')}): {e}")
-            excerpt = _strip_html(post["excerpt"]["rendered"])
-            return excerpt[:150].rstrip() + "…" if len(excerpt) > 150 else excerpt
+    def _get_summary(post: dict) -> str:
+        meta = post.get("meta", {}) or {}
+        summary = meta.get("bm_post_summary", "")
+        if summary and summary.strip():
+            s = summary.strip()
+            return s[:150].rstrip() + "…" if len(s) > 150 else s
+        excerpt = _strip_html(post["excerpt"]["rendered"])
+        return excerpt[:150].rstrip() + "…" if len(excerpt) > 150 else excerpt
 
+    def _fetch_from_cat(cat_id: int, per_page: int) -> list[dict[str, str]]:
+        params: dict = {
+            "categories": cat_id, "per_page": per_page,
+            "orderby": "date", "order": "desc", "status": "publish",
+            "_fields": "id,title,excerpt,link,meta",
+        }
+        if exclude_id:
+            params["exclude"] = exclude_id
+        try:
+            res = requests.get(f"{WP_BASE_URL}/posts", params=params, timeout=10)
+            res.raise_for_status()
+            posts = res.json()
+        except Exception as e:
+            print(f"WARN: 카테고리 {cat_id} 뉴스 fetch 실패: {e}")
+            return []
         result = []
-        for post in posts[:3]:
-            try:
-                cats = post.get("_embedded", {}).get("wp:term", [[]])[0]
-                cat_name = cats[0]["name"] if cats else ""
-            except Exception:
-                cat_name = ""
+        for post in posts:
             result.append({
                 "title":    _strip_html(post["title"]["rendered"]),
                 "excerpt":  _get_summary(post),
                 "link":     post.get("link", "#"),
-                "category": cat_name,
+                "category": CAT_LABELS[cat_id],
             })
         return result
-    except ValueError as e:
-        print(f"ERROR: {e}")
-        raise
-    except Exception as e:
-        print(f"WARN: fetch_wp_newsletter_news failed: {e}")
-        return [empty, empty, empty]
+
+    # 디지털자산 우선 수집 → 부족하면 금융·증권으로 보완
+    collected: list[dict[str, str]] = _fetch_from_cat(WP_CAT_ID_DIGITAL_ASSET, 3)
+    if len(collected) < 3:
+        collected += _fetch_from_cat(WP_CAT_ID_FINANCE, 3 - len(collected))
+    while len(collected) < 3:
+        collected.append(empty)
+    return collected[:3]
 
 
 # ─────────────────────────────────────────────────────────
@@ -565,8 +548,8 @@ def build_placeholders() -> dict[str, str]:
             pass
 
     # 뉴스
-    wp_lead = fetch_wp_newsletter_lead()
-    news3   = fetch_wp_newsletter_news()
+    wp_lead, lead_id = fetch_wp_newsletter_lead()
+    news3            = fetch_wp_newsletter_news(exclude_id=lead_id)
     top1, top2, top3 = news3[0], news3[1], news3[2]
 
     ph: dict[str, str] = {
