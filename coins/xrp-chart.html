@@ -792,7 +792,10 @@ async function fetchPrice() {
     }
     if (upbitR.status === 'fulfilled') {
       const d = await upbitR.value.json();
-      krwPrice = d[0]?.trade_price || 0;
+      const row = Array.isArray(d) ? d[0] : d;
+      krwPrice = parseFloat(row?.trade_price) || 0;
+      // 임시 디버그: 페이지에 표시
+      document.getElementById('kpiKimchi').textContent = 'raw:' + JSON.stringify(row?.trade_price) + ' / ' + JSON.stringify(Object.keys(row||{}));
     }
     document.getElementById('coinPrice').textContent = '$' + usdPrice.toFixed(2);
     const chgEl = document.getElementById('coinChange');
