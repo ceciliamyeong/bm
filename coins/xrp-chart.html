@@ -794,14 +794,14 @@ async function fetchPrice() {
       const d = await upbitR.value.json();
       krwPrice = d[0]?.trade_price || 0;
     }
-    document.getElementById('coinPrice').textContent = '$' + Math.round(usdPrice).toLocaleString();
+    document.getElementById('coinPrice').textContent = '$' + usdPrice.toFixed(2);
     const chgEl = document.getElementById('coinChange');
     chgEl.textContent = (chgPct >= 0 ? '+' : '') + chgPct.toFixed(2) + '%';
     chgEl.className = 'coin-change ' + (chgPct >= 0 ? 'up' : 'down');
     chgEl.style.display = 'inline-block';
-    document.getElementById('kpiKrw').textContent  = krwPrice.toLocaleString() + ' 원';
-    document.getElementById('kpiHigh').textContent = '$' + Math.round(high).toLocaleString();
-    document.getElementById('kpiLow').textContent  = '$' + Math.round(low).toLocaleString();
+    document.getElementById('kpiKrw').textContent  = Math.round(krwPrice).toLocaleString() + ' 원';
+    document.getElementById('kpiHigh').textContent = '$' + high.toFixed(2);
+    document.getElementById('kpiLow').textContent  = '$' + low.toFixed(2);
     document.getElementById('kpiVol').textContent  = vol >= 1e9 ? (vol/1e9).toFixed(1)+'B' : (vol/1e6).toFixed(0)+'M';
     if (usdPrice > 0 && krwPrice > 0) {
       const kimchi = ((krwPrice / (usdPrice * cachedUsdKrw)) - 1) * 100;
@@ -871,9 +871,9 @@ function initChart() {
     const dt = new Date(p.time * 1000);
     const dateStr = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
     if (sd.open !== undefined) {
-      bar.innerHTML = `<span style="color:var(--text3)">${dateStr}</span>&nbsp; O&nbsp;<b>$${Math.round(sd.open).toLocaleString()}</b>&nbsp;H&nbsp;<b style="color:#3B6D11">$${Math.round(sd.high).toLocaleString()}</b>&nbsp;L&nbsp;<b style="color:#A32D2D">$${Math.round(sd.low).toLocaleString()}</b>&nbsp;C&nbsp;<b>$${Math.round(sd.close).toLocaleString()}</b>`;
+      bar.innerHTML = `<span style="color:var(--text3)">${dateStr}</span>&nbsp; O&nbsp;<b>$${sd.open.toFixed(2)}</b>&nbsp;H&nbsp;<b style="color:#3B6D11">$${sd.high.toFixed(2)}</b>&nbsp;L&nbsp;<b style="color:#A32D2D">$${sd.low.toFixed(2)}</b>&nbsp;C&nbsp;<b>$${sd.close.toFixed(2)}</b>`;
     } else {
-      bar.innerHTML = `<span style="color:var(--text3)">${dateStr}</span>&nbsp; <b>$${Math.round(sd.value).toLocaleString()}</b>`;
+      bar.innerHTML = `<span style="color:var(--text3)">${dateStr}</span>&nbsp; <b>$${sd.value.toFixed(2)}</b>`;
     }
   });
   window.addEventListener('resize', () => { lwChart.applyOptions({ width: wrap.clientWidth, height: wrap.clientHeight }); });
@@ -917,7 +917,7 @@ function timeAgo(dateStr) {
 async function fetchNews() {
   const list = document.getElementById('newsList');
   try {
-    const r = await fetch('https://www.blockmedia.co.kr/wp-json/wp/v2/posts?coin_tag=56640,56641&per_page=10&orderby=date&_fields=id,title,link,date,featured_media,_links&_embed=wp:featuredmedia');
+    const r = await fetch('https://www.blockmedia.co.kr/wp-json/wp/v2/posts?coin_tag=56561&tags=10191&per_page=10&orderby=date&_fields=id,title,link,date,featured_media,_links&_embed=wp:featuredmedia');
     const posts = await r.json();
     if (!posts || !posts.length) { list.innerHTML = '<div class="news-loading">뉴스가 없습니다.</div>'; return; }
     list.innerHTML = '';
