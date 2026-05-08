@@ -796,6 +796,7 @@ async function fetchPrice() {
       const row = Array.isArray(d) ? d[0] : d;
       krwPrice = parseFloat(row?.trade_price) || 0;
       cachedKrwXrp = krwPrice;
+      cachedUpbitVol = parseFloat(row?.acc_trade_price_24h) || 0;
     }
     document.getElementById('coinPrice').textContent = '$' + usdPrice.toFixed(2);
     const chgEl = document.getElementById('coinChange');
@@ -954,11 +955,10 @@ function fmtVol(usd) {
 
 async function loadEtfFlow() {
   try {
-    const [binR, upbitR2, cbR] = await Promise.allSettled([
-      fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=XRPUSDT'),
-      fetch('https://api.upbit.com/v1/ticker?markets=KRW-XRP'),
-      fetch('https://api.exchange.coinbase.com/products/XRP-USD/stats'),
-    ]);
+    const [binR, cbR] = await Promise.allSettled([
+    fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=XRPUSDT'),
+    fetch('https://api.exchange.coinbase.com/products/XRP-USD/stats'),
+  ]);
 
     let binVol = 0, upbitVol = 0, cbVol = 0;
 
@@ -966,11 +966,7 @@ async function loadEtfFlow() {
       const d = await binR.value.json();
       binVol = parseFloat(d.quoteVolume);
     }
-    if (upbitR2.status === 'fulfilled') {
-      const d = await upbitR2.value.json();
-      const krwVol = d[0]?.acc_trade_price_24h || 0;
-      upbitVol = krwVol / cachedUsdKrw;
-    }
+    upbitVol = cachedUpbitVol / cachedUsdKrw;
     if (cbR.status === 'fulfilled') {
       const d = await cbR.value.json();
       cbVol = parseFloat(d.volume) * parseFloat(d.last || 0);
