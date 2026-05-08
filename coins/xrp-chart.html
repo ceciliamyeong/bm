@@ -1047,10 +1047,11 @@ document.querySelectorAll('.period-btn').forEach(btn => {
 });
 
 // ── INIT ─────────────────────────────────────────────────────
-fetchUsdKrw().then(() => fetchPrice());
+fetchUsdKrw().then(() => {
+  fetchPrice().then(() => loadEtfFlow());
+});
 loadChart('1m', 360, 1);
 fetchNews();
-loadEtfFlow();
 
 setInterval(fetchUsdKrw,  3600000);  // 1시간마다 환율
 setInterval(fetchPrice,     30000);  // 30초마다 가격
