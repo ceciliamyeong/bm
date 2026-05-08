@@ -611,7 +611,7 @@
       <div class="kpi-value down" id="kpiLow">—</div>
     </div>
     <div class="kpi-cell">
-      <div class="kpi-label">24H 거래량</div>
+      <div class="kpi-label">24H 거래량 (Binance)</div>
       <div class="kpi-value" id="kpiVol">—</div>
     </div>
     <div class="kpi-cell">
@@ -760,6 +760,7 @@ const C = {
 let lwChart = null, mainSeries = null;
 // ── 환율 ─────────────────────────────────────────────────────
 let cachedUsdKrw = 1480;
+let cachedKrwXrp = 0;
 async function fetchUsdKrw() {
   try {
     const r = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json');
@@ -791,13 +792,10 @@ async function fetchPrice() {
       vol      = parseFloat(d.quoteVolume);
     }
     if (upbitR.status === 'fulfilled') {
-      const text = await upbitR.value.text();
-      console.log('[upbit raw]', text.slice(0, 200));
-      try {
-        const d = JSON.parse(text);
-        const row = Array.isArray(d) ? d[0] : d;
-        krwPrice = parseFloat(row?.trade_price) || 0;
-      } catch(e) { console.error('[upbit parse error]', e); }
+      const d = await upbitR.value.json();
+      const row = Array.isArray(d) ? d[0] : d;
+      krwPrice = parseFloat(row?.trade_price) || 0;
+      cachedKrwXrp = krwPrice;
     }
     document.getElementById('coinPrice').textContent = '$' + usdPrice.toFixed(2);
     const chgEl = document.getElementById('coinChange');
@@ -956,7 +954,7 @@ function fmtVol(usd) {
 
 async function loadEtfFlow() {
   try {
-    const [binR, upbitR, cbR] = await Promise.allSettled([
+    const [binR, upbitR2, cbR] = await Promise.allSettled([
       fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=XRPUSDT'),
       fetch('https://api.upbit.com/v1/ticker?markets=KRW-XRP'),
       fetch('https://api.exchange.coinbase.com/products/XRP-USD/stats'),
@@ -966,16 +964,16 @@ async function loadEtfFlow() {
 
     if (binR.status === 'fulfilled') {
       const d = await binR.value.json();
-      binVol = parseFloat(d.quoteVolume); // USDT 기준
+      binVol = parseFloat(d.quoteVolume);
     }
-    if (upbitR.status === 'fulfilled') {
-      const d = await upbitR.value.json();
+    if (upbitR2.status === 'fulfilled') {
+      const d = await upbitR2.value.json();
       const krwVol = d[0]?.acc_trade_price_24h || 0;
-      upbitVol = krwVol / cachedUsdKrw; // USD 환산
+      upbitVol = krwVol / cachedUsdKrw;
     }
     if (cbR.status === 'fulfilled') {
       const d = await cbR.value.json();
-      cbVol = parseFloat(d.volume) * parseFloat(d.last || 0); // XRP수량 × 가격 = USD
+      cbVol = parseFloat(d.volume) * parseFloat(d.last || 0);
     }
 
     const total = binVol + upbitVol + cbVol;
