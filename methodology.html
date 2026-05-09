@@ -3,400 +3,394 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BM20 Index Methodology — Blockmedia</title>
+<title>BM20 Methodology | BLOCKMEDIA Data</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Pretendard:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0a0a0a;
-    --surface: #111111;
-    --border: #1e1e1e;
-    --border-bright: #2a2a2a;
-    --gold: #c8a45a;
-    --gold-dim: #8a6e3a;
-    --white: #f0ede8;
-    --muted: #6b6560;
-    --accent: #d4b97a;
-    --red: #c0392b;
+    --bg: #ffffff;
+    --surface: #f8f8f8;
+    --border: #e8e8e8;
+    --border-dark: #d0d0d0;
+    --gold: #b8860b;
+    --gold-light: #f5f0e0;
+    --text: #1a1a1a;
+    --muted: #888888;
+    --accent: #c8a000;
+    --link: #1a4fa0;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
   html { scroll-behavior: smooth; }
 
   body {
     background: var(--bg);
-    color: var(--white);
-    font-family: 'Pretendard', sans-serif;
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
     font-weight: 300;
+    font-size: 14px;
     line-height: 1.7;
-    font-size: 15px;
   }
 
-  /* ── TOP BAR ── */
-  .topbar {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 100;
-    background: rgba(10,10,10,0.92);
-    backdrop-filter: blur(12px);
+  /* ── HEADER (블록미디어 대시보드 스타일 통일) ── */
+  .site-header {
+    background: #fff;
     border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0 40px;
-    height: 56px;
+    gap: 16px;
   }
 
-  .topbar-logo {
+  .site-logo {
     font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    letter-spacing: 0.12em;
-    color: var(--gold);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
     text-decoration: none;
+    letter-spacing: 0.05em;
   }
 
-  .topbar-label {
+  .site-logo span {
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: 6px;
+    letter-spacing: 0.1em;
+  }
+
+  /* ── NAV (기존 대시보드와 동일한 형태) ── */
+  .site-nav {
+    background: #fff;
+    border-bottom: 2px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+  }
+
+  .site-nav a {
+    display: inline-block;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    white-space: nowrap;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .site-nav a:hover { color: var(--text); }
+  .site-nav a.active { color: var(--gold); border-bottom-color: var(--gold); font-weight: 500; }
+
+  /* ── PAGE HEADER ── */
+  .page-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 40px 24px 32px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .page-eyebrow {
     font-family: 'DM Mono', monospace;
     font-size: 11px;
     letter-spacing: 0.2em;
     color: var(--muted);
     text-transform: uppercase;
+    margin-bottom: 10px;
   }
 
-  .topbar-link {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    color: var(--gold-dim);
-    text-decoration: none;
-    border: 1px solid var(--border-bright);
-    padding: 6px 14px;
-    transition: all 0.2s;
-  }
-  .topbar-link:hover { border-color: var(--gold); color: var(--gold); }
-
-  /* ── HERO ── */
-  .hero {
-    margin-top: 56px;
-    padding: 100px 40px 80px;
-    max-width: 860px;
-    margin-left: auto;
-    margin-right: auto;
-    border-bottom: 1px solid var(--border);
-    position: relative;
-  }
-
-  .hero::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: radial-gradient(ellipse 60% 40% at 80% 20%, rgba(200,164,90,0.04) 0%, transparent 70%);
-    pointer-events: none;
-  }
-
-  .hero-eyebrow {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.25em;
-    color: var(--gold);
-    text-transform: uppercase;
-    margin-bottom: 28px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .hero-eyebrow::before {
-    content: '';
-    display: inline-block;
-    width: 32px;
-    height: 1px;
-    background: var(--gold);
-  }
-
-  .hero h1 {
+  .page-title {
     font-family: 'DM Serif Display', serif;
-    font-size: clamp(42px, 6vw, 68px);
-    line-height: 1.08;
-    letter-spacing: -0.02em;
-    color: var(--white);
-    margin-bottom: 8px;
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 400;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+    margin-bottom: 6px;
   }
 
-  .hero h1 em {
-    font-style: italic;
-    color: var(--gold);
-  }
+  .page-title em { font-style: italic; color: var(--gold); }
 
-  .hero-sub {
-    font-family: 'DM Serif Display', serif;
-    font-size: clamp(18px, 2.5vw, 24px);
+  .page-subtitle {
+    font-size: 14px;
     color: var(--muted);
-    font-style: italic;
-    margin-bottom: 40px;
-    margin-top: 12px;
+    margin-bottom: 24px;
   }
 
-  .hero-summary {
-    font-size: 16px;
-    line-height: 1.8;
-    color: #a09890;
-    max-width: 640px;
-    border-left: 2px solid var(--gold-dim);
-    padding-left: 24px;
-  }
-
-  .hero-meta {
-    margin-top: 48px;
+  .page-meta {
     display: flex;
-    gap: 40px;
+    gap: 32px;
     flex-wrap: wrap;
   }
 
   .meta-item { }
   .meta-label {
     font-family: 'DM Mono', monospace;
-    font-size: 10px;
+    font-size: 9px;
     letter-spacing: 0.2em;
     color: var(--muted);
     text-transform: uppercase;
-    margin-bottom: 4px;
   }
   .meta-value {
     font-family: 'DM Mono', monospace;
     font-size: 13px;
     color: var(--gold);
+    font-weight: 500;
   }
 
-  /* ── NAV ── */
-  .toc {
-    max-width: 860px;
+  /* ── VERSION BADGE ── */
+  .version-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    border: 1px solid var(--border-dark);
+    padding: 4px 10px;
+    background: #fff;
+    margin-top: 16px;
+  }
+
+  .version-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #2ecc71;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* ── TOC ── */
+  .toc-wrap {
+    max-width: 900px;
     margin: 0 auto;
-    padding: 48px 40px;
+    padding: 24px 24px;
     border-bottom: 1px solid var(--border);
   }
 
-  .toc-title {
+  .toc-label {
     font-family: 'DM Mono', monospace;
     font-size: 10px;
-    letter-spacing: 0.25em;
+    letter-spacing: 0.2em;
     color: var(--muted);
     text-transform: uppercase;
-    margin-bottom: 20px;
+    margin-bottom: 12px;
   }
 
-  .toc-list {
+  .toc-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 4px;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 2px;
     list-style: none;
   }
 
-  .toc-list a {
+  .toc-grid a {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 0;
-    text-decoration: none;
-    color: var(--muted);
+    gap: 8px;
+    padding: 7px 0;
     font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
     border-bottom: 1px solid transparent;
-    transition: all 0.15s;
+    transition: all 0.12s;
   }
 
-  .toc-list a:hover { color: var(--white); border-color: var(--border); }
+  .toc-grid a:hover { color: var(--text); border-color: var(--border); }
+  .toc-num { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--gold); min-width: 20px; }
 
-  .toc-num {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    color: var(--gold-dim);
-    min-width: 20px;
-  }
-
-  /* ── MAIN LAYOUT ── */
+  /* ── MAIN ── */
   .content {
-    max-width: 860px;
+    max-width: 900px;
     margin: 0 auto;
-    padding: 0 40px 120px;
+    padding: 0 24px 80px;
   }
 
   /* ── SECTION ── */
   .section {
-    padding: 72px 0 0;
+    padding-top: 56px;
+    margin-top: 56px;
     border-top: 1px solid var(--border);
-    margin-top: 72px;
   }
 
-  .section:first-child { margin-top: 0; }
+  .section:first-child { border-top: none; margin-top: 0; }
 
   .section-header {
     display: flex;
     align-items: baseline;
-    gap: 16px;
-    margin-bottom: 40px;
+    gap: 12px;
+    margin-bottom: 28px;
   }
 
-  .section-num {
+  .sec-num {
     font-family: 'DM Mono', monospace;
     font-size: 11px;
-    color: var(--gold-dim);
-    letter-spacing: 0.1em;
-    min-width: 28px;
+    color: var(--gold);
+    min-width: 24px;
   }
 
   .section h2 {
     font-family: 'DM Serif Display', serif;
-    font-size: clamp(22px, 3vw, 30px);
+    font-size: clamp(20px, 2.5vw, 26px);
     font-weight: 400;
-    letter-spacing: -0.01em;
-    color: var(--white);
+    color: var(--text);
   }
 
   .section h3 {
     font-family: 'DM Mono', monospace;
-    font-size: 11px;
+    font-size: 10px;
     letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--gold);
-    margin: 40px 0 16px;
+    margin: 32px 0 12px;
   }
 
-  p { color: #a09890; margin-bottom: 20px; font-size: 15px; line-height: 1.8; }
-  p strong { color: var(--white); font-weight: 500; }
+  p { color: #444; margin-bottom: 16px; font-size: 14px; line-height: 1.8; }
+  p strong { color: var(--text); font-weight: 500; }
 
   /* ── TABLE ── */
   .data-table {
     width: 100%;
     border-collapse: collapse;
-    margin: 24px 0;
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
+    margin: 16px 0;
+    font-size: 13px;
   }
 
   .data-table thead th {
     text-align: left;
-    padding: 10px 16px;
-    color: var(--muted);
+    padding: 9px 14px;
+    font-family: 'DM Mono', monospace;
     font-size: 10px;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
-    border-bottom: 1px solid var(--border-bright);
+    color: var(--muted);
+    border-bottom: 2px solid var(--border-dark);
     font-weight: 400;
+    background: var(--surface);
   }
 
   .data-table tbody td {
-    padding: 12px 16px;
+    padding: 11px 14px;
     border-bottom: 1px solid var(--border);
-    color: #a09890;
+    color: #444;
     vertical-align: top;
   }
 
   .data-table tbody tr:last-child td { border-bottom: none; }
+  .data-table tbody tr:hover td { background: #fafafa; }
 
-  .data-table tbody tr:hover td { background: rgba(255,255,255,0.015); }
+  .td-symbol { color: var(--text); font-weight: 500; font-family: 'DM Mono', monospace; }
+  .td-weight { color: var(--gold); font-family: 'DM Mono', monospace; font-weight: 500; }
 
-  .td-symbol { color: var(--white); font-weight: 500; }
-  .td-weight { color: var(--gold); }
-  .td-tier {
+  .tier {
     display: inline-block;
+    font-family: 'DM Mono', monospace;
     font-size: 9px;
     letter-spacing: 0.1em;
     padding: 2px 7px;
-    border: 1px solid var(--border-bright);
+    border: 1px solid var(--border-dark);
     color: var(--muted);
   }
-  .td-tier.t1 { border-color: var(--gold-dim); color: var(--gold); }
 
-  /* ── FORMULA BOX ── */
+  .tier.t1 { border-color: var(--gold); color: var(--gold); background: var(--gold-light); }
+
+  /* ── FORMULA ── */
   .formula-box {
     background: var(--surface);
-    border: 1px solid var(--border-bright);
+    border: 1px solid var(--border-dark);
     border-left: 3px solid var(--gold);
-    padding: 28px 32px;
-    margin: 24px 0;
+    padding: 24px 28px;
+    margin: 20px 0;
     font-family: 'DM Mono', monospace;
   }
 
   .formula-label {
     font-size: 9px;
-    letter-spacing: 0.25em;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--muted);
-    margin-bottom: 12px;
+    margin-bottom: 10px;
   }
 
-  .formula-main {
-    font-size: 15px;
-    color: var(--white);
-    line-height: 2;
+  .formula-main { font-size: 14px; color: var(--text); line-height: 2; }
+  .formula-note { font-size: 11px; color: var(--muted); margin-top: 10px; line-height: 1.6; }
+
+  /* ── CALLOUT ── */
+  .callout {
+    background: var(--gold-light);
+    border: 1px solid #e8d080;
+    border-left: 3px solid var(--gold);
+    padding: 18px 22px;
+    margin: 24px 0;
   }
 
-  .formula-note {
-    font-size: 11px;
+  .callout p { color: #6b5800; margin: 0; font-size: 13px; }
+  .callout p strong { color: var(--gold); }
+
+  /* ── EXCLUSION LIST ── */
+  .excl-list { list-style: none; margin: 10px 0 18px; }
+  .excl-list li {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    color: #444;
+  }
+  .excl-list li:last-child { border-bottom: none; }
+  .excl-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
     color: var(--muted);
-    margin-top: 12px;
-    line-height: 1.6;
+    min-width: 130px;
   }
 
   /* ── COMPARE TABLE ── */
   .compare-table {
     width: 100%;
     border-collapse: collapse;
-    margin: 24px 0;
+    margin: 16px 0;
     font-size: 13px;
   }
 
   .compare-table th {
-    padding: 12px 16px;
+    padding: 10px 14px;
     text-align: left;
     font-family: 'DM Mono', monospace;
     font-size: 10px;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--muted);
-    border-bottom: 1px solid var(--border-bright);
+    border-bottom: 2px solid var(--border-dark);
     font-weight: 400;
+    background: var(--surface);
   }
 
   .compare-table th.bm { color: var(--gold); }
 
   .compare-table td {
-    padding: 13px 16px;
+    padding: 11px 14px;
     border-bottom: 1px solid var(--border);
-    color: #a09890;
+    color: #555;
     vertical-align: top;
   }
 
-  .compare-table td.bm { color: var(--white); }
+  .compare-table td.bm { color: var(--text); font-weight: 500; }
   .compare-table td.item { color: var(--muted); font-size: 12px; font-family: 'DM Mono', monospace; }
-
-  .compare-table tbody tr:hover td { background: rgba(200,164,90,0.02); }
-
-  /* ── CALLOUT ── */
-  .callout {
-    background: rgba(200,164,90,0.05);
-    border: 1px solid rgba(200,164,90,0.2);
-    padding: 24px 28px;
-    margin: 32px 0;
-  }
-
-  .callout p { color: #c8b080; margin: 0; font-size: 14px; line-height: 1.7; }
-  .callout p strong { color: var(--gold); }
+  .compare-table tbody tr:hover td { background: #fafafa; }
 
   /* ── ROADMAP ── */
-  .roadmap {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    margin: 24px 0;
-  }
+  .roadmap { margin: 16px 0; }
 
   .roadmap-item {
     display: grid;
-    grid-template-columns: 120px 1fr;
-    gap: 24px;
-    padding: 24px 0;
+    grid-template-columns: 110px 1fr;
+    gap: 20px;
+    padding: 20px 0;
     border-bottom: 1px solid var(--border);
     align-items: start;
   }
@@ -406,29 +400,19 @@
   .roadmap-phase {
     font-family: 'DM Mono', monospace;
     font-size: 10px;
-    letter-spacing: 0.15em;
-    color: var(--gold-dim);
+    letter-spacing: 0.12em;
+    color: var(--gold);
     text-transform: uppercase;
     padding-top: 2px;
   }
 
-  .roadmap-title {
-    font-size: 14px;
-    color: var(--white);
-    font-weight: 500;
-    margin-bottom: 6px;
-  }
-
-  .roadmap-desc {
-    font-size: 13px;
-    color: var(--muted);
-    line-height: 1.6;
-  }
+  .roadmap-title { font-size: 14px; color: var(--text); font-weight: 500; margin-bottom: 4px; }
+  .roadmap-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
 
   /* ── DISCLAIMER ── */
   .disclaimer {
-    margin-top: 80px;
-    padding: 32px;
+    margin-top: 56px;
+    padding: 24px;
     border: 1px solid var(--border);
     background: var(--surface);
   }
@@ -436,155 +420,68 @@
   .disclaimer-label {
     font-family: 'DM Mono', monospace;
     font-size: 9px;
-    letter-spacing: 0.25em;
+    letter-spacing: 0.2em;
     color: var(--muted);
     text-transform: uppercase;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
   }
 
-  .disclaimer p {
-    font-size: 12px;
-    color: #5a5550;
-    line-height: 1.7;
-    margin: 0;
-  }
-
-  /* ── VERSION BADGE ── */
-  .version {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    color: var(--muted);
-    border: 1px solid var(--border);
-    padding: 6px 12px;
-    margin-bottom: 40px;
-  }
-
-  .version-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--gold);
-    animation: pulse 2s infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
-
-  /* ── EXCLUSION LIST ── */
-  .excl-list {
-    list-style: none;
-    margin: 12px 0 20px;
-  }
-
-  .excl-list li {
-    display: flex;
-    align-items: baseline;
-    gap: 12px;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--border);
-    font-size: 13px;
-    color: #a09890;
-  }
-
-  .excl-list li:last-child { border-bottom: none; }
-
-  .excl-tag {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    color: var(--muted);
-    min-width: 140px;
-  }
+  .disclaimer p { font-size: 12px; color: var(--muted); margin: 0; }
 
   /* ── FOOTER ── */
   footer {
     border-top: 1px solid var(--border);
-    padding: 32px 40px;
-    max-width: 860px;
+    padding: 20px 24px;
+    max-width: 900px;
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 8px;
   }
 
-  footer span {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    color: var(--muted);
-    letter-spacing: 0.1em;
-  }
-
-  footer a {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    color: var(--gold-dim);
-    text-decoration: none;
-    letter-spacing: 0.1em;
-  }
-
-  footer a:hover { color: var(--gold); }
+  footer span { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); }
+  footer a { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--link); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
 
   /* ── RESPONSIVE ── */
-  @media (max-width: 640px) {
-    .topbar { padding: 0 20px; }
-    .hero, .toc, .content { padding-left: 20px; padding-right: 20px; }
-    .hero { padding-top: 60px; }
-    .hero-meta { gap: 24px; }
-    .roadmap-item { grid-template-columns: 1fr; gap: 6px; }
-    footer { padding: 24px 20px; }
+  @media (max-width: 600px) {
+    .site-header, .toc-wrap, .content, footer { padding-left: 16px; padding-right: 16px; }
+    .page-header { padding-left: 16px; padding-right: 16px; }
+    .page-meta { gap: 20px; }
+    .roadmap-item { grid-template-columns: 1fr; gap: 4px; }
   }
-
-  /* ── FADE IN ── */
-  .section {
-    opacity: 0;
-    transform: translateY(16px);
-    animation: fadeUp 0.5s ease forwards;
-  }
-
-  @keyframes fadeUp {
-    to { opacity: 1; transform: none; }
-  }
-
-  .section:nth-child(1) { animation-delay: 0.05s; }
-  .section:nth-child(2) { animation-delay: 0.1s; }
-  .section:nth-child(3) { animation-delay: 0.15s; }
-  .section:nth-child(4) { animation-delay: 0.2s; }
-  .section:nth-child(5) { animation-delay: 0.25s; }
-  .section:nth-child(6) { animation-delay: 0.3s; }
-  .section:nth-child(7) { animation-delay: 0.35s; }
 </style>
 </head>
 <body>
 
-<!-- TOP BAR -->
-<nav class="topbar">
-  <a class="topbar-logo" href="https://blockmedia.co.kr">BLOCKMEDIA</a>
-  <span class="topbar-label">Index Methodology</span>
-  <a class="topbar-link" href="https://data.blockmedia.co.kr">Live Dashboard →</a>
+<!-- HEADER -->
+<header class="site-header">
+  <a class="site-logo" href="https://data.blockmedia.co.kr/">BLOCKMEDIA <span>Data</span></a>
+</header>
+
+<!-- NAV -->
+<nav class="site-nav">
+  <a href="https://data.blockmedia.co.kr/index.html">🇰🇷 KRW Market</a>
+  <a href="https://data.blockmedia.co.kr/bm20_index.html">📊 BM20 Index</a>
+  <a href="https://data.blockmedia.co.kr/etf.html">🌐 US ETF Flow</a>
+  <a href="https://data.blockmedia.co.kr/methodology/" class="active">📋 BM20 Methodology</a>
 </nav>
 
-<!-- HERO -->
-<header class="hero">
-  <div class="hero-eyebrow">BM20 Index · Blockmedia Digital Asset Benchmark</div>
-  <h1><em>BM20</em><br>Methodology</h1>
-  <p class="hero-sub">한국형 디지털자산 대표 벤치마크 지수</p>
-
-  <p class="hero-summary">
-    BM20은 블록미디어가 직접 산출·운영하는 디지털자산 벤치마크 지수다.
-    글로벌 시가총액 상위 20개 자산을 기반으로, 한국 시장의 거래 현실과 유동성을 반영해 설계됐다.
-    2018년부터 매일 자동 산출되며, 방법론과 산출 코드는 완전 공개된 오픈소스 지수다.
-  </p>
-
-  <div class="hero-meta">
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="page-eyebrow">BM20 Index · Blockmedia Digital Asset Benchmark</div>
+  <h1 class="page-title"><em>BM20</em> Index Methodology</h1>
+  <p class="page-subtitle">한국형 디지털자산 대표 벤치마크 지수 — 산출 방법론 공식 문서</p>
+  <div class="page-meta">
     <div class="meta-item">
-      <div class="meta-label">Base Date</div>
-      <div class="meta-value">2018-01-01</div>
+      <div class="meta-label">Backtest Period</div>
+      <div class="meta-value">2018 — 2025</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Launch</div>
+      <div class="meta-value">2026</div>
     </div>
     <div class="meta-item">
       <div class="meta-label">Base Value</div>
@@ -599,16 +496,20 @@
       <div class="meta-value">Quarterly</div>
     </div>
     <div class="meta-item">
-      <div class="meta-label">Version</div>
+      <div class="meta-label">Current Version</div>
       <div class="meta-value">2026 Q2</div>
     </div>
   </div>
-</header>
+  <div class="version-badge">
+    <div class="version-dot"></div>
+    현재 적용 버전: 2026 Q2 · 적용일 2026-04-01
+  </div>
+</div>
 
 <!-- TOC -->
-<nav class="toc">
-  <div class="toc-title">목차 / Contents</div>
-  <ul class="toc-list">
+<div class="toc-wrap">
+  <div class="toc-label">목차</div>
+  <ul class="toc-grid">
     <li><a href="#why"><span class="toc-num">01</span>왜 BM20인가</a></li>
     <li><a href="#philosophy"><span class="toc-num">02</span>설계 철학</a></li>
     <li><a href="#universe"><span class="toc-num">03</span>유니버스 & 편입 기준</a></li>
@@ -620,7 +521,7 @@
     <li><a href="#compare"><span class="toc-num">09</span>글로벌 지수 비교</a></li>
     <li><a href="#roadmap"><span class="toc-num">10</span>로드맵</a></li>
   </ul>
-</nav>
+</div>
 
 <!-- CONTENT -->
 <main class="content">
@@ -628,176 +529,99 @@
   <!-- 01 WHY -->
   <section class="section" id="why">
     <div class="section-header">
-      <span class="section-num">01</span>
+      <span class="sec-num">01</span>
       <h2>왜 BM20인가</h2>
     </div>
-
     <p>글로벌 암호자산 시장에는 다양한 지수가 존재하지만, 대부분은 해외 거래소 중심 구조를 따르거나 글로벌 시가총액을 기계적으로 반영한다. 한국 투자자들이 실제로 거래하는 시장 구조와는 다르다.</p>
-
-    <p>BM20은 세 가지 문제의식에서 출발했다.</p>
-
     <p><strong>첫째</strong>, 한국 디지털자산 시장은 세계 3~4위 규모의 거래량을 기록하고 있으나, 공신력 있는 벤치마크 지수가 존재하지 않는다. KRX는 주식/파생 지수만 운영하고, 거래소 자체 지수(UBCI 등)는 외부 벤치마크로 사용하기 어렵다.</p>
-
-    <p><strong>둘째</strong>, 비트코인 단일 지표로는 알트코인 시장의 흐름을 담을 수 없다. BM20은 20개 자산의 복합 움직임을 하나의 숫자로 압축해 "오늘 크립토 시장이 얼마나 움직였는가"를 정확하게 표현한다.</p>
-
+    <p><strong>둘째</strong>, 비트코인 단일 지표로는 알트코인 시장의 흐름을 담을 수 없다. BM20은 20개 자산의 복합 움직임을 하나의 숫자로 압축해 시장 전반을 표현한다.</p>
     <p><strong>셋째</strong>, 미디어가 지수를 운영하는 것은 전례가 있다. S&P는 신문사 지수에서 시작했고, CoinDesk는 2013년 Bitcoin Price Index(BPI)로 시작해 10년간 신뢰를 쌓은 뒤 CD20을 런칭했다. 블록미디어는 2018년부터 BM20을 매일 산출해왔다.</p>
-
     <div class="callout">
-      <p><strong>"한국 유일의 독립 크립토 라지캡 벤치마크."</strong><br>
-      국내 언론사가 직접 설계·산출·관리하는 지수로, KRW 거래 현실을 반영하고 한국 시장 특화 발전이 가능하다.</p>
+      <p><strong>한국 유일의 독립 크립토 라지캡 벤치마크.</strong><br>
+      국내 언론사가 직접 설계·산출·관리하는 지수로, 2018~2025년 7년간 백테스트를 완료하고 2026년 공식 론칭했다. 글로벌 기준의 방법론, 한국 시장의 현실 — 두 가지를 동시에 담는 것이 BM20의 목표다.</p>
     </div>
   </section>
 
   <!-- 02 PHILOSOPHY -->
   <section class="section" id="philosophy">
     <div class="section-header">
-      <span class="section-num">02</span>
+      <span class="sec-num">02</span>
       <h2>설계 철학</h2>
     </div>
-
     <h3>단순하고 명확한 규칙</h3>
-    <p>BM20의 핵심 설계 원칙은 <strong>단순성과 재현 가능성</strong>이다. 주관적 판단이 개입하는 요소를 최소화하고, 명확한 규칙 기반으로 누구든 동일한 결과를 재현할 수 있도록 설계됐다.</p>
-    <p>편입 기준, 가중치 구조, 리밸런싱 규칙 모두 사전에 공개된 방법론을 따른다. 산출 코드는 GitHub에 공개되어 있어 독립적으로 검증할 수 있다.</p>
-
+    <p>BM20의 핵심 설계 원칙은 <strong>단순성과 재현 가능성</strong>이다. 주관적 판단이 개입하는 요소를 최소화하고, 명확한 규칙 기반으로 누구든 동일한 결과를 재현할 수 있도록 설계됐다. 편입 기준, 가중치 구조, 리밸런싱 규칙 모두 사전에 공개된 방법론을 따른다. 산출 코드는 GitHub에 공개되어 있어 독립적으로 검증할 수 있다.</p>
     <h3>오픈소스 지수</h3>
-    <p>BM20은 방법론 문서뿐 아니라 실제 산출 코드까지 공개한다. CoinDesk 20은 방법론 문서는 있지만 산출 코드는 비공개다. BM20의 <strong>완전한 투명성</strong>은 차별화된 강점이다.</p>
-
+    <p>BM20은 방법론 문서뿐 아니라 실제 산출 코드까지 공개한다. CoinDesk 20은 방법론 문서는 있지만 산출 코드는 비공개다. BM20의 <strong>완전한 투명성(Full Transparency)</strong>은 차별화된 강점이다. 누구든 동일한 입력값으로 동일한 지수를 재현할 수 있다.</p>
     <h3>고정 가중 모델</h3>
-    <p>시총 자동 가중 방식이 아닌 고정 가중 모델을 채택한다. 시총 가중 방식은 특정 자산 급등 시 비중이 과도하게 쏠리는 문제가 있다. BM20은 T1(고정 핵심 자산)과 T3(균등 배분) 구조로 시장 대표성과 구조적 안정성을 동시에 추구한다.</p>
+    <p>시총 자동 가중 방식이 아닌 고정 가중 모델을 채택한다. 시총 가중 방식은 특정 자산 급등 시 비중이 과도하게 쏠리는 문제가 있다. BM20은 T1(고정 핵심 자산)과 T3(균등 배분) 구조로 <strong>시장 대표성과 구조적 안정성</strong>을 동시에 추구한다.</p>
   </section>
 
   <!-- 03 UNIVERSE -->
   <section class="section" id="universe">
     <div class="section-header">
-      <span class="section-num">03</span>
+      <span class="sec-num">03</span>
       <h2>유니버스 & 편입 기준</h2>
     </div>
-
     <h3>기본 유니버스</h3>
     <p>글로벌 CoinMarketCap(CMC) 시가총액 상위 20개 디지털자산을 기준 유니버스로 삼는다. 리밸런싱 기준일의 CMC 스냅샷을 활용한다.</p>
-
     <h3>편입 제외 기준</h3>
     <ul class="excl-list">
-      <li>
-        <span class="excl-tag">스테이블코인</span>
-        USDT 1개만 허용. USDC, DAI, USDe 등 추가 스테이블코인 제외
-      </li>
-      <li>
-        <span class="excl-tag">래핑 토큰</span>
-        WBTC 등 원자산과 중복되는 래핑 토큰 제외
-      </li>
-      <li>
-        <span class="excl-tag">거래소 토큰</span>
-        LEO, BGB 등 특정 거래소 생태계 종속 토큰 제외
-      </li>
-      <li>
-        <span class="excl-tag">정치적 토큰</span>
-        WLFI, USD1 등 정치적 연계 토큰 제외
-      </li>
-      <li>
-        <span class="excl-tag">알고리즘 스테이블</span>
-        알고리즘 기반 스테이블코인 제외 (UST 전례 반영)
-      </li>
+      <li><span class="excl-tag">스테이블코인</span>USDT 1개만 허용. USDC, DAI, USDe 등 추가 스테이블코인 제외</li>
+      <li><span class="excl-tag">래핑 토큰</span>WBTC 등 원자산과 중복되는 래핑 토큰 제외</li>
+      <li><span class="excl-tag">거래소 토큰</span>LEO, BGB 등 특정 거래소 생태계 종속 토큰 제외</li>
+      <li><span class="excl-tag">정치적 토큰</span>WLFI, USD1 등 정치적 연계 토큰 제외</li>
+      <li><span class="excl-tag">알고리즘 스테이블</span>알고리즘 기반 스테이블코인 제외 (UST 전례 반영)</li>
     </ul>
-
     <h3>신규 편입 원칙</h3>
-    <p>급격한 등락에 의한 노이즈를 줄이기 위해 신규 자산은 <strong>1분기 관찰 후 익분기 편입</strong>을 원칙으로 한다. 단, 충분한 시장 검증이 이루어진 자산(예: HYPE)은 예외를 적용할 수 있다.</p>
+    <p>급격한 등락에 의한 노이즈를 줄이기 위해 신규 자산은 <strong>1분기 관찰 후 익분기 편입</strong>을 원칙으로 한다. 단, 충분한 시장 검증이 이루어진 자산(예: HYPE)은 예외를 적용할 수 있다. 이 규칙은 단기 급등락에 의한 지수 왜곡을 방지하기 위한 장치다.</p>
   </section>
 
   <!-- 04 WEIGHTS -->
   <section class="section" id="weights">
     <div class="section-header">
-      <span class="section-num">04</span>
+      <span class="sec-num">04</span>
       <h2>가중치 구조 (2026 Q2)</h2>
     </div>
-
-    <div class="version">
-      <div class="version-dot"></div>
-      현재 적용 버전: 2026 Q2 · 적용일 2026-04-01
-    </div>
-
     <h3>T1 — 고정 핵심 자산 (6종)</h3>
     <p>시장 대표성이 높고 구조적으로 안정된 자산에 고정 가중치를 부여한다.</p>
-
     <table class="data-table">
       <thead>
-        <tr>
-          <th>자산</th>
-          <th>티어</th>
-          <th>가중치</th>
-          <th>비고</th>
-        </tr>
+        <tr><th>자산</th><th>티어</th><th>가중치</th><th>비고</th></tr>
       </thead>
       <tbody>
-        <tr>
-          <td class="td-symbol">BTC</td>
-          <td><span class="td-tier t1">T1</span></td>
-          <td class="td-weight">32.00%</td>
-          <td>글로벌 디지털자산 기준점</td>
-        </tr>
-        <tr>
-          <td class="td-symbol">ETH</td>
-          <td><span class="td-tier t1">T1</span></td>
-          <td class="td-weight">20.00%</td>
-          <td>스마트컨트랙트 플랫폼 대표</td>
-        </tr>
-        <tr>
-          <td class="td-symbol">XRP</td>
-          <td><span class="td-tier t1">T1</span></td>
-          <td class="td-weight">8.00%</td>
-          <td>결제 네트워크 대표</td>
-        </tr>
-        <tr>
-          <td class="td-symbol">SOL</td>
-          <td><span class="td-tier t1">T1</span></td>
-          <td class="td-weight">5.00%</td>
-          <td>2026 Q2 T1 승격</td>
-        </tr>
-        <tr>
-          <td class="td-symbol">BNB</td>
-          <td><span class="td-tier t1">T1</span></td>
-          <td class="td-weight">5.00%</td>
-          <td>거래소 생태계 대표</td>
-        </tr>
-        <tr>
-          <td class="td-symbol">USDT</td>
-          <td><span class="td-tier t1">T1</span></td>
-          <td class="td-weight">2.00%</td>
-          <td>스테이블코인 대표 (1종 한정)</td>
-        </tr>
+        <tr><td class="td-symbol">BTC</td><td><span class="tier t1">T1</span></td><td class="td-weight">32.00%</td><td>글로벌 디지털자산 기준점</td></tr>
+        <tr><td class="td-symbol">ETH</td><td><span class="tier t1">T1</span></td><td class="td-weight">20.00%</td><td>스마트컨트랙트 플랫폼 대표</td></tr>
+        <tr><td class="td-symbol">XRP</td><td><span class="tier t1">T1</span></td><td class="td-weight">5.00%</td><td>결제 네트워크 대표</td></tr>
+        <tr><td class="td-symbol">SOL</td><td><span class="tier t1">T1</span></td><td class="td-weight">5.00%</td><td>2026 Q2 T1 승격</td></tr>
+        <tr><td class="td-symbol">BNB</td><td><span class="tier t1">T1</span></td><td class="td-weight">5.00%</td><td>거래소 생태계 대표</td></tr>
+        <tr><td class="td-symbol">USDT</td><td><span class="tier t1">T1</span></td><td class="td-weight">5.00%</td><td>스테이블코인 대표 (1종 한정)</td></tr>
       </tbody>
     </table>
 
     <h3>T3 — 균등 배분 자산 (14종)</h3>
-    <p>T1을 제외한 나머지 14개 자산에 잔여 비중을 균등 배분한다. 각 자산의 비중은 약 <strong>2.00%</strong>다.</p>
+    <p>T1을 제외한 나머지 14개 자산에 잔여 비중을 균등 배분한다. 각 자산의 비중은 <strong>2.00%</strong>다.</p>
     <p style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);">
-      T3 총 비중 = 100% − (32+20+8+5+5+2)% = 28% ÷ 14종 = 2.00% each
+      T3 총 비중 = 100% − (32+20+5+5+5+5)% = 28% ÷ 14종 = 2.00% each
     </p>
-
     <table class="data-table">
       <thead>
-        <tr>
-          <th>자산</th>
-          <th>티어</th>
-          <th>가중치</th>
-          <th>비고</th>
-        </tr>
+        <tr><th>자산</th><th>티어</th><th>가중치</th><th>비고</th></tr>
       </thead>
       <tbody>
-        <tr><td class="td-symbol">ADA</td><td><span class="td-tier">T3</span></td><td class="td-weight">2.00%</td><td></td></tr>
-        <tr><td class="td-symbol">AVAX</td><td><span class="td-tier">T3</span></td><td class="td-weight">2.00%</td><td></td></tr>
-        <tr><td class="td-symbol">DOGE</td><td><span class="td-tier">T3</span></td><td class="td-weight">2.00%</td><td></td></tr>
-        <tr><td class="td-symbol">DOT</td><td><span class="td-tier">T3</span></td><td class="td-weight">2.00%</td><td></td></tr>
-        <tr><td class="td-symbol">HYPE</td><td><span class="td-tier">T3</span></td><td class="td-weight">2.00%</td><td>Hyperliquid</td></tr>
-        <tr><td class="td-symbol">LINK</td><td><span class="td-tier">T3</span></td><td class="td-weight">2.00%</td><td></td></tr>
-        <tr><td class="td-symbol">LTC</td><td><span class="td-tier">T3</span></td><td class="td-weight">2.00%</td><td></td></tr>
-        <tr><td class="td-symbol">SHIB</td><td><span class="td-tier">T3</span></td><td class="td-weight">2.00%</td><td></td></tr>
-        <tr><td class="td-symbol">SUI</td><td><span class="td-tier">T3</span></td><td class="td-weight">2.00%</td><td></td></tr>
-        <tr><td class="td-symbol">TON</td><td><span class="td-tier">T3</span></td><td class="td-weight">2.00%</td><td></td></tr>
-        <tr><td class="td-symbol">TRX</td><td><span class="td-tier">T3</span></td><td class="td-weight">2.00%</td><td></td></tr>
-        <tr><td class="td-symbol">UNI</td><td><span class="td-tier">T3</span></td><td class="td-weight">2.00%</td><td></td></tr>
-        <tr><td class="td-symbol">ZEC</td><td><span class="td-tier">T3</span></td><td class="td-weight">2.00%</td><td>2026 Q1 편입</td></tr>
-        <tr><td class="td-symbol">CC</td><td><span class="td-tier">T3</span></td><td class="td-weight">2.00%</td><td>Canton Network, 2026 Q2 편입</td></tr>
+        <tr><td class="td-symbol">ADA</td><td><span class="tier">T3</span></td><td class="td-weight">2.00%</td><td>L1</td></tr>
+        <tr><td class="td-symbol">AVAX</td><td><span class="tier">T3</span></td><td class="td-weight">2.00%</td><td>L1</td></tr>
+        <tr><td class="td-symbol">BCH</td><td><span class="tier">T3</span></td><td class="td-weight">2.00%</td><td>결제</td></tr>
+        <tr><td class="td-symbol">CC</td><td><span class="tier">T3</span></td><td class="td-weight">2.00%</td><td>Canton Network · DeFi/신규 · 2026 Q2 편입</td></tr>
+        <tr><td class="td-symbol">DOGE</td><td><span class="tier">T3</span></td><td class="td-weight">2.00%</td><td>밈</td></tr>
+        <tr><td class="td-symbol">HBAR</td><td><span class="tier">T3</span></td><td class="td-weight">2.00%</td><td>L1</td></tr>
+        <tr><td class="td-symbol">HYPE</td><td><span class="tier">T3</span></td><td class="td-weight">2.00%</td><td>Hyperliquid · DeFi/신규</td></tr>
+        <tr><td class="td-symbol">LINK</td><td><span class="tier">T3</span></td><td class="td-weight">2.00%</td><td>DeFi/신규</td></tr>
+        <tr><td class="td-symbol">LTC</td><td><span class="tier">T3</span></td><td class="td-weight">2.00%</td><td>결제</td></tr>
+        <tr><td class="td-symbol">SHIB</td><td><span class="tier">T3</span></td><td class="td-weight">2.00%</td><td>밈</td></tr>
+        <tr><td class="td-symbol">SUI</td><td><span class="tier">T3</span></td><td class="td-weight">2.00%</td><td>L1</td></tr>
+        <tr><td class="td-symbol">TRX</td><td><span class="tier">T3</span></td><td class="td-weight">2.00%</td><td>결제</td></tr>
+        <tr><td class="td-symbol">XLM</td><td><span class="tier">T3</span></td><td class="td-weight">2.00%</td><td>결제</td></tr>
+        <tr><td class="td-symbol">ZEC</td><td><span class="tier">T3</span></td><td class="td-weight">2.00%</td><td>프라이버시 · 2026 Q1 편입</td></tr>
       </tbody>
     </table>
   </section>
@@ -805,50 +629,45 @@
   <!-- 05 FORMULA -->
   <section class="section" id="formula">
     <div class="section-header">
-      <span class="section-num">05</span>
+      <span class="sec-num">05</span>
       <h2>산출 공식</h2>
     </div>
-
     <div class="formula-box">
       <div class="formula-label">Index Level Formula</div>
       <div class="formula-main">
-        Index<sub>t</sub> = (Portfolio Value<sub>t</sub> / Portfolio Value<sub>base</sub>) × 100
+        Index<sub>t</sub> = (Portfolio Value<sub>t</sub> / Portfolio Value<sub>base</sub>) × 100<br>
+        Portfolio Value<sub>t</sub> = Σ (Price<sub>i,t</sub> × Weight<sub>i</sub>)
       </div>
       <div class="formula-note">
-        Portfolio Value<sub>t</sub> = Σ (Price<sub>i,t</sub> × Weight<sub>i</sub>)<br>
         기준일: 2018-01-01 · 기준값: 100
       </div>
     </div>
-
     <h3>제공 데이터</h3>
-    <p>BM20은 단순 지수 레벨 외에 다음 데이터를 함께 제공한다.</p>
-    <p>1D / 7D / 30D / MTD / YTD 수익률 · Best 3 Performers · Worst 3 Performers · 자산별 기여도 분석 · BTC/ETH 트렌드 차트 · BM20 vs Raw Market Cap 비교</p>
+    <p>BM20은 지수 레벨 외에 다음 데이터를 함께 제공한다: 1D / 7D / 30D / MTD / YTD 수익률, Best 3 Performers, Worst 3 Performers, 자산별 기여도 분석, BTC/ETH 트렌드 차트, BM20 vs Raw Market Cap 비교.</p>
   </section>
 
   <!-- 06 REBALANCING -->
   <section class="section" id="rebalancing">
     <div class="section-header">
-      <span class="section-num">06</span>
+      <span class="sec-num">06</span>
       <h2>리밸런싱 규칙</h2>
     </div>
-
     <h3>주기</h3>
     <p><strong>분기 1회</strong>. 매년 1월 · 4월 · 7월 · 10월 첫 영업일에 적용한다.</p>
-
     <h3>기준</h3>
-    <p>리밸런싱 기준일의 CoinMarketCap 시가총액 스냅샷을 기준으로 상위 20개 자산을 선정한다. 편입 제외 기준(스테이블코인, 래핑 토큰 등)을 적용한 후 T1/T3 분류를 결정한다.</p>
-
+    <p>리밸런싱 기준일의 CoinMarketCap 시가총액 스냅샷을 기준으로 상위 20개 자산을 선정한다. 편입 제외 기준 적용 후 T1/T3 분류를 결정한다.</p>
     <h3>구성 변경 이력</h3>
     <table class="data-table">
-      <thead>
-        <tr><th>분기</th><th>주요 변경 내용</th></tr>
-      </thead>
+      <thead><tr><th>분기</th><th>주요 변경 내용</th></tr></thead>
       <tbody>
-        <tr><td>2026 Q2</td><td>CC (Canton Network) T3 편입 · SOL T1 승격</td></tr>
-        <tr><td>2026 Q1</td><td>ZEC T3 편입 · USDC 영구 제외</td></tr>
-        <tr><td>2025 Q4</td><td>HYPE (Hyperliquid) 예외 편입</td></tr>
-        <tr><td>2025 Q3</td><td>SUI 편입</td></tr>
-        <tr><td>2018 Q1</td><td>최초 구성 · 기준값 100 설정</td></tr>
+        <tr><td>2026 Q2</td><td>CC (Canton Network) 편입 · TON 제외</td></tr>
+        <tr><td>2026 Q1</td><td>ZEC 편입 · DOT 제외</td></tr>
+        <tr><td>2025 Q2</td><td>HYPE 편입 · UNI 제외</td></tr>
+        <tr><td>2025 Q1</td><td>XLM · HBAR · UNI 편입 · NEAR · TAO · APT 제외</td></tr>
+        <tr><td>2024 Q4</td><td>SUI · TAO · APT 편입 · MATIC · UNI · ICP 제외</td></tr>
+        <tr><td>2022 Q1</td><td>구조 변경 · SHIB · NEAR · TRX 편입 · USDC · XLM · ICP 제외</td></tr>
+        <tr><td>2020 Q1</td><td>구조 변경</td></tr>
+        <tr><td>2018 Q1</td><td>최초 구성 · 기준값 100 설정 (백테스트 시작)</td></tr>
       </tbody>
     </table>
   </section>
@@ -856,40 +675,34 @@
   <!-- 07 DATA -->
   <section class="section" id="data">
     <div class="section-header">
-      <span class="section-num">07</span>
+      <span class="sec-num">07</span>
       <h2>데이터 소스</h2>
     </div>
-
     <table class="data-table">
-      <thead>
-        <tr><th>항목</th><th>1차 소스</th><th>폴백</th></tr>
-      </thead>
+      <thead><tr><th>항목</th><th>1차 소스</th><th>폴백</th></tr></thead>
       <tbody>
-        <tr><td>일별 가격</td><td>Yahoo Finance (yfinance)</td><td>CoinGecko API</td></tr>
+        <tr><td>일별 가격</td><td>Yahoo Finance (yfinance)</td><td>CoinMarketCap</td></tr>
         <tr><td>시가총액 순위</td><td>CoinMarketCap</td><td>—</td></tr>
         <tr><td>히스토리</td><td>CSV 파일 (GitHub 저장)</td><td>—</td></tr>
       </tbody>
     </table>
-
     <div class="callout">
-      <p>써드파티 데이터를 사용하는 것은 BM20만의 특징이 아니다. CoinDesk 20도 CryptoCompare(CCData) 데이터를 활용한다. 차이는 <strong>"어떤 API를 쓰냐"가 아니라 "그 과정을 얼마나 투명하게 문서화했냐"</strong>다. BM20은 모든 산출 코드를 GitHub에 공개한다.</p>
+      <p>써드파티 데이터 활용은 BM20만의 특징이 아니다. CoinDesk 20도 CryptoCompare(CCData) 데이터를 활용한다. 차이는 <strong>"어떤 API를 쓰냐"가 아니라 "그 과정을 얼마나 투명하게 문서화했냐"</strong>다. BM20은 모든 산출 코드를 GitHub에 공개한다.</p>
     </div>
   </section>
 
   <!-- 08 INFRA -->
   <section class="section" id="infra">
     <div class="section-header">
-      <span class="section-num">08</span>
+      <span class="sec-num">08</span>
       <h2>운영 인프라</h2>
     </div>
-
     <h3>자동화 파이프라인</h3>
     <p>BM20은 GitHub Actions 기반으로 매일 자동 산출·배포된다. 인적 개입 없이 동일한 방법론이 매일 적용된다.</p>
-
     <div class="formula-box">
       <div class="formula-label">Daily Automation Flow</div>
       <div class="formula-main" style="font-size:13px;line-height:2.2;">
-        Data Collection (yfinance)<br>
+        Data Collection (yfinance / CoinGecko)<br>
         → Weight Application (T1 고정 / T3 균등)<br>
         → Index Calculation<br>
         → History Update (CSV)<br>
@@ -897,21 +710,18 @@
         → Web Publishing (data.blockmedia.co.kr)
       </div>
     </div>
-
     <h3>공개 대시보드</h3>
-    <p>산출된 지수와 모든 차트는 <strong>data.blockmedia.co.kr</strong>에서 실시간으로 확인할 수 있다. BM20 지수 레벨, 기간별 수익률, 포트폴리오 구성 비중, 히스토리 트렌드를 제공한다.</p>
-
+    <p>산출된 지수와 차트는 <strong>data.blockmedia.co.kr</strong>에서 확인할 수 있다.</p>
     <h3>트랙레코드</h3>
-    <p>2018년 1월부터 매일 산출된 <strong>7년 이상의 일별 히스토리</strong>가 존재한다. 이는 신뢰할 수 있는 벤치마크의 핵심 요건이다. CoinDesk도 Bitcoin Price Index(BPI) 10년 트랙레코드를 바탕으로 CD20을 런칭했다.</p>
+    <p>2018년~2025년 <strong>7년간의 백테스트 히스토리</strong>를 보유하며, 2026년 공식 론칭했다. CoinDesk도 Bitcoin Price Index(BPI) 10년 트랙레코드를 바탕으로 CD20을 런칭한 것과 같은 맥락이다.</p>
   </section>
 
   <!-- 09 COMPARE -->
   <section class="section" id="compare">
     <div class="section-header">
-      <span class="section-num">09</span>
+      <span class="sec-num">09</span>
       <h2>글로벌 지수 비교</h2>
     </div>
-
     <table class="compare-table">
       <thead>
         <tr>
@@ -922,54 +732,14 @@
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td class="item">발행사</td>
-          <td class="bm">블록미디어 (한국)</td>
-          <td>CoinDesk Indices (미국)</td>
-          <td>Bloomberg / Galaxy</td>
-        </tr>
-        <tr>
-          <td class="item">런칭</td>
-          <td class="bm">2018</td>
-          <td>2024</td>
-          <td>2018</td>
-        </tr>
-        <tr>
-          <td class="item">구성 종목</td>
-          <td class="bm">20</td>
-          <td>20</td>
-          <td>복수</td>
-        </tr>
-        <tr>
-          <td class="item">가중 방식</td>
-          <td class="bm">고정 가중 (T1/T3)</td>
-          <td>시총 가중 (상한 있음)</td>
-          <td>시총 가중</td>
-        </tr>
-        <tr>
-          <td class="item">방법론 공개</td>
-          <td class="bm">완전 공개 (코드 포함)</td>
-          <td>문서 공개</td>
-          <td>문서 공개</td>
-        </tr>
-        <tr>
-          <td class="item">산출 코드</td>
-          <td class="bm">GitHub 오픈소스</td>
-          <td>비공개</td>
-          <td>비공개</td>
-        </tr>
-        <tr>
-          <td class="item">한국 시장 반영</td>
-          <td class="bm">✓ 설계 원칙</td>
-          <td>—</td>
-          <td>—</td>
-        </tr>
-        <tr>
-          <td class="item">규제 등록</td>
-          <td class="bm">진행 예정</td>
-          <td>FCA / IOSCO</td>
-          <td>—</td>
-        </tr>
+        <tr><td class="item">발행사</td><td class="bm">블록미디어 (한국)</td><td>CoinDesk Indices (미국)</td><td>Bloomberg / Galaxy</td></tr>
+        <tr><td class="item">런칭</td><td class="bm">2026 (백테스트 2018~2025)</td><td>2024</td><td>2018</td></tr>
+        <tr><td class="item">구성 종목</td><td class="bm">20</td><td>20</td><td>복수</td></tr>
+        <tr><td class="item">가중 방식</td><td class="bm">고정 가중 (T1/T3)</td><td>시총 가중 (상한 있음)</td><td>시총 가중</td></tr>
+        <tr><td class="item">방법론 공개</td><td class="bm">완전 공개 (코드 포함)</td><td>문서 공개</td><td>문서 공개</td></tr>
+        <tr><td class="item">산출 코드</td><td class="bm">GitHub 오픈소스</td><td>비공개</td><td>비공개</td></tr>
+        <tr><td class="item">한국 시장 반영</td><td class="bm">✓ 설계 원칙</td><td>—</td><td>—</td></tr>
+        <tr><td class="item">규제 등록</td><td class="bm">진행 예정</td><td>FCA / IOSCO</td><td>—</td></tr>
       </tbody>
     </table>
   </section>
@@ -977,18 +747,16 @@
   <!-- 10 ROADMAP -->
   <section class="section" id="roadmap">
     <div class="section-header">
-      <span class="section-num">10</span>
+      <span class="sec-num">10</span>
       <h2>로드맵</h2>
     </div>
-
-    <p>BM20은 현재 방법론 문서화와 인프라 고도화를 진행 중이다. 글로벌 디지털자산 ETF/ETP 기초지수로의 발전을 장기 목표로 한다.</p>
-
+    <p>BM20은 방법론 문서화와 인프라 고도화를 진행 중이다. 글로벌 디지털자산 ETF/ETP 기초지수로의 발전을 장기 목표로 한다.</p>
     <div class="roadmap">
       <div class="roadmap-item">
         <div class="roadmap-phase">현재 완료</div>
         <div>
           <div class="roadmap-title">방법론 문서 정식화</div>
-          <div class="roadmap-desc">README 수준에서 공식 Methodology 문서로 전환. 버전 관리 체계 적용.</div>
+          <div class="roadmap-desc">공식 Methodology 문서 발행. 버전 관리 체계 적용.</div>
         </div>
       </div>
       <div class="roadmap-item">
@@ -1008,22 +776,29 @@
       <div class="roadmap-item">
         <div class="roadmap-phase">중기</div>
         <div>
-          <div class="roadmap-title">실시간 산출 파이프라인</div>
-          <div class="roadmap-desc">현행 일 1회 산출에서 준실시간(5분 단위) 산출로 전환. ETF NAV 계산 지원 기반 마련.</div>
+          <div class="roadmap-title">준실시간 산출</div>
+          <div class="roadmap-desc">일 1회 산출에서 5분 단위 산출로 전환. ETF NAV 계산 지원 기반 마련.</div>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-phase">중기</div>
+        <div>
+          <div class="roadmap-title">데이터 파트너십</div>
+          <div class="roadmap-desc">CoinGecko · CoinMarketCap 등 주요 데이터 플랫폼과 공식 파트너십 체결. 데이터 신뢰성 및 대외 공신력 강화.</div>
         </div>
       </div>
       <div class="roadmap-item">
         <div class="roadmap-phase">중기</div>
         <div>
           <div class="roadmap-title">기관 파트너십</div>
-          <div class="roadmap-desc">국내 자산운용사 대상 BM20 기초지수 활용 논의. CoinGecko, CMC 데이터 파트너십.</div>
+          <div class="roadmap-desc">국내 자산운용사 대상 BM20 기초지수 활용 논의.</div>
         </div>
       </div>
       <div class="roadmap-item">
         <div class="roadmap-phase">장기</div>
         <div>
           <div class="roadmap-title">ETF / ETP 기초지수</div>
-          <div class="roadmap-desc">한국 가상자산 ETF 제도화 시 기초지수 채택. 해외 ETP 발행사(WisdomTree 등) 접촉.</div>
+          <div class="roadmap-desc">한국 가상자산 ETF 제도화 시 기초지수 채택. 해외 ETP 발행사 접촉.</div>
         </div>
       </div>
     </div>
@@ -1032,14 +807,14 @@
   <!-- DISCLAIMER -->
   <div class="disclaimer">
     <div class="disclaimer-label">Disclaimer · 면책 고지</div>
-    <p>BM20은 정보 제공을 목적으로 하며 투자 권유가 아닙니다. 지수 구성 및 산출 방식은 시장 환경에 따라 변경될 수 있습니다. 데이터 오류 가능성이 존재할 수 있으며, 투자 판단에 대한 책임은 투자자 본인에게 있습니다. 블록미디어는 본 지수를 활용한 투자 결과에 대해 책임을 지지 않습니다.</p>
+    <p>BM20은 정보 제공을 목적으로 하며 투자 권유가 아닙니다. 지수 구성 및 산출 방식은 시장 환경에 따라 변경될 수 있습니다. 데이터 오류 가능성이 존재할 수 있으며, 투자 판단에 대한 책임은 투자자 본인에게 있습니다.</p>
   </div>
 
 </main>
 
 <footer>
-  <span>© 2026 Blockmedia · BM20 Index</span>
-  <a href="https://data.blockmedia.co.kr">data.blockmedia.co.kr →</a>
+  <span>© 2026 Blockmedia · BM20 Index Methodology v2026.Q2</span>
+  <a href="https://data.blockmedia.co.kr/bm20_index.html">Live Dashboard →</a>
 </footer>
 
 </body>
