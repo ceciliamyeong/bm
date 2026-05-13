@@ -17,13 +17,13 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Run coverage check
+      - name: Run slug finder
         env:
           SANTIMENT_API_KEY: ${{ secrets.SANTIMENT_API_KEY }}
-        run: python scripts/check_mvrv_coverage.py
+        run: python scripts/find_santiment_slugs.py
 
       - name: Upload result
         uses: actions/upload-artifact@v4
         with:
-          name: mvrv-coverage
-          path: mvrv_coverage.json
+          name: santiment_slugs
+          path: santiment_slugs.json
