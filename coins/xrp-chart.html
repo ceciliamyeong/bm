@@ -1045,7 +1045,9 @@ document.querySelectorAll('.period-btn').forEach(btn => {
 });
 
 // ── INIT ─────────────────────────────────────────────────────
-Promise.all([fetchUsdKrw(), fetchPrice()]).then(() => loadEtfFlow());
+fetchUsdKrw().then(() => {
+  fetchPrice().then(() => loadEtfFlow());
+});
 loadChart('1m', 360, 1);
 fetchNews();
 
