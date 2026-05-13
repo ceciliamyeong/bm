@@ -20,7 +20,7 @@ jobs:
       - name: Run coverage check
         env:
           SANTIMENT_API_KEY: ${{ secrets.SANTIMENT_API_KEY }}
-        run: python scripts/check_mvrv_coverage.py
+        run: python scripts/debug_mvrv.py
 
       - name: Upload result
         uses: actions/upload-artifact@v4
