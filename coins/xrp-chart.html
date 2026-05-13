@@ -762,15 +762,17 @@ let lwChart = null, mainSeries = null;
 let cachedUsdKrw = 1480;
 let cachedKrwXrp = 0;
 async function fetchUsdKrw() {
-  try {
-    const r = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json');
-    const d = await r.json();
-    if (d?.usd?.krw) { cachedUsdKrw = d.usd.krw; return d.usd.krw; }
-  } catch(e) {}
+  // 1순위: open.er-api.com (실시간에 가까움)
   try {
     const r = await fetch('https://open.er-api.com/v6/latest/USD');
     const d = await r.json();
     if (d?.rates?.KRW) { cachedUsdKrw = d.rates.KRW; return d.rates.KRW; }
+  } catch(e) {}
+  // 2순위: fawazahmed0 (하루 1회 업데이트, fallback)
+  try {
+    const r = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json');
+    const d = await r.json();
+    if (d?.usd?.krw) { cachedUsdKrw = d.usd.krw; return d.usd.krw; }
   } catch(e) {}
   return cachedUsdKrw;
 }
