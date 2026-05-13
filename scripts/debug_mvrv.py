@@ -21,7 +21,7 @@ from_date = (datetime.utcnow() - timedelta(days=7)).strftime("%Y-%m-%dT%H:%M:%SZ
 
 query = """
 {
-  getMetric(metric: "mvrv_ratio") {
+  getMetric(metric: "mvrv_usd") {
     timeseriesData(
       slug: "bitcoin"
       from: "%s"
