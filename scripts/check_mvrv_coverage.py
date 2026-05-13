@@ -40,7 +40,7 @@ BM20_COINS = [
 def fetch_mvrv(slug: str, from_date: str, to_date: str) -> list:
     query = """
     {
-      getMetric(metric: "mvrv_ratio") {
+      getMetric(metric: "mvrv_usd") {
         timeseriesData(
           slug: "%s"
           from: "%s"
