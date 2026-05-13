@@ -1,8 +1,6 @@
 """
-Santiment MVRV 커버리지 체크 스크립트
-- BM20 구성 코인 대상으로 mvrv_ratio 데이터 반환 여부 확인
-- 최근 7일치만 요청해서 빠르게 체크
-- 결과: 커버 가능 코인 / N/A 코인 분류 출력
+Santiment MVRV 커버리지 체크 v2
+- slug 교정 버전
 """
 
 import os
@@ -13,7 +11,7 @@ from datetime import datetime, timedelta
 API_KEY = os.environ.get("SANTIMENT_API_KEY")
 API_URL = "https://api.santiment.net/graphql"
 
-# BM20 구성 코인 (Santiment slug 기준)
+# slug 수정본 - Santiment 공식 slug 기준
 BM20_COINS = [
     {"symbol": "BTC",  "slug": "bitcoin"},
     {"symbol": "ETH",  "slug": "ethereum"},
@@ -36,6 +34,23 @@ BM20_COINS = [
     {"symbol": "ZEC",  "slug": "zcash"},
     {"symbol": "CC",   "slug": "canton-network"},
 ]
+
+# 안 됐던 코인들 대체 slug 후보
+SLUG_ALTERNATIVES = {
+    "SOL":  ["solana"],
+    "BNB":  ["binance-coin", "bnb"],
+    "AVAX": ["avalanche", "avalanche-2"],
+    "DOT":  ["polkadot-new", "polkadot"],
+    "TRX":  ["tron"],
+    "XLM":  ["stellar"],
+    "HBAR": ["hedera-hashgraph", "hedera"],
+    "ATOM": ["cosmos", "cosmos-hub"],
+    "NEAR": ["near-protocol", "near"],
+    "HYPE": ["hyperliquid", "hype"],
+    "SUI":  ["sui"],
+    "ZEC":  ["zcash"],
+    "CC":   ["canton-network", "canton"],
+}
 
 def fetch_mvrv(slug: str, from_date: str, to_date: str) -> list:
     query = """
@@ -60,85 +75,71 @@ def fetch_mvrv(slug: str, from_date: str, to_date: str) -> list:
     }
 
     try:
-        resp = requests.post(
-            API_URL,
-            json={"query": query},
-            headers=headers,
-            timeout=15
-        )
+        resp = requests.post(API_URL, json={"query": query}, headers=headers, timeout=15)
         resp.raise_for_status()
         data = resp.json()
-
-        # 에러 체크
         if "errors" in data:
             return []
-
         rows = data.get("data", {}).get("getMetric", {}).get("timeseriesData", [])
-        # null값 필터
-        rows = [r for r in rows if r.get("value") is not None]
-        return rows
-
-    except Exception as e:
-        print(f"  [ERROR] {slug}: {e}")
+        return [r for r in rows if r.get("value") is not None]
+    except Exception:
         return []
 
 
 def main():
-    to_date = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+    to_date   = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
     from_date = (datetime.utcnow() - timedelta(days=7)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    print(f"\n{'='*55}")
-    print(f"  Santiment MVRV 커버리지 체크")
-    print(f"  기간: 최근 7일 ({from_date[:10]} ~ {to_date[:10]})")
-    print(f"{'='*55}\n")
+    print(f"\n{'='*60}")
+    print(f"  Santiment MVRV 커버리지 체크 v2 (slug 교정)")
+    print(f"  기간: {from_date[:10]} ~ {to_date[:10]}")
+    print(f"{'='*60}\n")
 
-    covered = []
+    covered     = []
     not_covered = []
 
     for coin in BM20_COINS:
         symbol = coin["symbol"]
-        slug   = coin["slug"]
-        print(f"  Checking {symbol:6s} ({slug}) ... ", end="", flush=True)
+        slugs_to_try = SLUG_ALTERNATIVES.get(symbol, [coin["slug"]])
 
-        rows = fetch_mvrv(slug, from_date, to_date)
+        success = False
+        for slug in slugs_to_try:
+            print(f"  {symbol:6s} ({slug}) ... ", end="", flush=True)
+            rows = fetch_mvrv(slug, from_date, to_date)
+            if rows:
+                latest = rows[-1]
+                print(f"✅  MVRV: {latest['value']:+.4f} | {latest['datetime'][:10]}")
+                covered.append({
+                    "symbol": symbol,
+                    "slug": slug,
+                    "latest_mvrv": round(latest["value"], 4),
+                    "latest_date": latest["datetime"][:10]
+                })
+                success = True
+                break
+            else:
+                print(f"❌")
 
-        if rows:
-            latest = rows[-1]
-            print(f"✅  {len(rows)}일치 | 최신 MVRV: {latest['value']:.4f} ({latest['datetime'][:10]})")
-            covered.append({
-                "symbol": symbol,
-                "slug": slug,
-                "days": len(rows),
-                "latest_mvrv": round(latest["value"], 4),
-                "latest_date": latest["datetime"][:10]
-            })
-        else:
-            print("❌  데이터 없음")
-            not_covered.append({"symbol": symbol, "slug": slug})
+        if not success:
+            not_covered.append({"symbol": symbol})
 
-    # 결과 요약
-    print(f"\n{'='*55}")
-    print(f"  결과 요약")
-    print(f"{'='*55}")
-    print(f"\n✅ 커버 가능 ({len(covered)}종):")
+    print(f"\n{'='*60}")
+    print(f"✅ 커버 가능 ({len(covered)}종):")
     for c in covered:
-        print(f"   {c['symbol']:6s} | MVRV {c['latest_mvrv']:+.4f} | {c['latest_date']}")
+        print(f"   {c['symbol']:6s} | {c['slug']:30s} | MVRV {c['latest_mvrv']:+.4f}")
 
-    print(f"\n❌ 데이터 없음 ({len(not_covered)}종):")
+    print(f"\n❌ 최종 미지원 ({len(not_covered)}종):")
     for c in not_covered:
-        print(f"   {c['symbol']:6s} ({c['slug']})")
+        print(f"   {c['symbol']}")
 
-    # JSON 저장
     result = {
         "checked_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
         "covered": covered,
         "not_covered": not_covered
     }
-    with open("mvrv_coverage.json", "w") as f:
+    with open("mvrv_coverage_v2.json", "w") as f:
         json.dump(result, f, indent=2, ensure_ascii=False)
-
-    print(f"\n  → mvrv_coverage.json 저장 완료")
-    print(f"{'='*55}\n")
+    print(f"\n  → mvrv_coverage_v2.json 저장 완료\n")
 
 
 if __name__ == "__main__":
