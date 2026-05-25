@@ -74,13 +74,22 @@
       display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 12px; margin-bottom: 24px;
     }
+    @media (max-width: 640px) {
+      .kpi-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    }
     .kpi-card {
       background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
       padding: 16px 18px; box-shadow: 0 1px 3px rgba(15,23,42,0.06); transition: box-shadow .2s;
     }
+    @media (max-width: 640px) {
+      .kpi-card { padding: 12px 14px; border-radius: 8px; }
+    }
     .kpi-card:hover { box-shadow: 0 4px 12px rgba(15,23,42,0.08); }
     .kpi-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px; font-weight: 500; }
     .kpi-value { font-size: 22px; font-weight: 800; color: var(--text); letter-spacing: -0.04em; }
+    @media (max-width: 640px) {
+      .kpi-value { font-size: 18px; }
+    }
     .kpi-value.positive { color: var(--green); }
     .kpi-value.negative { color: var(--red); }
     .kpi-sub { font-size: 11px; color: var(--text2); margin-top: 4px; }
