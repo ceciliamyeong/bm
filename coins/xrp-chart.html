@@ -685,6 +685,35 @@
         </div>
       </div>
 
+      <!-- ── XRP ETF 순유입 섹션 ── -->
+      <div class="etf-section">
+        <div class="etf-header">
+          <span class="etf-title">📈 현물 XRP ETF 자금 흐름 (최근 30일)</span>
+          <span class="etf-source">DATA: SoSoValue</span>
+        </div>
+        <div class="etf-kpi-row">
+          <div class="etf-kpi-cell">
+            <div class="etf-kpi-label">당일 순유입</div>
+            <div class="etf-kpi-value" id="etfXDaily">—</div>
+            <div class="etf-kpi-date" id="etfXDailyDate"></div>
+          </div>
+          <div class="etf-kpi-cell">
+            <div class="etf-kpi-label">누적 순유입</div>
+            <div class="etf-kpi-value" id="etfXCum">—</div>
+            <div class="etf-kpi-date">출시 이후</div>
+          </div>
+          <div class="etf-kpi-cell">
+            <div class="etf-kpi-label">총 AUM</div>
+            <div class="etf-kpi-value" id="etfXAum">—</div>
+            <div class="etf-kpi-date" id="etfXAumDate"></div>
+          </div>
+        </div>
+        <div class="etf-chart-wrap">
+          <div class="etf-chart-loading" id="etfXChartLoading">ETF 데이터 불러오는 중...</div>
+          <canvas id="etfXFlowChart"></canvas>
+        </div>
+      </div>
+
       <!-- ── XRP ETF 현황 카드 ── -->
       <div class="xrp-etf-card">
         <div class="etf-header" style="margin-bottom:0.75rem;">
@@ -731,7 +760,7 @@
   </div>
 
   <footer class="page-footer">
-    <span>데이터: Binance API · Upbit API · SoSoValue</span>
+    <span>데이터: Binance API · Upbit API · Coinbase API · SoSoValue</span>
     <span>·</span>
     <a class="footer-tv-logo" href="https://www.tradingview.com" target="_blank" rel="noopener">
       charts by&nbsp;<svg class="tv-logo" viewBox="0 0 755 129" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M187.671 101.559H202.504V43.4442H221.909V29.4236H168.469V43.4442H187.671V101.559Z" fill="currentColor"/><path d="M221.931 101.558H235.85V77.2764C235.85 68.8434 240.219 63.7634 246.823 63.7634C249.159 63.7634 250.988 64.1699 253.122 64.8814V50.7589C251.395 50.2509 249.972 50.1494 248.448 50.1494C242.759 50.1494 237.577 53.9084 235.85 58.8869V50.7589H221.931V101.558Z" fill="currentColor"/><path d="M492.336 88.3505C485.326 88.3505 479.434 83.0675 479.434 75.346C479.434 67.523 485.326 62.3415 492.336 62.3415C499.346 62.3415 505.24 67.523 505.24 75.346C505.24 83.0675 499.346 88.3505 492.336 88.3505ZM490.711 123.809C506.255 123.809 518.04 115.883 518.04 97.596V50.759H504.12V56.4485C501.38 52.4865 495.893 49.6416 489.39 49.6416C476.081 49.6416 465.413 61.0205 465.413 75.346C465.413 89.5695 476.081 100.949 489.39 100.949C495.893 100.949 501.38 98.0025 504.12 94.243V97.6975C504.12 105.826 498.737 111.617 490.508 111.617C484.818 111.617 479.128 109.686 474.658 105.317L467.039 115.68C472.83 121.268 481.871 123.809 490.711 123.809Z" fill="currentColor"/><path d="M547.47 101.559H560.575L590.445 29.4236H574.19L554.075 79.5116L533.655 29.4236H517.7L547.47 101.559Z" fill="currentColor"/><path d="M603.215 42.4281C608.195 42.4281 612.16 38.4657 612.16 33.5891C612.16 28.7124 608.195 24.75 603.215 24.75C598.44 24.75 594.38 28.7124 594.38 33.5891C594.38 38.4657 598.44 42.4281 603.215 42.4281ZM596.31 101.559H610.23V50.759H596.31V101.559Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M56.142 101.593H29.4077V56.1445H0V29.4102H56.142V101.593ZM96.2435 45.4508C96.2435 54.3095 89.062 61.4915 80.203 61.4915C71.344 61.4915 64.1625 54.3095 64.1625 45.4508C64.1625 36.5918 71.344 29.4102 80.203 29.4102C89.062 29.4102 96.2435 36.5918 96.2435 45.4508ZM80.203 101.593L110.948 29.4102H143.029L112.284 101.593H80.203Z" fill="currentColor"/></svg>
@@ -758,6 +787,7 @@ const C = {
 };
 
 let lwChart = null, mainSeries = null;
+let xrpEtfChart = null;
 // ── 환율 ─────────────────────────────────────────────────────
 let cachedUsdKrw = 1480;
 let cachedKrwXrp = 0;
@@ -946,6 +976,105 @@ async function fetchNews() {
   }
 }
 
+// ── XRP ETF Flow ─────────────────────────────────────────────
+function fmtFlow(val) {
+  if (val == null || isNaN(val)) return '—';
+  const m = val / 1e6;
+  const abs = Math.abs(m);
+  const sign = m >= 0 ? '+' : '-';
+  return abs >= 1000 ? sign + '$' + (abs/1000).toFixed(2) + 'B' : sign + '$' + abs.toFixed(0) + 'M';
+}
+function fmtB(val) {
+  if (val == null || isNaN(val)) return '—';
+  return (val >= 0 ? '' : '-') + '$' + (Math.abs(val)/1e9).toFixed(2) + 'B';
+}
+
+async function loadXrpEtfFlow() {
+  try {
+    const [mRes, hRes] = await Promise.allSettled([
+      fetch('../data/etf_xrp_metrics.json'),
+      fetch('../data/etf_xrp_history.json'),
+    ]);
+
+    // KPI
+    if (mRes.status === 'fulfilled' && mRes.value.ok) {
+      const m = await mRes.value.json();
+      const daily = m.dailyNetInflow?.value;
+      const dailyEl = document.getElementById('etfXDaily');
+      if (daily != null) {
+        dailyEl.textContent = fmtFlow(daily);
+        dailyEl.className = 'etf-kpi-value ' + (daily >= 0 ? 'up' : 'down');
+      }
+      document.getElementById('etfXDailyDate').textContent = m.dailyNetInflow?.lastUpdateDate || '';
+      document.getElementById('etfXCum').textContent = fmtB(m.cumNetInflow?.value);
+      document.getElementById('etfXAum').textContent = fmtB(m.totalNetAssets?.value);
+      document.getElementById('etfXAumDate').textContent = m.totalNetAssets?.lastUpdateDate || '';
+    }
+
+    // 막대차트
+    if (hRes.status === 'fulfilled' && hRes.value.ok) {
+      const h = await hRes.value.json();
+      const recent = [...(h.data || [])].sort((a,b) => a.date.localeCompare(b.date)).slice(-30);
+      const labels = recent.map(d => d.date.slice(5));
+      const flows  = recent.map(d => +(d.totalNetInflow / 1e6).toFixed(2));
+
+      document.getElementById('etfXChartLoading').style.display = 'none';
+
+      const ctx = document.getElementById('etfXFlowChart').getContext('2d');
+      if (xrpEtfChart) xrpEtfChart.destroy();
+      xrpEtfChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: '일별 순유입 ($M)',
+            data: flows,
+            backgroundColor: flows.map(v => v >= 0 ? 'rgba(59,109,17,0.5)' : 'rgba(163,45,45,0.5)'),
+            borderColor:      flows.map(v => v >= 0 ? '#3B6D11' : '#A32D2D'),
+            borderWidth: 1,
+            borderRadius: 2,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => {
+                  const v = ctx.parsed.y;
+                  return ` ${v >= 0 ? '+' : ''}$${v.toFixed(0)}M`;
+                },
+              },
+            },
+          },
+          scales: {
+            x: {
+              grid: { color: C.grid },
+              ticks: { font: { family: "'JetBrains Mono', monospace", size: 10 }, color: C.text, maxRotation: 0, maxTicksLimit: 10 },
+            },
+            y: {
+              grid: { color: C.grid },
+              ticks: {
+                font: { family: "'JetBrains Mono', monospace", size: 10 },
+                color: C.text,
+                callback: v => (v >= 0 ? '+' : '') + '$' + v + 'M',
+              },
+            },
+          },
+        },
+      });
+    } else {
+      document.getElementById('etfXChartLoading').textContent = 'ETF 데이터를 불러올 수 없습니다.';
+    }
+  } catch(e) {
+    console.error('XRP ETF flow error:', e);
+    document.getElementById('etfXChartLoading').textContent = 'ETF 데이터를 불러올 수 없습니다.';
+  }
+}
+
 // ── 거래소별 거래량 ──────────────────────────────────────────
 let etfFlowChart = null; // 변수명 유지 (하단 스케줄러 참조)
 let volChart = null;
@@ -1050,6 +1179,7 @@ fetchUsdKrw().then(() => {
 });
 loadChart('1m', 360, 1);
 fetchNews();
+loadXrpEtfFlow();
 
 setInterval(fetchUsdKrw,  3600000);  // 1시간마다 환율
 setInterval(fetchPrice,     30000);  // 30초마다 가격
@@ -1071,7 +1201,7 @@ setTimeout(fetchPerformance, 1500);
   }
   TIMES.forEach(({ h, m }) => {
     function schedule() {
-      setTimeout(() => { loadEtfFlow(); schedule(); }, msUntil(h, m));
+      setTimeout(() => { loadEtfFlow(); loadXrpEtfFlow(); schedule(); }, msUntil(h, m));
     }
     schedule();
   });
