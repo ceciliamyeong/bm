@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>US Crypto Spot ETF | BLOCKMEDIA Data</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+  <style>
+    :root {
+      --bg:     #f5f7fa;
+      --bg2:    #ffffff;
+      --bg3:    #f1f5f9;
+      --border: #e2e8f0;
+      --text:   #0f172a;
+      --text2:  #64748b;
+      --green:  #16a34a;
+      --red:    #dc2626;
+      --blue:   #2563eb;
+      --orange: #ea580c;
+      --purple: #7c3aed;
+      --yellow: #d97706;
+      --xrp:    #346aa9;
+      --shadow-sm: 0 1px 3px rgba(15,23,42,0.06);
+      --shadow-md: 0 4px 12px rgba(15,23,42,0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    header {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      box-shadow: var(--shadow-sm);
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .site-title { font-size: 15px; font-weight: 800; color: var(--text); text-decoration: none; letter-spacing: -0.04em; }
+    .page-badge {
+      background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.2);
+      border-radius: 6px; padding: 2px 10px; font-size: 12px; color: var(--blue); font-weight: 600;
+    }
+    .header-meta { font-size: 12px; color: var(--text2); }
+    #updated-at { color: var(--text); font-weight: 600; }
+    nav {
+      background: var(--bg2); border-bottom: 1px solid var(--border);
+      padding: 0 20px; display: flex; gap: 4px; overflow-x: auto;
+    }
+    nav a {
+      color: var(--text2); text-decoration: none; padding: 10px 14px;
+      font-size: 13px; font-weight: 500; white-space: nowrap;
+      border-bottom: 2px solid transparent; transition: color .2s, border-color .2s;
+    }
+    nav a:hover { color: var(--text); }
+    nav a.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 700; }
+    main { max-width: 1200px; margin: 0 auto; padding: 24px 16px; }
+    .section-title {
+      font-size: 16px; font-weight: 700; margin-bottom: 16px;
+      padding-bottom: 8px; border-bottom: 2px solid rgba(37,99,235,0.15);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-title .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--blue); }
+    .kpi-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px; margin-bottom: 24px;
+    }
+    .kpi-card {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 16px 18px; box-shadow: 0 1px 3px rgba(15,23,42,0.06); transition: box-shadow .2s;
+    }
+    .kpi-card:hover { box-shadow: 0 4px 12px rgba(15,23,42,0.08); }
+    .kpi-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px; font-weight: 500; }
+    .kpi-value { font-size: 22px; font-weight: 800; color: var(--text); letter-spacing: -0.04em; }
+    .kpi-value.positive { color: var(--green); }
+    .kpi-value.negative { color: var(--red); }
+    .kpi-sub { font-size: 11px; color: var(--text2); margin-top: 4px; }
+    .tab-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tab-btn {
+      background: var(--bg3); border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 16px; color: var(--text2); font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all .2s; font-family: inherit;
+    }
+    .tab-btn.active, .tab-btn:hover { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+    .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    @media (max-width: 768px) { .chart-grid { grid-template-columns: 1fr; } }
+    .chart-card {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 18px; box-shadow: 0 1px 3px rgba(15,23,42,0.06);
+    }
+    .chart-card.full { grid-column: 1 / -1; }
+    .chart-title { font-size: 11px; font-weight: 600; color: var(--text2); margin-bottom: 14px; text-transform: uppercase; letter-spacing: .5px; }
+    .chart-wrap { position: relative; height: 200px; }
+    .chart-wrap.tall { height: 260px; }
+    .table-wrap {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+      overflow-x: auto; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(15,23,42,0.06);
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead { background: var(--bg3); }
+    th { padding: 11px 14px; text-align: right; color: var(--text2); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border); }
+    th:first-child { text-align: left; }
+    td { padding: 11px 14px; text-align: right; border-bottom: 1px solid var(--border); font-weight: 500; }
+    td:first-child { text-align: left; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(37,99,235,0.04); }
+    .ticker { font-weight: 700; color: var(--blue); }
+    .inst { color: var(--text2); font-size: 12px; font-weight: 400; }
+    .pos { color: var(--green); font-weight: 600; }
+    .neg { color: var(--red); font-weight: 600; }
+    .null-val { color: var(--text2); }
+    /* ── Coin Toggle ── */
+    .coin-toggle { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .coin-btn {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 20px;
+      padding: 7px 18px; cursor: pointer; font-size: 13px; font-weight: 600;
+      color: var(--text2); transition: all .2s; font-family: inherit;
+      box-shadow: 0 1px 3px rgba(15,23,42,0.06);
+    }
+    .coin-btn:hover { border-color: var(--blue); color: var(--blue); }
+    .coin-btn.active-btc  { background: rgba(247,147,26,0.08);  border-color: #f7931a; color: #f7931a; }
+    .coin-btn.active-eth  { background: rgba(98,126,234,0.08);  border-color: #627eea; color: #627eea; }
+    .coin-btn.active-sol  { background: rgba(153,69,255,0.08);  border-color: #9945ff; color: #9945ff; }
+    .coin-btn.active-xrp  { background: rgba(52,106,169,0.08);  border-color: #346aa9; color: #346aa9; }
+    .coin-btn.active-doge { background: rgba(194,163,62,0.08);  border-color: #c2a33e; color: #c2a33e; }
+    .coin-btn.active-hype { background: rgba(20,184,166,0.08);  border-color: #14b8a6; color: #14b8a6; }
+    .coin-btn.active-link { background: rgba(55,91,210,0.08);   border-color: #375bd2; color: #375bd2; }
+    .coin-btn.active-ltc  { background: rgba(148,148,148,0.08); border-color: #949494; color: #949494; }
+    .coin-btn.active-avax { background: rgba(232,65,66,0.08);   border-color: #e84142; color: #e84142; }
+    .coin-btn.active-hbar { background: rgba(0,166,136,0.08);   border-color: #00a688; color: #00a688; }
+    .coin-btn.active-dot  { background: rgba(230,0,122,0.08);   border-color: #e6007a; color: #e6007a; }
+    .coin-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dot-btc  { background: #f7931a; }
+    .dot-eth  { background: #627eea; }
+    .dot-sol  { background: #9945ff; }
+    .dot-xrp  { background: #346aa9; }
+    .dot-doge { background: #c2a33e; }
+    .dot-hype { background: #14b8a6; }
+    .dot-link { background: #375bd2; }
+    .dot-ltc  { background: #949494; }
+    .dot-avax { background: #e84142; }
+    .dot-hbar { background: #00a688; }
+    .dot-dot  { background: #e6007a; }
+    footer {
+      border-top: 1px solid var(--border); padding: 20px; text-align: center;
+      font-size: 12px; color: var(--text2); background: var(--bg2);
+    }
+    footer a { color: var(--blue); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+    .loading { color: var(--text2); font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <a href="/" class="site-title">BLOCKMEDIA</a>
+    <span class="page-badge">US Crypto ETF</span>
+  </div>
+  <div class="header-meta">
+    Updated: <span id="updated-at">-</span>
+  </div>
+</header>
+
+<nav>
+  <a href="/index.html">🇰🇷 KRW Market</a>
+  <a href="/bm20_index.html">📊 BM20 Index</a>
+  <a href="/etf.html" class="active">🌐 US ETF Flow</a>
+  <a href="/history.html">₿ BTC 역사</a>
+  <a href="/performance.html">📈 Performance</a>
+  <a href="/clm_brief.html">🧠 코생지</a>
+</nav>
+
+<main>
+
+  <!-- Coin Toggle -->
+  <div class="coin-toggle">
+    <button class="coin-btn active-btc" id="btn-btc" onclick="switchCoin('btc')">
+      <span class="coin-dot dot-btc"></span> BTC
+    </button>
+    <button class="coin-btn" id="btn-eth" onclick="switchCoin('eth')">
+      <span class="coin-dot dot-eth"></span> ETH
+    </button>
+    <button class="coin-btn" id="btn-sol" onclick="switchCoin('sol')">
+      <span class="coin-dot dot-sol"></span> SOL
+    </button>
+    <button class="coin-btn" id="btn-xrp" onclick="switchCoin('xrp')">
+      <span class="coin-dot dot-xrp"></span> XRP
+    </button>
+    <button class="coin-btn" id="btn-doge" onclick="switchCoin('doge')">
+      <span class="coin-dot dot-doge"></span> DOGE
+    </button>
+    <button class="coin-btn" id="btn-hype" onclick="switchCoin('hype')">
+      <span class="coin-dot dot-hype"></span> HYPE
+    </button>
+    <button class="coin-btn" id="btn-link" onclick="switchCoin('link')">
+      <span class="coin-dot dot-link"></span> LINK
+    </button>
+    <button class="coin-btn" id="btn-ltc" onclick="switchCoin('ltc')">
+      <span class="coin-dot dot-ltc"></span> LTC
+    </button>
+    <button class="coin-btn" id="btn-avax" onclick="switchCoin('avax')">
+      <span class="coin-dot dot-avax"></span> AVAX
+    </button>
+    <button class="coin-btn" id="btn-hbar" onclick="switchCoin('hbar')">
+      <span class="coin-dot dot-hbar"></span> HBAR
+    </button>
+    <button class="coin-btn" id="btn-dot" onclick="switchCoin('dot')">
+      <span class="coin-dot dot-dot"></span> DOT
+    </button>
+  </div>
+
+  <!-- KPI -->
+  <div class="section-title"><span class="dot"></span> <span id="kpi-title">BTC Spot ETF 현황</span></div>
+  <div class="kpi-grid" id="kpi-grid">
+    <div class="kpi-card"><div class="kpi-label">총 AUM</div><div class="kpi-value" id="k-aum">-</div><div class="kpi-sub" id="k-aum-date">-</div></div>
+    <div class="kpi-card"><div class="kpi-label">일별 순유입</div><div class="kpi-value" id="k-daily">-</div><div class="kpi-sub" id="k-daily-date">-</div></div>
+    <div class="kpi-card"><div class="kpi-label">누적 순유입</div><div class="kpi-value" id="k-cum">-</div><div class="kpi-sub">출시 이후</div></div>
+    <div class="kpi-card"><div class="kpi-label">일별 거래대금</div><div class="kpi-value" id="k-vol">-</div><div class="kpi-sub">24h</div></div>
+    <div class="kpi-card"><div class="kpi-label">총 보유량</div><div class="kpi-value" id="k-holdings">-</div><div class="kpi-sub" id="k-holdings-label">BTC</div></div>
+    <div class="kpi-card"><div class="kpi-label">시총 비중</div><div class="kpi-value" id="k-pct">-</div><div class="kpi-sub">ETF AUM / 코인 시총</div></div>
+  </div>
+
+  <!-- 기간 선택 -->
+  <div class="tab-bar" style="margin-bottom:12px">
+    <button class="tab-btn" id="period-60" onclick="setPeriod(60)">60일</button>
+    <button class="tab-btn active" id="period-90" onclick="setPeriod(90)">90일</button>
+    <button class="tab-btn" id="period-all" onclick="setPeriod(0)">전체</button>
+  </div>
+
+  <!-- Charts -->
+  <div class="chart-grid">
+    <div class="chart-card full">
+      <div class="chart-title">📊 일별 순유입/유출 (Daily Net Flow)</div>
+      <div class="chart-wrap tall"><canvas id="chart-flow"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">📈 누적 순유입 (Cumulative Net Inflow)</div>
+      <div class="chart-wrap"><canvas id="chart-cum"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">💹 일별 거래대금 (Daily Value Traded)</div>
+      <div class="chart-wrap"><canvas id="chart-vol"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ETF 개별 테이블 -->
+  <div class="section-title"><span class="dot"></span> <span id="table-title">BTC Spot ETF 개별 현황</span></div>
+  <div class="table-wrap">
+    <table id="etf-table">
+      <thead>
+        <tr>
+          <th>Ticker / 운용사</th>
+          <th>AUM</th>
+          <th>일별 순유입</th>
+          <th>누적 순유입</th>
+          <th>일별 거래대금</th>
+          <th>수수료</th>
+        </tr>
+      </thead>
+      <tbody id="etf-tbody">
+        <tr><td colspan="6" class="loading" style="text-align:center;padding:20px">로딩 중...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</main>
+
+<footer>
+  본 대시보드의 정보는 시장 동향 파악을 위한 참고 자료이며, 투자 권유 또는 재무적 조언이 아닙니다. &nbsp;|&nbsp;
+  Source: <a href="https://blockmedia.co.kr" target="_blank">BLOCKMEDIA</a> &nbsp;·&nbsp;
+  <a href="https://sosovalue.com" target="_blank">SoSoValue</a>
+</footer>
+
+<script>
+// ── 상태 ──
+let currentCoin = 'btc';
+let currentPeriod = 90;
+let metricsData = {};
+let historyData = {};
+let charts = {};
+
+const COINS = ['btc','eth','sol','xrp','doge','hype','link','ltc','avax','hbar','dot'];
+
+const COIN_COLOR = {
+  btc: '#f7931a', eth: '#627eea', sol: '#9945ff', xrp: '#346aa9',
+  doge: '#c2a33e', hype: '#14b8a6', link: '#375bd2', ltc: '#949494',
+  avax: '#e84142', hbar: '#00a688', dot: '#e6007a'
+};
+const COIN_LABEL = {
+  btc: 'BTC', eth: 'ETH', sol: 'SOL', xrp: 'XRP',
+  doge: 'DOGE', hype: 'HYPE', link: 'LINK', ltc: 'LTC',
+  avax: 'AVAX', hbar: 'HBAR', dot: 'DOT'
+};
+
+// ── 유틸 ──
+function fmt$B(v) {
+  if (v == null || v === '' || isNaN(parseFloat(v))) return '-';
+  const n = parseFloat(v);
+  if (Math.abs(n) >= 1e9) return (n/1e9).toFixed(2) + 'B';
+  if (Math.abs(n) >= 1e6) return (n/1e6).toFixed(1) + 'M';
+  if (Math.abs(n) >= 1e3) return (n/1e3).toFixed(1) + 'K';
+  return n.toFixed(0);
+}
+function fmtNum(v, digits=0) {
+  if (v == null || v === '') return '-';
+  return parseFloat(v).toLocaleString('en-US', {maximumFractionDigits: digits});
+}
+function fmtPct(v) {
+  if (v == null || v === '') return '-';
+  return (parseFloat(v)*100).toFixed(2) + '%';
+}
+function colorClass(v) {
+  if (v == null || v === '') return 'null-val';
+  return parseFloat(v) >= 0 ? 'pos' : 'neg';
+}
+
+// ── 데이터 로드 ──
+async function loadData(coin) {
+  if (metricsData[coin] && historyData[coin]) return;
+  try {
+    const [mRes, hRes] = await Promise.all([
+      fetch(`data/etf_${coin}_metrics.json`),
+      fetch(`data/etf_${coin}_history.json`)
+    ]);
+    if (mRes.ok) metricsData[coin] = await mRes.json();
+    if (hRes.ok) historyData[coin] = await hRes.json();
+  } catch(e) {
+    console.error('데이터 로드 실패:', coin, e);
+  }
+}
+
+// ── KPI 렌더 ──
+function renderKPI(coin) {
+  const d = metricsData[coin];
+  if (!d) { document.getElementById('kpi-title').textContent = `${COIN_LABEL[coin]} Spot ETF 현황 (데이터 없음)`; return; }
+
+  document.getElementById('kpi-title').textContent = `${COIN_LABEL[coin]} Spot ETF 현황`;
+  document.getElementById('k-holdings-label').textContent = COIN_LABEL[coin];
+
+  // AUM
+  const aum = d.totalNetAssets?.value;
+  document.getElementById('k-aum').textContent = '$' + fmt$B(aum);
+  document.getElementById('k-aum-date').textContent = d.totalNetAssets?.lastUpdateDate || '';
+
+  // 일별 순유입
+  const daily = d.dailyNetInflow?.value;
+  const dailyEl = document.getElementById('k-daily');
+  if (daily != null && daily !== '' && !isNaN(parseFloat(daily))) {
+    const n = parseFloat(daily);
+    dailyEl.textContent = (n >= 0 ? '+$' : '-$') + fmt$B(Math.abs(n));
+    dailyEl.className = 'kpi-value ' + (n >= 0 ? 'positive' : 'negative');
+  } else {
+    dailyEl.textContent = '-';
+    dailyEl.className = 'kpi-value';
+  }
+  document.getElementById('k-daily-date').textContent = d.dailyNetInflow?.lastUpdateDate || '';
+
+  document.getElementById('k-cum').textContent = '$' + fmt$B(d.cumNetInflow?.value);
+  document.getElementById('k-vol').textContent = '$' + fmt$B(d.dailyTotalValueTraded?.value);
+  document.getElementById('k-holdings').textContent = fmtNum(d.totalTokenHoldings?.value, 0);
+  document.getElementById('k-pct').textContent = fmtPct(d.totalNetAssetsPercentage?.value);
+
+  if (d.updatedAt) {
+    document.getElementById('updated-at').textContent = d.updatedAt.replace('T',' ').replace('Z',' UTC');
+  }
+}
+
+// ── 차트 렌더 ──
+function destroyCharts() {
+  Object.values(charts).forEach(c => c?.destroy());
+  charts = {};
+}
+
+function renderCharts(coin) {
+  const h = historyData[coin];
+  if (!h?.data) return;
+
+  destroyCharts();
+
+  const allSorted = [...h.data].sort((a,b) => a.date.localeCompare(b.date));
+  const sorted = currentPeriod > 0 ? allSorted.slice(-currentPeriod) : allSorted;
+  const labels = sorted.map(d => d.date.slice(5));
+  const color  = COIN_COLOR[coin];
+
+  const flowData = sorted.map(d => ((d.totalNetInflow||0) / 1e6).toFixed(2));
+  const cumData  = sorted.map(d => ((d.cumNetInflow||0)   / 1e9).toFixed(3));
+  const volData  = sorted.map(d => ((d.totalValueTraded||0) / 1e9).toFixed(2));
+
+  const flowColors  = flowData.map(v => parseFloat(v) >= 0 ? 'rgba(22,163,74,0.5)' : 'rgba(220,38,38,0.5)');
+  const flowBorders = flowData.map(v => parseFloat(v) >= 0 ? '#16a34a' : '#dc2626');
+
+  const baseOpts = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
+    scales: {
+      x: { ticks: { color: '#94a3b8', maxTicksLimit: 10, font: { size: 11 } }, grid: { color: '#e2e8f0' } },
+      y: { ticks: { color: '#94a3b8', font: { size: 11 } }, grid: { color: '#e2e8f0' } }
+    }
+  };
+
+  charts.flow = new Chart(document.getElementById('chart-flow'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label: '순유입 (M USD)', data: flowData, backgroundColor: flowColors, borderColor: flowBorders, borderWidth: 1, borderRadius: 2 }] },
+    options: { ...baseOpts, plugins: { ...baseOpts.plugins, tooltip: { callbacks: { label: ctx => ` $${ctx.parsed.y}M` } } } }
+  });
+
+  charts.cum = new Chart(document.getElementById('chart-cum'), {
+    type: 'line',
+    data: { labels, datasets: [{ label: '누적 유입 (B USD)', data: cumData, borderColor: color, backgroundColor: color+'22', fill: true, tension: 0.3, pointRadius: 0 }] },
+    options: { ...baseOpts }
+  });
+
+  charts.vol = new Chart(document.getElementById('chart-vol'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label: '거래대금 (B USD)', data: volData, backgroundColor: color+'55', borderColor: color, borderWidth: 1, borderRadius: 2 }] },
+    options: { ...baseOpts }
+  });
+}
+
+// ── 테이블 렌더 ──
+function renderTable(coin) {
+  const d = metricsData[coin];
+  document.getElementById('table-title').textContent = `${COIN_LABEL[coin]} Spot ETF 개별 현황`;
+  const tbody = document.getElementById('etf-tbody');
+
+  if (!d?.list || d.list.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="loading" style="text-align:center;padding:20px">개별 ETF 데이터 없음</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = '';
+  const sorted = [...d.list].sort((a,b) => {
+    const av = parseFloat(a.netAssets?.value || 0);
+    const bv = parseFloat(b.netAssets?.value || 0);
+    return bv - av;
+  });
+
+  sorted.forEach(etf => {
+    const daily = etf.dailyNetInflow?.value;
+    const cum   = etf.cumNetInflow?.value;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>
+        <div class="ticker">${etf.ticker || '-'}</div>
+        <div class="inst">${etf.institute || etf.inst || ''}</div>
+      </td>
+      <td>$${fmt$B(etf.netAssets?.value)}</td>
+      <td class="${colorClass(daily)}">${daily != null && daily !== '' && !isNaN(parseFloat(daily)) ? (parseFloat(daily)>=0?'+':'')+' $'+fmt$B(Math.abs(parseFloat(daily))) : '-'}</td>
+      <td class="${colorClass(cum)}">$${fmt$B(cum)}</td>
+      <td>$${fmt$B(etf.dailyValueTraded?.value)}</td>
+      <td>${etf.fee?.value != null ? (parseFloat(etf.fee.value)*100).toFixed(2)+'%' : '-'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ── 기간 선택 ──
+function setPeriod(days) {
+  currentPeriod = days;
+  ['60','90','all'].forEach(p => document.getElementById('period-' + p).classList.remove('active'));
+  document.getElementById('period-' + (days === 0 ? 'all' : String(days))).classList.add('active');
+  renderCharts(currentCoin);
+}
+
+// ── 코인 전환 ──
+async function switchCoin(coin) {
+  currentCoin = coin;
+  COINS.forEach(c => {
+    const btn = document.getElementById('btn-' + c);
+    if (btn) btn.className = 'coin-btn' + (c === coin ? ` active-${c}` : '');
+  });
+  await loadData(coin);
+  renderKPI(coin);
+  renderCharts(coin);
+  renderTable(coin);
+}
+
+// ── 초기 로드 ──
+switchCoin('btc');
+</script>
+</body>
+</html>
