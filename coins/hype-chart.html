@@ -621,12 +621,12 @@
     <!-- 차트 -->
     <div class="chart-section">
       <div class="chart-controls">
-        <button class="period-btn active" data-interval="1m" data-limit="360" data-days="1">24시간</button>
-        <button class="period-btn" data-interval="1h" data-limit="168" data-days="7">7일</button>
-        <button class="period-btn" data-interval="4h" data-limit="180" data-days="30">30일</button>
-        <button class="period-btn" data-interval="1d" data-limit="90" data-days="90">3개월</button>
-        <button class="period-btn" data-interval="1d" data-limit="365" data-days="365">1년</button>
-        <button class="period-btn" data-interval="1w" data-limit="500" data-days="max">전체</button>
+        <button class="period-btn active" data-interval="1" data-limit="360" data-days="1">24시간</button>
+        <button class="period-btn" data-interval="60" data-limit="168" data-days="7">7일</button>
+        <button class="period-btn" data-interval="240" data-limit="180" data-days="30">30일</button>
+        <button class="period-btn" data-interval="D" data-limit="90" data-days="90">3개월</button>
+        <button class="period-btn" data-interval="D" data-limit="365" data-days="365">1년</button>
+        <button class="period-btn" data-interval="W" data-limit="500" data-days="max">전체</button>
       </div>
 
       <div class="chart-wrap">
@@ -655,18 +655,18 @@
       <div class="etf-section">
         <div class="etf-header">
           <span class="etf-title">📊 거래소별 HYPE 24H 거래량</span>
-          <span class="etf-source">DATA: Binance · Bybit</span>
+          <span class="etf-source">DATA: Bybit · Hyperliquid DEX</span>
         </div>
         <div class="etf-kpi-row" id="volKpiRow">
-          <div class="etf-kpi-cell">
-            <div class="etf-kpi-label">Binance (USDT)</div>
-            <div class="etf-kpi-value" id="volBinance">—</div>
-            <div class="etf-kpi-date" id="volBinancePct"></div>
-          </div>
           <div class="etf-kpi-cell">
             <div class="etf-kpi-label">Bybit (USDT)</div>
             <div class="etf-kpi-value" id="volBybit">—</div>
             <div class="etf-kpi-date" id="volBybitPct"></div>
+          </div>
+          <div class="etf-kpi-cell">
+            <div class="etf-kpi-label">Hyperliquid DEX (USDT)</div>
+            <div class="etf-kpi-value" id="volHL">—</div>
+            <div class="etf-kpi-date" id="volHLPct"></div>
           </div>
         </div>
         <div class="etf-chart-wrap">
@@ -767,7 +767,7 @@
   </div>
 
   <footer class="page-footer">
-    <span>데이터: Binance API · Bybit API · Hyperliquid API · SoSoValue</span>
+    <span>데이터: Bybit API · Hyperliquid API · SoSoValue</span>
     <span>·</span>
     <a class="footer-tv-logo" href="https://www.tradingview.com" target="_blank" rel="noopener">
       charts by&nbsp;<svg class="tv-logo" viewBox="0 0 755 129" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M187.671 101.559H202.504V43.4442H221.909V29.4236H168.469V43.4442H187.671V101.559Z" fill="currentColor"/><path d="M221.931 101.558H235.85V77.2764C235.85 68.8434 240.219 63.7634 246.823 63.7634C249.159 63.7634 250.988 64.1699 253.122 64.8814V50.7589C251.395 50.2509 249.972 50.1494 248.448 50.1494C242.759 50.1494 237.577 53.9084 235.85 58.8869V50.7589H221.931V101.558Z" fill="currentColor"/><path d="M492.336 88.3505C485.326 88.3505 479.434 83.0675 479.434 75.346C479.434 67.523 485.326 62.3415 492.336 62.3415C499.346 62.3415 505.24 67.523 505.24 75.346C505.24 83.0675 499.346 88.3505 492.336 88.3505ZM490.711 123.809C506.255 123.809 518.04 115.883 518.04 97.596V50.759H504.12V56.4485C501.38 52.4865 495.893 49.6416 489.39 49.6416C476.081 49.6416 465.413 61.0205 465.413 75.346C465.413 89.5695 476.081 100.949 489.39 100.949C495.893 100.949 501.38 98.0025 504.12 94.243V97.6975C504.12 105.826 498.737 111.617 490.508 111.617C484.818 111.617 479.128 109.686 474.658 105.317L467.039 115.68C472.83 121.268 481.871 123.809 490.711 123.809Z" fill="currentColor"/><path d="M547.47 101.559H560.575L590.445 29.4236H574.19L554.075 79.5116L533.655 29.4236H517.7L547.47 101.559Z" fill="currentColor"/><path d="M603.215 42.4281C608.195 42.4281 612.16 38.4657 612.16 33.5891C612.16 28.7124 608.195 24.75 603.215 24.75C598.44 24.75 594.38 28.7124 594.38 33.5891C594.38 38.4657 598.44 42.4281 603.215 42.4281ZM596.31 101.559H610.23V50.759H596.31V101.559Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M56.142 101.593H29.4077V56.1445H0V29.4102H56.142V101.593ZM96.2435 45.4508C96.2435 54.3095 89.062 61.4915 80.203 61.4915C71.344 61.4915 64.1625 54.3095 64.1625 45.4508C64.1625 36.5918 71.344 29.4102 80.203 29.4102C89.062 29.4102 96.2435 36.5918 96.2435 45.4508ZM80.203 101.593L110.948 29.4102H143.029L112.284 101.593H80.203Z" fill="currentColor"/></svg>
@@ -813,14 +813,17 @@ async function fetchUsdKrw() {
 // ── 가격 ─────────────────────────────────────────────────────
 async function fetchPrice() {
   try {
-    const binR = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=HYPEUSDT');
-    const d = await binR.json();
-    const usdPrice = parseFloat(d.lastPrice);
-    const chgPct   = parseFloat(d.priceChangePercent);
-    const high     = parseFloat(d.highPrice);
-    const low      = parseFloat(d.lowPrice);
-    const vol      = parseFloat(d.quoteVolume);
-    const priceChg = parseFloat(d.priceChange);
+    const r = await fetch('https://api.bybit.com/v5/market/tickers?category=spot&symbol=HYPEUSDT');
+    const d = await r.json();
+    const t = d?.result?.list?.[0];
+    if (!t) return;
+    const usdPrice = parseFloat(t.lastPrice);
+    const prev     = parseFloat(t.prevPrice24h);
+    const high     = parseFloat(t.highPrice24h);
+    const low      = parseFloat(t.lowPrice24h);
+    const vol      = parseFloat(t.turnover24h); // USD 거래대금
+    const priceChg = usdPrice - prev;
+    const chgPct   = prev > 0 ? (priceChg / prev) * 100 : 0;
 
     document.getElementById('coinPrice').textContent = '$' + usdPrice.toFixed(2);
     const chgEl = document.getElementById('coinChange');
@@ -841,30 +844,38 @@ async function fetchPrice() {
 let currentPrice = 0;
 async function fetchPerformance() {
   try {
-    const now = Date.now();
-    const intervals = {
-      '1d':   { interval: '1h', startMs: now - 86400000 },
-      '7d':   { interval: '1d', startMs: now - 7*86400000 },
-      '30d':  { interval: '1d', startMs: now - 30*86400000 },
-      '180d': { interval: '1d', startMs: now - 180*86400000 },
-      '1y':   { interval: '1w', startMs: now - 365*86400000 },
-      '5y':   { interval: '1w', startMs: now - 5*365*86400000 },
-    };
-    const price = parseFloat(document.getElementById('coinPrice').textContent.replace(/[$,]/g, ''));
+    const price = currentPrice || parseFloat(document.getElementById('coinPrice').textContent.replace(/[$,]/g, ''));
     if (!price) return;
+    const now = Date.now();
+    // Bybit interval 코드: 1=1분, 60=1시간, D=1일, W=1주
+    const intervals = {
+      '1d':   { interval: '60', startMs: now - 86400000 },
+      '7d':   { interval: 'D',  startMs: now - 7*86400000 },
+      '30d':  { interval: 'D',  startMs: now - 30*86400000 },
+      '180d': { interval: 'D',  startMs: now - 180*86400000 },
+      '1y':   { interval: 'W',  startMs: now - 365*86400000 },
+      '5y':   { interval: 'W',  startMs: now - 5*365*86400000 },
+    };
     const ytdStart = new Date(new Date().getFullYear(), 0, 1).getTime();
-    const allStart = new Date('2024-11-01').getTime(); // HYPE 상장일
+    const allStart = new Date('2024-11-01').getTime();
     const perfKeys = ['1d','7d','30d','180d','1y','5y'];
+
+    const bybitKline = (interval, start) =>
+      fetch(`https://api.bybit.com/v5/market/kline?category=spot&symbol=HYPEUSDT&interval=${interval}&start=${start}&limit=1`);
+
     const [ytdRes, allRes, ...perfRes] = await Promise.all([
-      fetch(`https://api.binance.com/api/v3/klines?symbol=HYPEUSDT&interval=1d&startTime=${ytdStart}&limit=1`),
-      fetch(`https://api.binance.com/api/v3/klines?symbol=HYPEUSDT&interval=1w&startTime=${allStart}&limit=1`),
-      ...perfKeys.map(k => fetch(`https://api.binance.com/api/v3/klines?symbol=HYPEUSDT&interval=${intervals[k].interval}&startTime=${intervals[k].startMs}&limit=1`)),
+      bybitKline('D',  ytdStart),
+      bybitKline('W',  allStart),
+      ...perfKeys.map(k => bybitKline(intervals[k].interval, intervals[k].startMs)),
     ]);
+
     const calcPerf = async (res, id) => {
       try {
         const d = await res.json();
-        if (!d || !d[0]) return;
-        const pct = ((price - parseFloat(d[0][1])) / parseFloat(d[0][1])) * 100;
+        const bar = d?.result?.list?.[0]; // [time, open, high, low, close, vol, turnover]
+        if (!bar) return;
+        const openPx = parseFloat(bar[1]);
+        const pct = ((price - openPx) / openPx) * 100;
         const el = document.getElementById(id);
         if (el) { el.textContent = (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%'; el.className = 'perf-cell-val ' + (pct >= 0 ? 'up' : 'down'); }
       } catch(e) {}
@@ -908,22 +919,28 @@ function initChart() {
 async function loadChart(interval, limit, days) {
   document.getElementById('chartLoading').style.display = 'flex';
   try {
+    // Bybit kline API (interval: 1,3,5,15,30,60,120,240,360,D,W)
     let url;
     if (days === 'max') {
-      url = `https://api.binance.com/api/v3/klines?symbol=HYPEUSDT&interval=${interval}&startTime=${new Date('2024-11-01').getTime()}&limit=1000`;
+      url = `https://api.bybit.com/v5/market/kline?category=spot&symbol=HYPEUSDT&interval=${interval}&start=${new Date('2024-11-01').getTime()}&limit=1000`;
     } else {
-      url = `https://api.binance.com/api/v3/klines?symbol=HYPEUSDT&interval=${interval}&startTime=${Date.now() - days*86400000}&limit=${limit}`;
+      url = `https://api.bybit.com/v5/market/kline?category=spot&symbol=HYPEUSDT&interval=${interval}&start=${Date.now() - days*86400000}&limit=${limit}`;
     }
     const raw = await (await fetch(url)).json();
-    const data = raw.map(d => ({ time: Math.floor(d[0]/1000), open: parseFloat(d[1]), high: parseFloat(d[2]), low: parseFloat(d[3]), close: parseFloat(d[4]) })).sort((a,b) => a.time - b.time);
+    // Bybit은 최신순 → 오래된순으로 reverse 필요
+    // list: [startTime, open, high, low, close, volume, turnover]
+    const bars = (raw?.result?.list || [])
+      .map(d => ({ time: Math.floor(parseInt(d[0])/1000), open: parseFloat(d[1]), high: parseFloat(d[2]), low: parseFloat(d[3]), close: parseFloat(d[4]) }))
+      .sort((a, b) => a.time - b.time);
+
     if (!lwChart) initChart();
     if (mainSeries) { try { lwChart.removeSeries(mainSeries); } catch(e){} }
-    if (interval === '1m') {
+    if (interval === '1') {
       mainSeries = lwChart.addAreaSeries({ lineColor: C.line, topColor: C.fillTop, bottomColor: C.fillBot, lineWidth: 1.5, priceLineVisible: false });
-      mainSeries.setData(data.map(d => ({ time: d.time, value: d.close })));
+      mainSeries.setData(bars.map(d => ({ time: d.time, value: d.close })));
     } else {
       mainSeries = lwChart.addCandlestickSeries({ upColor: C.up, downColor: C.down, borderUpColor: C.up, borderDownColor: C.down, wickUpColor: C.up, wickDownColor: C.down, priceLineVisible: false });
-      mainSeries.setData(data);
+      mainSeries.setData(bars);
     }
     lwChart.timeScale().fitContent();
     document.getElementById('chartLoading').style.display = 'none';
@@ -943,9 +960,21 @@ function timeAgo(dateStr) {
 async function fetchNews() {
   const list = document.getElementById('newsList');
   try {
-    const r = await fetch('https://www.blockmedia.co.kr/wp-json/wp/v2/posts?coin_tag=64842&tags=63319&per_page=10&orderby=date&_fields=id,title,link,date,featured_media,_links&_embed=wp:featuredmedia');
-    const posts = await r.json();
-    if (!posts || !posts.length) { list.innerHTML = '<div class="news-loading">뉴스가 없습니다.</div>'; return; }
+    const [r1, r2] = await Promise.allSettled([
+      fetch('https://www.blockmedia.co.kr/wp-json/wp/v2/posts?coin_tag=64842&per_page=10&orderby=date&_fields=id,title,link,date,featured_media,_links&_embed=wp:featuredmedia'),
+      fetch('https://www.blockmedia.co.kr/wp-json/wp/v2/posts?tags=63319&per_page=10&orderby=date&_fields=id,title,link,date,featured_media,_links&_embed=wp:featuredmedia'),
+    ]);
+    const arr1 = r1.status === 'fulfilled' && r1.value.ok ? await r1.value.json() : [];
+    const arr2 = r2.status === 'fulfilled' && r2.value.ok ? await r2.value.json() : [];
+
+    // 합치고 id 기준 중복 제거, 날짜 내림차순 정렬, 최대 10개
+    const seen = new Set();
+    const posts = [...arr1, ...arr2]
+      .filter(p => { if (seen.has(p.id)) return false; seen.add(p.id); return true; })
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 10);
+
+    if (!posts.length) { list.innerHTML = '<div class="news-loading">뉴스가 없습니다.</div>'; return; }
     list.innerHTML = '';
     posts.forEach(post => {
       const item = document.createElement('a');
@@ -989,30 +1018,35 @@ function fmtB(val) {
 
 async function loadEtfFlow() {
   try {
-    const [binR, bybitR] = await Promise.allSettled([
-      fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=HYPEUSDT'),
+    const [bybitR, hlR] = await Promise.allSettled([
       fetch('https://api.bybit.com/v5/market/tickers?category=spot&symbol=HYPEUSDT'),
+      fetch('https://api.hyperliquid.xyz/info', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'metaAndAssetCtxs' }),
+      }),
     ]);
 
-    let binVol = 0, bybitVol = 0;
+    let bybitVol = 0, hlVol = 0;
 
-    if (binR.status === 'fulfilled') {
-      const d = await binR.value.json();
-      binVol = parseFloat(d.quoteVolume) || 0;
-    }
     if (bybitR.status === 'fulfilled') {
       const d = await bybitR.value.json();
       const t = d?.result?.list?.[0];
-      if (t) bybitVol = parseFloat(t.volume24h) * parseFloat(t.lastPrice || 0);
+      if (t) bybitVol = parseFloat(t.turnover24h) || 0;
+    }
+    if (hlR.status === 'fulfilled' && hlR.value.ok) {
+      const [meta, ctxs] = await hlR.value.json();
+      const idx = meta.universe.findIndex(a => a.name === 'HYPE');
+      if (idx >= 0) hlVol = parseFloat(ctxs[idx].dayNtlVlm) || 0;
     }
 
-    const total = binVol + bybitVol;
+    const total = bybitVol + hlVol;
     const pct = v => total > 0 ? (v / total * 100).toFixed(1) + '%' : '—';
 
-    document.getElementById('volBinance').textContent = fmtVol(binVol);
-    document.getElementById('volBybit').textContent   = fmtVol(bybitVol);
-    document.getElementById('volBinancePct').textContent = pct(binVol);
-    document.getElementById('volBybitPct').textContent   = pct(bybitVol);
+    document.getElementById('volBybit').textContent  = fmtVol(bybitVol);
+    document.getElementById('volHL').textContent     = fmtVol(hlVol);
+    document.getElementById('volBybitPct').textContent = pct(bybitVol);
+    document.getElementById('volHLPct').textContent    = pct(hlVol);
 
     document.getElementById('volChartLoading').style.display = 'none';
     const ctx = document.getElementById('volBarChart').getContext('2d');
@@ -1020,12 +1054,12 @@ async function loadEtfFlow() {
     volChart = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: ['Binance', 'Bybit'],
+        labels: ['Bybit', 'Hyperliquid DEX'],
         datasets: [{
           label: '24H 거래량 (USD)',
-          data: [binVol, bybitVol],
-          backgroundColor: ['rgba(240,185,11,0.6)', 'rgba(255,100,0,0.5)'],
-          borderColor:      ['#F0B90B', '#FF6400'],
+          data: [bybitVol, hlVol],
+          backgroundColor: ['rgba(255,100,0,0.5)', 'rgba(0,196,160,0.5)'],
+          borderColor:      ['#FF6400', '#00C4A0'],
           borderWidth: 1,
           borderRadius: 4,
         }],
