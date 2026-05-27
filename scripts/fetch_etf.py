@@ -236,6 +236,12 @@ def process_next_coin(coin, slug, build_id, updated_at, all_summary):
     print(f"\n--- {coin.upper()} (_next/data) ---")
     try:
         props       = fetch_next_data(slug, build_id)
+
+        if coin == "xrp":
+            data_list = props.get("data", [])
+            if data_list:
+                print("ETF 키 목록:", list(data_list[0].keys()))
+      
         metrics_out = convert_next_metrics(props, coin, updated_at)
         new_records = convert_next_history(props)
 
