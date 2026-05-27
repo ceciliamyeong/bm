@@ -1023,6 +1023,38 @@ def _append_market_history():
     except Exception as e:
         print(f"[WARN] k_share fetch failed: {e}")
 
+    # ── 펀딩비 — 바이낸스 / 바이비트 ────────────────────────────────
+    def _funding_binance(symbol: str) -> float | None:
+        try:
+            r = requests.get(
+                "https://fapi.binance.com/fapi/v1/fundingRate",
+                params={"symbol": symbol, "limit": 1},
+                timeout=10,
+            )
+            r.raise_for_status()
+            return round(float(r.json()[0]["fundingRate"]), 6)
+        except Exception as e:
+            print(f"[WARN] Binance funding {symbol} failed: {e}")
+            return None
+
+    def _funding_bybit(symbol: str) -> float | None:
+        try:
+            r = requests.get(
+                "https://api.bybit.com/v5/market/funding/history",
+                params={"category": "linear", "symbol": symbol, "limit": 1},
+                timeout=10,
+            )
+            r.raise_for_status()
+            return round(float(r.json()["result"]["list"][0]["fundingRate"]), 6)
+        except Exception as e:
+            print(f"[WARN] Bybit funding {symbol} failed: {e}")
+            return None
+
+    btc_funding_bin = _funding_binance("BTCUSDT")
+    eth_funding_bin = _funding_binance("ETHUSDT")
+    btc_funding_byb = _funding_bybit("BTCUSDT")
+    eth_funding_byb = _funding_bybit("ETHUSDT")
+
     # ── cb_premium — kimchi_snapshots.json 당일 평균 ────────────────
     cb_premium = None
     try:
@@ -1052,6 +1084,8 @@ def _append_market_history():
         "sentiment_value", "sentiment_label",
         "kimchi_pct", "usdkrw", "k_share_percent",
         "btc_dominance", "cb_premium",
+        "btc_funding_bin", "eth_funding_bin",
+        "btc_funding_byb", "eth_funding_byb",
     ]
 
     row = {
@@ -1065,6 +1099,10 @@ def _append_market_history():
         "k_share_percent":  k_share_percent,
         "btc_dominance":    btc_dominance,
         "cb_premium":       cb_premium,
+        "btc_funding_bin":  btc_funding_bin,
+        "eth_funding_bin":  eth_funding_bin,
+        "btc_funding_byb":  btc_funding_byb,
+        "eth_funding_byb":  eth_funding_byb,
     }
 
     if MARKET_HIST_CSV.exists():
