@@ -261,6 +261,66 @@
 
   </div>
 
+  <!-- ⑤ BM20 구성종목 기여도 분석 -->
+  <div class="section">
+    <div class="section-header">
+      <h2 class="blue">BM20 구성종목 기여도 분석</h2>
+      <span class="meta">components_history.csv · 2026-03-25~</span>
+    </div>
+
+    <!-- 장세 분류 KPI -->
+    <div class="panel widget" style="margin-bottom:14px">
+      <div class="chart-head">
+        <h3>장세 분류 현황 <span style="font-size:11px;color:var(--text2);font-weight:400">(53일 기준)</span></h3>
+        <p>BTC+ETH 기여 비중 기준 — 60% 이상이면 BTC/ETH 주도, 40% 이하면 알트 주도</p>
+      </div>
+      <div class="stat-row" style="grid-template-columns:repeat(4,1fr);margin-top:12px">
+        <div class="stat">
+          <div class="lbl">BTC/ETH 주도 상승</div>
+          <div class="num up">+1.33%</div>
+          <div class="sub">평균 수익률 · 12일</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">알트 주도 상승</div>
+          <div class="num up">+1.00%</div>
+          <div class="sub">평균 수익률 · 13일</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">혼조장</div>
+          <div class="num dn">-0.72%</div>
+          <div class="sub">평균 수익률 · 23일 (43%)</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">BCH 누적 기여</div>
+          <div class="num dn">-0.40%p</div>
+          <div class="sub">알트 중 최하위</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <!-- 종목별 누적 기여 -->
+      <div class="panel widget">
+        <div class="chart-head">
+          <h3>종목별 누적 기여도</h3>
+          <p>53일 누적 · 파란색=고정 6종, 회색=균등 14종</p>
+        </div>
+        <div class="chart-wrap"><div id="contribChart" style="height:380px"></div></div>
+        <p class="footnote">* 기여도 = 일별 수익률 × 비중의 합산</p>
+      </div>
+
+      <!-- BTC/ETH 기여 vs BM20 수익률 시계열 -->
+      <div class="panel widget">
+        <div class="chart-head">
+          <h3>BTC+ETH 기여 vs 알트 기여 시계열</h3>
+          <p>막대: BM20 일별 수익률 / 선: BTC+ETH 기여(좌), 알트 기여(우)</p>
+        </div>
+        <div class="chart-wrap"><div id="leaderChart" style="height:380px"></div></div>
+        <p class="footnote">* 막대 위로 두 선이 함께 올라갈 때 = 동반 상승 · 엇갈리면 혼조</p>
+      </div>
+    </div>
+  </div>
+
   <!-- ④ 김프 히스토그램 -->
   <div class="section">
     <div class="section-header">
@@ -297,6 +357,117 @@
 </main>
 
 <script>
+/* ── BM20 구성종목 기여도 — CSV 동적 로딩 ── */
+const COMP_CSV_URL = './out/history/components_history.csv';
+const T1 = ['BTC','ETH','XRP','USDT','BNB','SOL'];
+let COMP_DAILY = [], COMP_SYM = [];
+
+function processCompCSV(rows){
+  // 일별 집계
+  const byDate = {};
+  rows.forEach(r => {
+    const d = r.date;
+    const ret = +r.return_1d, w = +r.weight, sym = r.symbol;
+    if(!byDate[d]) byDate[d] = {bm20_ret:0, btc_eth_ret:0, alt_ret:0};
+    byDate[d].bm20_ret += ret * w;
+    if(['BTC','ETH'].includes(sym)) byDate[d].btc_eth_ret += ret * w;
+    else if(sym !== 'USDT') byDate[d].alt_ret += ret * w;
+  });
+  COMP_DAILY = Object.entries(byDate)
+    .sort((a,b)=>a[0].localeCompare(b[0]))
+    .map(([date,v])=>({
+      date,
+      bm20_ret:   +v.bm20_ret.toFixed(4),
+      btc_eth_ret:+v.btc_eth_ret.toFixed(4),
+      alt_ret:    +v.alt_ret.toFixed(4)
+    }));
+
+  // 종목별 누적 기여
+  const bySym = {};
+  rows.forEach(r => {
+    const s = r.symbol;
+    if(!bySym[s]) bySym[s] = {contrib:0, rets:[], weight:+r.weight};
+    bySym[s].contrib += +r.return_1d * +r.weight;
+    bySym[s].rets.push(+r.return_1d);
+  });
+  COMP_SYM = Object.entries(bySym).map(([symbol,v])=>{
+    const mean = v.rets.reduce((a,b)=>a+b,0)/v.rets.length;
+    const std  = Math.sqrt(v.rets.reduce((a,b)=>a+(b-mean)**2,0)/v.rets.length);
+    return {symbol, contrib:+v.contrib.toFixed(4), avg_ret:+mean.toFixed(3), std_ret:+std.toFixed(3), weight:v.weight};
+  }).sort((a,b)=>a.contrib-b.contrib);
+}
+
+function renderCompCharts(){
+  // ① 종목별 누적 기여 가로 막대
+  const cc = echarts.init(document.getElementById('contribChart'));
+  cc.setOption({
+    backgroundColor:'transparent',
+    grid:{left:52,right:60,top:12,bottom:12,containLabel:true},
+    tooltip:{formatter:p=>`${p.name}<br/>누적기여: ${p.value>0?'+':''}${p.value.toFixed(3)}%p<br/>평균수익률: ${COMP_SYM.find(s=>s.symbol===p.name)?.avg_ret.toFixed(2)}%/일`},
+    xAxis:{type:'value',axisLabel:{color:textC,fontSize:10,formatter:v=>v.toFixed(1)},splitLine:{lineStyle:{color:gridC}}},
+    yAxis:{type:'category',data:COMP_SYM.map(s=>s.symbol),axisLabel:{color:textC,fontSize:10}},
+    series:[{
+      type:'bar',
+      data:COMP_SYM.map(s=>({
+        value:s.contrib,
+        name:s.symbol,
+        itemStyle:{
+          color: s.contrib<0 ? 'rgba(220,38,38,0.75)'
+               : T1.includes(s.symbol) ? 'rgba(37,99,235,0.8)'
+               : 'rgba(107,114,128,0.65)',
+          borderRadius: s.contrib>=0 ? [0,3,3,0] : [3,0,0,3]
+        }
+      })),
+      barMaxWidth:14,
+      label:{show:true,position:p=>p.value>=0?'right':'left',
+        formatter:p=>`${p.value>0?'+':''}${p.value.toFixed(2)}`,
+        color:textC,fontSize:9}
+    }]
+  });
+
+  // ② 시계열 — BM20 막대 + BTC/ETH 선 + 알트 선
+  const lc = echarts.init(document.getElementById('leaderChart'));
+  const dates = COMP_DAILY.map(d=>d.date.slice(5));
+  lc.setOption({
+    backgroundColor:'transparent',
+    grid:{left:52,right:52,top:16,bottom:36},
+    tooltip:{trigger:'axis',axisPointer:{type:'cross'},
+      formatter:params=>{
+        const i=params[0].dataIndex;
+        const d=COMP_DAILY[i];
+        return `<b>${d.date}</b><br/>BM20: ${d.bm20_ret>0?'+':''}${d.bm20_ret.toFixed(2)}%<br/>BTC+ETH: ${d.btc_eth_ret>0?'+':''}${d.btc_eth_ret.toFixed(2)}%p<br/>알트: ${d.alt_ret>0?'+':''}${d.alt_ret.toFixed(2)}%p`;
+      }},
+    legend:{top:4,left:0,itemWidth:12,itemHeight:8,
+      data:['BM20 수익률','BTC+ETH 기여','알트 기여'],
+      textStyle:{color:textC,fontSize:10}},
+    xAxis:{type:'category',data:dates,
+      axisLabel:{color:textC,fontSize:9,rotate:35},
+      splitLine:{show:false},axisLine:{lineStyle:{color:gridC}}},
+    yAxis:[
+      {type:'value',name:'수익률(%)',nameTextStyle:{color:textC,fontSize:9},
+       axisLabel:{color:textC,fontSize:9,formatter:v=>v+'%'},
+       splitLine:{lineStyle:{color:gridC}},axisLine:{show:false}},
+      {type:'value',name:'기여(%p)',nameTextStyle:{color:textC,fontSize:9},
+       axisLabel:{color:textC,fontSize:9,formatter:v=>v+'%p'},
+       splitLine:{show:false},axisLine:{show:false}}
+    ],
+    series:[
+      {name:'BM20 수익률',type:'bar',yAxisIndex:0,
+       data:COMP_DAILY.map(d=>d.bm20_ret),
+       itemStyle:{color:p=>COMP_DAILY[p.dataIndex].bm20_ret>=0?'rgba(13,148,136,0.55)':'rgba(220,38,38,0.55)'},
+       barMaxWidth:10},
+      {name:'BTC+ETH 기여',type:'line',yAxisIndex:1,
+       data:COMP_DAILY.map(d=>d.btc_eth_ret),
+       lineStyle:{color:'#2563eb',width:1.5},symbol:'none',smooth:true},
+      {name:'알트 기여',type:'line',yAxisIndex:1,
+       data:COMP_DAILY.map(d=>d.alt_ret),
+       lineStyle:{color:'#d97706',width:1.5,type:'dashed'},symbol:'none',smooth:true}
+    ]
+  });
+
+  window.addEventListener('resize',()=>{cc.resize();lc.resize();});
+}
+
 const BM20_URL      = './bm20_series.json';
 const KIMCHI_URL    = './out/history/kimchi_snapshots.json';
 const KRW_URL       = './out/history/krw_24h_snapshots.json';
@@ -577,6 +748,9 @@ function setActive(grp,btn){
     const csvText = await fetchCSV(MKT_HIST_URL);
     MKT = parseCSV(csvText);
 
+    const compText = await fetchCSV(COMP_CSV_URL);
+    processCompCSV(parseCSV(compText));
+
     const lastTs = KIMCHI[KIMCHI.length-1]?.timestamp_label || '-';
     document.getElementById('metaTs').textContent = lastTs;
     document.getElementById('updatedLabel').textContent = lastTs;
@@ -585,6 +759,7 @@ function setActive(grp,btn){
     renderScatter();
     renderStable(stDays);
     renderHist();
+    renderCompCharts();
 
     ['ov30','ov60','ov90'].forEach((id,i)=>{
       const days=[30,60,90][i];
