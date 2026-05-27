@@ -32,6 +32,7 @@ COLUMNS = [
     "kimchi_btc", "kimchi_eth", "kimchi_xrp",
     "kimchi_driver", "kimchi_type",
     "usdkrw",
+    "cb_premium",
 ]
 
 
