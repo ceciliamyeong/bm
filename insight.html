@@ -208,8 +208,8 @@
     </div>
     <div class="panel widget">
       <div class="chart-head">
-        <h3>BM20 지수(좌) + BTC 김프(우) — 선행/후행 패턴 확인</h3>
-        <p>김프가 상승 전환될 때 BM20이 어떻게 반응했는지 읽을 수 있습니다</p>
+        <h3>BM20 일별 수익률(좌) + BTC 김프(우) — 선행/후행 패턴 확인</h3>
+        <p>김프 방향 전환 시 BM20 수익률이 어떻게 반응하는지 읽을 수 있습니다</p>
       </div>
       <div class="range-btns">
         <button class="rbtn" id="ov30">30D</button>
@@ -547,11 +547,17 @@ function initCharts(){
   });
 }
 
-/* ① 오버레이 차트 */
+/* ① 오버레이 차트 — BM20 일별 수익률 × 김프 */
 function renderOverlay(days){
   const kimchiDaily = kimchiToDaily(KIMCHI);
-  const bm20Map = {};
-  BM20.forEach(d=>bm20Map[d.date]=d.level);
+
+  // BM20 일별 수익률 계산
+  const bm20RetMap = {};
+  const sorted = [...BM20].sort((a,b)=>a.date.localeCompare(b.date));
+  for(let i=1;i<sorted.length;i++){
+    const prev=+sorted[i-1].level, cur=+sorted[i].level;
+    if(prev>0) bm20RetMap[sorted[i].date] = +((cur/prev-1)*100).toFixed(3);
+  }
 
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate()-days);
@@ -560,13 +566,20 @@ function renderOverlay(days){
   const filtered = kimchiDaily.filter(d=>d.date>=cutStr);
   const dates  = filtered.map(d=>d.date);
   const btcArr = filtered.map(d=>d.btc);
-  const bm20Arr= filtered.map(d=>bm20Map[d.date]!=null ? +num(bm20Map[d.date]).toFixed(1) : null);
+  const bm20Arr= filtered.map(d=>bm20RetMap[d.date]??null);
 
   overlayChart.setOption({
     backgroundColor:'transparent',
     grid:{left:52,right:52,top:16,bottom:36},
-    tooltip:{trigger:'axis',axisPointer:{type:'cross'}},
-    legend:{show:false},
+    tooltip:{trigger:'axis',axisPointer:{type:'cross'},
+      formatter:params=>{
+        const i=params[0].dataIndex;
+        const b=bm20Arr[i], k=btcArr[i];
+        return `<b>${dates[i].slice(5)}</b><br/>BM20 수익률: ${b!=null?(b>=0?'+':'')+b.toFixed(2)+'%':'-'}<br/>BTC 김프: ${k!=null?(k>=0?'+':'')+k.toFixed(2)+'%':'-'}`;
+      }},
+    legend:{show:true,top:4,left:0,itemWidth:12,itemHeight:8,
+      data:['BM20 수익률','BTC 김프'],
+      textStyle:{color:textC,fontSize:10}},
     xAxis:{
       type:'category',data:dates,
       axisLabel:{color:textC,fontSize:10,rotate:dates.length>60?30:0,
@@ -575,26 +588,27 @@ function renderOverlay(days){
       splitLine:{show:false}
     },
     yAxis:[
-      {type:'value',name:'BM20',nameTextStyle:{color:'#2563eb',fontSize:10},
-       axisLabel:{color:'#2563eb',fontSize:10},
+      {type:'value',name:'BM20 수익률(%)',nameTextStyle:{color:'#2563eb',fontSize:10},
+       axisLabel:{color:'#2563eb',fontSize:10,formatter:v=>v+'%'},
        splitLine:{lineStyle:{color:gridC}},
-       axisLine:{show:false}},
+       axisLine:{show:false},
+       markLine:{silent:true}},
       {type:'value',name:'김프(%)',nameTextStyle:{color:'#d97706',fontSize:10},
        axisLabel:{color:'#d97706',fontSize:10,formatter:v=>v+'%'},
        splitLine:{show:false},axisLine:{show:false},
-       min: v=>+(v.min-1).toFixed(1), max:v=>+(v.max+1).toFixed(1)}
+       min: v=>+(v.min-0.5).toFixed(1), max:v=>+(v.max+0.5).toFixed(1)}
     ],
     series:[
-      {name:'BM20',type:'line',data:bm20Arr,yAxisIndex:0,
-       lineStyle:{color:'#2563eb',width:1.8},
-       symbol:'none',smooth:false,
-       areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,
-         colorStops:[{offset:0,color:'rgba(37,99,235,0.12)'},{offset:1,color:'rgba(37,99,235,0)'}]}}},
+      {name:'BM20 수익률',type:'bar',data:bm20Arr,yAxisIndex:0,
+       itemStyle:{color:p=>bm20Arr[p.dataIndex]>=0?'rgba(37,99,235,0.6)':'rgba(220,38,38,0.55)'},
+       barMaxWidth:10,
+       markLine:{silent:true,lineStyle:{color:'rgba(0,0,0,0.15)',type:'dashed'},
+         data:[{yAxis:0}],label:{show:false}}},
       {name:'BTC 김프',type:'line',data:btcArr,yAxisIndex:1,
-       lineStyle:{color:'#d97706',width:1.5,type:'dashed'},
+       lineStyle:{color:'#d97706',width:1.8},
        symbol:'none',smooth:true,
-       markLine:{silent:true,lineStyle:{color:'rgba(220,38,38,0.4)',type:'solid'},
-         data:[{yAxis:0,yAxisIndex:1}]}}
+       markLine:{silent:true,lineStyle:{color:'rgba(220,38,38,0.3)',type:'solid'},
+         data:[{yAxis:0,yAxisIndex:1}],label:{show:false}}}
     ]
   });
 }
