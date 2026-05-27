@@ -377,8 +377,19 @@ function renderKPI(coin) {
 
   document.getElementById('k-cum').textContent = '$' + fmt$B(d.cumNetInflow?.value);
   document.getElementById('k-vol').textContent = '$' + fmt$B(d.dailyTotalValueTraded?.value);
-  document.getElementById('k-holdings').textContent = fmtNum(d.totalTokenHoldings?.value, 0);
-  document.getElementById('k-pct').textContent = fmtPct(d.totalNetAssetsPercentage?.value);
+  // 총 보유량 / 시총 비중 — BTC/ETH/SOL 공식 API만 지원
+  const OFFICIAL = ['btc', 'eth', 'sol'];
+  const holdingsCard = document.getElementById('k-holdings')?.closest('.kpi-card');
+  const pctCard      = document.getElementById('k-pct')?.closest('.kpi-card');
+  if (OFFICIAL.includes(coin)) {
+    if (holdingsCard) holdingsCard.style.display = '';
+    if (pctCard)      pctCard.style.display = '';
+    document.getElementById('k-holdings').textContent = fmtNum(d.totalTokenHoldings?.value, 0);
+    document.getElementById('k-pct').textContent = fmtPct(d.totalNetAssetsPercentage?.value);
+  } else {
+    if (holdingsCard) holdingsCard.style.display = 'none';
+    if (pctCard)      pctCard.style.display = 'none';
+  }
 
   if (d.updatedAt) {
     document.getElementById('updated-at').textContent = d.updatedAt.replace('T',' ').replace('Z',' UTC');
