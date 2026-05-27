@@ -240,8 +240,11 @@ def process_next_coin(coin, slug, build_id, updated_at, all_summary):
         if coin == "xrp":
             data_list = props.get("data", [])
             if data_list:
-                print("ETF 키 목록:", list(data_list[0].keys()))
-      
+                print("coinPerShare 샘플:", data_list[0].get("coinPerShare"))
+            hist_list = props.get("historyData", {}).get("list", [])
+            if hist_list:
+                print("historyData 키 목록:", list(hist_list[0].keys()))
+                print("historyData 최신:", hist_list[0])
         metrics_out = convert_next_metrics(props, coin, updated_at)
         new_records = convert_next_history(props)
 
