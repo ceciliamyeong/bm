@@ -95,6 +95,9 @@ def main():
         kimchi_type = (last.get("smart_kimchi") or {}).get("type")
         usdkrw = (last.get("prices") or {}).get("fx", {}).get("USDKRW")
 
+        cb_vals = [s["cb_premium_pct"] for s in today_kimchi
+           if s.get("cb_premium_pct") is not None] 
+        
         kimchi_row = {
             "kimchi_btc":    round(sum(btc_vals) / len(btc_vals), 4),
             "kimchi_eth":    round(sum(eth_vals) / len(eth_vals), 4),
@@ -102,13 +105,14 @@ def main():
             "kimchi_driver": driver,
             "kimchi_type":   kimchi_type,
             "usdkrw":        round(float(usdkrw), 2) if usdkrw else None,
+            "cb_premium":    round(sum(cb_vals)/len(cb_vals), 4) if cb_vals else None,
         }
         print(f"[OK] 김치: BTC={kimchi_row['kimchi_btc']}% ETH={kimchi_row['kimchi_eth']}% XRP={kimchi_row['kimchi_xrp']}%")
     else:
         print(f"[WARN] 오늘 김치 스냅샷 없음")
         kimchi_row = {k: None for k in [
             "kimchi_btc", "kimchi_eth", "kimchi_xrp",
-            "kimchi_driver", "kimchi_type", "usdkrw"
+            "kimchi_driver", "kimchi_type", "usdkrw", "cb_premium"
         ]}
 
     # ── 병합 & 저장 ───────────────────────────────────────────
