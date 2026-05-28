@@ -328,13 +328,31 @@ jobs:
           print(f"[INFO] funding bin BTC={btc_funding_bin} ETH={eth_funding_bin}")
           print(f"[INFO] funding byb BTC={btc_funding_byb} ETH={eth_funding_byb}")
 
+          # cb_premium — kimchi_snapshots.json 당일 평균
+          cb_premium = None
+          try:
+              kimchi_snap_path = HIST_DIR / "kimchi_snapshots.json"
+              if kimchi_snap_path.exists():
+                  snaps = json.loads(kimchi_snap_path.read_text(encoding="utf-8"))
+                  cb_vals = [
+                      float(s["cb_premium_pct"])
+                      for s in snaps
+                      if s.get("timestamp_kst", "")[:10] == YMD
+                      and s.get("cb_premium_pct") is not None
+                  ]
+                  if cb_vals:
+                      cb_premium = round(sum(cb_vals) / len(cb_vals), 4)
+              print(f"[INFO] cb_premium={cb_premium}")
+          except Exception as e:
+              print(f"[WARN] cb_premium fetch failed: {e}")
+
           COLUMNS = [
               "date", "bm20_level", "bm20_chg_pct",
               "sentiment_value", "sentiment_label",
               "kimchi_pct", "usdkrw", "k_share_percent",
               "btc_funding_bin", "eth_funding_bin",
               "btc_funding_byb", "eth_funding_byb",
-              "btc_dominance",
+              "btc_dominance", "cb_premium",
           ]
           row = {
               "date": YMD, "bm20_level": bm20_level, "bm20_chg_pct": bm20_chg_pct,
@@ -342,7 +360,7 @@ jobs:
               "kimchi_pct": kimchi_pct, "usdkrw": usdkrw, "k_share_percent": k_share_percent,
               "btc_funding_bin": btc_funding_bin, "eth_funding_bin": eth_funding_bin,
               "btc_funding_byb": btc_funding_byb, "eth_funding_byb": eth_funding_byb,
-              "btc_dominance": btc_dominance,
+              "btc_dominance": btc_dominance, "cb_premium": cb_premium,
           }
 
           if MARKET_HIST_CSV.exists():
