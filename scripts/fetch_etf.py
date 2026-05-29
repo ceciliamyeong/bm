@@ -302,9 +302,13 @@ def main():
                 props = r.json().get("pageProps", {})
                 res_list = props.get("resList", [])
                 print(f"[funding-rate] resList 길이: {len(res_list)}")
-                if res_list:
-                    print(f"[funding-rate] 첫번째 타입: {type(res_list[0])}")
-                    print(f"[funding-rate] 샘플: {res_list[0]}")
+                for i, item in enumerate(res_list):
+                    print(f"[funding-rate] [{i}] 타입: {type(item)}, 길이: {len(item) if isinstance(item, list) else 'N/A'}")
+                    if isinstance(item, list) and item:
+                        first = item[0]
+                        if isinstance(first, dict):
+                            print(f"[funding-rate] [{i}][0] 키: {list(first.keys())[:5]}")
+                            print(f"[funding-rate] [{i}][0] title: {first.get('title','')}")
         except Exception as e:
             print(f"[funding-rate] failed: {e}")
       
