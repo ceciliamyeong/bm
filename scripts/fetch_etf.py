@@ -298,10 +298,13 @@ def main():
         try:
             funding_url = f"https://sosovalue.com/_next/data/{build_id}/dashboard/funding-rate.json"
             r = requests.get(funding_url, headers=WEB_HEADERS, timeout=15)
-            print(f"[funding-rate] status={r.status_code}")
             if r.status_code == 200:
                 props = r.json().get("pageProps", {})
-                print(f"[funding-rate] keys={list(props.keys())}")
+                res_list = props.get("resList", [])
+                print(f"[funding-rate] resList 길이: {len(res_list)}")
+                if res_list:
+                    print(f"[funding-rate] 첫번째 항목 키: {list(res_list[0].keys())}")
+                    print(f"[funding-rate] 샘플: {res_list[0]}")
         except Exception as e:
             print(f"[funding-rate] failed: {e}")
       
