@@ -236,15 +236,7 @@ def process_next_coin(coin, slug, build_id, updated_at, all_summary):
     print(f"\n--- {coin.upper()} (_next/data) ---")
     try:
         props       = fetch_next_data(slug, build_id)
-
-        if coin == "xrp":
-            data_list = props.get("data", [])
-            if data_list:
-                print("coinPerShare 샘플:", data_list[0].get("coinPerShare"))
-            hist_list = props.get("historyData", {}).get("list", [])
-            if hist_list:
-                print("historyData 키 목록:", list(hist_list[0].keys()))
-                print("historyData 최신:", hist_list[0])
+      
         metrics_out = convert_next_metrics(props, coin, updated_at)
         new_records = convert_next_history(props)
 
@@ -295,23 +287,6 @@ def main():
     print("\n[BUILD_ID 추출 중...]")
     try:
         build_id = get_build_id()
-        try:
-            funding_url = f"https://sosovalue.com/_next/data/{build_id}/dashboard/funding-rate.json"
-            r = requests.get(funding_url, headers=WEB_HEADERS, timeout=15)
-            if r.status_code == 200:
-                props = r.json().get("pageProps", {})
-                res_list = props.get("resList", [])
-                print(f"[funding-rate] resList 길이: {len(res_list)}")
-                for i, item in enumerate(res_list):
-                    print(f"[funding-rate] [{i}] 타입: {type(item)}, 길이: {len(item) if isinstance(item, list) else 'N/A'}")
-                    if isinstance(item, list) and item:
-                        first = item[0]
-                        if isinstance(first, dict):
-                            print(f"[funding-rate] [{i}][0] 키: {list(first.keys())[:5]}")
-                            print(f"[funding-rate] [{i}][0] title: {first.get('title','')}")
-        except Exception as e:
-            print(f"[funding-rate] failed: {e}")
-      
         for coin, slug in NEXT_COINS.items():
             process_next_coin(coin, slug, build_id, updated_at, all_summary)
     except Exception as e:
