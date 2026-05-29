@@ -306,11 +306,17 @@ jobs:
           def _get_funding(symbol, exchange="binance"):
               try:
                   if exchange == "binance":
-                      rf = requests.get(
+                      for base_url in [
                           "https://fapi.binance.com/fapi/v1/fundingRate",
-                          params={"symbol": symbol, "limit": 1}, timeout=10)
-                      rf.raise_for_status()
-                      return round(float(rf.json()[0]["fundingRate"]), 6)
+                          "https://data-api.binance.vision/fapi/v1/fundingRate",
+                      ]:
+                          try:
+                              rf = requests.get(base_url, params={"symbol": symbol, "limit": 1}, timeout=10)
+                              rf.raise_for_status()
+                              return round(float(rf.json()[0]["fundingRate"]), 6)
+                          except Exception:
+                              continue
+                      return None
                   else:
                       rf = requests.get(
                           "https://api.bybit.com/v5/market/funding/history",
