@@ -295,6 +295,16 @@ def main():
     print("\n[BUILD_ID 추출 중...]")
     try:
         build_id = get_build_id()
+        try:
+            funding_url = f"https://sosovalue.com/_next/data/{build_id}/dashboard/funding-rate.json"
+            r = requests.get(funding_url, headers=WEB_HEADERS, timeout=15)
+            print(f"[funding-rate] status={r.status_code}")
+            if r.status_code == 200:
+                props = r.json().get("pageProps", {})
+                print(f"[funding-rate] keys={list(props.keys())}")
+        except Exception as e:
+            print(f"[funding-rate] failed: {e}")
+      
         for coin, slug in NEXT_COINS.items():
             process_next_coin(coin, slug, build_id, updated_at, all_summary)
     except Exception as e:
