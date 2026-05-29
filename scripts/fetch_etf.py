@@ -303,7 +303,7 @@ def main():
                 res_list = props.get("resList", [])
                 print(f"[funding-rate] resList 길이: {len(res_list)}")
                 if res_list:
-                    print(f"[funding-rate] 첫번째 항목 키: {list(res_list[0].keys())}")
+                    print(f"[funding-rate] 첫번째 타입: {type(res_list[0])}")
                     print(f"[funding-rate] 샘플: {res_list[0]}")
         except Exception as e:
             print(f"[funding-rate] failed: {e}")
