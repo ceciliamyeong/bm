@@ -157,7 +157,7 @@
   /* ── SECTOR BADGES ── */
   .sector-row { display: flex; align-items: center; gap: 6px; margin-bottom: 1rem; flex-wrap: wrap; }
   .sector-label { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; margin-right: 2px; }
-  .sector-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: 'JetBrains Mono', monospace; border: 1px solid; letter-spacing: 0.02em; transition: opacity 0.15s; }
+  .sector-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: 'JetBrains Mono', monospace; border: 1px solid; letter-spacing: 0.02em; transition: opacity 0.15s; text-decoration: none; }
   .sector-badge:hover { opacity: 0.75; cursor: default; }
   .sb-layer1   { background: rgba(37,99,235,0.08);   border-color: rgba(37,99,235,0.3);   color: #2563eb; }
   .sb-smart    { background: rgba(98,126,234,0.1);   border-color: rgba(98,126,234,0.35);  color: #4f6fd4; }
@@ -556,9 +556,9 @@
   <!-- SECTOR BADGES -->
   <div class="sector-row">
     <span class="sector-label">섹터</span>
-    <span class="sector-badge sb-layer1">⛓ Layer 1</span>
-    <span class="sector-badge sb-payments">💸 Payments</span>
-    <span class="sector-badge sb-rwa">🏛 RWA</span>
+    <a href="../sector.html?sector=Layer1" class="sector-badge sb-layer1">⛓ Layer 1</a>
+    <a href="../sector.html?sector=Payments" class="sector-badge sb-payments">💸 Payments</a>
+    <a href="../sector.html?sector=RWA" class="sector-badge sb-rwa">🏛 RWA</a>
   </div>
 
   <!-- KPI STRIP -->
