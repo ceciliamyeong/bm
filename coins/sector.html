@@ -186,7 +186,7 @@ function getSectorFromUrl() {
 
 // ── coin_sectors.json 로드 ────────────────────────────────
 async function loadCoinData() {
-  const r = await fetch('../data/coin_sectors.json');
+  const r = await fetch('data/coin_sectors.json');
   COIN_DATA = await r.json();
 }
 
@@ -264,11 +264,11 @@ function renderCards(sector, coins) {
     const coin = COIN_DATA[ticker];
     const px = priceCache[ticker] || {};
     const hasEtf = ETF_COINS.has(ticker);
-    const hasPage = coin.slug && !['usdt','usdc','canton','shib','ton','ondo','near','bch','xlm','zec'].includes(coin.slug);
+    const hasPage = coin.slug && !['usdt','usdc','canton','shib','ton','ondo','near','bch'].includes(coin.slug);
 
     const card = document.createElement(hasPage ? 'a' : 'div');
     if (hasPage) {
-      card.href = `${coin.slug}-chart.html`;
+      card.href = `coins/${coin.slug}-chart.html`;
     }
     card.className = 'coin-card';
 
@@ -313,7 +313,7 @@ async function init() {
   } catch(e) {
     // coin_sectors.json 직접 로드 실패시 상대경로 재시도
     try {
-      const r = await fetch('coin_sectors.json');
+      const r = await fetch('data/coin_sectors.json');
       COIN_DATA = await r.json();
     } catch(e2) {
       document.getElementById('coinGrid').innerHTML = '<div class="loading-msg">데이터 로드 실패</div>';
