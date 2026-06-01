@@ -117,7 +117,7 @@
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: #346AA9;
+    background: #c2a33e;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -517,52 +517,6 @@
     .etf-kpi-cell { border-bottom: 0.5px solid var(--border); }
     .etf-chart-wrap { height: 160px; }
   }
-
-  /* ── XRP ETF 카드 ── */
-  .doge-etf-card {
-    margin-top: 1.5rem;
-    border-top: 0.5px solid var(--border);
-    padding-top: 1.5rem;
-  }
-  .doge-etf-link {
-    font-size: 11px;
-    font-family: 'JetBrains Mono', monospace;
-    color: var(--accent);
-    text-decoration: none;
-  }
-  .doge-etf-grid {
-    border: 0.5px solid var(--border);
-    border-radius: 8px;
-    overflow: hidden;
-  }
-  .doge-etf-row {
-    display: grid;
-    grid-template-columns: 2fr 0.8fr 1.2fr 1fr;
-    padding: 8px 14px;
-    font-size: 12px;
-    border-bottom: 0.5px solid var(--border);
-    align-items: center;
-    gap: 0.5rem;
-  }
-  .doge-etf-row:last-child { border-bottom: none; }
-  .doge-etf-header-row {
-    background: var(--bg2);
-    font-size: 10px;
-    font-family: 'JetBrains Mono', monospace;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--text3);
-  }
-  .doge-etf-row .ticker {
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 700;
-    font-size: 11px;
-    color: var(--accent);
-  }
-  @media (max-width: 640px) {
-    .doge-etf-row { grid-template-columns: 1.8fr 0.7fr 0fr 1fr; font-size: 11px; }
-    .doge-etf-row span:nth-child(3) { display: none; }
-  }
 </style>
 </head>
 <body>
@@ -576,9 +530,6 @@
     <a class="nav-link" href="https://data.blockmedia.co.kr/etf.html">🌐 US ETF Flow</a>
     <a class="nav-link" href="https://data.blockmedia.co.kr/history.html">₿ BTC 역사</a>
     <a class="nav-link" href="https://data.blockmedia.co.kr/coins/btc-chart.html">📈 BTC 시세</a>
-    <a class="nav-link" href="https://data.blockmedia.co.kr/coins/eth-chart.html">📈 ETH 시세</a>
-    <a class="nav-link" href="https://data.blockmedia.co.kr/coins/sol-chart.html">📈 SOL 시세</a>
-    <a class="nav-link" href="https://data.blockmedia.co.kr/coins/xrp-chart.html">📈 XRP 시세</a>
     <a class="nav-link" href="https://data.blockmedia.co.kr/performance.html">📅 Performance</a>
     <a class="nav-link" href="https://data.blockmedia.co.kr/clm_brief.html">🧠 코생지</a>
   </nav>
@@ -666,92 +617,32 @@
         <div class="perf-cell" data-perf="all"><div class="perf-cell-label">전체</div><div class="perf-cell-val" id="perfAll">—</div></div>
       </div>
 
-      <!-- ── 거래소 거래량 섹션 ── -->
+      <!-- ── ETF FLOW SECTION ── -->
       <div class="etf-section">
         <div class="etf-header">
-          <span class="etf-title">📊 거래소별 XRP 24H 거래량</span>
-          <span class="etf-source">DATA: Binance · Upbit · Coinbase</span>
-        </div>
-        <div class="etf-kpi-row" id="volKpiRow">
-          <div class="etf-kpi-cell">
-            <div class="etf-kpi-label">Binance (USDT)</div>
-            <div class="etf-kpi-value" id="volBinance">—</div>
-            <div class="etf-kpi-date" id="volBinancePct"></div>
-          </div>
-          <div class="etf-kpi-cell">
-            <div class="etf-kpi-label">Upbit (KRW)</div>
-            <div class="etf-kpi-value" id="volUpbit">—</div>
-            <div class="etf-kpi-date" id="volUpbitPct"></div>
-          </div>
-          <div class="etf-kpi-cell">
-            <div class="etf-kpi-label">Coinbase (USD)</div>
-            <div class="etf-kpi-value" id="volCoinbase">—</div>
-            <div class="etf-kpi-date" id="volCoinbasePct"></div>
-          </div>
-        </div>
-        <div class="etf-chart-wrap">
-          <div class="etf-chart-loading" id="volChartLoading">거래량 데이터 불러오는 중...</div>
-          <canvas id="volBarChart"></canvas>
-        </div>
-      </div>
-
-      <!-- ── XRP ETF 순유입 섹션 ── -->
-      <div class="etf-section">
-        <div class="etf-header">
-          <span class="etf-title">📈 현물 DOGE ETF 자금 흐름 (최근 30일)</span>
+          <span class="etf-title">🏦 현물 DOGE ETF 자금 흐름 (최근 30일)</span>
           <span class="etf-source">DATA: SoSoValue</span>
         </div>
         <div class="etf-kpi-row">
           <div class="etf-kpi-cell">
             <div class="etf-kpi-label">당일 순유입</div>
-            <div class="etf-kpi-value" id="etfXDaily">—</div>
-            <div class="etf-kpi-date" id="etfXDailyDate"></div>
+            <div class="etf-kpi-value" id="etfDaily">—</div>
+            <div class="etf-kpi-date" id="etfDailyDate"></div>
           </div>
           <div class="etf-kpi-cell">
             <div class="etf-kpi-label">누적 순유입</div>
-            <div class="etf-kpi-value" id="etfXCum">—</div>
+            <div class="etf-kpi-value" id="etfCum">—</div>
             <div class="etf-kpi-date">출시 이후</div>
           </div>
           <div class="etf-kpi-cell">
             <div class="etf-kpi-label">총 AUM</div>
-            <div class="etf-kpi-value" id="etfXAum">—</div>
-            <div class="etf-kpi-date" id="etfXAumDate"></div>
+            <div class="etf-kpi-value" id="etfAum">—</div>
+            <div class="etf-kpi-date" id="etfAumDate"></div>
           </div>
         </div>
         <div class="etf-chart-wrap">
-          <div class="etf-chart-loading" id="etfXChartLoading">ETF 데이터 불러오는 중...</div>
-          <canvas id="etfXFlowChart"></canvas>
-        </div>
-      </div>
-
-      <!-- ── XRP ETF 현황 카드 ── -->
-      <div class="xrp-etf-card">
-        <div class="etf-header" style="margin-bottom:0.75rem;">
-          <span class="etf-title">🏦 미국 현물 XRP ETF 현황</span>
-          <a class="xrp-etf-link" href="https://sosovalue.com/assets/etf/us-xrp-spot" target="_blank" rel="noopener">SoSoValue →</a>
-        </div>
-        <div class="xrp-etf-grid">
-          <div class="doge-etf-row doge-etf-header-row">
-            <span>ETF명</span><span>티커</span><span>운용사</span><span>출시일</span>
-          </div>
-          <div class="doge-etf-row">
-            <span>Bitwise XRP ETF</span><span class="ticker">XRP</span><span>Bitwise</span><span>2025-11-08</span>
-          </div>
-          <div class="doge-etf-row">
-            <span>Canary XRP ETF</span><span class="ticker">XRPC</span><span>Canary Capital</span><span>2025-11-13</span>
-          </div>
-          <div class="doge-etf-row">
-            <span>Franklin XRP ETF</span><span class="ticker">XRPZ</span><span>Franklin Templeton</span><span>2025-11-19</span>
-          </div>
-          <div class="doge-etf-row">
-            <span>Grayscale XRP ETF</span><span class="ticker">GXRP</span><span>Grayscale</span><span>2025-11-21</span>
-          </div>
-          <div class="doge-etf-row">
-            <span>21Shares XRP ETF</span><span class="ticker">TOXR</span><span>21Shares</span><span>2026-01-09</span>
-          </div>
-          <div class="doge-etf-row">
-            <span>REX-Osprey XRP ETF</span><span class="ticker">XRPR</span><span>REX-Osprey</span><span>2025-11-19</span>
-          </div>
+          <div class="etf-chart-loading" id="etfChartLoading">ETF 데이터 불러오는 중...</div>
+          <canvas id="etfFlowChart"></canvas>
         </div>
       </div>
     </div>
@@ -760,7 +651,7 @@
     <div class="news-sidebar">
       <div class="news-header">
         도지코인 최신 뉴스
-        <a href="https://www.blockmedia.co.kr/coins/xrp" target="_blank">더보기 →</a>
+        <a href="https://www.blockmedia.co.kr" target="_blank">더보기 →</a>
       </div>
       <div class="news-list" id="newsList">
         <div class="news-loading">뉴스 불러오는 중...</div>
@@ -770,7 +661,7 @@
   </div>
 
   <footer class="page-footer">
-    <span>데이터: Binance API · Upbit API · Coinbase API · SoSoValue</span>
+    <span>데이터: Binance API · Upbit API · SoSoValue</span>
     <span>·</span>
     <a class="footer-tv-logo" href="https://www.tradingview.com" target="_blank" rel="noopener">
       charts by&nbsp;<svg class="tv-logo" viewBox="0 0 755 129" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M187.671 101.559H202.504V43.4442H221.909V29.4236H168.469V43.4442H187.671V101.559Z" fill="currentColor"/><path d="M221.931 101.558H235.85V77.2764C235.85 68.8434 240.219 63.7634 246.823 63.7634C249.159 63.7634 250.988 64.1699 253.122 64.8814V50.7589C251.395 50.2509 249.972 50.1494 248.448 50.1494C242.759 50.1494 237.577 53.9084 235.85 58.8869V50.7589H221.931V101.558Z" fill="currentColor"/><path d="M492.336 88.3505C485.326 88.3505 479.434 83.0675 479.434 75.346C479.434 67.523 485.326 62.3415 492.336 62.3415C499.346 62.3415 505.24 67.523 505.24 75.346C505.24 83.0675 499.346 88.3505 492.336 88.3505ZM490.711 123.809C506.255 123.809 518.04 115.883 518.04 97.596V50.759H504.12V56.4485C501.38 52.4865 495.893 49.6416 489.39 49.6416C476.081 49.6416 465.413 61.0205 465.413 75.346C465.413 89.5695 476.081 100.949 489.39 100.949C495.893 100.949 501.38 98.0025 504.12 94.243V97.6975C504.12 105.826 498.737 111.617 490.508 111.617C484.818 111.617 479.128 109.686 474.658 105.317L467.039 115.68C472.83 121.268 481.871 123.809 490.711 123.809Z" fill="currentColor"/><path d="M547.47 101.559H560.575L590.445 29.4236H574.19L554.075 79.5116L533.655 29.4236H517.7L547.47 101.559Z" fill="currentColor"/><path d="M603.215 42.4281C608.195 42.4281 612.16 38.4657 612.16 33.5891C612.16 28.7124 608.195 24.75 603.215 24.75C598.44 24.75 594.38 28.7124 594.38 33.5891C594.38 38.4657 598.44 42.4281 603.215 42.4281ZM596.31 101.559H610.23V50.759H596.31V101.559Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M56.142 101.593H29.4077V56.1445H0V29.4102H56.142V101.593ZM96.2435 45.4508C96.2435 54.3095 89.062 61.4915 80.203 61.4915C71.344 61.4915 64.1625 54.3095 64.1625 45.4508C64.1625 36.5918 71.344 29.4102 80.203 29.4102C89.062 29.4102 96.2435 36.5918 96.2435 45.4508ZM80.203 101.593L110.948 29.4102H143.029L112.284 101.593H80.203Z" fill="currentColor"/></svg>
@@ -797,18 +688,18 @@ const C = {
 };
 
 let lwChart = null, mainSeries = null;
-let xrpEtfChart = null;
+let etfFlowChart = null;
+
 // ── 환율 ─────────────────────────────────────────────────────
 let cachedUsdKrw = 1480;
-let cachedKrwXrp = 0;
 async function fetchUsdKrw() {
-  // 1순위: open.er-api.com (실시간에 가까움)
+  // 1순위: open.er-api.com (1시간 주기, 실시간에 가까움)
   try {
     const r = await fetch('https://open.er-api.com/v6/latest/USD');
     const d = await r.json();
     if (d?.rates?.KRW) { cachedUsdKrw = d.rates.KRW; return d.rates.KRW; }
   } catch(e) {}
-  // 2순위: fawazahmed0 (하루 1회 업데이트, fallback)
+  // 2순위: fawazahmed0 (fallback)
   try {
     const r = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json');
     const d = await r.json();
@@ -822,7 +713,7 @@ async function fetchPrice() {
   try {
     const [binR, upbitR] = await Promise.allSettled([
       fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=DOGEUSDT'),
-      fetch('https://api.upbit.com/v1/ticker?markets=KRW-XRP'),
+      fetch('https://api.upbit.com/v1/ticker?markets=KRW-DOGE'),
     ]);
     let usdPrice = 0, chgPct = 0, high = 0, low = 0, vol = 0, krwPrice = 0;
     if (binR.status === 'fulfilled') {
@@ -835,19 +726,16 @@ async function fetchPrice() {
     }
     if (upbitR.status === 'fulfilled') {
       const d = await upbitR.value.json();
-      const row = Array.isArray(d) ? d[0] : d;
-      krwPrice = parseFloat(row?.trade_price) || 0;
-      cachedKrwXrp = krwPrice;
-      cachedUpbitVol = parseFloat(row?.acc_trade_price_24h) || 0;
+      krwPrice = d[0]?.trade_price || 0;
     }
-    document.getElementById('coinPrice').textContent = '$' + usdPrice.toFixed(2);
+    document.getElementById('coinPrice').textContent = usdPrice.toFixed(4);
     const chgEl = document.getElementById('coinChange');
     chgEl.textContent = (chgPct >= 0 ? '+' : '') + chgPct.toFixed(2) + '%';
     chgEl.className = 'coin-change ' + (chgPct >= 0 ? 'up' : 'down');
     chgEl.style.display = 'inline-block';
-    document.getElementById('kpiKrw').textContent  = Math.round(krwPrice).toLocaleString() + ' 원';
-    document.getElementById('kpiHigh').textContent = '$' + high.toFixed(2);
-    document.getElementById('kpiLow').textContent  = '$' + low.toFixed(2);
+    document.getElementById('kpiKrw').textContent  = (krwPrice).toLocaleString() + ' 원';
+    document.getElementById('kpiHigh').textContent = high.toFixed(4);
+    document.getElementById('kpiLow').textContent  = low.toFixed(4);
     document.getElementById('kpiVol').textContent  = vol >= 1e9 ? (vol/1e9).toFixed(1)+'B' : (vol/1e6).toFixed(0)+'M';
     if (usdPrice > 0 && krwPrice > 0) {
       const kimchi = ((krwPrice / (usdPrice * cachedUsdKrw)) - 1) * 100;
@@ -873,7 +761,7 @@ async function fetchPerformance() {
     const currentPrice = parseFloat(document.getElementById('coinPrice').textContent.replace(/[$,]/g, ''));
     if (!currentPrice) return;
     const ytdStart = new Date(new Date().getFullYear(), 0, 1).getTime();
-    const allStart = new Date('2017-08-01').getTime();
+    const allStart = new Date('2013-12-01').getTime();
     const perfKeys = ['1d','7d','30d','180d','1y','5y'];
     const [ytdRes, allRes, ...perfRes] = await Promise.all([
       fetch(`https://api.binance.com/api/v3/klines?symbol=DOGEUSDT&interval=1d&startTime=${ytdStart}&limit=1`),
@@ -917,9 +805,9 @@ function initChart() {
     const dt = new Date(p.time * 1000);
     const dateStr = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
     if (sd.open !== undefined) {
-      bar.innerHTML = `<span style="color:var(--text3)">${dateStr}</span>&nbsp; O&nbsp;<b>$${sd.open.toFixed(2)}</b>&nbsp;H&nbsp;<b style="color:#3B6D11">$${sd.high.toFixed(2)}</b>&nbsp;L&nbsp;<b style="color:#A32D2D">$${sd.low.toFixed(2)}</b>&nbsp;C&nbsp;<b>$${sd.close.toFixed(2)}</b>`;
+      bar.innerHTML = `<span style="color:var(--text3)">${dateStr}</span>&nbsp; O&nbsp;<b>$${Math.round(sd.open).toLocaleString()}</b>&nbsp;H&nbsp;<b style="color:#3B6D11">$${Math.round(sd.high).toLocaleString()}</b>&nbsp;L&nbsp;<b style="color:#A32D2D">$${Math.round(sd.low).toLocaleString()}</b>&nbsp;C&nbsp;<b>$${Math.round(sd.close).toLocaleString()}</b>`;
     } else {
-      bar.innerHTML = `<span style="color:var(--text3)">${dateStr}</span>&nbsp; <b>$${sd.value.toFixed(2)}</b>`;
+      bar.innerHTML = `<span style="color:var(--text3)">${dateStr}</span>&nbsp; <b>$${Math.round(sd.value).toLocaleString()}</b>`;
     }
   });
   window.addEventListener('resize', () => { lwChart.applyOptions({ width: wrap.clientWidth, height: wrap.clientHeight }); });
@@ -930,7 +818,7 @@ async function loadChart(interval, limit, days) {
   try {
     let url;
     if (days === 'max') {
-      url = `https://api.binance.com/api/v3/klines?symbol=DOGEUSDT&interval=${interval}&startTime=${new Date('2018-05-01').getTime()}&limit=1000`;
+      url = `https://api.binance.com/api/v3/klines?symbol=DOGEUSDT&interval=${interval}&startTime=${new Date('2013-12-01').getTime()}&limit=1000`;
     } else {
       url = `https://api.binance.com/api/v3/klines?symbol=DOGEUSDT&interval=${interval}&startTime=${Date.now() - days*86400000}&limit=${limit}`;
     }
@@ -964,19 +852,17 @@ async function fetchNews() {
   const list = document.getElementById('newsList');
   try {
     const [r1, r2] = await Promise.allSettled([
-      fetch('https://www.blockmedia.co.kr/wp-json/wp/v2/posts?coin_tag=56675&tags=12630,11484&per_page=10&orderby=date&_fields=id,title,link,date,featured_media,_links&_embed=wp:featuredmedia'),
-      fetch('https://www.blockmedia.co.kr/wp-json/wp/v2/posts?tags=10191&per_page=10&orderby=date&_fields=id,title,link,date,featured_media,_links&_embed=wp:featuredmedia'),
+      fetch('https://www.blockmedia.co.kr/wp-json/wp/v2/posts?coin_tag=56675&per_page=10&orderby=date&_fields=id,title,link,date,featured_media,_links&_embed=wp:featuredmedia'),
+      fetch('https://www.blockmedia.co.kr/wp-json/wp/v2/posts?tags=12630,11484&per_page=10&orderby=date&_fields=id,title,link,date,featured_media,_links&_embed=wp:featuredmedia'),
     ]);
     const arr1 = r1.status === 'fulfilled' && r1.value.ok ? await r1.value.json() : [];
     const arr2 = r2.status === 'fulfilled' && r2.value.ok ? await r2.value.json() : [];
-
     const seen = new Set();
     const posts = [...arr1, ...arr2]
       .filter(p => { if (seen.has(p.id)) return false; seen.add(p.id); return true; })
       .sort((a, b) => new Date(b.date) - new Date(a.date))
       .slice(0, 10);
-
-    if (!posts.length) { list.innerHTML = '<div class="news-loading">뉴스가 없습니다.</div>'; return; }
+    if (!posts || !posts.length) { list.innerHTML = '<div class="news-loading">뉴스가 없습니다.</div>'; return; }
     list.innerHTML = '';
     posts.forEach(post => {
       const item = document.createElement('a');
@@ -987,7 +873,7 @@ async function fetchNews() {
       const thumb = post._embedded?.['wp:featuredmedia']?.[0]?.source_url;
       const imgEl = thumb
         ? `<img class="news-thumb" src="${thumb}" alt="" loading="lazy" onerror="this.style.display='none'">`
-        : `<div class="news-thumb-placeholder">Ξ</div>`;
+        : `<div class="news-thumb-placeholder">🐕</div>`;
       const titleText = post.title?.rendered?.replace(/&#\d+;/g, c => String.fromCharCode(c.match(/\d+/)[0])) || '';
       item.innerHTML = `${imgEl}<div class="news-body"><div class="news-title">${titleText}</div><div class="news-date">${timeAgo(post.date)}</div></div>`;
       list.appendChild(item);
@@ -997,7 +883,7 @@ async function fetchNews() {
   }
 }
 
-// ── XRP ETF Flow ─────────────────────────────────────────────
+// ── ETF Flow ─────────────────────────────────────────────────
 function fmtFlow(val) {
   if (val == null || isNaN(val)) return '—';
   const m = val / 1e6;
@@ -1010,7 +896,7 @@ function fmtB(val) {
   return (val >= 0 ? '' : '-') + '$' + (Math.abs(val)/1e9).toFixed(2) + 'B';
 }
 
-async function loadXrpEtfFlow() {
+async function loadEtfFlow() {
   try {
     const [mRes, hRes] = await Promise.allSettled([
       fetch('../data/etf_doge_metrics.json'),
@@ -1021,15 +907,15 @@ async function loadXrpEtfFlow() {
     if (mRes.status === 'fulfilled' && mRes.value.ok) {
       const m = await mRes.value.json();
       const daily = m.dailyNetInflow?.value;
-      const dailyEl = document.getElementById('etfXDaily');
+      const dailyEl = document.getElementById('etfDaily');
       if (daily != null) {
         dailyEl.textContent = fmtFlow(daily);
         dailyEl.className = 'etf-kpi-value ' + (daily >= 0 ? 'up' : 'down');
       }
-      document.getElementById('etfXDailyDate').textContent = m.dailyNetInflow?.lastUpdateDate || '';
-      document.getElementById('etfXCum').textContent = fmtB(m.cumNetInflow?.value);
-      document.getElementById('etfXAum').textContent = fmtB(m.totalNetAssets?.value);
-      document.getElementById('etfXAumDate').textContent = m.totalNetAssets?.lastUpdateDate || '';
+      document.getElementById('etfDailyDate').textContent = m.dailyNetInflow?.lastUpdateDate || '';
+      document.getElementById('etfCum').textContent = fmtB(m.cumNetInflow?.value);
+      document.getElementById('etfAum').textContent = fmtB(m.totalNetAssets?.value);
+      document.getElementById('etfAumDate').textContent = m.totalNetAssets?.lastUpdateDate || '';
     }
 
     // 막대차트
@@ -1039,11 +925,11 @@ async function loadXrpEtfFlow() {
       const labels = recent.map(d => d.date.slice(5));
       const flows  = recent.map(d => +(d.totalNetInflow / 1e6).toFixed(2));
 
-      document.getElementById('etfXChartLoading').style.display = 'none';
+      document.getElementById('etfChartLoading').style.display = 'none';
 
-      const ctx = document.getElementById('etfXFlowChart').getContext('2d');
-      if (xrpEtfChart) xrpEtfChart.destroy();
-      xrpEtfChart = new Chart(ctx, {
+      const ctx = document.getElementById('etfFlowChart').getContext('2d');
+      if (etfFlowChart) etfFlowChart.destroy();
+      etfFlowChart = new Chart(ctx, {
         type: 'bar',
         data: {
           labels,
@@ -1088,100 +974,11 @@ async function loadXrpEtfFlow() {
         },
       });
     } else {
-      document.getElementById('etfXChartLoading').textContent = 'ETF 데이터를 불러올 수 없습니다.';
+      document.getElementById('etfChartLoading').textContent = 'ETF 데이터를 불러올 수 없습니다.';
     }
   } catch(e) {
-    console.error('DOGE ETF flow error:', e);
-    document.getElementById('etfXChartLoading').textContent = 'ETF 데이터를 불러올 수 없습니다.';
-  }
-}
-
-// ── 거래소별 거래량 ──────────────────────────────────────────
-let etfFlowChart = null; // 변수명 유지 (하단 스케줄러 참조)
-let volChart = null;
-
-function fmtVol(usd) {
-  if (!usd || isNaN(usd)) return '—';
-  return usd >= 1e9 ? '$' + (usd/1e9).toFixed(2) + 'B' : '$' + (usd/1e6).toFixed(0) + 'M';
-}
-
-async function loadEtfFlow() {
-  try {
-    const [binR, cbR] = await Promise.allSettled([
-    fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=DOGEUSDT'),
-    fetch('https://api.exchange.coinbase.com/products/XRP-USD/stats'),
-  ]);
-
-    let binVol = 0, upbitVol = 0, cbVol = 0;
-
-    if (binR.status === 'fulfilled') {
-      const d = await binR.value.json();
-      binVol = parseFloat(d.quoteVolume);
-    }
-    upbitVol = cachedUpbitVol / cachedUsdKrw;
-    if (cbR.status === 'fulfilled') {
-      const d = await cbR.value.json();
-      cbVol = parseFloat(d.volume) * parseFloat(d.last || 0);
-    }
-
-    const total = binVol + upbitVol + cbVol;
-    const pct = v => total > 0 ? (v / total * 100).toFixed(1) + '%' : '—';
-
-    document.getElementById('volBinance').textContent  = fmtVol(binVol);
-    document.getElementById('volUpbit').textContent    = fmtVol(upbitVol);
-    document.getElementById('volCoinbase').textContent = fmtVol(cbVol);
-    document.getElementById('volBinancePct').textContent  = pct(binVol);
-    document.getElementById('volUpbitPct').textContent    = pct(upbitVol);
-    document.getElementById('volCoinbasePct').textContent = pct(cbVol);
-
-    // 도넛 → 가로 바 차트
-    document.getElementById('volChartLoading').style.display = 'none';
-    const ctx = document.getElementById('volBarChart').getContext('2d');
-    if (volChart) volChart.destroy();
-    volChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: ['Binance', 'Upbit', 'Coinbase'],
-        datasets: [{
-          label: '24H 거래량 (USD)',
-          data: [binVol, upbitVol, cbVol],
-          backgroundColor: ['rgba(240,185,11,0.6)', 'rgba(0,113,227,0.6)', 'rgba(0,82,255,0.4)'],
-          borderColor:      ['#F0B90B', '#0071E3', '#0052FF'],
-          borderWidth: 1,
-          borderRadius: 4,
-        }],
-      },
-      options: {
-        indexAxis: 'y',
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: ctx => ' ' + fmtVol(ctx.parsed.x),
-            },
-          },
-        },
-        scales: {
-          x: {
-            grid: { color: C.grid },
-            ticks: {
-              font: { family: "'JetBrains Mono', monospace", size: 10 },
-              color: C.text,
-              callback: v => fmtVol(v),
-            },
-          },
-          y: {
-            grid: { color: 'transparent' },
-            ticks: { font: { family: "'JetBrains Mono', monospace", size: 11 }, color: C.text },
-          },
-        },
-      },
-    });
-  } catch(e) {
-    console.error('volume error:', e);
-    document.getElementById('volChartLoading').textContent = '데이터를 불러올 수 없습니다.';
+    console.error('ETF flow error:', e);
+    document.getElementById('etfChartLoading').textContent = 'ETF 데이터를 불러올 수 없습니다.';
   }
 }
 
@@ -1195,12 +992,10 @@ document.querySelectorAll('.period-btn').forEach(btn => {
 });
 
 // ── INIT ─────────────────────────────────────────────────────
-fetchUsdKrw().then(() => {
-  fetchPrice().then(() => loadEtfFlow());
-});
+Promise.all([fetchUsdKrw(), fetchPrice()]);
 loadChart('1m', 360, 1);
 fetchNews();
-loadXrpEtfFlow();
+loadEtfFlow();
 
 setInterval(fetchUsdKrw,  3600000);  // 1시간마다 환율
 setInterval(fetchPrice,     30000);  // 30초마다 가격
@@ -1222,7 +1017,7 @@ setTimeout(fetchPerformance, 1500);
   }
   TIMES.forEach(({ h, m }) => {
     function schedule() {
-      setTimeout(() => { loadEtfFlow(); loadXrpEtfFlow(); schedule(); }, msUntil(h, m));
+      setTimeout(() => { loadEtfFlow(); schedule(); }, msUntil(h, m));
     }
     schedule();
   });
