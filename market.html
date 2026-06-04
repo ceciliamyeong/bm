@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KR 마켓 | 블록미디어 마켓랩</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f5f8;--card:#fff;--ink:#0d1b2a;--ink2:#5a6b7b;--ink3:#92a0ad;
+  --line:#e8ecf1;--line2:#f1f3f6;
+  --up:#1763ff;--up-bg:#eef3ff;
+  --down:#ff3b4e;--down-bg:#fff0f1;
+  --upbit:#1763ff;--bithumb:#ff8a00;--coinone:#16c79a;
+  --neutral:#6b7aff;
+  --r:16px;--shadow:0 1px 3px rgba(13,27,42,.05),0 6px 20px rgba(13,27,42,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans KR',sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5}
+.num{font-family:'Outfit',sans-serif;font-variant-numeric:tabular-nums}
+.pos{color:var(--up)}.neg{color:var(--down)}.neu{color:var(--ink2)}
+a{color:inherit;text-decoration:none}
+
+/* ── header ── */
+header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:40}
+.nav{max-width:1200px;margin:0 auto;padding:0 20px;height:58px;display:flex;align-items:center;gap:24px}
+.logo{font-family:'Outfit';font-weight:800;font-size:17px;display:flex;align-items:center;gap:8px}
+.logo .sq{width:10px;height:10px;background:var(--up);border-radius:2px;transform:rotate(45deg)}
+.logo .sub{font-size:11px;font-family:'IBM Plex Sans KR';font-weight:600;color:var(--ink3);background:var(--line2);padding:2px 7px;border-radius:6px}
+.nav-links{display:flex;gap:20px;font-size:13.5px;font-weight:500;color:var(--ink2)}
+.nav-links a.on{color:var(--ink);font-weight:700;border-bottom:2px solid var(--ink);padding-bottom:2px}
+.nav-links a:hover{color:var(--ink)}
+.live-badge{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2);font-weight:500}
+.dot-live{width:7px;height:7px;border-radius:50%;background:var(--coinone);animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(22,199,154,.5)}70%{box-shadow:0 0 0 6px rgba(22,199,154,0)}100%{box-shadow:0 0 0 0 rgba(22,199,154,0)}}
+
+/* ── layout ── */
+main{max-width:1200px;margin:0 auto;padding:24px 20px 80px}
+.hero{margin-bottom:22px}
+.hero-tag{display:inline-flex;align-items:center;gap:5px;background:var(--up-bg);color:var(--up);font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:7px;margin-bottom:10px}
+.hero h1{font-size:24px;font-weight:700;letter-spacing:-.02em}
+.hero p{color:var(--ink2);font-size:13.5px;margin-top:5px}
+#updated{font-weight:600;color:var(--ink)}
+
+.sec-hd{display:flex;align-items:baseline;gap:10px;margin:30px 0 14px}
+.sec-hd h2{font-size:16px;font-weight:700}
+.sec-hd span{font-size:12px;color:var(--ink3)}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+
+/* ── KPI ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.kpi{padding:16px 16px 14px}
+.kpi-label{font-size:12px;color:var(--ink2);font-weight:600;display:flex;align-items:center;gap:5px;margin-bottom:10px}
+.kpi-dot{width:5px;height:5px;border-radius:50%}
+.kpi-val{font-size:24px;font-weight:700}
+.kpi-val .unit{font-size:13px;font-weight:500;color:var(--ink3);margin-left:2px}
+.kpi-sub{font-size:12px;font-weight:600;margin-top:4px}
+.kpi-spark{margin-top:10px}
+
+/* ── main 2-col ── */
+.row2{display:grid;grid-template-columns:1.6fr 1fr;gap:14px}
+.panel{padding:18px}
+.panel-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.panel-hd h3{font-size:14.5px;font-weight:700}
+.panel-hd .note{font-size:11.5px;color:var(--ink3)}
+.seg{display:flex;background:var(--line2);border-radius:8px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;font-family:inherit;font-size:11.5px;font-weight:600;color:var(--ink3);padding:4px 10px;border-radius:6px;cursor:pointer;transition:.12s}
+.seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.legend-row{display:flex;gap:14px;margin-top:10px;font-size:12px;color:var(--ink2);font-weight:500;flex-wrap:wrap}
+.legend-row i{width:8px;height:8px;border-radius:2px;display:inline-block;vertical-align:middle;margin-right:4px}
+
+/* donut */
+.share-wrap{display:flex;align-items:center;gap:20px;margin-top:4px}
+.share-list{flex:1;display:flex;flex-direction:column;gap:11px}
+.share-row{display:flex;align-items:center;gap:10px;font-size:13px}
+.share-name{width:56px;font-weight:600}
+.share-bar{flex:1;height:7px;background:var(--line2);border-radius:99px;overflow:hidden}
+.share-bar i{display:block;height:100%;border-radius:99px;transition:width .4s}
+.share-pct{width:44px;text-align:right;font-weight:700;font-family:'Outfit'}
+
+/* kimchi section */
+.kimchi-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.kimchi-card{padding:16px}
+.kimchi-card h3{font-size:14px;font-weight:700;margin-bottom:14px}
+.kp-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line2);font-size:13.5px}
+.kp-row:last-child{border-bottom:0}
+.kp-coin{font-weight:600}
+.kp-pct{font-weight:700;font-family:'Outfit';font-size:14px}
+.kimchi-type-card{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px;text-align:center}
+.ktype-badge{font-size:15px;font-weight:700;padding:7px 18px;border-radius:10px}
+.ktype-sub{font-size:12px;color:var(--ink2);line-height:1.6}
+.score-bar{width:100%;height:8px;background:var(--line2);border-radius:99px;overflow:hidden;margin-top:4px}
+.score-fill{height:100%;border-radius:99px;transition:width .5s}
+
+/* top10 table */
+.tbl{width:100%;border-collapse:collapse}
+.tbl thead th{font-size:11px;color:var(--ink3);font-weight:600;text-align:right;padding:0 12px 10px;border-bottom:1px solid var(--line)}
+.tbl thead th:first-child{text-align:left;padding-left:16px}
+.tbl tbody td{padding:11px 12px;border-bottom:1px solid var(--line2);font-size:13px;text-align:right}
+.tbl tbody tr:last-child td{border-bottom:0}
+.tbl tbody tr:hover{background:#fafbfc}
+.tbl .l{text-align:left;padding-left:16px}
+.coin-cell{display:flex;align-items:center;gap:9px}
+.coin-ic{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff;font-family:'Outfit';flex:0 0 auto}
+.coin-nm{font-weight:600;font-size:13px}
+.rk{color:var(--ink3);font-family:'Outfit';font-weight:700;width:18px;display:inline-block;text-align:center}
+.chip{font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:5px;background:var(--line2);color:var(--ink2)}
+
+/* exchange top5 */
+.ex-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.ex-card{padding:16px}
+.ex-head{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.ex-ic{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;color:#fff;font-weight:700;font-size:11px;font-family:'Outfit';flex:0 0 auto}
+.ex-head b{font-size:14px;font-weight:700}
+.ex-grp{font-size:11px;color:var(--ink3);margin-bottom:12px;padding-left:1px}
+.ex-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line2);font-size:13px}
+.ex-row:last-child{border-bottom:0}
+.ex-rk{color:var(--ink3);font-weight:700;font-family:'Outfit';width:12px}
+.ex-sym{font-weight:700;flex:1}
+.ex-bar-wrap{width:60px}
+.ex-bar{height:5px;border-radius:3px;opacity:.5}
+.ex-pct{width:40px;text-align:right;font-family:'Outfit';font-weight:700;font-size:12px}
+
+/* footer */
+footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink3);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+
+@media(max-width:960px){.kpi-grid{grid-template-columns:1fr 1fr}.row2{grid-template-columns:1fr}.ex-grid{grid-template-columns:1fr}.kimchi-grid{grid-template-columns:1fr}}
+@media(max-width:480px){.kpi-grid{grid-template-columns:1fr 1fr}.nav-links{display:none}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav">
+    <a class="logo" href="https://www.blockmedia.co.kr">
+      <span class="sq"></span>블록미디어<span class="sub">마켓랩</span>
+    </a>
+    <nav class="nav-links">
+      <a href="https://www.blockmedia.co.kr">홈</a>
+      <a href="#" class="on">KR 마켓</a>
+      <a href="https://data.blockmedia.co.kr/bm20_index.html">BM20 지수</a>
+      <a href="https://data.blockmedia.co.kr/etf.html">US ETF</a>
+    </nav>
+    <div class="live-badge">
+      <span class="dot-live"></span>
+      <span>업비트·빗썸·코인원 합산</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="hero">
+    <div class="hero-tag">● 국내 3대 원화 거래소 통합</div>
+    <h1>한국 디지털 자산 시장</h1>
+    <p><span id="updated">-</span> 기준 · 스냅샷 주기: 8h</p>
+  </div>
+
+  <!-- KPI -->
+  <div class="kpi-grid">
+    <div class="card kpi">
+      <div class="kpi-label"><span class="kpi-dot" style="background:var(--upbit)"></span>국내 합산 거래대금</div>
+      <div class="kpi-val num" id="kpi-vol">-<span class="unit">조</span></div>
+      <div class="kpi-sub" id="kpi-vol-sub">-</div>
+      <svg class="kpi-spark" id="sp-vol" width="100%" height="30" viewBox="0 0 160 30" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="card kpi">
+      <div class="kpi-label"><span class="kpi-dot" style="background:var(--ink3)"></span>Top10 집중도</div>
+      <div class="kpi-val num" id="kpi-top10">-<span class="unit">%</span></div>
+      <div class="kpi-sub" id="kpi-top10-sub">-</div>
+      <svg class="kpi-spark" id="sp-top10" width="100%" height="30" viewBox="0 0 160 30" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="card kpi">
+      <div class="kpi-label"><span class="kpi-dot" style="background:#f59e0b"></span>스테이블 비중 (K-Safety)</div>
+      <div class="kpi-val num" id="kpi-stable">-<span class="unit">%</span></div>
+      <div class="kpi-sub" id="kpi-stable-sub">-</div>
+      <svg class="kpi-spark" id="sp-stable" width="100%" height="30" viewBox="0 0 160 30" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="card kpi">
+      <div class="kpi-label"><span class="kpi-dot" style="background:var(--neutral)"></span>BTC 김치프리미엄</div>
+      <div class="kpi-val num" id="kpi-kimchi">-<span class="unit">%</span></div>
+      <div class="kpi-sub" id="kpi-kimchi-sub">-</div>
+      <svg class="kpi-spark" id="sp-kimchi" width="100%" height="30" viewBox="0 0 160 30" preserveAspectRatio="none"></svg>
+    </div>
+  </div>
+
+  <!-- 거래대금 차트 + 점유율 -->
+  <div class="sec-hd"><h2>거래소 합산 현황</h2><span>Rolling 24h</span></div>
+  <div class="row2">
+    <div class="card panel">
+      <div class="panel-hd">
+        <h3>총 거래대금 추이</h3>
+        <div class="seg" id="vol-seg">
+          <button class="on" data-d="14">14D</button>
+          <button data-d="30">30D</button>
+          <button data-d="90">90D</button>
+        </div>
+      </div>
+      <svg id="volChart" width="100%" height="200" viewBox="0 0 720 200" preserveAspectRatio="none"></svg>
+      <div class="legend-row">
+        <span><i style="background:var(--upbit)"></i>업비트</span>
+        <span><i style="background:var(--bithumb)"></i>빗썸</span>
+        <span><i style="background:var(--coinone)"></i>코인원</span>
+      </div>
+    </div>
+    <div class="card panel">
+      <div class="panel-hd"><h3>거래소 점유율</h3><span class="note">24h 거래대금</span></div>
+      <div class="share-wrap">
+        <svg id="donut" width="130" height="130" viewBox="0 0 130 130"></svg>
+        <div class="share-list" id="shareList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top10 -->
+  <div class="sec-hd"><h2>Top 10 자산</h2><span>3사 합산 거래대금 기준</span></div>
+  <div class="card" style="overflow:hidden">
+    <table class="tbl">
+      <thead><tr>
+        <th class="l">자산</th>
+        <th>24h 거래대금</th>
+        <th>비중</th>
+      </tr></thead>
+      <tbody id="top10Body"></tbody>
+    </table>
+  </div>
+
+  <!-- Exchange Top5 -->
+  <div class="sec-hd"><h2>거래소별 Top5</h2><span>어떤 알트에 쏠렸는지</span></div>
+  <div class="ex-grid" id="exGrid"></div>
+
+  <!-- 김치프리미엄 -->
+  <div class="sec-hd"><h2>스마트 김치프리미엄</h2><span>업비트 KRW vs 바이낸스 USD × 환율</span></div>
+  <div class="kimchi-grid">
+    <div class="card kimchi-card">
+      <h3>BTC · ETH · XRP 김프</h3>
+      <div id="kimchiRows"></div>
+    </div>
+    <div class="card kimchi-card kimchi-type-card">
+      <div id="ktypeBadge" class="ktype-badge">-</div>
+      <div id="ktypeSub" class="ktype-sub">-</div>
+      <div style="width:100%">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink3);margin-bottom:4px">
+          <span>공포</span><span>점수: <b id="ktypeScore">-</b></span><span>탐욕</span>
+        </div>
+        <div class="score-bar"><div class="score-fill" id="scoreFill" style="width:0%"></div></div>
+      </div>
+      <div id="ktypeRationale" style="font-size:11.5px;color:var(--ink2);line-height:1.6;text-align:left;width:100%"></div>
+    </div>
+  </div>
+
+  <footer>
+    <div style="max-width:500px;line-height:1.6">본 페이지는 시장 동향 파악을 위한 참고 자료이며, 투자 권유가 아닙니다. 데이터 오류 가능성이 존재할 수 있습니다.</div>
+    <div>© 블록미디어 마켓랩 · 업비트·빗썸·코인원 합산</div>
+  </footer>
+</main>
+
+<script>
+// ── 데이터 경로 (data.blockmedia.co.kr 기준)
+const BASE = 'https://data.blockmedia.co.kr';
+const PATHS = {
+  latest:  '/out/history/krw_24h_latest.json',
+  daily:   '/out/history/krw_24h_snapshots.json',  // 시계열
+  kimchi:  '/out/history/kimchi_latest.json',
+  fx:      '/out/history/fx_latest.json',
+};
+
+const EX = {
+  upbit:   { n:'업비트',  c:'#1763ff', grp:'두나무 · 삼성그룹 지분' },
+  bithumb: { n:'빗썸',    c:'#ff8a00', grp:'빗썸코리아' },
+  coinone: { n:'코인원',  c:'#16c79a', grp:'한국투자증권 지분 투자 추진' },
+};
+
+const COIN_COLOR = {
+  BTC:'#f7931a',ETH:'#627eea',XRP:'#23292f',USDT:'#26a17b',USDC:'#2775ca',
+  WLD:'#1a1a1a',SLX:'#6b5cff',XLM:'#000000',ONDO:'#3b4f7c',NEAR:'#00c08b',
+  H:'#e6007a',ADA:'#0033ad',SOL:'#9945ff',DOGE:'#c2a633',RLUSD:'#346aa9',
+};
+function coinColor(sym){return COIN_COLOR[sym]||'#92a0ad';}
+
+const fmt = {
+  tri:  v => {
+    if(v>=1e12) return (v/1e12).toFixed(2)+'조';
+    if(v>=1e8)  return (v/1e8).toFixed(0)+'억';
+    return v.toLocaleString();
+  },
+  pct:  v => (v>0?'+':'')+v.toFixed(2)+'%',
+  sign: v => v>0?'pos':v<0?'neg':'neu',
+};
+
+async function fetchJ(path){
+  const r = await fetch(BASE+path+'?t='+Date.now());
+  return r.json();
+}
+
+// ── 스파크라인
+function spark(id, vals, color){
+  const W=160,H=30,mx=Math.max(...vals),mn=Math.min(...vals);
+  const pts=vals.map((v,i)=>{
+    const x=(i/(vals.length-1)*W).toFixed(1);
+    const y=(H-(v-mn)/(mx-mn||1)*(H-6)-3).toFixed(1);
+    return x+','+y;
+  }).join(' ');
+  const el=document.getElementById(id);
+  if(el) el.innerHTML=`<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+}
+
+// ── 볼륨 차트 (stacked bar)
+let dailyData=[];
+function drawVol(days){
+  const data = dailyData.slice(-days);
+  if(!data.length) return;
+  const W=720,H=200,pad=12;
+  const totals = data.map(d=>d.u+d.b+d.c);
+  const mx = Math.max(...totals)*1.12;
+  const bw = (W-pad*2)/data.length;
+  let svg='';
+  for(let g=0;g<=3;g++){
+    const y=pad+(H-pad*2)*g/3;
+    svg+=`<line x1="${pad}" y1="${y.toFixed(1)}" x2="${W-pad}" y2="${y.toFixed(1)}" stroke="#f0f2f5" stroke-width="1"/>`;
+  }
+  data.forEach((d,i)=>{
+    const cx=pad+i*bw+bw*.15, bw2=bw*.7;
+    let yb=H-pad;
+    [[d.c,EX.coinone.c],[d.b,EX.bithumb.c],[d.u,EX.upbit.c]].forEach(([v,col])=>{
+      const hgt=(v/mx)*(H-pad*2);
+      svg+=`<rect x="${cx.toFixed(1)}" y="${(yb-hgt).toFixed(1)}" width="${bw2.toFixed(1)}" height="${hgt.toFixed(1)}" fill="${col}" rx="2"><title>${fmt.tri(v)}</title></rect>`;
+      yb-=hgt+.5;
+    });
+  });
+  document.getElementById('volChart').innerHTML=svg;
+}
+document.querySelectorAll('#vol-seg button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#vol-seg button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); drawVol(+b.dataset.d);
+});
+
+// ── 도넛
+function drawDonut(shares){
+  const cx=65,cy=65,r=48,sw=18,C=2*Math.PI*r;
+  let off=0, svg=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#f0f2f5" stroke-width="${sw}"/>`;
+  shares.forEach(s=>{
+    const len=C*s.pct/100;
+    svg+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s.c}" stroke-width="${sw}"
+      stroke-dasharray="${len.toFixed(1)} ${(C-len).toFixed(1)}"
+      stroke-dashoffset="${(-off).toFixed(1)}" transform="rotate(-90 ${cx} ${cy})"/>`;
+    off+=len;
+  });
+  svg+=`<text x="${cx}" y="${cy-2}" text-anchor="middle" font-family="Outfit" font-size="17" font-weight="800" fill="#0d1b2a">3사</text>
+        <text x="${cx}" y="${cy+14}" text-anchor="middle" font-family="IBM Plex Sans KR" font-size="9.5" fill="#92a0ad">합산</text>`;
+  document.getElementById('donut').innerHTML=svg;
+
+  document.getElementById('shareList').innerHTML=shares.map(s=>`
+    <div class="share-row">
+      <span class="share-name">${s.n}</span>
+      <span class="share-bar"><i style="width:${Math.max(s.pct,1.5)}%;background:${s.c}"></i></span>
+      <span class="share-pct">${s.pct.toFixed(1)}%</span>
+    </div>`).join('');
+}
+
+// ── Top10
+function drawTop10(coins){
+  const total = coins.reduce((a,c)=>a+c.value,0);
+  document.getElementById('top10Body').innerHTML=coins.map((c,i)=>{
+    const sym=c.symbol.replace('KRW-','');
+    const col=coinColor(sym);
+    return `<tr>
+      <td class="l">
+        <div class="coin-cell">
+          <span class="rk num">${i+1}</span>
+          <span class="coin-ic" style="background:${col}">${sym.slice(0,3)}</span>
+          <span class="coin-nm">${sym}</span>
+        </div>
+      </td>
+      <td class="num">${fmt.tri(c.value)}</td>
+      <td class="num">${c.share_pct.toFixed(2)}%</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Exchange Top5
+function drawExTop5(byEx){
+  const keys=['upbit','bithumb','coinone'];
+  document.getElementById('exGrid').innerHTML=keys.map(k=>{
+    const rows=byEx[k+'_top5']||[];
+    const total=rows.reduce((a,r)=>a+r.value,0);
+    return `<div class="card ex-card">
+      <div class="ex-head">
+        <span class="ex-ic" style="background:${EX[k].c}">${EX[k].n[0]}</span>
+        <b>${EX[k].n} Top5</b>
+      </div>
+      <div class="ex-grp">${EX[k].grp}</div>
+      ${rows.slice(0,5).map((r,i)=>{
+        const sym=r.symbol.replace('KRW-','');
+        const pct=(r.value/total*100).toFixed(1);
+        const bw=Math.min(pct*1.8,56);
+        return `<div class="ex-row">
+          <span class="ex-rk">${i+1}</span>
+          <span class="ex-sym">${sym}</span>
+          <span class="ex-bar-wrap"><div class="ex-bar" style="width:${bw}px;background:${EX[k].c}"></div></span>
+          <span class="ex-pct">${pct}%</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+}
+
+// ── 김프
+function drawKimchi(k){
+  const prems=k.kimchi_premium_pct;
+  const coins=[['BTC','비트코인'],['ETH','이더리움'],['XRP','리플']];
+  document.getElementById('kimchiRows').innerHTML=coins.map(([s,n])=>{
+    const v=prems[s];
+    const cls=v>0?'pos':v<0?'neg':'neu';
+    return `<div class="kp-row">
+      <span class="kp-coin">${s} <span style="font-size:11px;color:var(--ink3);font-weight:400">${n}</span></span>
+      <span class="kp-pct ${cls} num">${fmt.pct(v)}</span>
+    </div>`;
+  }).join('');
+
+  const sk=k.smart_kimchi;
+  const type=sk.type;
+  const score=sk.score_v1;
+  const isReverse=type.includes('Reverse')||type.includes('역');
+  const isPositive=type.includes('Retail')||type.includes('Inflow');
+  const badgeColor=isPositive?'var(--up-bg);color:var(--up)':isReverse?'var(--down-bg);color:var(--down)':'var(--line2);color:var(--ink2)';
+  const fillColor=isPositive?'var(--up)':isReverse?'var(--down)':'#6b7aff';
+
+  document.getElementById('ktypeBadge').style.cssText=`background:${badgeColor};`;
+  document.getElementById('ktypeBadge').textContent=type;
+  document.getElementById('ktypeScore').textContent=score;
+  document.getElementById('scoreFill').style.cssText=`width:${score}%;background:${fillColor}`;
+  document.getElementById('ktypeSub').textContent=
+    `Upbit KRW vs Binance USD×환율`;
+  document.getElementById('ktypeRationale').textContent=sk.rationale||'';
+}
+
+// ── 메인 로드
+async function load(){
+  try{
+    const [latest, kimchi, fx] = await Promise.all([
+      fetchJ(PATHS.latest), fetchJ(PATHS.kimchi), fetchJ(PATHS.fx)
+    ]);
+
+    // 업데이트 시각
+    document.getElementById('updated').textContent=latest.timestamp_label||'-';
+
+    const tot=latest.totals;
+    const combined=tot.combined_24h;
+
+    // KPI - 거래대금
+    document.getElementById('kpi-vol').innerHTML=
+      `${(combined/1e12).toFixed(2)}<span class="unit">조</span>`;
+    document.getElementById('kpi-vol-sub').innerHTML=
+      `<span class="neu">업비트 ${(tot.upbit_24h/1e12).toFixed(2)}조 · 빗썸 ${(tot.bithumb_24h/1e12).toFixed(2)}조</span>`;
+
+    // KPI - Top10
+    const t10=latest.top10;
+    document.getElementById('kpi-top10').innerHTML=
+      `${t10.top10_share_pct.toFixed(1)}<span class="unit">%</span>`;
+    document.getElementById('kpi-top10-sub').innerHTML=
+      `<span class="neu">Rest ${(100-t10.top10_share_pct).toFixed(1)}%</span>`;
+
+    // KPI - K-Safety
+    const stable=latest.stablecoins.stable_dominance_pct;
+    document.getElementById('kpi-stable').innerHTML=
+      `${stable.toFixed(2)}<span class="unit">%</span>`;
+    const stableSignal=stable>10?'위험회피 강함':stable>5?'중립':'리스크온';
+    document.getElementById('kpi-stable-sub').innerHTML=
+      `<span class="neu">${stableSignal}</span>`;
+
+    // KPI - 김프
+    const kimchiBTC=kimchi.kimchi_premium_pct.BTC;
+    const kimchiClass=kimchiBTC>0?'pos':kimchiBTC<0?'neg':'neu';
+    document.getElementById('kpi-kimchi').innerHTML=
+      `<span class="${kimchiClass}">${fmt.pct(kimchiBTC)}</span><span class="unit"></span>`;
+    document.getElementById('kpi-kimchi-sub').innerHTML=
+      `<span class="${kimchiClass}">${kimchi.smart_kimchi.type}</span>`;
+
+    // 도넛
+    const shares=[
+      {n:'업비트', pct:tot.upbit_24h/combined*100,   c:EX.upbit.c},
+      {n:'빗썸',   pct:tot.bithumb_24h/combined*100, c:EX.bithumb.c},
+      {n:'코인원', pct:tot.coinone_24h/combined*100,  c:EX.coinone.c},
+    ];
+    drawDonut(shares);
+
+    // Top10
+    drawTop10(t10.coins);
+
+    // Exchange Top5
+    drawExTop5(latest.by_exchange_top);
+
+    // 김치
+    drawKimchi(kimchi);
+
+    // 시계열 (snapshots) 로드 - 비동기로 나중에
+    fetchJ(PATHS.daily).then(snaps=>{
+      if(!Array.isArray(snaps)||!snaps.length) return;
+      dailyData=snaps.map(s=>({
+        ts: s.timestamp_kst,
+        u:  s.totals?.upbit_24h||0,
+        b:  s.totals?.bithumb_24h||0,
+        c:  s.totals?.coinone_24h||0,
+        t10:s.top10?.top10_share_pct||0,
+        st: s.stablecoins?.stable_dominance_pct||0,
+      }));
+      drawVol(14);
+
+      // 스파크라인
+      const vols=dailyData.slice(-14).map(d=>d.u+d.b+d.c);
+      const t10s=dailyData.slice(-14).map(d=>d.t10);
+      const sts=dailyData.slice(-14).map(d=>d.st);
+      spark('sp-vol',   vols,  '#1763ff');
+      spark('sp-top10', t10s,  '#92a0ad');
+      spark('sp-stable',sts,   '#f59e0b');
+    }).catch(()=>{});
+
+    // 김프 스파크 (kimchi_snapshots 따로 없으면 단순 표시)
+    if(kimchiBTC!==undefined){
+      const kVal=kimchiBTC;
+      const kColor=kVal>0?'#1763ff':kVal<0?'#ff3b4e':'#92a0ad';
+      // 7점 더미 스파크 (snapshots 없을 때 fallback)
+      spark('sp-kimchi',[kVal,kVal,kVal,kVal,kVal,kVal,kVal],kColor);
+    }
+
+    // 김프 스파크 - snapshots에서 가져오기
+    fetchJ('/out/history/kimchi_snapshots.json').then(ksnaps=>{
+      if(!Array.isArray(ksnaps)) return;
+      const vals=ksnaps.slice(-14).map(s=>s.kimchi_premium_pct?.BTC||0);
+      const col=kimchiBTC>0?'#1763ff':'#ff3b4e';
+      spark('sp-kimchi',vals,col);
+    }).catch(()=>{});
+
+  } catch(e){
+    console.error('데이터 로드 실패:', e);
+  }
+}
+
+load();
+// 8분마다 자동 갱신
+setInterval(load, 8*60*1000);
+</script>
+</body>
+</html>
