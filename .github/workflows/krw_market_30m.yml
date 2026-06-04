@@ -2,7 +2,7 @@ name: KRW Market Data (30min)
 
 on:
   schedule:
-    - cron: "*/30 * * * *"   # 매 30분
+    - cron: "0,30 * * * *"
   workflow_dispatch:
 
 jobs:
