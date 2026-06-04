@@ -1,0 +1,48 @@
+name: KRW Market Data (30min)
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"   # 매 30분
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run KRW rolling 24h (4사: 업비트·빗썸·코인원·코빗)
+        run: python3 scripts/krw_rolling24h_8h.py
+
+      - name: Run smart kimchi
+        run: python3 scripts/smart_kimchi_8h.py
+
+      - name: Commit & push
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # 동시 실행 충돌 방지
+          git pull --rebase origin main || true
+
+          git add out/history/krw_24h_*.json || true
+          git add out/history/kimchi_*.json || true
+          git add out/archive/krw_*.json || true
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Market snapshot [$(TZ=Asia/Seoul date '+%m/%d %H:%M KST')]"
+          git push
