@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root{
   --bg:#ffffff;--card:#fbfbfb;--ink:#2b2b2b;--ink2:#444444;--ink3:#999999;
@@ -193,11 +194,8 @@ footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);font-si
           <button data-d="90">90D</button>
         </div>
       </div>
-      <svg id="volChart" width="100%" height="200" viewBox="0 0 720 200" preserveAspectRatio="none"></svg>
-      <div class="legend-row" id="volLegend">
-        <span><i style="background:var(--upbit)"></i>업비트</span>
-        <span><i style="background:var(--bithumb)"></i>빗썸</span>
-        <span><i style="background:var(--coinone)"></i>코인원</span>
+      <div style="position:relative;height:240px">
+        <canvas id="volChart"></canvas>
       </div>
     </div>
     <div class="card panel">
@@ -309,33 +307,123 @@ function spark(id, vals, color){
 }
 
 let dailyData=[];
+let volChart=null;
+
 function drawVol(days){
   const data = dailyData.slice(-days);
   if(!data.length) return;
-  const W=720,H=200,pad=12;
-  // 코빗 있으면 4사, 없으면 3사
+
   const hasKorbit = data.some(d=>d.o>0);
-  const totals = data.map(d=>d.u+d.b+d.c+(d.o||0));
-  const mx = Math.max(...totals)*1.12;
-  const bw = (W-pad*2)/data.length;
-  let svg='';
-  for(let g=0;g<=3;g++){
-    const y=pad+(H-pad*2)*g/3;
-    svg+=`<line x1="${pad}" y1="${y.toFixed(1)}" x2="${W-pad}" y2="${y.toFixed(1)}" stroke="#f0f2f5" stroke-width="1"/>`;
-  }
-  data.forEach((d,i)=>{
-    const cx=pad+i*bw+bw*.15, bw2=bw*.7;
-    let yb=H-pad;
-    const layers = hasKorbit
-      ? [[d.o||0,EX.korbit.c],[d.c,EX.coinone.c],[d.b,EX.bithumb.c],[d.u,EX.upbit.c]]
-      : [[d.c,EX.coinone.c],[d.b,EX.bithumb.c],[d.u,EX.upbit.c]];
-    layers.forEach(([v,col])=>{
-      const hgt=(v/mx)*(H-pad*2);
-      svg+=`<rect x="${cx.toFixed(1)}" y="${(yb-hgt).toFixed(1)}" width="${bw2.toFixed(1)}" height="${hgt.toFixed(1)}" fill="${col}" rx="2"><title>${fmt.tri(v)}</title></rect>`;
-      yb-=hgt+.5;
-    });
+
+  // X축 라벨: 데이터 포인트 수에 따라 적절히 샘플링
+  const labelStep = Math.max(1, Math.floor(data.length / 12));
+  const labels = data.map((d,i)=>{
+    if(i % labelStep !== 0) return '';
+    const dt = new Date(d.ts);
+    return `${dt.getMonth()+1}/${dt.getDate()}`;
   });
-  document.getElementById('volChart').innerHTML=svg;
+
+  const datasets = [
+    {
+      label:'업비트',
+      data: data.map(d=>d.u),
+      backgroundColor: EX.upbit.c,
+      stack:'vol',
+    },
+    {
+      label:'빗썸',
+      data: data.map(d=>d.b),
+      backgroundColor: EX.bithumb.c,
+      stack:'vol',
+    },
+    {
+      label:'코인원',
+      data: data.map(d=>d.c),
+      backgroundColor: EX.coinone.c,
+      stack:'vol',
+    },
+  ];
+  if(hasKorbit){
+    datasets.push({
+      label:'코빗',
+      data: data.map(d=>d.o||0),
+      backgroundColor: EX.korbit.c,
+      stack:'vol',
+    });
+  }
+
+  // 기존 차트 제거
+  if(volChart) volChart.destroy();
+
+  const ctx = document.getElementById('volChart').getContext('2d');
+  volChart = new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{
+        legend:{
+          position:'bottom',
+          labels:{
+            font:{ family:'Noto Sans KR', size:12 },
+            color:'#666',
+            boxWidth:10,
+            boxHeight:10,
+            padding:16,
+            usePointStyle:true,
+            pointStyle:'rect',
+          }
+        },
+        tooltip:{
+          backgroundColor:'rgba(15,25,45,.92)',
+          titleFont:{ family:'Noto Sans KR', size:12 },
+          bodyFont:{ family:'Noto Sans KR', size:12 },
+          padding:12,
+          callbacks:{
+            title: items => {
+              const d = data[items[0].dataIndex];
+              if(!d) return '';
+              const dt = new Date(d.ts);
+              return `${dt.getMonth()+1}/${dt.getDate()} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+            },
+            label: ctx => ` ${ctx.dataset.label}: ${fmt.tri(ctx.raw)}`,
+            footer: items => {
+              const total = items.reduce((a,i)=>a+(i.raw||0),0);
+              return `합산: ${fmt.tri(total)}`;
+            },
+          }
+        }
+      },
+      scales:{
+        x:{
+          stacked:true,
+          grid:{ display:false },
+          ticks:{
+            font:{ family:'Noto Sans KR', size:11 },
+            color:'#aaa',
+            maxRotation:0,
+            autoSkip:false,
+          }
+        },
+        y:{
+          stacked:true,
+          grid:{ color:'rgba(0,0,0,.05)' },
+          border:{ display:false },
+          ticks:{
+            font:{ family:'Noto Sans KR', size:11 },
+            color:'#aaa',
+            callback: v => {
+              if(v>=1e12) return (v/1e12).toFixed(1)+'조';
+              if(v>=1e8)  return (v/1e8).toFixed(0)+'억';
+              return v;
+            }
+          }
+        }
+      }
+    }
+  });
 }
 document.querySelectorAll('#vol-seg button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('#vol-seg button').forEach(x=>x.classList.remove('on'));
@@ -456,12 +544,7 @@ async function load(){
 
     // Hero / 뱃지 업데이트
     if(hasKorbit){
-      // 차트 범례에 코빗 추가
-      document.getElementById('volLegend').innerHTML = `
-        <span><i style="background:var(--upbit)"></i>업비트</span>
-        <span><i style="background:var(--bithumb)"></i>빗썸</span>
-        <span><i style="background:var(--coinone)"></i>코인원</span>
-        <span><i style="background:var(--korbit)"></i>코빗</span>`;
+      // 차트 범례는 Chart.js가 자동 처리
     }
 
     // KPI - 거래대금
