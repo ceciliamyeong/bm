@@ -59,7 +59,7 @@ BINANCE_TICKER_URLS = [
 # FX_USDKRW_URL = "https://api.exchangerate.host/latest"
 
 # Fallbacks (last-resort)
-USDKRW_FALLBACK = 1450.0
+USDKRW_FALLBACK = 1540.0
 
 # Local cache (so charts don't break when FX API is temporarily unavailable)
 FX_CACHE_JSON = HIST_DIR / "fx_usdkrw_latest.json"
@@ -106,32 +106,36 @@ def usdkrw_rate() -> float:
       2) fx_latest.json 의 official (한국은행 ECOS, update_fx_8h.py 가 관리)
       3) constant fallback
     """
-    # 1) yfinance USDKRW=X
+    # 1) Yahoo Finance 직접 HTTP 호출 (update_bm20_full.py 와 동일 방식)
     try:
-        import yfinance as yf
-        h = yf.Ticker("USDKRW=X").history(period="2d")["Close"].dropna()
-        rate = float(h.iloc[-1])
+        r = requests.get(
+            "https://query1.finance.yahoo.com/v8/finance/chart/USDKRW=X",
+            headers={"User-Agent": "Mozilla/5.0"},
+            params={"interval": "1d", "range": "1d"},
+            timeout=10,
+        )
+        r.raise_for_status()
+        rate = float(r.json()["chart"]["result"][0]["meta"]["regularMarketPrice"])
         if 900 <= rate <= 2000:
-            write_json(
-                FX_CACHE_JSON,
-                {
-                    "timestamp_kst": now_kst().strftime("%Y-%m-%dT%H:%M:%S%z"),
-                    "USDKRW": rate,
-                    "source": "yfinance:USDKRW=X",
-                },
-            )
-            print(f"[FX] yfinance USDKRW=X: {rate}")
+            print(f"[FX] Yahoo Finance direct: {rate}")
             return rate
     except Exception as e:
-        print(f"[FX] yfinance failed: {e}")
+        print(f"[FX] Yahoo Finance direct failed: {e}")
 
-    # 2) fx_latest.json official (한국은행 ECOS — update_fx_8h.py 가 관리)
+    # 2) fx_latest.json — official(BOK) 우선, 없으면 market 환율
     try:
         fx_latest = BASE_DIR / "out" / "history" / "fx_latest.json"
         cached = safe_read_json(fx_latest) or {}
-        rate = float((cached.get("usdkrw") or {}).get("official") or 0)
+        usdkrw_obj = cached.get("usdkrw") or {}
+        # official(BOK) 먼저
+        rate = float(usdkrw_obj.get("official") or 0)
         if 900 <= rate <= 2000:
             print(f"[FX] fx_latest.json official (BOK): {rate}")
+            return rate
+        # market 환율 fallback
+        rate = float(usdkrw_obj.get("market") or 0)
+        if 900 <= rate <= 2000:
+            print(f"[FX] fx_latest.json market: {rate}")
             return rate
     except Exception as e:
         print(f"[FX] fx_latest.json failed: {e}")
@@ -291,7 +295,7 @@ def run():
         "prices": {
             "upbit": {"KRW-BTC": krw_btc, "KRW-ETH": krw_eth, "KRW-XRP": krw_xrp, "KRW-USDT": krw_usdt},
             "binance": {"BTCUSDT": usdt_btc, "ETHUSDT": usdt_eth, "XRPUSDT": usdt_xrp},
-            "fx": {"USDKRW": usdkrw, "source": "exchangerate.host"},
+            "fx": {"USDKRW": usdkrw, "source": "yahoo_finance_direct"},
         },
         "kimchi_premium_pct": {
             "BTC": round(prem_btc, 3),
