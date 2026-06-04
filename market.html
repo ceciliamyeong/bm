@@ -6,44 +6,48 @@
 <title>KR 마켓 | 블록미디어 마켓랩</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f4f5f8;--card:#fff;--ink:#0d1b2a;--ink2:#5a6b7b;--ink3:#92a0ad;
-  --line:#e8ecf1;--line2:#f1f3f6;
-  --up:#1763ff;--up-bg:#eef3ff;
-  --down:#ff3b4e;--down-bg:#fff0f1;
+  --bg:#ffffff;--card:#fbfbfb;--ink:#2b2b2b;--ink2:#444444;--ink3:#999999;
+  --line:#e2e2e2;--line2:#f7f7f7;
+  --main:#337abd;--main-rgb:51,122,189;--main-dark:#1e4d78;
+  --up:#c93d3d;--up-bg:rgba(201,61,61,.08);
+  --down:#2c5fad;--down-bg:rgba(44,95,173,.08);
   --upbit:#1763ff;--bithumb:#ff8a00;--coinone:#16c79a;--korbit:#7c5cff;
-  --neutral:#6b7aff;
-  --r:16px;--shadow:0 1px 3px rgba(13,27,42,.05),0 6px 20px rgba(13,27,42,.06);
+  --r:10px;--shadow:0 4px 16px rgba(50,50,93,.08),0 1px 3px rgba(0,0,0,.04);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans KR',sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5}
-.num{font-family:'Outfit',sans-serif;font-variant-numeric:tabular-nums}
-.pos{color:var(--up)}.neg{color:var(--down)}.neu{color:var(--ink2)}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink2);font-family:"Noto Sans KR",system-ui,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5}
+.num{font-family:Arial,sans-serif;font-variant-numeric:tabular-nums}
+.pos{color:var(--up)}.neg{color:var(--down)}.neu{color:var(--ink3)}
 a{color:inherit;text-decoration:none}
 
-header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:40}
-.nav{max-width:1240px;margin:0 auto;padding:0 20px;height:58px;display:flex;align-items:center;gap:24px}
-.logo{font-family:'Outfit';font-weight:800;font-size:17px;display:flex;align-items:center;gap:8px}
-.logo .sq{width:10px;height:10px;background:var(--up);border-radius:2px;transform:rotate(45deg)}
-.logo .sub{font-size:11px;font-family:'IBM Plex Sans KR';font-weight:600;color:var(--ink3);background:var(--line2);padding:2px 7px;border-radius:6px}
-.nav-links{display:flex;gap:20px;font-size:13.5px;font-weight:500;color:var(--ink2)}
-.nav-links a.on{color:var(--ink);font-weight:700;border-bottom:2px solid var(--ink);padding-bottom:2px}
-.nav-links a:hover{color:var(--ink)}
-.live-badge{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2);font-weight:500}
-.dot-live{width:7px;height:7px;border-radius:50%;background:var(--coinone);animation:pulse 2s infinite}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(22,199,154,.5)}70%{box-shadow:0 0 0 6px rgba(22,199,154,0)}100%{box-shadow:0 0 0 0 rgba(22,199,154,0)}}
+/* 오로라 배경 */
+.aurora{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.aurora::before,.aurora::after{content:'';position:absolute;width:600px;height:600px;border-radius:50%;filter:blur(100px);opacity:.25}
+.aurora::before{background:radial-gradient(circle,rgba(51,122,189,.28) 0%,transparent 70%);top:-200px;left:-150px}
+.aurora::after{background:radial-gradient(circle,rgba(36,48,144,.15) 0%,transparent 70%);top:30%;right:-200px}
 
-main{max-width:1240px;margin:0 auto;padding:24px 20px 80px}
-.hero{margin-bottom:22px}
-.hero-tag{display:inline-flex;align-items:center;gap:5px;background:var(--up-bg);color:var(--up);font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:7px;margin-bottom:10px}
-.hero h1{font-size:24px;font-weight:700;letter-spacing:-.02em}
-.hero p{color:var(--ink2);font-size:13.5px;margin-top:5px}
-#updated{font-weight:600;color:var(--ink)}
+header{background:rgba(255,255,255,.92);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)}
+.nav{max-width:1200px;margin:0 auto;padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between;position:relative;gap:32px}
+.logo{font-weight:800;font-size:17px;display:flex;align-items:center;gap:8px;letter-spacing:.02em;color:#161616;flex:0 0 auto}
+.logo .sq{width:10px;height:10px;background:var(--main);border-radius:2px;transform:rotate(45deg)}
+.logo .sub{font-size:11px;font-weight:600;color:var(--ink3);background:var(--line2);padding:2px 7px;border-radius:99px}
 
-.sec-hd{display:flex;align-items:baseline;gap:10px;margin:30px 0 14px}
-.sec-hd h2{font-size:16px;font-weight:700}
+main{max-width:1200px;margin:0 auto;padding:0 32px 80px;position:relative;z-index:1}
+.hero{padding:52px 0 36px;border-bottom:1px solid var(--line);margin-bottom:36px}
+.hero-tag{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--main);background:rgba(var(--main-rgb),.08);padding:6px 14px;border-radius:99px;margin-bottom:18px;letter-spacing:.04em}
+.hero-tag .dot{width:6px;height:6px;border-radius:50%;background:var(--main);box-shadow:0 0 0 4px rgba(var(--main-rgb),.15);animation:pulse-ring 2s ease-in-out infinite}
+@keyframes pulse-ring{0%,100%{opacity:1}50%{opacity:.4}}
+.hero h1{font-size:35px;font-weight:800;color:#161616;letter-spacing:-.03em;margin-bottom:12px}
+.hero h1 .accent{color:var(--main)}
+.hero p{color:var(--ink3);font-size:13px}
+#updated{font-weight:600;color:var(--ink2)}
+
+.sec-hd{display:flex;align-items:baseline;gap:10px;margin:32px 0 14px}
+.sec-hd h2{font-size:16px;font-weight:700;color:#2b2b2b}
 .sec-hd span{font-size:12px;color:var(--ink3)}
 
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
@@ -140,30 +144,13 @@ footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);font-si
 </style>
 </head>
 <body>
-
-<header>
-  <div class="nav">
-    <a class="logo" href="https://www.blockmedia.co.kr">
-      <span class="sq"></span>블록미디어<span class="sub">마켓랩</span>
-    </a>
-    <nav class="nav-links">
-      <a href="https://www.blockmedia.co.kr">홈</a>
-      <a href="#" class="on">KR 마켓</a>
-      <a href="https://data.blockmedia.co.kr/bm20_index.html">BM20 지수</a>
-      <a href="https://data.blockmedia.co.kr/etf.html">US ETF</a>
-    </nav>
-    <div class="live-badge">
-      <span class="dot-live"></span>
-      <span id="liveBadgeText">업비트·빗썸·코인원 합산</span>
-    </div>
-  </div>
-</header>
+<div class="aurora"></div>
 
 <main>
   <div class="hero">
-    <div class="hero-tag" id="heroTag">● 국내 3대 원화 거래소 통합</div>
-    <h1>한국 디지털 자산 시장</h1>
-    <p><span id="updated">-</span> 기준 · 스냅샷 주기: 8h</p>
+    <div class="hero-tag"><span class="dot"></span>국내 4대 원화 거래소 통합</div>
+    <h1>한국 디지털 자산 <span class="accent">마켓랩</span></h1>
+    <p>업비트·빗썸·코인원·코빗 합산 · <span id="updated">-</span> 기준</p>
   </div>
 
   <!-- KPI -->
@@ -234,7 +221,7 @@ footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);font-si
   </div>
 
   <!-- Exchange Top5 -->
-  <div class="sec-hd"><h2>거래소별 Top5</h2><span>어떤 알트에 쏠렸는지 · 배후 금융그룹</span></div>
+  <div class="sec-hd"><h2>거래소별 Top5</h2><span>어떤 알트에 쏠렸는지 · 투자한 금융그룹</span></div>
   <div class="ex-grid" id="exGrid"></div>
 
   <!-- 김치프리미엄 -->
@@ -469,9 +456,6 @@ async function load(){
 
     // Hero / 뱃지 업데이트
     if(hasKorbit){
-      document.getElementById('heroTag').textContent = '● 국내 4대 원화 거래소 통합';
-      document.getElementById('liveBadgeText').textContent = '업비트·빗썸·코인원·코빗 합산';
-      document.getElementById('footerEx').textContent = '업비트·빗썸·코인원·코빗 합산';
       // 차트 범례에 코빗 추가
       document.getElementById('volLegend').innerHTML = `
         <span><i style="background:var(--upbit)"></i>업비트</span>
