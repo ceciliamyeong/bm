@@ -13,8 +13,8 @@
   --bg:#ffffff;--card:#fbfbfb;--ink:#2b2b2b;--ink2:#444444;--ink3:#999999;
   --line:#e2e2e2;--line2:#f7f7f7;
   --main:#337abd;--main-rgb:51,122,189;--main-dark:#1e4d78;
-  --up:#c93d3d;--up-bg:rgba(201,61,61,.08);
-  --down:#2c5fad;--down-bg:rgba(44,95,173,.08);
+  --up:#1a7a4a;--up-bg:rgba(26,122,74,.08);
+  --down:#e03131;--down-bg:rgba(224,49,49,.08);
   --upbit:#1763ff;--bithumb:#ff8a00;--coinone:#16c79a;--korbit:#7c5cff;
   --r:10px;--shadow:0 4px 16px rgba(50,50,93,.08),0 1px 3px rgba(0,0,0,.04);
 }
@@ -150,7 +150,7 @@ footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);font-si
 <main>
   <div class="hero">
     <div class="hero-tag"><span class="dot"></span>국내 4대 원화 거래소 통합</div>
-    <h1>한국 디지털 자산 <span class="accent">마켓랩</span></h1>
+    <h1>한국 디지털자산 <span class="accent">마켓랩</span></h1>
     <p>업비트·빗썸·코인원·코빗 합산 · <span id="updated">-</span> 기준</p>
   </div>
 
@@ -253,7 +253,7 @@ footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);font-si
 
   <footer>
     <div style="max-width:500px;line-height:1.6">본 페이지는 시장 동향 파악을 위한 참고 자료이며, 투자 권유가 아닙니다. 데이터 오류 가능성이 존재할 수 있습니다.</div>
-    <div>© 블록미디어 마켓랩 · <span id="footerEx">업비트·빗썸·코인원 합산</span></div>
+    <div>© 블록미디어 마켓랩 · <span id="footerEx">업비트·빗썸·코인원·코빗 합산</span></div>
   </footer>
 </main>
 
@@ -270,7 +270,7 @@ const PATHS = {
 const EX = {
   upbit:   { n:'업비트',  c:'#1763ff', grp:'두나무 · <strong>삼성그룹</strong> 지분 취득' },
   bithumb: { n:'빗썸',    c:'#ff8a00', grp:'빗썸코리아' },
-  coinone: { n:'코인원',  c:'#16c79a', grp:'<strong>한국투자증권</strong> 지분 투자 추진' },
+  coinone: { n:'코인원',  c:'#16c79a', grp:'<strong>컴투스</strong>·<strong>한국투자증권</strong> 지분 투자' },
   korbit:  { n:'코빗',    c:'#7c5cff', grp:'<strong>미래에셋그룹</strong> 인수 (지분 92%)' },
 };
 
@@ -534,7 +534,12 @@ async function load(){
     const [latest, kimchi, fx] = await Promise.all([
       fetchJ(PATHS.latest), fetchJ(PATHS.kimchi), fetchJ(PATHS.fx)
     ]);
-    document.getElementById('updated').textContent=latest.timestamp_label||'-';
+    // 현재 시각 (KST) 표시
+    const _now = new Date();
+    const _kst = new Date(_now.getTime() + 9*60*60*1000);
+    const _p = n => String(n).padStart(2,'0');
+    document.getElementById('updated').textContent =
+      `${_kst.getUTCMonth()+1}/${_p(_kst.getUTCDate())} ${_p(_kst.getUTCHours())}:${_p(_kst.getUTCMinutes())} KST`;
 
     const tot=latest.totals;
     const hasKorbit = !!(tot.korbit_24h);
