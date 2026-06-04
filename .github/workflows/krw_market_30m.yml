@@ -20,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run KRW rolling 24h (4사: 업비트·빗썸·코인원·코빗)
+      - name: Run KRW rolling 24h 
         run: python3 scripts/krw_rolling24h_8h.py
 
       - name: Run smart kimchi
