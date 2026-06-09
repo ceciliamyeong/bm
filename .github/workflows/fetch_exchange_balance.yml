@@ -1,0 +1,25 @@
+name: Santiment Exchange Balance
+
+on:
+  workflow_dispatch:  # 수동 실행
+  schedule:
+    - cron: '0 1 * * *'  # 매일 10:00 KST (UTC+9)
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install httpx
+
+      - name: Run fetch script
+        env:
+          SANTIMENT_API_KEY: ${{ secrets.SANTIMENT_API_KEY }}
+        run: python fetch_exchange_balance.py
