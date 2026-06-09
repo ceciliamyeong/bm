@@ -71,7 +71,10 @@ def fetch_exchange_balance(slug: str, days: int = 30, interval: str = "1d") -> l
     raw = data.get("data", {}).get("getMetric", {}).get("timeseriesDataJson")
     if not raw:
         return []
-    return json.loads(raw)  # [{datetime, value}, ...]
+    # 이미 리스트로 파싱된 경우와 JSON 문자열인 경우 모두 처리
+    if isinstance(raw, list):
+        return raw
+    return json.loads(raw)
 
 
 def fetch_all_bm20(days: int = 7) -> dict:
