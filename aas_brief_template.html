@@ -320,8 +320,7 @@
 
         /* 테이블 파싱 */
         var coins = [];
-        var tbodies = document.querySelectorAll('.table-wrap table tbody');
-        var tbody   = tbodies.length >= 1 ? tbodies[0] : null;
+        var tbody = document.getElementById('top10Body');
         if (tbody) {
           tbody.querySelectorAll('tr').forEach(function(row) {
             var cells = row.querySelectorAll('td');
@@ -446,7 +445,7 @@
   <div class="table-wrap">
     <table>
       <thead><tr><th>순위</th><th>심볼</th><th>코생지</th><th>가격 (USD)</th><th>24H (%)</th><th>RSI</th><th>신호</th><th>코멘트</th></tr></thead>
-      <tbody>{{TOP10_ROWS}}</tbody>
+      <tbody id="top10Body">{{TOP10_ROWS}}</tbody>
     </table>
   </div>
 
