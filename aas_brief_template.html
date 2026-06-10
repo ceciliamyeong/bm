@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>코생지 Daily Brief — 블록미디어</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --c-main: #337abd;
+    --c-main-rgb: 51,122,189;
+    --c-bg: #ffffff;
+    --c-surface: #fbfbfb;
+    --c-surface-tint: #f7f7ff;
+    --c-border: #e2e2e2;
+    --c-muted: #999999;
+    --c-text: #444444;
+    --c-heading: #2b2b2b;
+    --c-heading-strong: #161616;
+    --c-up: #c93d3d;
+    --c-down: #2c5fad;
+    --zone-best-bg: rgba(102,187,106,0.10); --zone-best-label: #2e7d32; --zone-best-bubble: #66bb6a;
+    --zone-watch-bg: rgba(66,165,245,0.10); --zone-watch-label: #1565c0; --zone-watch-bubble: #42a5f5;
+    --zone-dead-bg: rgba(212,137,76,0.13);  --zone-dead-label: #a86c1d; --zone-dead-bubble: #d4894c;
+    --zone-exit-bg: rgba(239,83,80,0.10);   --zone-exit-label: #c62828; --zone-exit-bubble: #ef5350;
+    --sig-overheat: #db2929; --sig-caution: #e98c2a; --sig-trend: #b87d0e;
+    --sig-spec: #7c3aed; --sig-accum: #2a9d63; --sig-oversold: #1d4ed8;
+    --sig-watch: #6b7280; --sig-wait: #4b5563;
+    --shadow-card: 0 2px 12px rgba(50,50,93,.07), 0 1px 3px rgba(0,0,0,.04);
+    --radius-sm: 5px; --radius-card: 10px; --radius-pill: 999px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: "Noto Sans KR",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",Arial,sans-serif; background:var(--c-bg); color:var(--c-text); line-height:1.5; font-size:15px; -webkit-font-smoothing:antialiased; }
+  .num { font-family:"IBM Plex Mono",Arial,monospace; font-variant-numeric:tabular-nums; }
+
+  /* INLINE NAV (eyebrow 옆) */
+  .page-eyebrow-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:12px; flex-wrap:wrap; }
+  nav.inline-nav { display:flex; gap:0; overflow-x:auto; scrollbar-width:none; }
+  nav.inline-nav::-webkit-scrollbar { display:none; }
+  nav.inline-nav a { color:var(--c-muted); text-decoration:none; padding:5px 13px; font-size:12px; font-weight:600; white-space:nowrap; border-bottom:2px solid transparent; transition:color .15s,border-color .15s; }
+  nav.inline-nav a:hover { color:var(--c-heading); }
+  nav.inline-nav a.active { color:var(--c-main); border-bottom-color:var(--c-main); }
+
+  /* LAYOUT */
+  .content-wrap { max-width:900px; margin:0 auto; padding:32px 20px 48px; }
+
+  /* PAGE HEADER */
+  .page-header { padding-bottom:24px; margin-bottom:28px; border-bottom:1px solid var(--c-border); }
+  .page-eyebrow { display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:700; color:var(--c-main); background:rgba(var(--c-main-rgb),0.08); padding:5px 13px; border-radius:var(--radius-pill); margin-bottom:12px; letter-spacing:0.04em; }
+  .page-eyebrow .dot { width:6px; height:6px; border-radius:50%; background:var(--c-main); box-shadow:0 0 0 3px rgba(var(--c-main-rgb),0.18); animation:pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .page-title { font-size:28px; font-weight:800; color:var(--c-heading-strong); letter-spacing:-0.03em; margin-bottom:8px; }
+  .page-title .accent { color:var(--c-main); }
+  .page-meta { font-size:13px; color:var(--c-muted); }
+  .page-meta strong { color:var(--c-text); font-weight:600; font-family:"IBM Plex Mono",monospace; }
+
+  /* SKS */
+  .sks-box { background:var(--c-surface); border:1px solid var(--c-border); border-radius:var(--radius-card); padding:20px 24px; margin-bottom:24px; position:relative; overflow:hidden; box-shadow:var(--shadow-card); }
+  .sks-box::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:linear-gradient(180deg,var(--c-main) 0%,#243090 100%); }
+  .sks-row { display:flex; align-items:flex-start; gap:14px; padding:9px 0; }
+  .sks-row + .sks-row { border-top:1px solid var(--c-border); }
+  .sks-label { flex:0 0 64px; font-weight:700; font-size:11px; letter-spacing:0.07em; color:var(--c-main); padding-top:2px; }
+  .sks-text { flex:1; color:var(--c-heading); font-size:14px; font-weight:500; line-height:1.6; }
+  .sks-text strong { color:var(--c-heading-strong); font-weight:700; }
+
+  /* DASHBOARD */
+  .dashboard { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:24px; }
+  .dash-card { background:var(--c-surface); border:1px solid var(--c-border); border-radius:var(--radius-card); padding:16px 18px; position:relative; box-shadow:var(--shadow-card); transition:transform .18s,box-shadow .18s; }
+  .dash-card:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(50,50,93,.10); }
+  .dash-card .accent-bar-left { position:absolute; left:0; top:16px; bottom:16px; width:3px; border-radius:0 2px 2px 0; }
+  .dash-card.c-return .accent-bar-left { background:var(--c-main); }
+  .dash-card.c-perf   .accent-bar-left { background:#c98f0e; }
+  .dash-card.c-market .accent-bar-left { background:#2a9d63; }
+  .dash-head { font-size:10px; font-weight:700; color:var(--c-muted); margin-bottom:12px; letter-spacing:0.06em; text-transform:uppercase; }
+  .dash-row { display:flex; justify-content:space-between; align-items:center; padding:7px 0; font-size:13px; }
+  .dash-row + .dash-row { border-top:1px dashed var(--c-border); }
+  .dash-row .label { color:var(--c-text); }
+  .dash-row .val { font-weight:700; color:var(--c-heading-strong); font-size:15px; font-family:"IBM Plex Mono",monospace; }
+  .dash-row .val.up { color:var(--c-up); } .dash-row .val.dn { color:var(--c-down); }
+  .up { color:var(--c-up); } .dn { color:var(--c-down); }
+  .big { font-size:17px; font-weight:800; }
+
+  /* SECTION HEADER */
+  .section-head { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:10px; gap:10px; }
+  .section-title { font-size:16px; font-weight:700; color:var(--c-heading); display:flex; align-items:center; gap:8px; }
+  .section-title .accent-bar { width:4px; height:16px; background:var(--c-main); border-radius:2px; }
+  .section-sub { font-size:12px; color:var(--c-muted); }
+
+  /* MAJOR COIN CARDS */
+  .major-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px; }
+  .major-card { background:var(--c-surface); border:1px solid var(--c-border); border-radius:var(--radius-card); padding:20px 22px; box-shadow:var(--shadow-card); transition:transform .18s,box-shadow .18s; }
+  .major-card:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(50,50,93,.10); }
+  .major-card-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .major-card-logo { display:flex; align-items:center; gap:10px; }
+  .major-card-logo img { width:32px; height:32px; border-radius:50%; }
+  .major-card-logo-fallback { width:32px; height:32px; border-radius:50%; background:rgba(var(--c-main-rgb),0.12); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:var(--c-main); }
+  .major-card-name { font-size:18px; font-weight:800; color:var(--c-heading-strong); letter-spacing:-0.02em; }
+  .major-card-rank { font-size:12px; color:var(--c-muted); font-weight:500; margin-top:1px; }
+  .major-card-clm { display:flex; align-items:baseline; gap:8px; margin-bottom:10px; }
+  .major-card-clm-val { font-size:32px; font-weight:800; color:var(--c-heading-strong); font-family:"IBM Plex Mono",monospace; letter-spacing:-0.03em; }
+  .major-card-clm-delta { font-size:13px; font-weight:700; font-family:"IBM Plex Mono",monospace; display:flex; align-items:center; gap:2px; }
+  .major-card-clm-delta.up { color:var(--c-up); }
+  .major-card-clm-delta.dn { color:var(--c-down); }
+  .major-card-meta { font-size:12px; color:var(--c-muted); margin-bottom:14px; display:flex; gap:14px; flex-wrap:wrap; }
+  .major-card-meta .meta-val { font-weight:700; font-family:"IBM Plex Mono",monospace; }
+  .major-card-meta .meta-val.up { color:var(--c-up); }
+  .major-card-meta .meta-val.dn { color:var(--c-down); }
+  .major-card-meta .meta-val.neutral { color:var(--c-heading-strong); }
+  .major-card-comment { font-size:13px; color:var(--c-text); padding-top:12px; border-top:1px solid var(--c-border); font-weight:500; }
+  @media (max-width:640px) { .major-grid { grid-template-columns:1fr; } }
+
+  /* TABLE */
+  .table-wrap { background:var(--c-surface); border:1px solid var(--c-border); border-radius:var(--radius-card); overflow:hidden; box-shadow:var(--shadow-card); margin-bottom:24px; }
+  .part-label { display:inline-block; background:var(--c-main); color:white; font-size:11px; font-weight:700; padding:4px 12px; border-radius:var(--radius-sm); letter-spacing:0.05em; margin-bottom:12px; font-family:"IBM Plex Mono",monospace; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  thead tr { background:var(--c-surface-tint); }
+  thead th { color:var(--c-heading); font-size:11px; font-weight:700; padding:12px 12px; text-align:center; white-space:nowrap; letter-spacing:0.05em; border-bottom:2px solid var(--c-border); }
+  tbody tr { transition:background .1s; }
+  tbody tr:nth-child(odd)  { background:#fafbfc; }
+  tbody tr:nth-child(even) { background:var(--c-surface); }
+  tbody tr.hq { background:rgba(var(--c-main-rgb),.05); border-left:3px solid var(--c-main); }
+  tbody tr:hover { background:rgba(var(--c-main-rgb),.06); }
+  td { padding:11px 12px; text-align:center; color:var(--c-text); border-bottom:1px solid var(--c-border); font-weight:500; }
+  tbody tr:last-child td { border-bottom:0; }
+  td.sym { font-family:"IBM Plex Mono",monospace; font-weight:800; font-size:14px; color:var(--c-heading-strong); }
+  td.aas { font-family:"IBM Plex Mono",monospace; font-weight:700; font-size:14px; color:var(--c-heading-strong); }
+  td.price { font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; }
+  td.chg { font-weight:800; font-family:"IBM Plex Mono",monospace; font-size:13px; }
+  td.rsi { font-family:"IBM Plex Mono",monospace; font-size:13px; font-weight:600; }
+  td.cmt { font-size:12px; text-align:left; white-space:nowrap; font-weight:600; }
+  td.cmt.whale   { color:var(--sig-accum); }
+  td.cmt.specu   { color:var(--sig-caution); }
+  td.cmt.caution { color:var(--sig-overheat); }
+  .rank-c { display:inline-flex; width:22px; height:22px; border-radius:50%; background:#e2e8f0; color:var(--c-heading); font-size:11px; font-weight:700; align-items:center; justify-content:center; font-family:"IBM Plex Mono",monospace; }
+  .rank-c.top { background:var(--c-main); color:white; }
+
+  /* BADGE */
+  .badge { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; padding:4px 10px; border-radius:var(--radius-pill); letter-spacing:0.04em; font-family:"IBM Plex Mono",Arial,monospace; }
+  .badge::before { content:""; width:6px; height:6px; border-radius:50%; background:currentColor; flex-shrink:0; }
+  .badge-accum,   .badge-ACCUM    { background:rgba(42,157,99,0.12);   color:var(--sig-accum); }
+  .badge-specu,   .badge-SPECU    { background:rgba(182,122,214,0.14); color:var(--sig-spec); }
+  .badge-caution, .badge-CAUTION  { background:rgba(233,140,42,0.14);  color:var(--sig-caution); }
+  .badge-over,    .badge-OVERHEAT { background:rgba(219,41,41,0.10);   color:var(--sig-overheat); }
+  .badge-OVERSOLD { background:rgba(37,99,235,0.10);  color:var(--sig-oversold); }
+  .badge-TREND    { background:rgba(244,183,64,0.18);  color:var(--sig-trend); }
+  .badge-WATCH    { background:rgba(153,153,153,0.14); color:var(--sig-watch); }
+  .badge-WAIT     { background:rgba(107,114,128,0.14); color:var(--sig-wait); }
+  .badge-NA       { background:rgba(203,213,224,0.30); color:var(--c-muted); }
+
+  /* CHARTS */
+  .chart-wrap { background:var(--c-surface); border:1px solid var(--c-border); border-radius:var(--radius-card); padding:20px 22px; margin-bottom:24px; box-shadow:var(--shadow-card); }
+  .chart-label { font-size:14px; font-weight:700; color:var(--c-heading); margin-bottom:12px; }
+  .chart-sublabel { font-size:11px; color:var(--c-muted); margin-top:8px; font-style:italic; }
+  .chart-img { width:100%; border-radius:6px; border:1px solid var(--c-border); }
+  .zone-chips { display:flex; flex-wrap:wrap; gap:14px; margin-bottom:10px; }
+  .zone-chip { display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:600; color:var(--c-text); }
+  .zone-dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+  .zone-dot.best  { background:var(--zone-best-bubble); }
+  .zone-dot.watch { background:var(--zone-watch-bubble); }
+  .zone-dot.dead  { background:var(--zone-dead-bubble); }
+  .zone-dot.exit  { background:var(--zone-exit-bubble); }
+  .zone-explain-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px; padding-top:14px; border-top:1px solid var(--c-border); }
+  .zone-explain { padding:10px 14px; border-radius:var(--radius-sm); border:1px solid transparent; }
+  .zone-explain.best  { background:var(--zone-best-bg);  border-color:var(--zone-best-bubble); }
+  .zone-explain.watch { background:var(--zone-watch-bg); border-color:var(--zone-watch-bubble); }
+  .zone-explain.dead  { background:var(--zone-dead-bg);  border-color:var(--zone-dead-bubble); }
+  .zone-explain.exit  { background:var(--zone-exit-bg);  border-color:var(--zone-exit-bubble); }
+  .zone-explain-title { font-size:12px; font-weight:800; margin-bottom:3px; }
+  .zone-explain.best  .zone-explain-title { color:var(--zone-best-label); }
+  .zone-explain.watch .zone-explain-title { color:var(--zone-watch-label); }
+  .zone-explain.dead  .zone-explain-title { color:var(--zone-dead-label); }
+  .zone-explain.exit  .zone-explain-title { color:var(--zone-exit-label); }
+  .zone-explain-desc { font-size:11px; color:var(--c-text); }
+
+  /* BACKTEST */
+  .backtest { background:var(--c-surface); border:1px solid var(--c-border); border-radius:var(--radius-card); padding:20px 22px; margin-bottom:24px; box-shadow:var(--shadow-card); }
+  .backtest-head { font-size:14px; font-weight:700; color:var(--c-heading-strong); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .backtest-version { background:rgba(var(--c-main-rgb),.10); color:var(--c-main); font-size:11px; font-weight:700; padding:2px 9px; border-radius:var(--radius-pill); }
+  .backtest-cond { font-size:13px; color:var(--c-text); margin-bottom:14px; padding:8px 12px; background:var(--c-surface-tint); border-radius:var(--radius-sm); border-left:3px solid var(--c-main); }
+  .backtest-cond strong { color:var(--c-heading-strong); font-weight:700; }
+  .backtest-stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .backtest-stat { text-align:center; padding:12px; background:var(--c-surface-tint); border:1px solid var(--c-border); border-radius:var(--radius-sm); }
+  .backtest-stat .label { font-size:11px; color:var(--c-muted); margin-bottom:4px; font-weight:600; }
+  .backtest-stat .val { font-size:24px; font-weight:800; color:var(--c-main); font-family:"IBM Plex Mono",monospace; }
+  .backtest-src { font-size:11px; color:var(--c-muted); margin-top:12px; padding-top:10px; border-top:1px dashed var(--c-border); }
+
+  /* FOOTER */
+  .page-foot { font-size:11px; color:var(--c-muted); line-height:1.8; text-align:center; padding:16px 0 0; border-top:1px solid var(--c-border); }
+
+  /* RESPONSIVE */
+  @media (max-width:640px) {
+    .content-wrap { padding:20px 14px 36px; }
+    .dashboard { grid-template-columns:1fr; }
+    .backtest-stats { grid-template-columns:1fr; }
+    .zone-explain-grid { grid-template-columns:1fr; }
+    td.cmt { display:none; }
+    .page-title { font-size:22px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- GLOBAL HEADER -->
+<div class="content-wrap">
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div class="page-eyebrow-row">
+      <div class="page-eyebrow"><span class="dot"></span>코인 생명력 지표</div>
+      <nav class="inline-nav">
+        <a href="/index.html">KRW Market</a>
+        <a href="/bm20_index.html">BM20 Index</a>
+        <a href="/etf.html">US ETF Flow</a>
+        <a href="/history.html">History</a>
+        <a href="/clm_brief.html" class="active">CLM</a>
+      </nav>
+    </div>
+    <h1 class="page-title">코생지<span class="accent">(CLM)</span> Daily Brief</h1>
+    <div class="page-meta">리포트 발행 <strong>{{REPORT_DATE}} 03:00 KST</strong></div>
+  </div>
+
+  <!-- SIGNAL / KEY / STEP -->
+  <div class="sks-box">
+    <div class="sks-row">
+      <div class="sks-label">SIGNAL</div>
+      <div class="sks-text">{{INSIGHT_1}}</div>
+    </div>
+    <div class="sks-row">
+      <div class="sks-label">KEY</div>
+      <div class="sks-text">{{INSIGHT_2}}</div>
+    </div>
+    <div class="sks-row">
+      <div class="sks-label">STEP</div>
+      <div class="sks-text">{{INSIGHT_3}}</div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="dashboard">
+    <div class="dash-card c-return">
+      <div class="accent-bar-left"></div>
+      <div class="dash-head">수익률 종합 (24H)</div>
+      <div class="dash-row"><span class="label">Top 10 평균</span><span class="val {{AVG_TOP10_COLOR}} num">{{AVG_TOP10}}</span></div>
+      <div class="dash-row"><span class="label">중위 수익률</span><span class="val {{MEDIAN_COLOR}} num">{{MEDIAN_RETURN}}</span></div>
+      <div class="dash-row"><span class="label">1위 제외 평균</span><span class="val {{EXCL1_COLOR}} num">{{EXCL1_RETURN}}</span></div>
+    </div>
+    <div class="dash-card c-perf">
+      <div class="accent-bar-left"></div>
+      <div class="dash-head">종목 등락 분석</div>
+      <div class="dash-row"><span class="label">Best Performer</span><span class="val up big num">{{BEST_PERFORMER}}</span></div>
+      <div class="dash-row"><span class="label">Worst Performer</span><span class="val dn num">{{WORST_PERFORMER}}</span></div>
+    </div>
+    <div class="dash-card c-market">
+      <div class="accent-bar-left"></div>
+      <div class="dash-head">시장 비교 (Alpha)</div>
+      <div class="dash-row"><span class="label">Bitcoin (King)</span><span class="val {{BTC_COLOR}} num">{{BTC_RETURN}}</span></div>
+      <div class="dash-row"><span class="label">Alpha vs BTC</span><span class="val {{ALPHA_COLOR}} big num">{{ALPHA_BTC}}</span></div>
+    </div>
+  </div>
+
+  <!-- PART 1: MAJOR COINS -->
+  <div class="section-head">
+    <h2 class="section-title"><span class="accent-bar"></span>메이저 디지털자산</h2>
+  </div>
+  <div class="major-grid">
+    {{MAJOR_ROWS}}
+  </div>
+
+  <!-- PART 2: TOP 10 -->
+  <div class="section-head">
+    <h2 class="section-title"><span class="accent-bar"></span>코생지 Top 10</h2>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>순위</th><th>심볼</th><th>코생지</th><th>가격 (USD)</th><th>24H (%)</th><th>RSI</th><th>신호</th><th>코멘트</th></tr></thead>
+      <tbody>{{TOP10_ROWS}}</tbody>
+    </table>
+  </div>
+
+  <!-- CHARTS: 포지셔닝 매트릭스 -->
+  <div class="section-head">
+    <h2 class="section-title"><span class="accent-bar"></span>Top 10 신호 분포</h2>
+    <span class="section-sub">X: 상대강도지수(RSI) · Y: 코생지(CLM)</span>
+  </div>
+  <div class="chart-wrap">
+    <div class="zone-chips">
+      <span class="zone-chip"><span class="zone-dot best"></span>관심</span>
+      <span class="zone-chip"><span class="zone-dot watch"></span>강세 관찰</span>
+      <span class="zone-chip"><span class="zone-dot dead"></span>관심 밖</span>
+      <span class="zone-chip"><span class="zone-dot exit"></span>과열 주의</span>
+      <span style="font-size:11px;color:var(--c-muted);margin-left:auto">버블 크기 = 코생지 점수</span>
+    </div>
+    <div style="position:relative;">
+      <div id="clmTip" style="position:absolute;display:none;pointer-events:none;background:var(--c-surface);border:1px solid var(--c-border);border-radius:8px;padding:8px 12px;font-size:11px;color:var(--c-heading-strong);z-index:30;min-width:120px;box-shadow:var(--shadow-card);"></div>
+      <div style="position:relative;width:100%;height:300px;">
+        <canvas id="clmMatrixChart" aria-label="CLM 포지셔닝 매트릭스"></canvas>
+      </div>
+    </div>
+    <div class="zone-explain-grid">
+      <div class="zone-explain best"><div class="zone-explain-title">관심</div><div class="zone-explain-desc">생명력 높고 과열 낮음</div></div>
+      <div class="zone-explain watch"><div class="zone-explain-title">강세 관찰</div><div class="zone-explain-desc">생명력 높지만 가격 부담 확인</div></div>
+      <div class="zone-explain dead"><div class="zone-explain-title">관심 밖</div><div class="zone-explain-desc">참여도와 모멘텀 모두 낮음</div></div>
+      <div class="zone-explain exit"><div class="zone-explain-title">과열 주의</div><div class="zone-explain-desc">추격 매수보다 변동성 관리</div></div>
+    </div>
+    <div class="chart-sublabel">* 기준선: RSI 50 / 코생지 1.5</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+      <script>
+      (function() {
+        /* ── Part 2 Top 10 테이블에서 데이터 직접 파싱 ──
+           Python이 {{TOP10_ROWS}}를 채운 뒤 브라우저가 파싱
+           컬럼: 0=Rank | 1=Symbol | 2=CLM | 3=Price | 4=24H | 5=RSI | 6=Action | 7=Comment
+        ─────────────────────────────────────────────── */
+        var RSI_MID = 50, CLM_MID = 1.5;
+
+        function getZone(clm, rsi) {
+          if (clm >= CLM_MID && rsi <= RSI_MID) return 'best';
+          if (clm >= CLM_MID && rsi >  RSI_MID) return 'watch';
+          if (clm <  CLM_MID && rsi <= RSI_MID) return 'dead';
+          return 'exit';
+        }
+
+        var zoneColor = {
+          best:  { bg:'rgba(102,187,106,0.82)', bd:'rgba(46,125,50,1)' },
+          watch: { bg:'rgba(66,165,245,0.82)',  bd:'rgba(21,101,192,1)' },
+          dead:  { bg:'rgba(212,137,76,0.82)',  bd:'rgba(168,108,29,1)' },
+          exit:  { bg:'rgba(239,83,80,0.82)',   bd:'rgba(198,40,40,1)' }
+        };
+        var zoneLabel     = { best:'관심', watch:'강세 관찰', dead:'관심 밖', exit:'과열 주의' };
+        var zoneTextColor = { best:'#2e7d32', watch:'#1565c0', dead:'#a86c1d', exit:'#c62828' };
+
+        /* 테이블 파싱 */
+        var coins = [];
+        var tbodies = document.querySelectorAll('.table-wrap table tbody');
+        var tbody   = tbodies.length >= 2 ? tbodies[1] : null;
+        if (tbody) {
+          tbody.querySelectorAll('tr').forEach(function(row) {
+            var cells = row.querySelectorAll('td');
+            if (cells.length < 6) return;
+            var sym = cells[1].textContent.trim();
+            var clm = parseFloat(cells[2].textContent.trim());
+            var rsi = parseFloat(cells[5].textContent.trim());
+            if (!sym || isNaN(clm) || isNaN(rsi)) return;
+            coins.push({ sym: sym, clm: clm, rsi: rsi, zone: getZone(clm, rsi) });
+          });
+        }
+
+        /* 사분면 배경 플러그인 */
+        var quadBg = {
+          id: 'quadBg',
+          beforeDraw: function(ch) {
+            var ctx = ch.ctx, ca = ch.chartArea;
+            var mx = ch.scales.x.getPixelForValue(RSI_MID);
+            var my = ch.scales.y.getPixelForValue(CLM_MID);
+            ctx.save();
+            [
+              { x1:ca.left, y1:ca.top,  x2:mx,       y2:my,        bg:'rgba(102,187,106,0.08)', lc:'#2e7d32', label:'관심'  },
+              { x1:mx,      y1:ca.top,  x2:ca.right,  y2:my,        bg:'rgba(66,165,245,0.08)',  lc:'#1565c0', label:'강세 관찰' },
+              { x1:ca.left, y1:my,      x2:mx,        y2:ca.bottom, bg:'rgba(212,137,76,0.10)',  lc:'#a86c1d', label:'관심 밖'  },
+              { x1:mx,      y1:my,      x2:ca.right,  y2:ca.bottom, bg:'rgba(239,83,80,0.08)',   lc:'#c62828', label:'과열 주의'  }
+            ].forEach(function(q) {
+              ctx.fillStyle = q.bg;
+              ctx.fillRect(q.x1, q.y1, q.x2 - q.x1, q.y2 - q.y1);
+              ctx.fillStyle = q.lc;
+              ctx.font = '500 10px -apple-system,sans-serif';
+              ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+              ctx.fillText(q.label, q.x1 + 6, q.y1 + 5);
+            });
+            ctx.strokeStyle = 'rgba(100,100,100,0.2)';
+            ctx.lineWidth = 1; ctx.setLineDash([5,4]);
+            ctx.beginPath(); ctx.moveTo(mx, ca.top);  ctx.lineTo(mx, ca.bottom); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(ca.left, my); ctx.lineTo(ca.right, my);  ctx.stroke();
+            ctx.setLineDash([]); ctx.restore();
+          }
+        };
+
+        /* 심볼 라벨 플러그인 */
+        var symLabel = {
+          id: 'symLabel',
+          afterDatasetsDraw: function(ch) {
+            var ctx = ch.ctx;
+            ctx.save();
+            coins.forEach(function(c, i) {
+              var el = ch.getDatasetMeta(0).data[i];
+              if (!el) return;
+              var p = el.getProps(['x','y'], true);
+              ctx.font = '500 10px -apple-system,sans-serif';
+              ctx.fillStyle = 'rgba(255,255,255,0.96)';
+              ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+              ctx.fillText(c.sym, p.x, p.y);
+            });
+            ctx.restore();
+          }
+        };
+
+        new Chart(document.getElementById('clmMatrixChart'), {
+          type: 'bubble',
+          data: {
+            datasets: [{
+              data: coins.map(function(c) {
+                return { x: c.rsi, y: c.clm, r: Math.max(10, c.clm * 9) };
+              }),
+              backgroundColor: coins.map(function(c) { return zoneColor[c.zone].bg; }),
+              borderColor:     coins.map(function(c) { return zoneColor[c.zone].bd; }),
+              borderWidth: 1.5, hoverBorderWidth: 2.5
+            }]
+          },
+          plugins: [quadBg, symLabel],
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            layout: { padding: { top:8, right:12, bottom:4, left:4 } },
+            plugins: { legend: { display:false }, tooltip: { enabled:false } },
+            scales: {
+              x: {
+                min:10, max:80,
+                title: { display:true, text:'상대강도지수 (RSI)', font:{size:10}, color:'#6b7280' },
+                grid:  { color:'rgba(0,0,0,0.04)' },
+                ticks: { font:{size:10}, color:'#6b7280', stepSize:10 }
+              },
+              y: {
+                min:0, max:3.0,
+                title: { display:true, text:'코생지 (CLM)', font:{size:10}, color:'#6b7280' },
+                grid:  { color:'rgba(0,0,0,0.04)' },
+                ticks: { font:{size:10}, color:'#6b7280', callback:function(v){ return v.toFixed(1); } }
+              }
+            },
+            onHover: function(evt, els, ch) {
+              var tip = document.getElementById('clmTip');
+              if (!els.length) { tip.style.display='none'; return; }
+              var c   = coins[els[0].index];
+              var el  = ch.getDatasetMeta(0).data[els[0].index];
+              var p   = el.getProps(['x','y'], true);
+              var wr  = ch.canvas.parentElement.getBoundingClientRect();
+              var cr  = ch.canvas.getBoundingClientRect();
+              tip.innerHTML =
+                '<div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:3px">' + c.sym + '</div>' +
+                '<div style="display:flex;justify-content:space-between;gap:10px;color:#6b7280;font-size:10px"><span>CLM</span><span>' + c.clm.toFixed(2) + '</span></div>' +
+                '<div style="display:flex;justify-content:space-between;gap:10px;color:#6b7280;font-size:10px"><span>RSI</span><span>' + c.rsi + '</span></div>' +
+                '<div style="margin-top:4px;font-size:10px;font-weight:700;color:' + zoneTextColor[c.zone] + '">' + zoneLabel[c.zone] + '</div>';
+              var tx = cr.left - wr.left + p.x + 14;
+              var ty = cr.top  - wr.top  + p.y - 70;
+              if (tx + 130 > wr.width) tx = cr.left - wr.left + p.x - 145;
+              if (ty < 0) ty = 4;
+              tip.style.left = tx + 'px'; tip.style.top = ty + 'px'; tip.style.display = 'block';
+            }
+          }
+        });
+      })();
+      </script>
+    </div>
+  </div>
+
+  <!-- CHART: Composition -->
+  <div class="section-head">
+    <h2 class="section-title"><span class="accent-bar"></span>코생지 Composition (Top 3)</h2>
+  </div>
+  <div class="chart-wrap">
+    <img class="chart-img" src="{{CONTRIB_CHART_URL}}" alt="CLM Contribution Chart">
+    <div class="chart-sublabel">* On-chain / Social / Momentum 비중 분석</div>
+  </div>
+
+  <!-- BACKTEST -->
+  <div class="section-head">
+    <h2 class="section-title"><span class="accent-bar"></span>Historical Backtest</h2>
+  </div>
+  <div class="backtest">
+    <div class="backtest-head">High-Confidence 진입 조건 <span class="backtest-version">v4.1</span></div>
+    <div class="backtest-cond">지난 1년간 <strong>CLM Score 1.3 이상</strong> &amp; <strong>RSI 35 이하</strong> 조건 진입 시 7일 후 상승</div>
+    <div class="backtest-stats">
+      <div class="backtest-stat">
+        <div class="label">상승 확률 (7일 후)</div>
+        <div class="val">54.37%</div>
+      </div>
+      <div class="backtest-stat">
+        <div class="label">평균 수익률</div>
+        <div class="val">+1.24%</div>
+      </div>
+    </div>
+    <div class="backtest-src">Data Source: Santiment, CoinGecko, CLM Algorithm Validation v4.1 · 과거 데이터 기준이며 미래 성과를 보장하지 않습니다.</div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="page-foot">
+    본 리포트는 투자자 참고 정보제공을 목적으로 작성된 자료이며, 투자 판단은 투자자의 책임입니다.
+    블록미디어는 본 리포트의 정확성과 완전성을 보장하지 않으며 투자 결과에 대한 책임을 지지 않습니다.
+    코생지(CLM)는 알고리즘 기반 참고 지표이며 실제 투자 성과를 보장하지 않습니다.
+  </div>
+
+</div>
+</body>
+</html>
