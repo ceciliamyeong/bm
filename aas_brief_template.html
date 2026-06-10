@@ -43,7 +43,7 @@
   nav.inline-nav a.active { color:var(--c-main); border-bottom-color:var(--c-main); }
 
   /* LAYOUT */
-  .content-wrap { max-width:900px; margin:0 auto; padding:32px 20px 48px; }
+  .content-wrap { max-width:960px; margin:0 auto; padding:32px 20px 48px; }
 
   /* PAGE HEADER */
   .page-header { padding-bottom:24px; margin-bottom:28px; border-bottom:1px solid var(--c-border); }
@@ -112,16 +112,19 @@
 
   /* TABLE */
   .table-wrap { background:var(--c-surface); border:1px solid var(--c-border); border-radius:var(--radius-card); overflow:hidden; box-shadow:var(--shadow-card); margin-bottom:24px; }
+  .table-wrap table { margin:0; }
+  thead th { color:var(--c-heading); font-size:11px; font-weight:700; padding:14px 16px; text-align:center; white-space:nowrap; letter-spacing:0.05em; border-bottom:2px solid var(--c-border); }
+  td { padding:13px 16px; text-align:center; color:var(--c-text); border-bottom:1px solid var(--c-border); font-weight:500; }
   .part-label { display:inline-block; background:var(--c-main); color:white; font-size:11px; font-weight:700; padding:4px 12px; border-radius:var(--radius-sm); letter-spacing:0.05em; margin-bottom:12px; font-family:"IBM Plex Mono",monospace; }
   table { width:100%; border-collapse:collapse; font-size:13px; }
   thead tr { background:var(--c-surface-tint); }
-  thead th { color:var(--c-heading); font-size:11px; font-weight:700; padding:12px 12px; text-align:center; white-space:nowrap; letter-spacing:0.05em; border-bottom:2px solid var(--c-border); }
+  thead th { color:var(--c-heading); font-size:11px; font-weight:700; padding:14px 16px; text-align:center; white-space:nowrap; letter-spacing:0.05em; border-bottom:2px solid var(--c-border); }
   tbody tr { transition:background .1s; }
   tbody tr:nth-child(odd)  { background:#fafbfc; }
   tbody tr:nth-child(even) { background:var(--c-surface); }
   tbody tr.hq { background:rgba(var(--c-main-rgb),.05); border-left:3px solid var(--c-main); }
   tbody tr:hover { background:rgba(var(--c-main-rgb),.06); }
-  td { padding:11px 12px; text-align:center; color:var(--c-text); border-bottom:1px solid var(--c-border); font-weight:500; }
+  td { padding:13px 16px; text-align:center; color:var(--c-text); border-bottom:1px solid var(--c-border); font-weight:500; }
   tbody tr:last-child td { border-bottom:0; }
   td.sym { font-family:"IBM Plex Mono",monospace; font-weight:800; font-size:14px; color:var(--c-heading-strong); }
   td.aas { font-family:"IBM Plex Mono",monospace; font-weight:700; font-size:14px; color:var(--c-heading-strong); }
@@ -174,15 +177,15 @@
   .zone-explain-desc { font-size:11px; color:var(--c-text); }
 
   /* BACKTEST */
-  .backtest { background:var(--c-surface); border:1px solid var(--c-border); border-radius:var(--radius-card); padding:20px 22px; margin-bottom:24px; box-shadow:var(--shadow-card); }
+  .backtest { background:var(--c-surface); border:1px solid var(--c-border); border-radius:var(--radius-card); padding:24px 28px; margin-bottom:24px; box-shadow:var(--shadow-card); }
   .backtest-head { font-size:14px; font-weight:700; color:var(--c-heading-strong); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
   .backtest-version { background:rgba(var(--c-main-rgb),.10); color:var(--c-main); font-size:11px; font-weight:700; padding:2px 9px; border-radius:var(--radius-pill); }
   .backtest-cond { font-size:13px; color:var(--c-text); margin-bottom:14px; padding:8px 12px; background:var(--c-surface-tint); border-radius:var(--radius-sm); border-left:3px solid var(--c-main); }
   .backtest-cond strong { color:var(--c-heading-strong); font-weight:700; }
   .backtest-stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  .backtest-stat { text-align:center; padding:12px; background:var(--c-surface-tint); border:1px solid var(--c-border); border-radius:var(--radius-sm); }
-  .backtest-stat .label { font-size:11px; color:var(--c-muted); margin-bottom:4px; font-weight:600; }
-  .backtest-stat .val { font-size:24px; font-weight:800; color:var(--c-main); font-family:"IBM Plex Mono",monospace; }
+  .backtest-stat { text-align:center; padding:24px 16px; background:var(--c-surface-tint); border:1px solid var(--c-border); border-radius:var(--radius-sm); }
+  .backtest-stat .label { font-size:11px; color:var(--c-muted); margin-bottom:8px; font-weight:600; }
+  .backtest-stat .val { font-size:28px; font-weight:800; color:var(--c-main); font-family:"IBM Plex Mono",monospace; }
   .backtest-src { font-size:11px; color:var(--c-muted); margin-top:12px; padding-top:10px; border-top:1px dashed var(--c-border); }
 
   /* FOOTER */
@@ -295,7 +298,7 @@
     <div class="chart-sublabel">* 기준선: RSI 70 / 코생지 1.5</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
       <script>
-      (function() {
+      document.addEventListener('DOMContentLoaded', function() {
         /* ── Part 2 Top 10 테이블에서 데이터 직접 파싱 ──
            Python이 {{TOP10_ROWS}}를 채운 뒤 브라우저가 파싱
            컬럼: 0=Rank | 1=Symbol | 2=CLM | 3=Price | 4=24H | 5=RSI | 6=Action | 7=Comment
@@ -433,7 +436,7 @@
             }
           }
         });
-      })();
+      }); // DOMContentLoaded
       </script>
     </div>
   </div>
@@ -451,7 +454,7 @@
 
   <!-- BACKTEST -->
   <div class="section-head">
-    <h2 class="section-title"><span class="accent-bar"></span>Historical Backtest</h2>
+    <h2 class="section-title"><span class="accent-bar"></span>백테스트 결과</h2>
   </div>
   <div class="backtest">
     <div class="backtest-head">High-Confidence 진입 조건 <span class="backtest-version">v4.1</span></div>
