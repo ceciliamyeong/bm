@@ -11,8 +11,6 @@ render_letter.py 와 동일한 방식 (순수 string replace, no JS)
 Inputs (GitHub raw URL — private repo, AAS_BOT_TOKEN 환경변수 필요)
   reports/daily/{date}/newsletter_aas_top3_{date}.json
   reports/daily/{date}/daily_report_{date}.csv
-  reports/daily/{date}/daily_score_{date}.png
-  reports/daily/{date}/newsletter_contribution_top3_{date}.png
 
 Output
   clm_brief.html
@@ -23,7 +21,6 @@ from __future__ import annotations
 import os
 import re
 import json
-import base64
 import requests
 import pandas as pd
 from io import StringIO
@@ -185,11 +182,6 @@ def _fetch_raw(path: str) -> requests.Response | None:
         return None
 
 
-def _png_to_b64(path: str) -> str:
-    r = _fetch_raw(path)
-    if r is None:
-        return ""
-    return f"data:image/png;base64,{base64.b64encode(r.content).decode()}"
 
 
 def _table_row(rank: int, sym: str, aas: float, price: float,
@@ -264,9 +256,6 @@ def render() -> None:
             print(f"WARN: CLM delta 계산 실패 ({sym}): {e}")
             return 0.0
 
-    # 4. 차트 PNG → base64
-    score_img   = _png_to_b64(f"{base}/daily_score_{date_str}.png")
-    contrib_img = _png_to_b64(f"{base}/newsletter_contribution_top3_{date_str}.png")
 
     # 5. Major coins — 카드 형태
     major_rows_html = ""
@@ -353,9 +342,17 @@ def render() -> None:
     oversold = sum(1 for _, r in top10_df.iterrows()
                    if float(r["RSI"]) <= 40) if not top10_df.empty else 0
 
-    insight1 = f"<strong>시장 현황:</strong> 코생지 Top 10 평균 수익률 {_fmt_chg(avg_top10)}, 비트코인 대비 알파 {alpha_btc:+.2f}%p"
-    insight2 = f"<strong>High Quality 종목:</strong> {hq_str} 등 코생지 1.5 이상 종목은 고래 매집 지속 중"
-    insight3 = f"<strong>RSI 모니터링:</strong> Top 10 중 {oversold}종목이 RSI 40 이하 — 단기 변동성 주의"
+    def _colored(v: float, text: str = None) -> str:
+        t = text or _fmt_chg(v)
+        cls = "up" if v >= 0 else "dn"
+        return f'<span class="{cls}" style="font-weight:700">{t}</span>'
+
+    insight1 = (f"코생지 Top 10이 24시간 평균 {_colored(avg_top10)} 상승하며 "
+                f"비트코인 대비 {_colored(alpha_btc, f'{alpha_btc:+.2f}%p')}의 초과수익을 기록했다.")
+    insight2 = (f"Top 10 중 <strong>{oversold}개 종목</strong>이 "
+                f"<strong>OVERSOLD</strong> 신호를 보이며 과매도 국면이 우세하다.")
+    insight3 = (f"코생지 1.3 이상·RSI 35 이하 조건을 충족한 "
+                f"<strong>{hq_str}</strong> 종목의 추이를 주목할 필요가 있다.")
 
     # 9. 표시 날짜 — 데이터 폴더 날짜와 무관하게 항상 KST 오늘
     kst = timezone(timedelta(hours=9))
@@ -383,8 +380,6 @@ def render() -> None:
         "{{INSIGHT_3}}":         insight3,
         "{{MAJOR_ROWS}}":        major_rows_html,
         "{{TOP10_ROWS}}":        top10_rows_html,
-        "{{SCORE_CHART_URL}}":   score_img,
-        "{{CONTRIB_CHART_URL}}": contrib_img,
     }
 
     html = TEMPLATE.read_text(encoding="utf-8")
