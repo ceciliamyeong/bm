@@ -1,54 +1,145 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko-KR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>솔라나 시세 | 블록미디어</title>
-<meta name="description" content="솔라나 실시간 가격 차트와 최신 뉴스">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<title>솔라나(SOL) 시세 · 실시간 가격 · ETF 자금 흐름 | 블록미디어</title>
+<meta name="description" content="솔라나(SOL) 실시간 시세, 김치 프리미엄, 미국 현물 SOL ETF 자금 유출입 흐름을 블록미디어에서 확인하세요. 국내 최신 솔라나 뉴스와 시장 분석을 제공합니다.">
+<meta name="keywords" content="솔라나, 솔라나 시세, 솔라나 가격, SOL 가격, 솔라나 ETF, 솔라나 ETF 자금흐름, 김치 프리미엄, 솔라나 차트, 솔라나 뉴스, 솔라나 실시간, SOL KRW, 솔라나 업비트">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="naver-site-verification" content="ce6d8867a1a85b3a31ccbaa7b6097a3a9d61a910">
+<link rel="canonical" href="https://www.blockmedia.co.kr/coins/sol">
+<meta property="og:type" content="website">
+<meta property="og:title" content="솔라나(SOL) 시세 · ETF 자금 흐름 · 김치 프리미엄 | 블록미디어">
+<meta property="og:description" content="솔라나(SOL) 실시간 시세, 김치 프리미엄, 미국 현물 SOL ETF 자금 유출입 흐름을 블록미디어에서 확인하세요.">
+<meta property="og:url" content="https://www.blockmedia.co.kr/coins/sol">
+<meta property="og:site_name" content="블록미디어">
+<meta property="og:image" content="https://cdn.blockmedia.co.kr/wp-content/uploads/2018/08/블록미디어로고_세로.png">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@with_blockmedia">
+<meta name="twitter:title" content="솔라나(SOL) 시세 · ETF 자금 흐름 | 블록미디어">
+<meta name="twitter:description" content="솔라나(SOL) 실시간 시세, 김치 프리미엄, ETF 자금 흐름을 확인하세요.">
+<meta name="twitter:image" content="https://cdn.blockmedia.co.kr/wp-content/uploads/2018/08/블록미디어로고_세로.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "@id": "https://www.blockmedia.co.kr/coins/sol",
+      "url": "https://www.blockmedia.co.kr/coins/sol",
+      "name": "솔라나(SOL) 시세 · 실시간 가격 · ETF 자금 흐름 | 블록미디어",
+      "description": "솔라나(SOL) 실시간 시세와 가격 차트, 김치 프리미엄, 미국 현물 SOL ETF 자금 유출입 흐름",
+      "inLanguage": "ko-KR",
+      "publisher": {
+        "@type": "Organization",
+        "name": "블록미디어",
+        "url": "https://www.blockmedia.co.kr",
+        "logo": { "@type": "ImageObject", "url": "https://cdn.blockmedia.co.kr/wp-content/uploads/2018/08/블록미디어로고_세로.png" }
+      }
+    },
+    {
+      "@type": "FinancialProduct",
+      "name": "솔라나",
+      "alternateName": ["Solana", "SOL"],
+      "description": "솔라나(SOL)는 2020년 출시된 고성능 Layer1 블록체인입니다. 초당 수만 건의 트랜잭션 처리 속도와 낮은 수수료가 특징이며, DeFi와 NFT 생태계의 핵심 플랫폼입니다.",
+      "tickerSymbol": "SOL",
+      "url": "https://www.blockmedia.co.kr/coins/sol",
+      "provider": { "@type": "Organization", "name": "블록미디어", "url": "https://www.blockmedia.co.kr" }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "솔라나(SOL)란 무엇인가요?",
+          "acceptedAnswer": { "@type": "Answer", "text": "솔라나(Solana, SOL)는 2020년 출시된 고성능 Layer1 블록체인입니다. 초당 수만 건의 트랜잭션 처리가 가능하며 수수료가 매우 낮아 DeFi와 NFT 생태계의 핵심 플랫폼으로 자리잡았습니다." }
+        },
+        {
+          "@type": "Question",
+          "name": "솔라나의 핵심 기술 PoH란 무엇인가요?",
+          "acceptedAnswer": { "@type": "Answer", "text": "PoH(Proof of History)는 아나톨리 야코벤코가 개발한 합의 알고리즘입니다. 트랜잭션 처리와 경과 시간을 기록해 블록체인 신뢰성을 보장하며, PoS가 이를 검증하는 구조로 솔라나만의 고성능을 구현합니다." }
+        },
+        {
+          "@type": "Question",
+          "name": "솔라나 ETF란 무엇인가요?",
+          "acceptedAnswer": { "@type": "Answer", "text": "미국 현물 솔라나 ETF는 실제 SOL을 보유하고 주식처럼 거래소에서 사고팔 수 있는 금융 상품입니다. 블록미디어는 SOL ETF 자금 유출입 데이터를 매일 업데이트합니다." }
+        },
+        {
+          "@type": "Question",
+          "name": "솔라나는 어디서 살 수 있나요?",
+          "acceptedAnswer": { "@type": "Answer", "text": "국내에서는 업비트(Upbit), 빗썸(Bithumb), 코인원(Coinone), 코빗(Korbit) 등 원화 거래소에서 구매할 수 있습니다." }
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "블록미디어", "item": "https://www.blockmedia.co.kr" },
+        { "@type": "ListItem", "position": 2, "name": "마켓랩", "item": "https://data.blockmedia.co.kr" },
+        { "@type": "ListItem", "position": 3, "name": "솔라나(SOL) 시세", "item": "https://www.blockmedia.co.kr/coins/sol" }
+      ]
+    }
+  ]
+}
+</script>
 <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
     --bg: #ffffff;
-    --bg2: #f7f7f5;
-    --bg3: #f0efec;
-    --text: #1a1a18;
-    --text2: #5f5e5a;
-    --text3: #9a9894;
-    --border: rgba(0,0,0,0.10);
-    --border2: rgba(0,0,0,0.18);
-    --accent: #0f6e56;
-    --up: #3B6D11;
-    --up-bg: #EAF3DE;
-    --down: #A32D2D;
-    --down-bg: #FCEBEB;
+    --bg2: #ffffff;
+    --bg3: #f8f8f8;
+    --card: #ffffff;
+    --text: #2b2b2b;
+    --text2: #444444;
+    --text3: #999999;
+    --border: #e2e2e2;
+    --border2: #d0d0d0;
+    --accent: #337abd;
+    --main: #337abd;
+    --main-rgb: 51,122,189;
+    --up: #1a7a4a;
+    --up-bg: rgba(26,122,74,.08);
+    --down: #e03131;
+    --down-bg: rgba(224,49,49,.08);
+    --r: 10px;
+    --shadow: none;
   }
 
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #111110;
-      --bg2: #1a1a18;
-      --bg3: #222220;
-      --text: #e8e7e3;
-      --text2: #888780;
-      --text3: #555450;
+      --bg: #111214;
+      --bg2: #1a1c1f;
+      --bg3: #222426;
+      --card: #1a1c1f;
+      --text: #e8e8e8;
+      --text2: #aaaaaa;
+      --text3: #666666;
       --border: rgba(255,255,255,0.08);
       --border2: rgba(255,255,255,0.15);
-      --accent: #1D9E75;
-      --up: #9FE1CB;
-      --up-bg: #0a2e20;
-      --down: #F7C1C1;
-      --down-bg: #2e0a0a;
+      --accent: #5ba3e8;
+      --main: #5ba3e8;
+      --main-rgb: 91,163,232;
+      --shadow: none;
+      --up: #4caf82;
+      --up-bg: rgba(76,175,130,.12);
+      --down: #e05555;
+      --down-bg: rgba(224,85,85,.12);
     }
   }
 
   html { scroll-behavior: smooth; }
   body {
-    font-family: 'Noto Sans KR', sans-serif;
+    font-family: "Noto Sans KR", system-ui, sans-serif;
     background: var(--bg);
     color: var(--text);
     font-size: 14px;
@@ -57,46 +148,7 @@
   }
 
   /* ── HEADER ── */
-  .site-header {
-    border-bottom: 1px solid var(--border);
-    padding: 0 1.5rem;
-    height: 52px;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    position: sticky;
-    top: 0;
-    background: var(--bg);
-    z-index: 100;
-  }
-  .site-logo {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-    text-decoration: none;
-    letter-spacing: -0.02em;
-  }
-  .site-logo span { color: var(--accent); }
-  .header-sep { width: 1px; height: 16px; background: var(--border2); }
-  .site-nav {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    margin-left: auto;
-  }
-  .nav-link {
-    font-size: 11px;
-    font-family: 'JetBrains Mono', monospace;
-    padding: 5px 10px;
-    border-radius: 4px;
-    text-decoration: none;
-    color: var(--text2);
-    transition: all 0.12s;
-    white-space: nowrap;
-  }
-  .nav-link:hover { background: var(--bg2); color: var(--text); }
-  .nav-link.active { background: var(--text); color: var(--bg); }
+
 
   /* ── LAYOUT ── */
   .container {
@@ -128,7 +180,7 @@
   .coin-symbol {
     font-size: 13px;
     color: var(--text3);
-    font-family: 'JetBrains Mono', monospace;
+    font-family: Arial, sans-serif; font-variant-numeric: tabular-nums;
     margin-left: 4px;
   }
   .coin-price-wrap {
@@ -140,12 +192,12 @@
   .coin-price {
     font-size: 28px;
     font-weight: 700;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: Arial, sans-serif; font-variant-numeric: tabular-nums;
     letter-spacing: -0.03em;
   }
   .coin-change {
     font-size: 15px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: Arial, sans-serif; font-variant-numeric: tabular-nums;
     font-weight: 600;
     padding: 3px 10px;
     border-radius: 4px;
@@ -156,8 +208,8 @@
 
   /* ── SECTOR BADGES ── */
   .sector-row { display: flex; align-items: center; gap: 6px; margin-bottom: 1rem; flex-wrap: wrap; }
-  .sector-label { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; margin-right: 2px; }
-  .sector-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: 'JetBrains Mono', monospace; border: 1px solid; letter-spacing: 0.02em; transition: opacity 0.15s; text-decoration: none; }
+  .sector-label { font-size: 10px; font-family: Arial, sans-serif; font-variant-numeric: tabular-nums; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; margin-right: 2px; }
+  .sector-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: Arial, sans-serif; font-variant-numeric: tabular-nums; border: 1px solid; letter-spacing: 0.02em; transition: opacity 0.15s; text-decoration: none; }
   .sector-badge:hover { opacity: 0.75; cursor: pointer; }
   .sb-layer1    { background: rgba(37,99,235,0.08);   border-color: rgba(37,99,235,0.3);   color: #2563eb; }
   .sb-store     { background: rgba(247,147,26,0.1);   border-color: rgba(247,147,26,0.35);  color: #b45309; }
@@ -174,24 +226,22 @@
   .sb-privacy   { background: rgba(234,179,8,0.08);   border-color: rgba(234,179,8,0.3);    color: #92400e; }
   /* ── KPI STRIP ── */
   .kpi-strip {
-    display: flex;
-    gap: 0;
-    background: var(--bg2);
-    border: 0.5px solid var(--border);
-    border-radius: 8px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
     margin-bottom: 1.25rem;
-    overflow: hidden;
-    flex-wrap: wrap;
   }
+  @media (max-width: 768px) { .kpi-strip { grid-template-columns: 1fr 1fr; } }
   .kpi-cell {
-    padding: 0.75rem 1.25rem;
-    border-right: 0.5px solid var(--border);
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 14px 16px;
     min-width: 0;
   }
-  .kpi-cell:last-child { border-right: none; }
   .kpi-label {
     font-size: 10px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: Arial, sans-serif; font-variant-numeric: tabular-nums;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--text3);
@@ -201,7 +251,7 @@
   .kpi-value {
     font-size: 14px;
     font-weight: 700;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: Arial, sans-serif; font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
   .kpi-value.up   { color: var(--up); }
@@ -225,7 +275,7 @@
   }
   .period-btn {
     font-size: 11px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: Arial, sans-serif; font-variant-numeric: tabular-nums;
     padding: 4px 11px;
     border-radius: 4px;
     border: 0.5px solid var(--border2);
@@ -241,7 +291,7 @@
     position: relative;
     height: 360px;
     border: 0.5px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--r);
     overflow: hidden;
     background: var(--bg);
   }
@@ -253,7 +303,7 @@
     align-items: center;
     justify-content: center;
     font-size: 12px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: Arial, sans-serif; font-variant-numeric: tabular-nums;
     color: var(--text3);
     background: var(--bg);
     z-index: 10;
@@ -264,7 +314,7 @@
     left: 50%;
     transform: translateX(-50%);
     font-size: 11px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: Arial, sans-serif; font-variant-numeric: tabular-nums;
     color: var(--text2);
     z-index: 20;
     pointer-events: none;
@@ -295,7 +345,7 @@
   .tv-badge:hover { background: var(--bg3); }
   .tv-badge-label {
     font-size: 9px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: Arial, sans-serif; font-variant-numeric: tabular-nums;
     letter-spacing: 0.05em;
     text-transform: uppercase;
   }
@@ -307,7 +357,7 @@
     gap: 0;
     margin-top: 8px;
     border: 0.5px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--r);
     overflow: hidden;
   }
   .perf-cell {
@@ -323,13 +373,13 @@
   .perf-cell.active { background: var(--bg3); }
   .perf-cell-label {
     font-size: 10px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: Arial, sans-serif; font-variant-numeric: tabular-nums;
     color: var(--text3);
     margin-bottom: 3px;
   }
   .perf-cell-val {
     font-size: 12px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: Arial, sans-serif; font-variant-numeric: tabular-nums;
     font-weight: 600;
   }
   .perf-cell-val.up   { color: var(--up); }
@@ -348,8 +398,8 @@
   }
   .news-header a {
     font-size: 11px;
-    font-family: 'JetBrains Mono', monospace;
-    color: var(--accent);
+    font-family: Arial, sans-serif; font-variant-numeric: tabular-nums;
+    color: var(--main);
     text-decoration: none;
     font-weight: 400;
   }
@@ -364,7 +414,7 @@
     transition: background 0.1s;
   }
   .news-item:last-child { border-bottom: none; }
-  .news-item:hover { color: var(--accent); }
+  .news-item:hover { color: var(--main); }
   .news-thumb {
     width: 64px; height: 48px;
     border-radius: 4px;
@@ -395,12 +445,12 @@
   }
   .news-date {
     font-size: 10px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: Arial, sans-serif; font-variant-numeric: tabular-nums;
     color: var(--text3);
   }
   .news-loading {
     font-size: 12px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: Arial, sans-serif; font-variant-numeric: tabular-nums;
     color: var(--text3);
     padding: 1rem 0;
     text-align: center;
@@ -427,7 +477,7 @@
   }
   .etf-source {
     font-size: 10px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: Arial, sans-serif; font-variant-numeric: tabular-nums;
     color: var(--text3);
   }
   .etf-kpi-row {
@@ -435,7 +485,7 @@
     gap: 0;
     background: var(--bg2);
     border: 0.5px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--r);
     overflow: hidden;
     margin-bottom: 1rem;
   }
@@ -447,7 +497,7 @@
   .etf-kpi-cell:last-child { border-right: none; }
   .etf-kpi-label {
     font-size: 10px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: Arial, sans-serif; font-variant-numeric: tabular-nums;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--text3);
@@ -456,14 +506,14 @@
   .etf-kpi-value {
     font-size: 16px;
     font-weight: 700;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: Arial, sans-serif; font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
   .etf-kpi-value.up   { color: var(--up); }
   .etf-kpi-value.down { color: var(--down); }
   .etf-kpi-date {
     font-size: 10px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: Arial, sans-serif; font-variant-numeric: tabular-nums;
     color: var(--text3);
     margin-top: 2px;
   }
@@ -471,7 +521,7 @@
     position: relative;
     height: 200px;
     border: 0.5px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--r);
     overflow: hidden;
     background: var(--bg);
     padding: 12px 12px 8px;
@@ -483,7 +533,7 @@
     align-items: center;
     justify-content: center;
     font-size: 12px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: Arial, sans-serif; font-variant-numeric: tabular-nums;
     color: var(--text3);
   }
 
@@ -494,7 +544,7 @@
     border-top: 0.5px solid var(--border);
     font-size: 11px;
     color: var(--text3);
-    font-family: 'JetBrains Mono', monospace;
+    font-family: Arial, sans-serif; font-variant-numeric: tabular-nums;
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -517,7 +567,6 @@
   }
   @media (max-width: 640px) {
     .container   { padding: 1rem 0.75rem 2rem; }
-    .site-header { padding: 0 0.75rem; }
     .coin-price  { font-size: 22px; }
     .chart-wrap  { height: 260px; }
     .kpi-strip   { display: grid; grid-template-columns: 1fr 1fr; }
@@ -528,25 +577,31 @@
     .etf-kpi-cell { border-bottom: 0.5px solid var(--border); }
     .etf-chart-wrap { height: 160px; }
   }
+
+  .profile-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .profile-row:last-child { border-bottom: none; }
+  .profile-key { color: var(--text3); }
+  .profile-val { font-weight: 600; font-family: Arial, sans-serif; }
+  .profile-link { display: inline-flex; align-items: center; gap: 5px; padding: 6px 14px; border-radius: 99px; border: 1px solid var(--border); background: #fff; color: var(--text2); font-size: 12px; text-decoration: none; font-weight: 500; transition: all 0.15s; }
+  .profile-link:hover { border-color: var(--main); color: var(--main); }
+  .exchange-badge { padding: 6px 14px; border-radius: 99px; font-size: 12px; font-weight: 500; border: 1px solid var(--border); background: #fff; color: var(--text2); text-decoration: none; transition: all 0.15s; }
+  .exchange-badge:hover { border-color: var(--main); color: var(--main); }
+  .related-coin { display: flex; align-items: center; gap: 6px; padding: 6px 16px; border-radius: 99px; border: 1px solid var(--border); background: #fff; text-decoration: none; color: var(--text2); font-size: 12px; font-weight: 600; transition: all 0.15s; }
+  .related-coin:hover { border-color: var(--main); color: var(--main); }
+  .related-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .faq-item { border: none; border-bottom: 1px solid var(--border); margin-bottom: 0; overflow: hidden; }
+  .faq-q { padding: 16px 0; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: transparent; transition: color 0.15s; user-select: none; }
+  .faq-q:hover { color: var(--main); }
+  .faq-icon { font-size: 16px; color: var(--text3); transition: transform 0.2s; flex-shrink: 0; }
+  .faq-item.open .faq-icon { transform: rotate(45deg); }
+  .faq-a { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; font-size: 13px; color: var(--text2); line-height: 1.8; }
+  .faq-item.open .faq-a { max-height: 300px; }
+  .faq-a-inner { padding: 0 0 16px; }
+
 </style>
 </head>
 <body>
 
-<header class="site-header">
-  <a href="https://data.blockmedia.co.kr" class="site-logo">BM<span>.</span>DATA</a>
-  <div class="header-sep"></div>
-  <nav class="site-nav">
-    <a class="nav-link" href="https://data.blockmedia.co.kr/index.html">🇰🇷 KRW Market</a>
-    <a class="nav-link" href="https://data.blockmedia.co.kr/bm20_index.html">📊 BM20 Index</a>
-    <a class="nav-link" href="https://data.blockmedia.co.kr/etf.html">🌐 US ETF Flow</a>
-    <a class="nav-link" href="https://data.blockmedia.co.kr/history.html">₿ BTC 역사</a>
-    <a class="nav-link" href="https://data.blockmedia.co.kr/coins/btc-chart.html">📈 BTC 시세</a>
-    <a class="nav-link" href="https://data.blockmedia.co.kr/coins/eth-chart.html">📈 ETH 시세</a>
-    <a class="nav-link active" href="https://data.blockmedia.co.kr/coins/sol-chart.html">📈 SOL 시세</a>
-    <a class="nav-link" href="https://data.blockmedia.co.kr/performance.html">📅 Performance</a>
-    <a class="nav-link" href="https://data.blockmedia.co.kr/clm_brief.html">🧠 코생지</a>
-  </nav>
-</header>
 
 <div class="container">
 
@@ -560,7 +615,7 @@
       </svg>
     </div>
     <div>
-      <span class="coin-title">솔라나</span>
+      <h1 class="coin-title" style="display:inline;font-size:inherit;font-weight:inherit;">솔라나</h1>
       <span class="coin-symbol">SOL</span>
     </div>
     <div class="coin-price-wrap" style="margin-left: auto;">
@@ -571,23 +626,21 @@
 
   <!-- SECTOR BADGES -->
   <div class="sector-row">
-    <span class="sector-label">섹터</span>
     <a href="../sector.html?sector=Layer1" class="sector-badge sb-layer1">⛓ Layer 1</a>
-    <a href="../sector.html?sector=DeFi" class="sector-badge sb-defi">🏦 DeFi</a>
     <a href="../sector.html?sector=Smart Contract" class="sector-badge sb-smart">📜 Smart Contract</a>
   </div>
   <!-- KPI STRIP -->
   <div class="kpi-strip">
     <div class="kpi-cell">
-      <div class="kpi-label">KRW 환산</div>
+      <div class="kpi-label"><span class="kpi-dot" style="background:#1763ff"></span>KRW 환산</div>
       <div class="kpi-value" id="kpiKrw">—</div>
     </div>
     <div class="kpi-cell">
-      <div class="kpi-label">24H 고가</div>
+      <div class="kpi-label"><span class="kpi-dot" style="background:var(--up)"></span>24H 고가</div>
       <div class="kpi-value up" id="kpiHigh">—</div>
     </div>
     <div class="kpi-cell">
-      <div class="kpi-label">24H 저가</div>
+      <div class="kpi-label"><span class="kpi-dot" style="background:var(--down)"></span>24H 저가</div>
       <div class="kpi-value down" id="kpiLow">—</div>
     </div>
     <div class="kpi-cell">
@@ -595,7 +648,7 @@
       <div class="kpi-value" id="kpiVol">—</div>
     </div>
     <div class="kpi-cell">
-      <div class="kpi-label">김치 프리미엄</div>
+      <div class="kpi-label"><span class="kpi-dot" style="background:#f59e0b"></span>김치 프리미엄</div>
       <div class="kpi-value" id="kpiKimchi">—</div>
     </div>
   </div>
@@ -679,8 +732,71 @@
 
   </div>
 
+
+  <!-- ══ SEO 강화 섹션 ══ -->
+  <div style="max-width:1200px;margin:0 auto;padding:0 1.5rem;">
+
+    <!-- 기본 정보 카드 -->
+    <div style="margin-bottom:1.5rem;">
+      <h2 style="font-size:15px;font-weight:700;margin-bottom:14px;color:var(--text);">솔라나(SOL) 기본 정보</h2>
+      <div class="profile-row"><span class="profile-key">시가총액</span><span class="profile-val" id="cg-mktcap">-</span></div>
+      <div class="profile-row"><span class="profile-key">시총 순위</span><span class="profile-val" id="cg-rank">-</span></div>
+      <div class="profile-row"><span class="profile-key">24H 거래량</span><span class="profile-val" id="cg-vol">-</span></div>
+      <div class="profile-row"><span class="profile-key">유통량</span><span class="profile-val" id="cg-supply">-</span></div>
+      <div class="profile-row"><span class="profile-key">역대 최고가 (ATH)</span><span class="profile-val" id="cg-ath">-</span></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+        <a class="profile-link" href="https://solana.com" target="_blank" rel="noopener">🌐 공식 사이트</a>
+        <a class="profile-link" href="https://solana.com/solana-whitepaper.pdf" target="_blank" rel="noopener">📄 백서</a>
+        <a class="profile-link" href="https://solscan.io" target="_blank" rel="noopener">🔍 블록 탐색기</a>
+        <a class="profile-link" href="https://github.com/solana-labs/solana" target="_blank" rel="noopener">💻 GitHub</a>
+      </div>
+      <div style="margin-top:10px;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">국내 거래소</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <a class="exchange-badge" href="https://upbit.com/exchange?code=CRIX.UPBIT.KRW-SOL" target="_blank" rel="noopener">업비트</a>
+          <a class="exchange-badge" href="https://www.bithumb.com/react/trade/order/SOL-KRW" target="_blank" rel="noopener">빗썸</a>
+          <a class="exchange-badge" href="https://coinone.co.kr/exchange/trade/sol/krw" target="_blank" rel="noopener">코인원</a>
+          <a class="exchange-badge" href="https://www.korbit.co.kr/trade?pair=SOL-KRW" target="_blank" rel="noopener">코빗</a>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-top:8px;">Data: <span id="cg-source">CoinPaprika</span></div>
+    </div>
+
+    <!-- FAQ -->
+    <div style="margin-bottom:1.5rem;border-top:1px solid var(--border);">
+      <h2 style="font-size:14px;font-weight:700;margin:16px 0 4px;">솔라나 자주 묻는 질문 (FAQ)</h2>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span>솔라나(SOL)란 무엇인가요?</span><span class="faq-icon">+</span></div><div class="faq-a"><div class="faq-a-inner">솔라나(Solana, SOL)는 2020년 3월 솔라나 재단이 공식 출시한 고성능 블록체인입니다. <strong>PoH(Proof of History)</strong>와 <strong>PoS(Proof of Stake)</strong>를 결합한 하이브리드 합의 메커니즘을 사용해 초당 수만 건의 트랜잭션 처리가 가능하며, 낮은 수수료와 빠른 처리 속도로 DeFi·NFT·dApp 생태계의 핵심 플랫폼으로 자리잡았습니다.</div></div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span>솔라나의 핵심 기술 PoH란 무엇인가요?</span><span class="faq-icon">+</span></div><div class="faq-a"><div class="faq-a-inner"><strong>PoH(Proof of History)</strong>는 아나톨리 야코벤코(Anatoly Yakovenko)가 개발한 혁신적인 합의 알고리즘입니다. 트랜잭션 처리와 그 사이에 경과한 시간을 기록해 블록체인의 신뢰성을 보장합니다. PoH가 트랜잭션의 대부분을 처리하고, PoS가 이를 검증하는 구조로 솔라나만의 독특한 성능을 구현합니다.</div></div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span>솔라나 ETF란 무엇인가요?</span><span class="faq-icon">+</span></div><div class="faq-a"><div class="faq-a-inner">미국 현물 솔라나 ETF는 실제 SOL을 보유하고 주식처럼 거래소에서 사고팔 수 있는 금융 상품입니다. 기관 투자자들이 솔라나에 직접 투자할 수 있는 수단으로, 블록미디어는 SOL ETF 자금 유출입 데이터를 매일 업데이트합니다.</div></div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span>솔라나 SOL 토큰은 총 몇 개인가요?</span><span class="faq-icon">+</span></div><div class="faq-a"><div class="faq-a-inner">솔라나 재단은 총 4억 8,900만 개의 SOL 토큰을 발행할 예정입니다. 토큰 배분은 초기 시드 세일 16.23%, 파운딩 세일 12.92%, 팀 12.79%, 솔라나 재단 10.46% 등으로 구성되어 있습니다.</div></div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span>솔라나는 어디서 살 수 있나요?</span><span class="faq-icon">+</span></div><div class="faq-a"><div class="faq-a-inner">국내에서는 <strong>업비트</strong>, <strong>빗썸</strong>, <strong>코인원</strong>, <strong>코빗</strong> 등 원화 거래소에서 구매할 수 있습니다. 해외에서는 바이낸스(Binance), 코인베이스(Coinbase) 등을 이용할 수 있습니다.</div></div></div>
+    </div>
+
+    <!-- 프로필 -->
+    <div style="margin-bottom:1.5rem;">
+      <h2 style="font-size:14px;font-weight:700;margin-bottom:10px;">솔라나(SOL) 프로필</h2>
+      <p style="font-size:13px;color:var(--text2);line-height:1.9;margin-bottom:0.75rem;">솔라나는 <strong>고성능 Layer1 블록체인</strong>으로, PoH(Proof of History) 합의 알고리즘을 사용합니다. 초당 수만 건의 트랜잭션 처리와 낮은 수수료가 특징입니다.</p>
+      <p style="font-size:13px;color:var(--text2);line-height:1.9;">섹터: <strong>Layer 1 · Smart Contract</strong> &nbsp;|&nbsp; 내러티브: <strong>High-Performance L1</strong></p>
+    </div>
+
+    <!-- 관련 코인 -->
+    <div style="margin-bottom:1.5rem;">
+      <h2 style="font-size:14px;font-weight:700;margin-bottom:10px;">관련 코인 시세</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <a href="btc-chart.html" class="related-coin"><span class="related-dot" style="background:#f7931a"></span>BTC</a>
+        <a href="eth-chart.html" class="related-coin"><span class="related-dot" style="background:#627eea"></span>ETH</a>
+        <a href="xrp-chart.html" class="related-coin"><span class="related-dot" style="background:#346aa9"></span>XRP</a>
+        <a href="avax-chart.html" class="related-coin"><span class="related-dot" style="background:#e84142"></span>AVAX</a>
+        <a href="ada-chart.html" class="related-coin"><span class="related-dot" style="background:#0033ad"></span>ADA</a>
+        <a href="hype-chart.html" class="related-coin"><span class="related-dot" style="background:#14b8a6"></span>HYPE</a>
+      </div>
+    </div>
+
+
+  </div>
+  <!-- ══ /SEO 강화 섹션 ══ -->
   <footer class="page-footer">
-    <span>데이터: Binance API · Upbit API · SoSoValue</span>
+    <span>본 페이지의 정보는 시장 동향 파악을 위한 참고 자료이며, 투자 권유가 아닙니다. &nbsp;|&nbsp; 데이터: Binance API · Upbit API · SoSoValue &nbsp;|&nbsp; 관련: <a href="https://data.blockmedia.co.kr/etf.html" style="color:var(--main)">ETF 대시보드</a> · <a href="https://data.blockmedia.co.kr/coins/btc-chart.html" style="color:var(--main)">비트코인 시세</a> · <a href="https://data.blockmedia.co.kr/coins/eth-chart.html" style="color:var(--main)">이더리움 시세</a> · <a href="https://data.blockmedia.co.kr/coins/xrp-chart.html" style="color:var(--main)">리플 시세</a></span>
     <span>·</span>
     <a class="footer-tv-logo" href="https://www.tradingview.com" target="_blank" rel="noopener">
       charts by&nbsp;<svg class="tv-logo" viewBox="0 0 755 129" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M187.671 101.559H202.504V43.4442H221.909V29.4236H168.469V43.4442H187.671V101.559Z" fill="currentColor"/><path d="M221.931 101.558H235.85V77.2764C235.85 68.8434 240.219 63.7634 246.823 63.7634C249.159 63.7634 250.988 64.1699 253.122 64.8814V50.7589C251.395 50.2509 249.972 50.1494 248.448 50.1494C242.759 50.1494 237.577 53.9084 235.85 58.8869V50.7589H221.931V101.558Z" fill="currentColor"/><path d="M492.336 88.3505C485.326 88.3505 479.434 83.0675 479.434 75.346C479.434 67.523 485.326 62.3415 492.336 62.3415C499.346 62.3415 505.24 67.523 505.24 75.346C505.24 83.0675 499.346 88.3505 492.336 88.3505ZM490.711 123.809C506.255 123.809 518.04 115.883 518.04 97.596V50.759H504.12V56.4485C501.38 52.4865 495.893 49.6416 489.39 49.6416C476.081 49.6416 465.413 61.0205 465.413 75.346C465.413 89.5695 476.081 100.949 489.39 100.949C495.893 100.949 501.38 98.0025 504.12 94.243V97.6975C504.12 105.826 498.737 111.617 490.508 111.617C484.818 111.617 479.128 109.686 474.658 105.317L467.039 115.68C472.83 121.268 481.871 123.809 490.711 123.809Z" fill="currentColor"/><path d="M547.47 101.559H560.575L590.445 29.4236H574.19L554.075 79.5116L533.655 29.4236H517.7L547.47 101.559Z" fill="currentColor"/><path d="M603.215 42.4281C608.195 42.4281 612.16 38.4657 612.16 33.5891C612.16 28.7124 608.195 24.75 603.215 24.75C598.44 24.75 594.38 28.7124 594.38 33.5891C594.38 38.4657 598.44 42.4281 603.215 42.4281ZM596.31 101.559H610.23V50.759H596.31V101.559Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M56.142 101.593H29.4077V56.1445H0V29.4102H56.142V101.593ZM96.2435 45.4508C96.2435 54.3095 89.062 61.4915 80.203 61.4915C71.344 61.4915 64.1625 54.3095 64.1625 45.4508C64.1625 36.5918 71.344 29.4102 80.203 29.4102C89.062 29.4102 96.2435 36.5918 96.2435 45.4508ZM80.203 101.593L110.948 29.4102H143.029L112.284 101.593H80.203Z" fill="currentColor"/></svg>
@@ -701,7 +817,7 @@ const C = {
   text:    isDark ? '#666564' : '#9a9894',
   up:      '#3B6D11',
   down:    '#A32D2D',
-  line:    isDark ? '#1D9E75' : '#0f6e56',
+  line:    isDark ? '#5ba3e8' : '#337abd',
   fillTop: isDark ? 'rgba(29,158,117,0.18)' : 'rgba(15,110,86,0.10)',
   fillBot: 'rgba(0,0,0,0)',
 };
@@ -752,7 +868,7 @@ async function fetchPrice() {
     chgEl.textContent = (chgPct >= 0 ? '+' : '') + chgPct.toFixed(2) + '%';
     chgEl.className = 'coin-change ' + (chgPct >= 0 ? 'up' : 'down');
     chgEl.style.display = 'inline-block';
-    document.getElementById('kpiKrw').textContent  = (krwPrice/10000).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '만 원';
+    document.getElementById('kpiKrw').textContent  = '₩' + Math.round(krwPrice).toLocaleString() + ' 원';
     document.getElementById('kpiHigh').textContent = '$' + Math.round(high).toLocaleString();
     document.getElementById('kpiLow').textContent  = '$' + Math.round(low).toLocaleString();
     document.getElementById('kpiVol').textContent  = vol >= 1e9 ? (vol/1e9).toFixed(1)+'B' : (vol/1e6).toFixed(0)+'M';
@@ -870,8 +986,17 @@ function timeAgo(dateStr) {
 async function fetchNews() {
   const list = document.getElementById('newsList');
   try {
-    const r = await fetch('https://www.blockmedia.co.kr/wp-json/wp/v2/posts?coin_tag=56657,56658&per_page=10&orderby=date&_fields=id,title,link,date,featured_media,_links&_embed=wp:featuredmedia');
-    const posts = await r.json();
+    const [r1, r2] = await Promise.allSettled([
+      fetch('https://www.blockmedia.co.kr/wp-json/wp/v2/posts?coin_tag=56657,56658&per_page=10&orderby=date&_fields=id,title,link,date,featured_media,_links&_embed=wp:featuredmedia'),
+      fetch('https://www.blockmedia.co.kr/wp-json/wp/v2/posts?tags=56657,56658&per_page=10&orderby=date&_fields=id,title,link,date,featured_media,_links&_embed=wp:featuredmedia'),
+    ]);
+    const arr1 = r1.status === 'fulfilled' && r1.value.ok ? await r1.value.json() : [];
+    const arr2 = r2.status === 'fulfilled' && r2.value.ok ? await r2.value.json() : [];
+    const seen = new Set();
+    const posts = [...arr1, ...arr2]
+      .filter(p => { if (seen.has(p.id)) return false; seen.add(p.id); return true; })
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 10);
     if (!posts || !posts.length) { list.innerHTML = '<div class="news-loading">뉴스가 없습니다.</div>'; return; }
     list.innerHTML = '';
     posts.forEach(post => {
@@ -1032,6 +1157,35 @@ setTimeout(fetchPerformance, 1500);
     schedule();
   });
 })();
+
+// ── CoinPaprika 프로필 ──
+async function loadCoinProfile() {
+  try {
+    const r = await fetch('https://api.coinpaprika.com/v1/tickers/sol-solana');
+    if (!r.ok) throw new Error();
+    const d = await r.json();
+    const q = d.quotes?.USD || {};
+    function fmtB(v) {
+      if (!v) return '-';
+      if (v >= 1e12) return '$' + (v/1e12).toFixed(2) + 'T';
+      if (v >= 1e9)  return '$' + (v/1e9).toFixed(1) + 'B';
+      if (v >= 1e6)  return '$' + (v/1e6).toFixed(0) + 'M';
+      return '$' + Math.round(v).toLocaleString();
+    }
+    document.getElementById('cg-mktcap').textContent = fmtB(q.market_cap);
+    document.getElementById('cg-rank').textContent   = '#' + (d.rank || '-');
+    document.getElementById('cg-vol').textContent    = fmtB(q.volume_24h);
+    document.getElementById('cg-supply').textContent = d.circulating_supply ? (d.circulating_supply/1e6).toFixed(0) + 'M SOL' : '-';
+    document.getElementById('cg-ath').textContent    = q.ath_price ? '$' + Math.round(q.ath_price).toLocaleString() : '-';
+    document.getElementById('cg-source').textContent = 'CoinPaprika · ' + new Date().toLocaleString('ko-KR', {month:'numeric',day:'numeric',hour:'numeric',minute:'numeric'});
+  } catch(e) {
+    document.getElementById('cg-source').textContent = '데이터 로드 실패';
+  }
+}
+function toggleFaq(el) { el.parentElement.classList.toggle('open'); }
+loadCoinProfile();
+setInterval(loadCoinProfile, 600000);
+
 </script>
 
 </body>
