@@ -802,18 +802,16 @@
       </div>
     </div>
 
-    <div style="font-size:11px;color:var(--text3);padding:1rem 0 3rem;border-top:1px solid var(--border);line-height:1.7;">
-      본 페이지의 정보는 시장 동향 파악을 위한 참고 자료이며, 투자 권유가 아닙니다. &nbsp;|&nbsp;
-      데이터: Binance API · Upbit API · SoSoValue &nbsp;|&nbsp;
-      <a href="https://www.blockmedia.co.kr" target="_blank" style="color:var(--main)">블록미디어</a> &nbsp;·&nbsp;
-      <a href="https://data.blockmedia.co.kr/etf.html" style="color:var(--main)">ETF 대시보드</a> &nbsp;·&nbsp;
+    <div style="font-size:11px;color:var(--text3);padding:0.75rem 0 2rem;line-height:1.7;">
+      관련: <a href="https://data.blockmedia.co.kr/etf.html" style="color:var(--main)">ETF 대시보드</a> &nbsp;·&nbsp;
       <a href="https://data.blockmedia.co.kr/coins/btc-chart.html" style="color:var(--main)">비트코인 시세</a> &nbsp;·&nbsp;
-      <a href="https://data.blockmedia.co.kr/coins/sol-chart.html" style="color:var(--main)">솔라나 시세</a>
+      <a href="https://data.blockmedia.co.kr/coins/sol-chart.html" style="color:var(--main)">솔라나 시세</a> &nbsp;·&nbsp;
+      <a href="https://data.blockmedia.co.kr/coins/xrp-chart.html" style="color:var(--main)">리플 시세</a>
     </div>
   </div>
   <!-- ══ /SEO 강화 섹션 ══ -->
   <footer class="page-footer">
-    <span>데이터: Binance API · Upbit API · SoSoValue</span>
+    <span>본 페이지의 정보는 시장 동향 파악을 위한 참고 자료이며, 투자 권유가 아닙니다. &nbsp;|&nbsp; 데이터: Binance API · Upbit API · SoSoValue</span>
     <span>·</span>
     <a class="footer-tv-logo" href="https://www.tradingview.com" target="_blank" rel="noopener">
       charts by&nbsp;<svg class="tv-logo" viewBox="0 0 755 129" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M187.671 101.559H202.504V43.4442H221.909V29.4236H168.469V43.4442H187.671V101.559Z" fill="currentColor"/><path d="M221.931 101.558H235.85V77.2764C235.85 68.8434 240.219 63.7634 246.823 63.7634C249.159 63.7634 250.988 64.1699 253.122 64.8814V50.7589C251.395 50.2509 249.972 50.1494 248.448 50.1494C242.759 50.1494 237.577 53.9084 235.85 58.8869V50.7589H221.931V101.558Z" fill="currentColor"/><path d="M492.336 88.3505C485.326 88.3505 479.434 83.0675 479.434 75.346C479.434 67.523 485.326 62.3415 492.336 62.3415C499.346 62.3415 505.24 67.523 505.24 75.346C505.24 83.0675 499.346 88.3505 492.336 88.3505ZM490.711 123.809C506.255 123.809 518.04 115.883 518.04 97.596V50.759H504.12V56.4485C501.38 52.4865 495.893 49.6416 489.39 49.6416C476.081 49.6416 465.413 61.0205 465.413 75.346C465.413 89.5695 476.081 100.949 489.39 100.949C495.893 100.949 501.38 98.0025 504.12 94.243V97.6975C504.12 105.826 498.737 111.617 490.508 111.617C484.818 111.617 479.128 109.686 474.658 105.317L467.039 115.68C472.83 121.268 481.871 123.809 490.711 123.809Z" fill="currentColor"/><path d="M547.47 101.559H560.575L590.445 29.4236H574.19L554.075 79.5116L533.655 29.4236H517.7L547.47 101.559Z" fill="currentColor"/><path d="M603.215 42.4281C608.195 42.4281 612.16 38.4657 612.16 33.5891C612.16 28.7124 608.195 24.75 603.215 24.75C598.44 24.75 594.38 28.7124 594.38 33.5891C594.38 38.4657 598.44 42.4281 603.215 42.4281ZM596.31 101.559H610.23V50.759H596.31V101.559Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M56.142 101.593H29.4077V56.1445H0V29.4102H56.142V101.593ZM96.2435 45.4508C96.2435 54.3095 89.062 61.4915 80.203 61.4915C71.344 61.4915 64.1625 54.3095 64.1625 45.4508C64.1625 36.5918 71.344 29.4102 80.203 29.4102C89.062 29.4102 96.2435 36.5918 96.2435 45.4508ZM80.203 101.593L110.948 29.4102H143.029L112.284 101.593H80.203Z" fill="currentColor"/></svg>
@@ -885,7 +883,7 @@ async function fetchPrice() {
     chgEl.textContent = (chgPct >= 0 ? '+' : '') + chgPct.toFixed(2) + '%';
     chgEl.className = 'coin-change ' + (chgPct >= 0 ? 'up' : 'down');
     chgEl.style.display = 'inline-block';
-    document.getElementById('kpiKrw').textContent  = (krwPrice/10000).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '만 원';
+    document.getElementById('kpiKrw').textContent  = '₩' + Math.round(krwPrice).toLocaleString() + ' 원';
     document.getElementById('kpiHigh').textContent = '$' + Math.round(high).toLocaleString();
     document.getElementById('kpiLow').textContent  = '$' + Math.round(low).toLocaleString();
     document.getElementById('kpiVol').textContent  = vol >= 1e9 ? (vol/1e9).toFixed(1)+'B' : (vol/1e6).toFixed(0)+'M';
