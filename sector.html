@@ -3,10 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- ── SEO 기본 (JS로 동적 업데이트) ── -->
   <title id="pageTitle">섹터 | 블록미디어</title>
-  <meta name="description" content="블록미디어 섹터별 코인 현황" />
+  <meta name="description" id="metaDesc" content="블록미디어 섹터별 코인 현황" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="naver-site-verification" content="ce6d8867a1a85b3a31ccbaa7b6097a3a9d61a910" />
+  <link rel="canonical" id="canonicalUrl" href="https://data.blockmedia.co.kr/sector.html" />
+
+  <!-- ── OG ── -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="블록미디어" />
+  <meta property="og:locale" content="ko_KR" />
+  <meta property="og:title" id="ogTitle" content="섹터 | 블록미디어" />
+  <meta property="og:description" id="ogDesc" content="블록미디어 섹터별 코인 현황" />
+  <meta property="og:url" id="ogUrl" content="https://data.blockmedia.co.kr/sector.html" />
+  <meta property="og:image" content="https://cdn.blockmedia.co.kr/wp-content/uploads/2018/08/블록미디어로고_세로.png" />
+
+  <!-- ── Twitter ── -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@with_blockmedia" />
+  <meta name="twitter:title" id="twTitle" content="섹터 | 블록미디어" />
+  <meta name="twitter:description" id="twDesc" content="블록미디어 섹터별 코인 현황" />
+  <meta name="twitter:image" content="https://cdn.blockmedia.co.kr/wp-content/uploads/2018/08/블록미디어로고_세로.png" />
+
+  <!-- ── JSON-LD (동적 생성) ── -->
+  <script type="application/ld+json" id="jsonLd">{}</script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -16,58 +41,40 @@
       --accent: #0f6e56; --up: #3B6D11; --up-bg: #EAF3DE;
       --down: #A32D2D; --down-bg: #FCEBEB;
     }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #111110; --bg2: #1a1a18; --bg3: #222220;
-        --text: #e8e7e3; --text2: #888780; --text3: #555450;
-        --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.15);
-        --accent: #1D9E75; --up: #9FE1CB; --up-bg: #0a2e20;
-        --down: #F7C1C1; --down-bg: #2e0a0a;
-      }
-    }
-    body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
-
-    /* ── HEADER ── */
-    .site-header { border-bottom: 1px solid var(--border); padding: 0 1.5rem; height: 52px; display: flex; align-items: center; gap: 1rem; position: sticky; top: 0; background: var(--bg); z-index: 100; }
-    .site-logo { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: var(--text); text-decoration: none; letter-spacing: -0.02em; }
-    .site-logo span { color: var(--accent); }
-    .header-sep { width: 1px; height: 16px; background: var(--border2); }
-    .site-nav { display: flex; align-items: center; gap: 4px; margin-left: auto; overflow-x: auto; }
-    .nav-link { font-size: 11px; font-family: 'JetBrains Mono', monospace; padding: 5px 10px; border-radius: 4px; text-decoration: none; color: var(--text2); transition: all 0.12s; white-space: nowrap; }
-    .nav-link:hover { background: var(--bg2); color: var(--text); }
-    .nav-link.active { background: var(--text); color: var(--bg); }
+    body { font-family: 'Noto Sans KR', sans-serif; background: #ffffff; color: var(--text); font-size: 14px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
 
     .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
 
-    /* ── 섹터 헤더 ── */
-    .sector-hero { margin-bottom: 2rem; }
-    .sector-hero-top { display: flex; align-items: center; gap: 12px; margin-bottom: 0.5rem; flex-wrap: wrap; }
-    .sector-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
-    .sector-name { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
-    .sector-desc { font-size: 13px; color: var(--text2); max-width: 600px; line-height: 1.7; }
-    .sector-count { font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--text3); margin-top: 4px; }
+    /* ── 섹터 히어로 ── */
+    .sector-hero { margin-bottom: 2.5rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+    .sector-pill { display: inline-flex; align-items: center; gap: 6px; background: #eef3fb; border-radius: 99px; padding: 4px 12px 4px 8px; margin-bottom: 1rem; }
+    .sector-pill-dot { width: 8px; height: 8px; border-radius: 50%; background: #5b8fd4; flex-shrink: 0; }
+    .sector-pill-text { font-size: 12px; color: #4a6fa5; font-weight: 500; }
+    .sector-title { font-size: 30px; font-weight: 800; letter-spacing: -0.03em; color: var(--text); margin-bottom: 0.4rem; line-height: 1.2; }
+    .sector-title-accent { color: #3b82f6; }
+    .sector-sub { font-size: 13px; color: var(--text3); margin-top: 0.25rem; }
 
     /* ── 섹터 탭 ── */
     .sector-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 2rem; }
     .sector-tab {
       padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600;
       font-family: 'JetBrains Mono', monospace; border: 1px solid var(--border2);
-      background: var(--bg2); color: var(--text2); cursor: pointer;
+      background: #ffffff; color: var(--text2); cursor: pointer;
       text-decoration: none; transition: all 0.15s; white-space: nowrap;
     }
     .sector-tab:hover { color: var(--text); border-color: var(--text); }
-    .sector-tab.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+    .sector-tab.active { background: var(--text); color: #ffffff; border-color: var(--text); }
 
     /* ── 코인 그리드 ── */
     .coin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
     @media (max-width: 640px) { .coin-grid { grid-template-columns: 1fr; } }
 
     .coin-card {
-      background: var(--bg2); border: 0.5px solid var(--border); border-radius: 10px;
+      background: #ffffff; border: 1px solid var(--border); border-radius: 12px;
       padding: 16px; text-decoration: none; color: var(--text);
       transition: all 0.15s; display: block;
     }
-    .coin-card:hover { border-color: var(--border2); box-shadow: 0 4px 16px rgba(0,0,0,0.08); transform: translateY(-1px); }
+    .coin-card:hover { border-color: var(--border2); box-shadow: 0 4px 20px rgba(0,0,0,0.07); transform: translateY(-1px); }
     .coin-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
     .coin-dot { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; }
     .coin-card-name { font-size: 15px; font-weight: 700; }
@@ -85,46 +92,38 @@
     .coin-meta-value.down { color: var(--down); }
     .coin-sectors { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 10px; }
     .coin-sector-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--border); color: var(--text2); font-family: 'JetBrains Mono', monospace; }
-    .coin-sector-badge.current { background: var(--text); color: var(--bg); border-color: var(--text); }
-    .etf-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; background: rgba(15,110,86,0.1); border: 1px solid rgba(15,110,86,0.3); color: var(--accent); font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+    .coin-sector-badge.current { background: var(--text); color: #ffffff; border-color: var(--text); }
+    .etf-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; background: rgba(15,110,86,0.08); border: 1px solid rgba(15,110,86,0.25); color: var(--accent); font-family: 'JetBrains Mono', monospace; font-weight: 600; }
 
     .loading-msg { text-align: center; color: var(--text3); font-family: 'JetBrains Mono', monospace; font-size: 13px; padding: 3rem; }
+
+    /* ── SEO 텍스트 섹션 ── */
+    .seo-section { margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+    .seo-section h2 { font-size: 15px; font-weight: 700; margin-bottom: 0.75rem; color: var(--text); }
+    .seo-section p { font-size: 13px; color: var(--text2); line-height: 1.9; margin-bottom: 0.75rem; }
 
     footer { border-top: 0.5px solid var(--border); padding: 1.5rem; text-align: center; font-size: 12px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
   </style>
 </head>
 <body>
 
-<header class="site-header">
-  <a href="https://data.blockmedia.co.kr" class="site-logo">BM<span>.</span>DATA</a>
-  <div class="header-sep"></div>
-  <nav class="site-nav">
-    <a class="nav-link" href="https://data.blockmedia.co.kr/index.html">🇰🇷 KRW Market</a>
-    <a class="nav-link" href="https://data.blockmedia.co.kr/bm20_index.html">📊 BM20 Index</a>
-    <a class="nav-link" href="https://data.blockmedia.co.kr/etf.html">🌐 US ETF Flow</a>
-    <a class="nav-link" href="https://data.blockmedia.co.kr/history.html">₿ BTC 역사</a>
-    <a class="nav-link" href="https://data.blockmedia.co.kr/performance.html">📅 Performance</a>
-    <a class="nav-link" href="https://data.blockmedia.co.kr/clm_brief.html">🧠 코생지</a>
-  </nav>
-</header>
-
 <div class="container">
+
+  <!-- 섹터 히어로 — h1로 SEO 처리 -->
+  <div class="sector-hero">
+    <div class="sector-pill">
+      <span class="sector-pill-dot"></span>
+      <span class="sector-pill-text" id="sectorPillText">섹터 분류</span>
+    </div>
+    <h1 class="sector-title">
+      <span id="sectorNameText">-</span> <span class="sector-title-accent" id="sectorNameAccent"></span>
+    </h1>
+    <p class="sector-sub" id="sectorDesc"></p>
+  </div>
 
   <!-- 섹터 탭 -->
   <div class="sector-tabs" id="sectorTabs">
     <div class="loading-msg">로딩 중...</div>
-  </div>
-
-  <!-- 섹터 헤더 -->
-  <div class="sector-hero">
-    <div class="sector-hero-top">
-      <div class="sector-icon" id="sectorIcon">📊</div>
-      <div>
-        <div class="sector-name" id="sectorName">-</div>
-        <div class="sector-count" id="sectorCount"></div>
-      </div>
-    </div>
-    <div class="sector-desc" id="sectorDesc"></div>
   </div>
 
   <!-- 코인 카드 그리드 -->
@@ -132,26 +131,29 @@
     <div class="loading-msg">코인 데이터 불러오는 중...</div>
   </div>
 
+  <!-- SEO 텍스트 (JS로 동적 생성) -->
+  <div class="seo-section" id="seoSection"></div>
+
 </div>
 
-<footer>데이터: Binance API · SoSoValue · BLOCKMEDIA</footer>
+<footer>데이터: Binance API · MEXC API · Bybit API · SoSoValue · BLOCKMEDIA</footer>
 
 <script>
 // ── 섹터 메타 ──────────────────────────────────────────────
 const SECTOR_META = {
-  'Layer1':        { icon: '⛓', desc: '독자적인 블록체인 네트워크를 운영하는 기반 레이어 프로토콜' },
-  'Smart Contract':{ icon: '📜', desc: '스마트 컨트랙트 플랫폼 — 탈중앙화 앱(dApp) 실행 환경' },
-  'Payments':      { icon: '💸', desc: '결제 및 국경 간 송금에 특화된 블록체인 네트워크' },
-  'DeFi':          { icon: '🏦', desc: '탈중앙화 금융 프로토콜 — 대출, 유동성, 파생상품 등' },
-  'Infrastructure':{ icon: '🔧', desc: '블록체인 생태계를 지원하는 미들웨어·오라클·인터롭 프로토콜' },
-  'Store of Value':{ icon: '🪙', desc: '가치 저장 수단으로 활용되는 디지털 자산' },
-  'Meme':          { icon: '🐕', desc: '커뮤니티와 밈 문화를 기반으로 성장한 코인' },
-  'RWA':           { icon: '🏛', desc: '부동산·채권 등 실물 자산을 블록체인에 토큰화' },
-  'AI':            { icon: '🤖', desc: 'AI와 블록체인을 결합한 탈중앙화 인공지능 프로젝트' },
-  'Privacy':       { icon: '🔒', desc: '프라이버시와 익명성을 강화한 블록체인 네트워크' },
-  'Enterprise':    { icon: '🏢', desc: '기업용 블록체인 솔루션 및 엔터프라이즈 네트워크' },
-  'Social':        { icon: '💬', desc: '소셜·메시징 플랫폼과 결합된 블록체인 네트워크' },
-  'Stablecoin':    { icon: '💵', desc: '법정화폐 가치에 연동된 안정적인 디지털 자산' },
+  'Layer1':        { icon: '⛓', desc: '독자적인 블록체인 네트워크를 운영하는 기반 레이어 프로토콜', seo: 'Layer 1 블록체인은 독자적인 네트워크 인프라를 운영하는 기반 프로토콜입니다. 비트코인(BTC), 이더리움(ETH), 솔라나(SOL) 등이 대표적이며, 보안·탈중앙화·확장성의 트릴레마를 해결하기 위해 각자의 합의 알고리즘과 아키텍처를 채택하고 있습니다.' },
+  'Smart Contract':{ icon: '📜', desc: '스마트 컨트랙트 플랫폼 — 탈중앙화 앱(dApp) 실행 환경', seo: '스마트 컨트랙트 플랫폼은 코드로 자동 실행되는 계약을 온체인에서 처리합니다. DeFi, NFT, GameFi 등 다양한 탈중앙화 애플리케이션의 기반이 되며, 이더리움(ETH), 솔라나(SOL), 에이다(ADA) 등이 해당 섹터를 대표합니다.' },
+  'Payments':      { icon: '💸', desc: '결제 및 국경 간 송금에 특화된 블록체인 네트워크', seo: '결제 특화 블록체인은 빠르고 저렴한 국경 간 송금을 목표로 합니다. XRP(리플), LTC(라이트코인), XLM(스텔라루멘), BCH(비트코인캐시) 등이 전통 금융 인프라를 대체하거나 보완하는 결제 솔루션을 제공합니다.' },
+  'DeFi':          { icon: '🏦', desc: '탈중앙화 금융 프로토콜 — 대출, 유동성, 파생상품 등', seo: 'DeFi(탈중앙화 금융)는 중개 기관 없이 대출·예치·거래·파생상품을 제공하는 프로토콜입니다. 스마트 컨트랙트 기반으로 운영되며, HYPE(하이퍼리퀴드) 등이 퍼프 DEX 등 혁신적인 금융 인프라를 구축하고 있습니다.' },
+  'Infrastructure':{ icon: '🔧', desc: '블록체인 생태계를 지원하는 미들웨어·오라클·인터롭 프로토콜', seo: '블록체인 인프라 프로토콜은 온체인과 오프체인 데이터를 연결하거나 체인 간 상호 운용성을 제공합니다. LINK(체인링크)는 오라클 네트워크의 표준으로, DOT(폴카닷)은 레이어0 인터롭 솔루션으로 생태계를 지원합니다.' },
+  'Store of Value':{ icon: '🪙', desc: '가치 저장 수단으로 활용되는 디지털 자산', seo: '가치 저장 자산은 인플레이션 헤지 및 장기 보유 목적으로 활용되는 디지털 자산입니다. 비트코인(BTC)은 총 공급량 2,100만 개로 제한된 희소성을 바탕으로 "디지털 금"으로 자리잡았습니다.' },
+  'Meme':          { icon: '🐕', desc: '커뮤니티와 밈 문화를 기반으로 성장한 코인', seo: '밈 코인은 커뮤니티 문화와 소셜 미디어를 기반으로 성장한 암호화폐입니다. DOGE(도지코인)과 SHIB(시바이누)가 대표적이며, 강력한 커뮤니티와 유명인의 언급이 가격에 큰 영향을 미칩니다.' },
+  'RWA':           { icon: '🏛', desc: '부동산·채권 등 실물 자산을 블록체인에 토큰화', seo: 'RWA(실물 자산 토큰화)는 부동산·채권·원자재 등 전통 금융 자산을 블록체인 토큰으로 디지털화합니다. ONDO(온도파이낸스)가 대표적으로, BlackRock 등 글로벌 기관과 협력해 기관급 RWA 금융 서비스를 제공합니다.' },
+  'AI':            { icon: '🤖', desc: 'AI와 블록체인을 결합한 탈중앙화 인공지능 프로젝트', seo: 'AI 블록체인은 인공지능과 탈중앙화 기술을 결합한 차세대 프로젝트입니다. NEAR(니어프로토콜)은 AI 친화적 레이어1으로, 탈중앙화 AI 모델 실행·데이터 마켓플레이스 등 AI 인프라 구축을 지원합니다.' },
+  'Privacy':       { icon: '🔒', desc: '프라이버시와 익명성을 강화한 블록체인 네트워크', seo: '프라이버시 코인은 zk-SNARK 등 영지식 증명 기술로 완전한 익명 거래를 보장합니다. ZEC(지캐시)가 대표적으로, 투명한 주소와 실드 주소를 모두 지원해 선택적 프라이버시를 제공합니다.' },
+  'Enterprise':    { icon: '🏢', desc: '기업용 블록체인 솔루션 및 엔터프라이즈 네트워크', seo: '엔터프라이즈 블록체인은 글로벌 기업·금융 기관을 위한 고성능 분산 원장 솔루션입니다. HBAR(헤데라)는 Google·IBM 등이 참여하는 거버닝 카운슬 기반으로, CC(캔튼)는 DTCC 등 금융 인프라 기관이 채택한 기관용 블록체인입니다.' },
+  'Social':        { icon: '💬', desc: '소셜·메시징 플랫폼과 결합된 블록체인 네트워크', seo: '소셜 블록체인은 메시징 플랫폼과 결합해 대규모 사용자 기반을 확보합니다. TON(톤코인)은 텔레그램 네이티브 블록체인으로, 9억 명 이상의 텔레그램 사용자를 잠재적 Web3 유저로 온보딩합니다.' },
+  'Stablecoin':    { icon: '💵', desc: '법정화폐 가치에 연동된 안정적인 디지털 자산', seo: '스테이블코인은 달러 등 법정화폐 가치에 1:1로 연동되어 가격 변동성을 최소화한 디지털 자산입니다. USDT(테더)와 USDC(USD코인)가 전체 스테이블코인 시장의 대부분을 차지하며, DeFi·결제·송금의 기축 자산으로 활용됩니다.' },
 };
 
 // ETF 있는 코인
@@ -188,6 +190,65 @@ async function loadCoinData() {
   COIN_DATA = await r.json();
 }
 
+// ── SEO 메타 동적 업데이트 ───────────────────────────────
+function updateSeoMeta(sector, coins) {
+  const meta   = SECTOR_META[sector] || { icon: '📊', desc: '', seo: '' };
+  const title  = `${sector} 섹터 코인 ${coins.length}개 · 실시간 시세 | 블록미디어`;
+  const desc   = `${sector} 섹터 ${coins.length}개 코인 실시간 시세를 블록미디어에서 확인하세요. ${meta.desc}`;
+  const url    = `https://data.blockmedia.co.kr/sector.html?sector=${encodeURIComponent(sector)}`;
+
+  document.title = title;
+  document.getElementById('metaDesc').content   = desc;
+  document.getElementById('canonicalUrl').href  = url;
+  document.getElementById('ogTitle').content    = title;
+  document.getElementById('ogDesc').content     = desc;
+  document.getElementById('ogUrl').content      = url;
+  document.getElementById('twTitle').content    = title;
+  document.getElementById('twDesc').content     = desc;
+
+  // JSON-LD BreadcrumbList + ItemList
+  const coinItems = coins.slice(0, 10).map((ticker, i) => {
+    const c = COIN_DATA[ticker];
+    return {
+      '@type': 'ListItem',
+      position: i + 1,
+      name: `${c.name} (${ticker})`,
+      url: c.slug ? `https://data.blockmedia.co.kr/coins/${c.slug}-chart.html` : `https://data.blockmedia.co.kr/sector.html?sector=${encodeURIComponent(sector)}`,
+    };
+  });
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebPage',
+        '@id': url,
+        url,
+        name: title,
+        description: desc,
+        inLanguage: 'ko-KR',
+        publisher: { '@type': 'Organization', name: '블록미디어', url: 'https://www.blockmedia.co.kr' },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: '블록미디어', item: 'https://www.blockmedia.co.kr' },
+          { '@type': 'ListItem', position: 2, name: '마켓랩', item: 'https://data.blockmedia.co.kr' },
+          { '@type': 'ListItem', position: 3, name: `${sector} 섹터`, item: url },
+        ],
+      },
+      {
+        '@type': 'ItemList',
+        name: `${sector} 섹터 코인`,
+        description: meta.desc,
+        numberOfItems: coins.length,
+        itemListElement: coinItems,
+      },
+    ],
+  };
+  document.getElementById('jsonLd').textContent = JSON.stringify(jsonLd);
+}
+
 // ── 섹터 탭 렌더 ─────────────────────────────────────────
 function renderTabs(activeSector) {
   const allSectors = new Set();
@@ -204,22 +265,39 @@ function renderTabs(activeSector) {
   });
 }
 
-// ── 섹터 헤더 렌더 ───────────────────────────────────────
+// ── 섹터 히어로 렌더 ─────────────────────────────────────
 function renderHero(sector, coins) {
   const meta = SECTOR_META[sector] || { icon: '📊', desc: '' };
-  document.getElementById('sectorIcon').textContent = meta.icon;
-  document.getElementById('sectorName').textContent = sector;
-  document.getElementById('sectorCount').textContent = `${coins.length}개 코인`;
+  document.getElementById('sectorPillText').textContent = meta.icon + ' 섹터 분류';
+  document.getElementById('sectorNameText').textContent = sector;
+  document.getElementById('sectorNameAccent').textContent = coins.length + '개 코인';
   document.getElementById('sectorDesc').textContent = meta.desc;
-  document.title = `${sector} 섹터 | 블록미디어`;
 }
 
-// ── 가격 fetch (Binance) ──────────────────────────────────
+// ── SEO 텍스트 섹션 렌더 ─────────────────────────────────
+function renderSeoSection(sector, coins) {
+  const meta = SECTOR_META[sector] || {};
+  if (!meta.seo) return;
+  const coinNames = coins.slice(0, 5).map(t => `${COIN_DATA[t]?.name}(${t})`).join(', ');
+  const el = document.getElementById('seoSection');
+  el.innerHTML = `
+    <h2>${sector} 섹터란?</h2>
+    <p>${meta.seo}</p>
+    <p>현재 ${sector} 섹터에는 ${coins.length}개 코인이 포함되어 있으며, 대표 코인으로는 ${coinNames} 등이 있습니다. 각 코인의 실시간 시세, 24시간 거래대금, 등락률을 블록미디어에서 확인하세요.</p>
+  `;
+}
+
+// ── 가격 fetch (Binance / MEXC / Bybit) ──────────────────
 async function fetchPrices(tickers) {
-  // 스테이블코인은 가격 1로 처리
-  const stables = new Set(['USDT','USDC']);
-  const toFetch = tickers.filter(t => !stables.has(t) && !priceCache[t]);
-  
+  const stables    = new Set(['USDT','USDC']);
+  const MEXC_ONLY  = new Set(['CC']);
+  const BYBIT_ONLY = new Set(['HYPE']);
+
+  const toFetch      = tickers.filter(t => !stables.has(t) && !MEXC_ONLY.has(t) && !BYBIT_ONLY.has(t) && !priceCache[t]);
+  const toFetchMexc  = tickers.filter(t => MEXC_ONLY.has(t)  && !priceCache[t]);
+  const toFetchBybit = tickers.filter(t => BYBIT_ONLY.has(t) && !priceCache[t]);
+
+  // Binance
   if (toFetch.length > 0) {
     const symbols = JSON.stringify(toFetch.map(t => t + 'USDT'));
     try {
@@ -227,13 +305,32 @@ async function fetchPrices(tickers) {
       const data = await r.json();
       data.forEach(d => {
         const ticker = d.symbol.replace('USDT','');
-        priceCache[ticker] = {
-          price: parseFloat(d.lastPrice),
-          chg:   parseFloat(d.priceChangePercent),
-          vol:   parseFloat(d.quoteVolume),
-        };
+        priceCache[ticker] = { price: parseFloat(d.lastPrice), chg: parseFloat(d.priceChangePercent), vol: parseFloat(d.quoteVolume) };
       });
     } catch(e) { console.error('Binance fetch error', e); }
+  }
+
+  // MEXC
+  for (const t of toFetchMexc) {
+    try {
+      const r = await fetch(`https://api.mexc.com/api/v3/ticker/24hr?symbol=${t}USDT`);
+      const d = await r.json();
+      priceCache[t] = { price: parseFloat(d.lastPrice), chg: parseFloat(d.priceChangePercent), vol: parseFloat(d.quoteVolume) };
+    } catch(e) { console.error('MEXC fetch error', e); }
+  }
+
+  // Bybit
+  for (const t of toFetchBybit) {
+    try {
+      const r = await fetch(`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${t}USDT`);
+      const d = await r.json();
+      const tk = d?.result?.list?.[0];
+      if (tk) {
+        const prev = parseFloat(tk.prevPrice24h);
+        const last = parseFloat(tk.lastPrice);
+        priceCache[t] = { price: last, chg: prev > 0 ? ((last - prev) / prev) * 100 : 0, vol: parseFloat(tk.turnover24h) };
+      }
+    } catch(e) { console.error('Bybit fetch error', e); }
   }
 
   stables.forEach(t => {
@@ -251,23 +348,16 @@ function renderCards(sector, coins) {
     return;
   }
 
-  // 시총 순 정렬 (가격 × 임의 supply 근사 — Binance 거래량 기준 정렬)
-  coins.sort((a, b) => {
-    const va = priceCache[a]?.vol || 0;
-    const vb = priceCache[b]?.vol || 0;
-    return vb - va;
-  });
+  coins.sort((a, b) => (priceCache[b]?.vol || 0) - (priceCache[a]?.vol || 0));
 
   coins.forEach(ticker => {
-    const coin = COIN_DATA[ticker];
-    const px = priceCache[ticker] || {};
+    const coin   = COIN_DATA[ticker];
+    const px     = priceCache[ticker] || {};
     const hasEtf = ETF_COINS.has(ticker);
     const hasPage = coin.slug && !['usdt','usdc','canton','shib','ton','ondo','near','bch'].includes(coin.slug);
 
     const card = document.createElement(hasPage ? 'a' : 'div');
-    if (hasPage) {
-      card.href = `coins/${coin.slug}-chart.html`;
-    }
+    if (hasPage) card.href = `coins/${coin.slug}-chart.html`;
     card.className = 'coin-card';
 
     const chgClass = (px.chg || 0) >= 0 ? 'up' : 'down';
@@ -309,7 +399,6 @@ async function init() {
   try {
     await loadCoinData();
   } catch(e) {
-    // coin_sectors.json 직접 로드 실패시 상대경로 재시도
     try {
       const r = await fetch('data/coin_sectors.json');
       COIN_DATA = await r.json();
@@ -322,13 +411,13 @@ async function init() {
   const sector = getSectorFromUrl();
   currentSector = sector;
 
-  // 해당 섹터 코인 필터
   const coins = Object.keys(COIN_DATA).filter(t => COIN_DATA[t].sectors.includes(sector));
 
-  renderTabs(sector);
+  updateSeoMeta(sector, coins);
   renderHero(sector, coins);
+  renderTabs(sector);
+  renderSeoSection(sector, coins);
 
-  // 가격 로드 후 카드 렌더
   document.getElementById('coinGrid').innerHTML = '<div class="loading-msg">가격 데이터 불러오는 중...</div>';
   await fetchPrices(coins);
   renderCards(sector, coins);
