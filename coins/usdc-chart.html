@@ -616,11 +616,15 @@
 
     <div style="margin-bottom:1.5rem;">
       <h2 style="font-size:15px;font-weight:700;margin-bottom:14px;color:var(--text);">USD코인(USDC) 기본 정보</h2>
+      <div class="profile-row"><span class="profile-key">발행사</span><span class="profile-val">Circle Internet Financial</span></div>
+      <div class="profile-row"><span class="profile-key">파트너</span><span class="profile-val">Coinbase (Centre 컨소시엄)</span></div>
+      <div class="profile-row"><span class="profile-key">출시일</span><span class="profile-val">2018년 9월</span></div>
       <div class="profile-row"><span class="profile-key">시가총액</span><span class="profile-val" id="cg-mktcap">-</span></div>
       <div class="profile-row"><span class="profile-key">시총 순위</span><span class="profile-val" id="cg-rank">-</span></div>
       <div class="profile-row"><span class="profile-key">24H 거래량</span><span class="profile-val" id="cg-vol">-</span></div>
-      <div class="profile-row"><span class="profile-key">페그</span><span class="profile-val">1 USDC = $1.00 USD</span></div>
       <div class="profile-row"><span class="profile-key">유통량</span><span class="profile-val" id="cg-supply">-</span></div>
+      <div class="profile-row"><span class="profile-key">페그</span><span class="profile-val">1 USDC = $1.00 USD</span></div>
+      <div class="profile-row"><span class="profile-key">준비금 감사</span><span class="profile-val">Grant Thornton (월간 독립 감사)</span></div>
       <div class="profile-row"><span class="profile-key">발행 블록체인</span><span class="profile-val">Ethereum, Solana, Avalanche 외</span></div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
         <a class="profile-link" href="https://www.circle.com/usdc" target="_blank" rel="noopener">🌐 공식 사이트</a>
@@ -640,17 +644,17 @@
 
     <div style="margin-bottom:1.5rem;border-top:1px solid var(--border);">
       <h2 style="font-size:14px;font-weight:700;margin:16px 0 4px;">USD코인(USDC) 자주 묻는 질문 (FAQ)</h2>
-      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span>USD코인(USDC)이란 무엇인가요?</span><span class="faq-icon">+</span></div><div class="faq-a"><div class="faq-a-inner">USD코인(USDC)은 <strong>Circle</strong>과 <strong>Coinbase</strong>가 설립한 Centre 컨소시엄이 2018년 9월 출시한 달러 연동 스테이블코인입니다. 1 USDC = 1 USD로 가치가 고정되며, "디지털 시대의 디지털 화폐"를 표방합니다. 규제 준수와 투명성을 핵심 가치로 내세우며 DeFi, 게임, 기업 결제 등 다양한 분야에서 활용됩니다.</div></div></div>
-      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span>USDC는 어떻게 $1 가치를 유지하나요?</span><span class="faq-icon">+</span></div><div class="faq-a"><div class="faq-a-inner">USDC는 발행된 모든 토큰에 대해 동일한 금액의 달러를 준비금으로 적립합니다. 준비금은 <strong>미국 국채와 현금</strong>으로만 구성되며, <strong>Grant Thornton 등 독립 회계법인</strong>이 매월 감사를 수행해 투명성을 보장합니다. 이 점이 USDT 대비 가장 큰 차별점입니다.</div></div></div>
-      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span>USDC 김치 프리미엄이란?</span><span class="faq-icon">+</span></div><div class="faq-a"><div class="faq-a-inner">USDC 김치 프리미엄은 국내 업비트의 USDC 원화 가격이 실제 달러 환율 대비 얼마나 높은지를 나타냅니다. 스테이블코인 김프는 국내 달러 수요와 원화 유동성을 반영하는 지표로, 일반 코인 김프와 함께 시장 심리를 파악하는 데 활용됩니다.</div></div></div>
-      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span>USDC 발행량은 얼마나 되나요?</span><span class="faq-icon">+</span></div><div class="faq-a"><div class="faq-a-inner">USDC는 발행량 상한이 없으며 수요에 따라 새로 발행됩니다. 누군가 달러로 USDC를 구매하면 새 코인이 발행되고, USDC를 달러로 환전하면 소각됩니다. 현재 유통량은 약 <strong>749억 USDC</strong>이며, DeFi 생태계 성장과 함께 급격히 증가했습니다.</div></div></div>
-      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span>USDC와 USDT의 차이는?</span><span class="faq-icon">+</span></div><div class="faq-a"><div class="faq-a-inner">두 가지 모두 달러 연동 스테이블코인이지만 차이가 있습니다. <strong>USDC</strong>는 독립 감사를 통한 높은 투명성과 규제 준수가 강점으로, 법적 분쟁 이력이 없습니다. <strong>USDT(테더)</strong>는 시장 점유율 1위로 유동성이 더 높지만 준비금 투명성 논란이 있습니다. 기관·규제 환경에서는 USDC가 선호되는 경향이 있습니다.</div></div></div>
-      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span>USDC는 어디서 살 수 있나요?</span><span class="faq-icon">+</span></div><div class="faq-a"><div class="faq-a-inner">국내에서는 <strong>업비트</strong>, <strong>빗썸</strong> 등 원화 거래소에서 구매할 수 있습니다. 해외에서는 코인베이스(Coinbase), 바이낸스(Binance) 등에서 거래됩니다. DeFi 프로토콜이나 기업 결제 수단으로도 널리 활용됩니다.</div></div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span>USD코인(USDC)이란 무엇인가요?</span><span class="faq-icon">+</span></div><div class="faq-a"><div class="faq-a-inner">USDC는 유통 중인 모든 토큰이 현금과 단기 미국 국채로 1:1 뒷받침되는 달러 연동 스테이블코인입니다. 2018년 9월 출시되었으며 <strong>"디지털 시대의 디지털 화폐"</strong>를 표방합니다. 규제 금융기관이 발행하며, 암호화폐 변동성을 피한 안전 피난처이자 DeFi·게임·기업 결제 등 다양한 분야에서 활용됩니다.</div></div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span>USDC를 만든 사람은 누구인가요?</span><span class="faq-icon">+</span></div><div class="faq-a"><div class="faq-a-inner">USDC는 <strong>Circle</strong>(P2P 결제 서비스)과 <strong>Coinbase</strong>(암호화폐 거래소)가 설립한 Centre 컨소시엄이 만들었습니다. Circle 공동창업자 제레미 알레어(Jeremy Allaire)와 션 네빌(Sean Neville)은 "개방적인 가치 교환 인터넷이 세계를 더 깊이 통합하고 포용적인 글로벌 시장을 만들 것"이라는 비전을 밝혔습니다. 2020년에는 프로토콜과 스마트 컨트랙트를 대폭 업그레이드했습니다.</div></div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span>USDC의 준비금은 얼마나 되나요?</span><span class="faq-icon">+</span></div><div class="faq-a"><div class="faq-a-inner">Circle이 공개한 2022년 7월 기준 보고서에 따르면 USDC 준비금은 <strong>미국 국채 423억 달러</strong>와 <strong>현금 예치금 122억 달러</strong>로 구성됩니다. 독립 회계법인 <strong>Grant Thornton</strong>이 월간 감사를 수행하며 "모든 측면에서 공정하게 표시되었다"는 독립 확인서를 발행했습니다.</div></div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span>USDC 발행량은 얼마나 되나요?</span><span class="faq-icon">+</span></div><div class="faq-a"><div class="faq-a-inner">USDC는 발행량 상한이 없으며 수요에 따라 새로 발행됩니다. 누군가 달러로 USDC를 구매하면 새 코인이 발행되고, 달러로 환전하면 소각됩니다. 2020년 DeFi 붐과 함께 폭발적으로 성장했으며, USDC는 DeFi 프로토콜 진입을 위한 핵심 온램프(onramp)로 자리잡고 있습니다.</div></div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span>USDC와 USDT의 차이는?</span><span class="faq-icon">+</span></div><div class="faq-a"><div class="faq-a-inner">두 가지 모두 달러 연동 스테이블코인이지만 투명성에서 차이가 있습니다. <strong>USDC</strong>는 독립 감사를 통한 준비금 투명성과 규제 준수가 강점으로, 법적 분쟁 이력이 없습니다. <strong>USDT(테더)</strong>는 시장 점유율 1위로 유동성이 더 높지만 반복적인 조사에 휘말린 반면 USDC는 부정 행위 의혹을 받은 적이 없습니다.</div></div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span>USDC는 어떻게 보안이 유지되나요?</span><span class="faq-icon">+</span></div><div class="faq-a"><div class="faq-a-inner">유통 중인 모든 USDC는 <strong>이더리움 블록체인의 ERC-20 토큰</strong>입니다. 이더리움 기반이기 때문에 이더리움 생태계의 모든 앱과 통합이 가능합니다. 보안과 신뢰는 달러가 준비금으로 안전하게 보관되고 있음을 증명함으로써 유지됩니다.</div></div></div>
     </div>
 
     <div style="margin-bottom:1.5rem;">
-      <h2 style="font-size:14px;font-weight:700;margin-bottom:10px;">테더(USDT) 프로필</h2>
-      <p style="font-size:13px;color:var(--text2);line-height:1.9;margin-bottom:0.75rem;">USDC는 <strong>투명성과 규제 준수</strong>를 최우선으로 하는 스테이블코인입니다. 독립 회계법인의 월간 감사를 통해 준비금을 검증하며, DeFi·기업 결제·국경 간 송금 등 다양한 분야에서 신뢰성 있는 달러 대체 수단으로 활용됩니다.</p>
+      <h2 style="font-size:14px;font-weight:700;margin-bottom:10px;">USD코인(USDC) 프로필</h2>
+      <p style="font-size:13px;color:var(--text2);line-height:1.9;margin-bottom:0.75rem;">USD코인(USDC)은 <strong>투명성과 규제 준수</strong>를 최우선으로 하는 스테이블코인입니다. 독립 회계법인의 월간 감사를 통해 준비금을 검증하며, DeFi·기업 결제·국경 간 송금 등 다양한 분야에서 신뢰성 있는 달러 대체 수단으로 활용됩니다.</p>
       <p style="font-size:13px;color:var(--text2);line-height:1.9;">섹터: <strong>Stablecoin</strong> &nbsp;|&nbsp; 내러티브: <strong>Stablecoin</strong> &nbsp;|&nbsp; 페그: <strong>1 USDC = $1 USD</strong></p>
     </div>
 
@@ -718,7 +722,7 @@ async function fetchUsdKrw() {
 async function fetchPrice() {
   try {
     const [binR, upbitR] = await Promise.allSettled([
-      fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=USDTUSDC'),
+      fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=USDCUSDT'),
       fetch('https://api.upbit.com/v1/ticker?markets=KRW-USDC'),
     ]);
     let usdPrice = 0, chgPct = 0, high = 0, low = 0, vol = 0, krwPrice = 0;
@@ -737,14 +741,14 @@ async function fetchPrice() {
       cachedKrwXrp = krwPrice;
       cachedUpbitVol = parseFloat(row?.acc_trade_price_24h) || 0;
     }
-    document.getElementById('coinPrice').textContent = '$' + usdPrice.toFixed(2);
+    document.getElementById('coinPrice').textContent = '$' + usdPrice.toFixed(4);
     const chgEl = document.getElementById('coinChange');
     chgEl.textContent = (chgPct >= 0 ? '+' : '') + chgPct.toFixed(2) + '%';
     chgEl.className = 'coin-change ' + (chgPct >= 0 ? 'up' : 'down');
     chgEl.style.display = 'inline-block';
     document.getElementById('kpiKrw').textContent  = '₩' + Math.round(krwPrice).toLocaleString() + ' 원';
-    document.getElementById('kpiHigh').textContent = '$' + high.toFixed(2);
-    document.getElementById('kpiLow').textContent  = '$' + low.toFixed(2);
+    document.getElementById('kpiHigh').textContent = '$' + high.toFixed(4);
+    document.getElementById('kpiLow').textContent  = '$' + low.toFixed(4);
     document.getElementById('kpiVol').textContent  = vol >= 1e9 ? (vol/1e9).toFixed(1)+'B' : (vol/1e6).toFixed(0)+'M';
     if (usdPrice > 0 && krwPrice > 0) {
       const kimchi = ((krwPrice / (usdPrice * cachedUsdKrw)) - 1) * 100;
@@ -773,9 +777,9 @@ async function fetchPerformance() {
     const allStart = new Date('2017-08-01').getTime();
     const perfKeys = ['1d','7d','30d','180d','1y','5y'];
     const [ytdRes, allRes, ...perfRes] = await Promise.all([
-      fetch(`https://api.binance.com/api/v3/klines?symbol=USDTUSDC&interval=1d&startTime=${ytdStart}&limit=1`),
-      fetch(`https://api.binance.com/api/v3/klines?symbol=USDTUSDC&interval=1w&startTime=${allStart}&limit=1`),
-      ...perfKeys.map(k => fetch(`https://api.binance.com/api/v3/klines?symbol=USDTUSDC&interval=${intervals[k].interval}&startTime=${intervals[k].startMs}&limit=1`)),
+      fetch(`https://api.binance.com/api/v3/klines?symbol=USDCUSDT&interval=1d&startTime=${ytdStart}&limit=1`),
+      fetch(`https://api.binance.com/api/v3/klines?symbol=USDCUSDT&interval=1w&startTime=${allStart}&limit=1`),
+      ...perfKeys.map(k => fetch(`https://api.binance.com/api/v3/klines?symbol=USDCUSDT&interval=${intervals[k].interval}&startTime=${intervals[k].startMs}&limit=1`)),
     ]);
     const calcPerf = async (res, id) => {
       try {
@@ -827,9 +831,9 @@ async function loadChart(interval, limit, days) {
   try {
     let url;
     if (days === 'max') {
-      url = `https://api.binance.com/api/v3/klines?symbol=USDTUSDC&interval=${interval}&startTime=${new Date('2019-09-01').getTime()}&limit=1000`;
+      url = `https://api.binance.com/api/v3/klines?symbol=USDCUSDT&interval=${interval}&startTime=${new Date('2019-09-01').getTime()}&limit=1000`;
     } else {
-      url = `https://api.binance.com/api/v3/klines?symbol=USDTUSDC&interval=${interval}&startTime=${Date.now() - days*86400000}&limit=${limit}`;
+      url = `https://api.binance.com/api/v3/klines?symbol=USDCUSDT&interval=${interval}&startTime=${Date.now() - days*86400000}&limit=${limit}`;
     }
     const raw = await (await fetch(url)).json();
     const data = raw.map(d => ({ time: Math.floor(d[0]/1000), open: parseFloat(d[1]), high: parseFloat(d[2]), low: parseFloat(d[3]), close: parseFloat(d[4]) })).sort((a,b) => a.time - b.time);
