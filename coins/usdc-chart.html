@@ -442,86 +442,9 @@
     text-align: center;
   }
 
-  /* ── ETF FLOW SECTION ── */
-  .etf-section {
-    margin-top: 2rem;
-    border-top: 0.5px solid var(--border);
-    padding-top: 1.5rem;
-  }
-  .etf-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-  .etf-title {
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-  }
-  .etf-source {
-    font-size: 10px;
-    font-family: Arial, sans-serif; font-variant-numeric: tabular-nums;
-    color: var(--text3);
-  }
-  .etf-kpi-row {
-    display: flex;
-    gap: 0;
-    background: var(--bg2);
-    border: 0.5px solid var(--border);
-    border-radius: var(--r);
-    overflow: hidden;
-    margin-bottom: 1rem;
-  }
-  .etf-kpi-cell {
-    flex: 1;
-    padding: 0.75rem 1.25rem;
-    border-right: 0.5px solid var(--border);
-  }
-  .etf-kpi-cell:last-child { border-right: none; }
-  .etf-kpi-label {
-    font-size: 10px;
-    font-family: Arial, sans-serif; font-variant-numeric: tabular-nums;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text3);
-    margin-bottom: 3px;
-  }
-  .etf-kpi-value {
-    font-size: 16px;
-    font-weight: 700;
-    font-family: Arial, sans-serif; font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-  }
-  .etf-kpi-value.up   { color: var(--up); }
-  .etf-kpi-value.down { color: var(--down); }
-  .etf-kpi-date {
-    font-size: 10px;
-    font-family: Arial, sans-serif; font-variant-numeric: tabular-nums;
-    color: var(--text3);
-    margin-top: 2px;
-  }
-  .etf-chart-wrap {
-    position: relative;
-    height: 200px;
-    border: 0.5px solid var(--border);
-    border-radius: var(--r);
-    overflow: hidden;
-    background: var(--bg);
-    padding: 12px 12px 8px;
-  }
-  .etf-chart-loading {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-family: Arial, sans-serif; font-variant-numeric: tabular-nums;
-    color: var(--text3);
-  }
+
+
+
 
   /* ── FOOTER ── */
   .page-footer {
@@ -559,10 +482,10 @@
     .kpi-cell    { border-bottom: 0.5px solid var(--border); }
     .perf-row    { display: grid; grid-template-columns: repeat(4, 1fr); }
     .tv-badge-label { display: none; }
-    .etf-kpi-row { display: grid; grid-template-columns: 1fr 1fr; }
-    .etf-kpi-cell { border-bottom: 0.5px solid var(--border); }
     .etf-chart-wrap { height: 160px; }
   }
+
+
   }
 
   .profile-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
@@ -673,46 +596,12 @@
         <div class="perf-cell" data-perf="5y"><div class="perf-cell-label">5년</div><div class="perf-cell-val" id="perf5y">—</div></div>
         <div class="perf-cell" data-perf="all"><div class="perf-cell-label">전체</div><div class="perf-cell-val" id="perfAll">—</div></div>
       </div>
-          <div class="etf-kpi-cell">
-            <div class="etf-kpi-label">Upbit (KRW)</div>
-            <div class="etf-kpi-value" id="volUpbit">—</div>
-            <div class="etf-kpi-date" id="volUpbitPct"></div>
-          </div>
-          <div class="etf-kpi-cell">
-            <div class="etf-kpi-label">Coinbase (USD)</div>
-            <div class="etf-kpi-value" id="volCoinbase">—</div>
-            <div class="etf-kpi-date" id="volCoinbasePct"></div>
-          </div>
-        </div>
-        <div class="etf-chart-wrap">
-          <div class="etf-chart-loading" id="volChartLoading">거래량 데이터 불러오는 중...</div>
-          <canvas id="volBarChart"></canvas>
-        </div>
-      </div>
-          <div class="etf-kpi-cell">
-            <div class="etf-kpi-label">누적 순유입</div>
-            <div class="etf-kpi-value" id="etfXCum">—</div>
-            <div class="etf-kpi-date">출시 이후</div>
-          </div>
-          <div class="etf-kpi-cell">
-            <div class="etf-kpi-label">총 AUM</div>
-            <div class="etf-kpi-value" id="etfXAum">—</div>
-            <div class="etf-kpi-date" id="etfXAumDate"></div>
-          </div>
-        </div>
-        <div class="etf-chart-wrap">
-          <div class="etf-chart-loading" id="etfXChartLoading">ETF 데이터 불러오는 중...</div>
-          <canvas id="etfXFlowChart"></canvas>
-        </div>
-      </div>
-      </div>
-    </div>
 
     <!-- 뉴스 사이드바 -->
     <div class="news-sidebar">
       <div class="news-header">
         USD코인 최신 뉴스
-        <a href="https://www.blockmedia.co.kr/coins/xrp" target="_blank">더보기 →</a>
+        <a href="https://www.blockmedia.co.kr/tag/usdc" target="_blank">더보기 →</a>
       </div>
       <div class="news-list" id="newsList">
         <div class="news-loading">뉴스 불러오는 중...</div>
@@ -731,7 +620,8 @@
       <div class="profile-row"><span class="profile-key">시총 순위</span><span class="profile-val" id="cg-rank">-</span></div>
       <div class="profile-row"><span class="profile-key">24H 거래량</span><span class="profile-val" id="cg-vol">-</span></div>
       <div class="profile-row"><span class="profile-key">페그</span><span class="profile-val">1 USDC = $1.00 USD</span></div>
-      <div class="profile-row"><span class="profile-key">발행 블록체인</span><span class="profile-val">Ethereum, Tron, Solana 외 다수</span></div>
+      <div class="profile-row"><span class="profile-key">유통량</span><span class="profile-val" id="cg-supply">-</span></div>
+      <div class="profile-row"><span class="profile-key">발행 블록체인</span><span class="profile-val">Ethereum, Solana, Avalanche 외</span></div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
         <a class="profile-link" href="https://www.circle.com/usdc" target="_blank" rel="noopener">🌐 공식 사이트</a>
         <a class="profile-link" href="https://www.circle.com/transparency" target="_blank" rel="noopener">📊 준비금 현황</a>
@@ -753,6 +643,7 @@
       <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span>USD코인(USDC)이란 무엇인가요?</span><span class="faq-icon">+</span></div><div class="faq-a"><div class="faq-a-inner">USD코인(USDC)은 <strong>Circle</strong>과 <strong>Coinbase</strong>가 설립한 Centre 컨소시엄이 2018년 9월 출시한 달러 연동 스테이블코인입니다. 1 USDC = 1 USD로 가치가 고정되며, "디지털 시대의 디지털 화폐"를 표방합니다. 규제 준수와 투명성을 핵심 가치로 내세우며 DeFi, 게임, 기업 결제 등 다양한 분야에서 활용됩니다.</div></div></div>
       <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span>USDC는 어떻게 $1 가치를 유지하나요?</span><span class="faq-icon">+</span></div><div class="faq-a"><div class="faq-a-inner">USDC는 발행된 모든 토큰에 대해 동일한 금액의 달러를 준비금으로 적립합니다. 준비금은 <strong>미국 국채와 현금</strong>으로만 구성되며, <strong>Grant Thornton 등 독립 회계법인</strong>이 매월 감사를 수행해 투명성을 보장합니다. 이 점이 USDT 대비 가장 큰 차별점입니다.</div></div></div>
       <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span>USDC 김치 프리미엄이란?</span><span class="faq-icon">+</span></div><div class="faq-a"><div class="faq-a-inner">USDC 김치 프리미엄은 국내 업비트의 USDC 원화 가격이 실제 달러 환율 대비 얼마나 높은지를 나타냅니다. 스테이블코인 김프는 국내 달러 수요와 원화 유동성을 반영하는 지표로, 일반 코인 김프와 함께 시장 심리를 파악하는 데 활용됩니다.</div></div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span>USDC 발행량은 얼마나 되나요?</span><span class="faq-icon">+</span></div><div class="faq-a"><div class="faq-a-inner">USDC는 발행량 상한이 없으며 수요에 따라 새로 발행됩니다. 누군가 달러로 USDC를 구매하면 새 코인이 발행되고, USDC를 달러로 환전하면 소각됩니다. 현재 유통량은 약 <strong>749억 USDC</strong>이며, DeFi 생태계 성장과 함께 급격히 증가했습니다.</div></div></div>
       <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span>USDC와 USDT의 차이는?</span><span class="faq-icon">+</span></div><div class="faq-a"><div class="faq-a-inner">두 가지 모두 달러 연동 스테이블코인이지만 차이가 있습니다. <strong>USDC</strong>는 독립 감사를 통한 높은 투명성과 규제 준수가 강점으로, 법적 분쟁 이력이 없습니다. <strong>USDT(테더)</strong>는 시장 점유율 1위로 유동성이 더 높지만 준비금 투명성 논란이 있습니다. 기관·규제 환경에서는 USDC가 선호되는 경향이 있습니다.</div></div></div>
       <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span>USDC는 어디서 살 수 있나요?</span><span class="faq-icon">+</span></div><div class="faq-a"><div class="faq-a-inner">국내에서는 <strong>업비트</strong>, <strong>빗썸</strong> 등 원화 거래소에서 구매할 수 있습니다. 해외에서는 코인베이스(Coinbase), 바이낸스(Binance) 등에서 거래됩니다. DeFi 프로토콜이나 기업 결제 수단으로도 널리 활용됩니다.</div></div></div>
     </div>
@@ -804,7 +695,6 @@ const C = {
 };
 
 let lwChart = null, mainSeries = null;
-let xrpEtfChart = null;
 // ── 환율 ─────────────────────────────────────────────────────
 let cachedUsdKrw = 1480;
 let cachedKrwXrp = 0;
@@ -828,7 +718,7 @@ async function fetchUsdKrw() {
 async function fetchPrice() {
   try {
     const [binR, upbitR] = await Promise.allSettled([
-      fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=USDCUSDT'),
+      fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=USDTUSDC'),
       fetch('https://api.upbit.com/v1/ticker?markets=KRW-USDC'),
     ]);
     let usdPrice = 0, chgPct = 0, high = 0, low = 0, vol = 0, krwPrice = 0;
@@ -883,9 +773,9 @@ async function fetchPerformance() {
     const allStart = new Date('2017-08-01').getTime();
     const perfKeys = ['1d','7d','30d','180d','1y','5y'];
     const [ytdRes, allRes, ...perfRes] = await Promise.all([
-      fetch(`https://api.binance.com/api/v3/klines?symbol=USDCUSDT&interval=1d&startTime=${ytdStart}&limit=1`),
-      fetch(`https://api.binance.com/api/v3/klines?symbol=USDCUSDT&interval=1w&startTime=${allStart}&limit=1`),
-      ...perfKeys.map(k => fetch(`https://api.binance.com/api/v3/klines?symbol=USDCUSDT&interval=${intervals[k].interval}&startTime=${intervals[k].startMs}&limit=1`)),
+      fetch(`https://api.binance.com/api/v3/klines?symbol=USDTUSDC&interval=1d&startTime=${ytdStart}&limit=1`),
+      fetch(`https://api.binance.com/api/v3/klines?symbol=USDTUSDC&interval=1w&startTime=${allStart}&limit=1`),
+      ...perfKeys.map(k => fetch(`https://api.binance.com/api/v3/klines?symbol=USDTUSDC&interval=${intervals[k].interval}&startTime=${intervals[k].startMs}&limit=1`)),
     ]);
     const calcPerf = async (res, id) => {
       try {
@@ -937,9 +827,9 @@ async function loadChart(interval, limit, days) {
   try {
     let url;
     if (days === 'max') {
-      url = `https://api.binance.com/api/v3/klines?symbol=USDCUSDT&interval=${interval}&startTime=${new Date('2019-09-01').getTime()}&limit=1000`;
+      url = `https://api.binance.com/api/v3/klines?symbol=USDTUSDC&interval=${interval}&startTime=${new Date('2019-09-01').getTime()}&limit=1000`;
     } else {
-      url = `https://api.binance.com/api/v3/klines?symbol=USDCUSDT&interval=${interval}&startTime=${Date.now() - days*86400000}&limit=${limit}`;
+      url = `https://api.binance.com/api/v3/klines?symbol=USDTUSDC&interval=${interval}&startTime=${Date.now() - days*86400000}&limit=${limit}`;
     }
     const raw = await (await fetch(url)).json();
     const data = raw.map(d => ({ time: Math.floor(d[0]/1000), open: parseFloat(d[1]), high: parseFloat(d[2]), low: parseFloat(d[3]), close: parseFloat(d[4]) })).sort((a,b) => a.time - b.time);
@@ -1004,7 +894,6 @@ async function fetchNews() {
   }
 }
 
-// ── XRP ETF Flow ─────────────────────────────────────────────
 function fmtFlow(val) {
   if (val == null || isNaN(val)) return '—';
   const m = val / 1e6;
@@ -1017,88 +906,6 @@ function fmtB(val) {
   return (val >= 0 ? '' : '-') + '$' + (Math.abs(val)/1e9).toFixed(2) + 'B';
 }
 
-async function loadXrpEtfFlow() {
-  try {
-    const [mRes, hRes] = await Promise.allSettled([
-
-    // KPI
-    if (mRes.status === 'fulfilled' && mRes.value.ok) {
-      const m = await mRes.value.json();
-      const daily = m.dailyNetInflow?.value;
-      const dailyEl = document.getElementById('etfXDaily');
-      if (daily != null) {
-        dailyEl.textContent = fmtFlow(daily);
-        dailyEl.className = 'etf-kpi-value ' + (daily >= 0 ? 'up' : 'down');
-      }
-      document.getElementById('etfXDailyDate').textContent = m.dailyNetInflow?.lastUpdateDate || '';
-      document.getElementById('etfXCum').textContent = fmtB(m.cumNetInflow?.value);
-      document.getElementById('etfXAum').textContent = fmtB(m.totalNetAssets?.value);
-      document.getElementById('etfXAumDate').textContent = m.totalNetAssets?.lastUpdateDate || '';
-    }
-
-    // 막대차트
-    if (hRes.status === 'fulfilled' && hRes.value.ok) {
-      const h = await hRes.value.json();
-      const recent = [...(h.data || [])].sort((a,b) => a.date.localeCompare(b.date)).slice(-30);
-      const labels = recent.map(d => d.date.slice(5));
-      const flows  = recent.map(d => +(d.totalNetInflow / 1e6).toFixed(2));
-
-      document.getElementById('etfXChartLoading').style.display = 'none';
-
-      const ctx = document.getElementById('etfXFlowChart').getContext('2d');
-      if (xrpEtfChart) xrpEtfChart.destroy();
-      xrpEtfChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [{
-            label: '일별 순유입 ($M)',
-            data: flows,
-            backgroundColor: flows.map(v => v >= 0 ? 'rgba(59,109,17,0.5)' : 'rgba(163,45,45,0.5)'),
-            borderColor:      flows.map(v => v >= 0 ? '#3B6D11' : '#A32D2D'),
-            borderWidth: 1,
-            borderRadius: 2,
-          }],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: { mode: 'index', intersect: false },
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: ctx => {
-                  const v = ctx.parsed.y;
-                  return ` ${v >= 0 ? '+' : ''}$${v.toFixed(0)}M`;
-                },
-              },
-            },
-          },
-          scales: {
-            x: {
-              grid: { color: C.grid },
-              ticks: { font: { family: "'JetBrains Mono', monospace", size: 10 }, color: C.text, maxRotation: 0, maxTicksLimit: 10 },
-            },
-            y: {
-              grid: { color: C.grid },
-              ticks: {
-                font: { family: "'JetBrains Mono', monospace", size: 10 },
-                color: C.text,
-                callback: v => (v >= 0 ? '+' : '') + '$' + v + 'M',
-              },
-            },
-          },
-        },
-      });
-    } else {
-      document.getElementById('etfXChartLoading').textContent = 'ETF 데이터를 불러올 수 없습니다.';
-    }
-  } catch(e) {
-    console.error('XRP ETF flow error:', e);
-    document.getElementById('etfXChartLoading').textContent = 'ETF 데이터를 불러올 수 없습니다.';
-  }
-}
 
 // ── 거래소별 거래량 ──────────────────────────────────────────
 let etfFlowChart = null; // 변수명 유지 (하단 스케줄러 참조)
@@ -1125,7 +932,7 @@ fetchUsdKrw().then(() => {
 });
 loadChart('1m', 360, 1);
 fetchNews();
-loadXrpEtfFlow();
+
 
 setInterval(fetchUsdKrw,  3600000);  // 1시간마다 환율
 setInterval(fetchPrice,     30000);  // 30초마다 가격
@@ -1147,7 +954,7 @@ setTimeout(fetchPerformance, 1500);
   }
   TIMES.forEach(({ h, m }) => {
     function schedule() {
-      setTimeout(() => {  loadXrpEtfFlow(); schedule(); }, msUntil(h, m));
+      setTimeout(() => {   schedule(); }, msUntil(h, m));
     }
     schedule();
   });
@@ -1170,6 +977,7 @@ async function loadCoinProfile() {
     document.getElementById('cg-mktcap').textContent = fmtB(q.market_cap);
     document.getElementById('cg-rank').textContent   = '#' + (d.rank || '-');
     document.getElementById('cg-vol').textContent    = fmtB(q.volume_24h);
+    document.getElementById('cg-supply').textContent = d.circulating_supply ? (d.circulating_supply/1e9).toFixed(1) + 'B USDC' : '74.9B USDC';
     document.getElementById('cg-source').textContent = 'CoinPaprika · ' + new Date().toLocaleString('ko-KR', {month:'numeric',day:'numeric',hour:'numeric',minute:'numeric'});
   } catch(e) {
     document.getElementById('cg-source').textContent = '데이터 로드 실패';
