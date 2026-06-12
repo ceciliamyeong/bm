@@ -938,7 +938,7 @@ async function fetchNews() {
   try {
     const [r1, r2] = await Promise.allSettled([
       fetch('https://www.blockmedia.co.kr/wp-json/wp/v2/posts?coin_tag=56722,56721&per_page=10&orderby=date&_fields=id,title,link,date,featured_media,_links&_embed=wp:featuredmedia'),
-      fetch('https://www.blockmedia.co.kr/wp-json/wp/v2/posts?tags=41211&per_page=10&orderby=date&_fields=id,title,link,date,featured_media,_links&_embed=wp:featuredmedia'),
+      fetch('https://www.blockmedia.co.kr/wp-json/wp/v2/posts?tags=41112,41211&per_page=10&orderby=date&_fields=id,title,link,date,featured_media,_links&_embed=wp:featuredmedia'),
     ]);
     const arr1 = r1.status === 'fulfilled' && r1.value.ok ? await r1.value.json() : [];
     const arr2 = r2.status === 'fulfilled' && r2.value.ok ? await r2.value.json() : [];
@@ -967,3 +967,45 @@ async function fetchNews() {
     list.innerHTML = '<div class="news-loading">뉴스를 불러올 수 없습니다.</div>';
   }
 }
+
+// ── CoinPaprika 프로필 ────────────────────────────────────────
+async function loadCoinProfile() {
+  try {
+    const r = await fetch('https://api.coinpaprika.com/v1/tickers/sui-sui');
+    if (!r.ok) throw new Error();
+    const d = await r.json();
+    const q = d.quotes?.USD || {};
+    function fmtB(v) {
+      if (!v) return '-';
+      if (v >= 1e9) return '$' + (v/1e9).toFixed(2) + 'B';
+      if (v >= 1e6) return '$' + (v/1e6).toFixed(0) + 'M';
+      return '$' + Math.round(v).toLocaleString();
+    }
+    document.getElementById('cg-mktcap').textContent  = fmtB(q.market_cap);
+    document.getElementById('cg-rank').textContent    = '#' + (d.rank || '-');
+    document.getElementById('cg-vol').textContent     = fmtB(q.volume_24h);
+    document.getElementById('cg-supply').textContent  = d.circulating_supply ? (d.circulating_supply / 1e9).toFixed(2) + 'B SUI' : '4.02B SUI';
+    document.getElementById('cg-ath').textContent     = q.ath_price ? '$' + parseFloat(q.ath_price).toFixed(3) : '-';
+    document.getElementById('cg-source').textContent  = 'CoinPaprika · ' + new Date().toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' });
+  } catch(e) {
+    document.getElementById('cg-source').textContent = '데이터 로드 실패';
+  }
+}
+
+function toggleFaq(el) { el.parentElement.classList.toggle('open'); }
+
+// ── INIT ─────────────────────────────────────────────────────
+Promise.all([fetchUsdKrw(), fetchPrice()]);
+loadChart('1m', 360, 1);
+fetchNews();
+loadCoinProfile();
+
+setInterval(fetchUsdKrw,   3600000);  // 1시간
+setInterval(fetchPrice,      30000);  // 30초
+setInterval(fetchNews,      300000);  // 5분
+setInterval(loadCoinProfile, 600000); // 10분
+setTimeout(fetchPerformance, 1500);
+
+</script>
+</body>
+</html>
