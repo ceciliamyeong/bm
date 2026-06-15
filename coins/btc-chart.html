@@ -278,6 +278,12 @@
     transition: opacity 0.15s;
   }
   .sector-badge:hover { opacity: 0.75; }
+  .narrative-text {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: "Noto Sans KR", system-ui, sans-serif;
+    padding-left: 2px;
+  }
   /* 섹터별 컬러 */
   .sb-layer1      { background: rgba(37,99,235,0.08);   border-color: rgba(37,99,235,0.3);   color: #2563eb; }
   .sb-store       { background: rgba(247,147,26,0.1);   border-color: rgba(247,147,26,0.35);  color: #b45309; }
@@ -779,8 +785,8 @@
 
   <!-- SECTOR BADGES -->
   <div class="sector-row">
-    <a href="../sector.html?sector=Layer1" class="sector-badge sb-layer1" style="text-decoration:none">⛓ Layer 1</a>
-    <a href="../sector.html?sector=Store of Value" class="sector-badge sb-store" style="text-decoration:none">🪙 Store of Value</a>
+    <a href="../sector.html?sector=Layer1" class="sector-badge sb-layer1" style="text-decoration:none">⛓ Layer1</a>
+    <span class="narrative-text">Store of Value (디지털 금)</span>
   </div>
 
   <!-- KPI STRIP -->
@@ -1565,5 +1571,7 @@ function toggleFaq(el) {
 
 </script>
 
+</body>
+</html>
 </body>
 </html>
