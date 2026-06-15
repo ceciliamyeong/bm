@@ -349,48 +349,53 @@
 
     </div><!-- /chart-section -->
 
-    <!-- 뉴스 사이드바 -->
+    <!-- 사이드바: 기본 정보 -->
     <div class="news-sidebar">
-      <div class="news-header">
-        시바이누 최신 뉴스
-        <a href="https://www.blockmedia.co.kr/tag/%EC%8B%9C%EB%B0%94%EC%9D%B4%EB%88%84" target="_blank">더보기 →</a>
-      </div>
-      <div class="news-list" id="newsList">
-        <div class="news-loading">뉴스 불러오는 중...</div>
-      </div>
-    </div>
-
-  </div><!-- /main-grid -->
-
-
-  <!-- ══ SEO 강화 섹션 ══ -->
-  <div style="max-width:1200px;margin:0 auto;padding:0 1.5rem;">
-
-    <div style="margin-bottom:1.5rem;">
-      <h2 style="font-size:15px;font-weight:700;margin-bottom:14px;color:var(--text);">시바이누(SHIB) 기본 정보</h2>
-      <div class="profile-row"><span class="profile-key">시가총액</span><span class="profile-val" id="cg-mktcap">-</span></div>
-      <div class="profile-row"><span class="profile-key">시총 순위</span><span class="profile-val" id="cg-rank">-</span></div>
-      <div class="profile-row"><span class="profile-key">24H 거래량</span><span class="profile-val" id="cg-vol">-</span></div>
-      <div class="profile-row"><span class="profile-key">유통량</span><span class="profile-val" id="cg-supply">-</span></div>
+      <h2 style="font-size:15px;font-weight:700;margin-bottom:14px;color:var(--text);">기본 정보</h2>
+      <div class="profile-row"><span class="profile-key">시가총액</span><span class="profile-val num" id="cg-mktcap">-</span></div>
+      <div class="profile-row"><span class="profile-key">시총 순위</span><span class="profile-val num" id="cg-rank">-</span></div>
+      <div class="profile-row"><span class="profile-key">24H 거래량</span><span class="profile-val num" id="cg-vol">-</span></div>
+      <div class="profile-row"><span class="profile-key">유통량</span><span class="profile-val num" id="cg-supply">-</span></div>
       <div class="profile-row"><span class="profile-key">최대 공급량</span><span class="profile-val">589.55조 SHIB</span></div>
       <div class="profile-row"><span class="profile-key">홀더 수</span><span class="profile-val">296만+</span></div>
-      <div class="profile-row"><span class="profile-key">역대 최고가 (ATH)</span><span class="profile-val" id="cg-ath">-</span></div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-        <a class="profile-link" href="https://shibatoken.com" target="_blank" rel="noopener">🌐 공식 사이트</a>
+      <div class="profile-row"><span class="profile-key">역대 최고가 (ATH)</span><span class="profile-val num" id="cg-ath">-</span></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);">
+        <a class="profile-link" href="https://shibatoken.com" target="_blank" rel="noopener">🌐 공식</a>
         <a class="profile-link" href="https://woofpaper.shibatoken.com" target="_blank" rel="noopener">📄 WoofPaper</a>
         <a class="profile-link" href="https://etherscan.io/token/0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce" target="_blank" rel="noopener">🔍 Etherscan</a>
-        <a class="profile-link" href="https://shibaswap.com" target="_blank" rel="noopener">🔄 ShibaSwap</a>
       </div>
       <div style="margin-top:10px;">
         <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">국내 거래소</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <a class="exchange-badge" href="https://upbit.com/exchange?code=CRIX.UPBIT.KRW-SHIB" target="_blank" rel="noopener">업비트</a>
           <a class="exchange-badge" href="https://www.bithumb.com/react/trade/order/SHIB-KRW" target="_blank" rel="noopener">빗썸</a>
+        </div>
+      </div>
+      <div style="margin-top:10px;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">해외 거래소</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <a class="exchange-badge" href="https://www.binance.com/trade/SHIB_USDT" target="_blank" rel="noopener">Binance</a>
         </div>
       </div>
-      <div style="font-size:10px;color:var(--text3);margin-top:8px;">Data: <span id="cg-source">CoinPaprika</span></div>
+      <div style="font-size:10px;color:var(--text3);margin-top:8px;">출처: <span id="cg-source">CoinPaprika</span></div>
     </div>
+
+  </div><!-- /main-grid -->
+
+  <!-- 뉴스 섹션 (차트 아래 full-width) -->
+  <div style="max-width:1200px;margin:1.5rem auto 0;padding:0 1.5rem;">
+    <div class="news-header">
+      시바이누 최신 뉴스
+      <a href="https://www.blockmedia.co.kr/tag/%EC%8B%9C%EB%B0%94%EC%9D%B4%EB%88%84" target="_blank">더보기 →</a>
+    </div>
+    <div class="news-list" id="newsList">
+      <div class="news-loading">뉴스 불러오는 중...</div>
+    </div>
+  </div>
+
+
+  <!-- ══ SEO 강화 섹션 ══ -->
+  <div style="max-width:1200px;margin:0 auto;padding:0 1.5rem;">
 
     <div style="margin-bottom:1.5rem;border-top:1px solid var(--border);">
       <h2 style="font-size:14px;font-weight:700;margin:16px 0 4px;">시바이누(SHIB) 자주 묻는 질문 (FAQ)</h2>
