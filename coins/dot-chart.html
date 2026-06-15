@@ -372,35 +372,19 @@
 
     </div><!-- /chart-section -->
 
-    <!-- 뉴스 사이드바 -->
+    <!-- 사이드바: 기본 정보 -->
     <div class="news-sidebar">
-      <div class="news-header">
-        폴카닷 최신 뉴스
-        <a href="https://www.blockmedia.co.kr/tag/%ED%8F%B4%EC%B9%B4%EB%8B%B7" target="_blank">더보기 →</a>
-      </div>
-      <div class="news-list" id="newsList">
-        <div class="news-loading">뉴스 불러오는 중...</div>
-      </div>
-    </div>
-
-  </div><!-- /main-grid -->
-
-
-  <!-- ══ SEO 강화 섹션 ══ -->
-  <div style="max-width:1200px;margin:0 auto;padding:0 1.5rem;">
-
-    <div style="margin-bottom:1.5rem;">
-      <h2 style="font-size:15px;font-weight:700;margin-bottom:14px;color:var(--text);">폴카닷(DOT) 기본 정보</h2>
-      <div class="profile-row"><span class="profile-key">시가총액</span><span class="profile-val" id="cg-mktcap">-</span></div>
-      <div class="profile-row"><span class="profile-key">시총 순위</span><span class="profile-val" id="cg-rank">-</span></div>
-      <div class="profile-row"><span class="profile-key">24H 거래량</span><span class="profile-val" id="cg-vol">-</span></div>
-      <div class="profile-row"><span class="profile-key">유통량</span><span class="profile-val" id="cg-supply">-</span></div>
+      <h2 style="font-size:15px;font-weight:700;margin-bottom:14px;color:var(--text);">기본 정보</h2>
+      <div class="profile-row"><span class="profile-key">시가총액</span><span class="profile-val num" id="cg-mktcap">-</span></div>
+      <div class="profile-row"><span class="profile-key">시총 순위</span><span class="profile-val num" id="cg-rank">-</span></div>
+      <div class="profile-row"><span class="profile-key">24H 거래량</span><span class="profile-val num" id="cg-vol">-</span></div>
+      <div class="profile-row"><span class="profile-key">유통량</span><span class="profile-val num" id="cg-supply">-</span></div>
       <div class="profile-row"><span class="profile-key">최대 공급량</span><span class="profile-val">2,100,000,000 DOT</span></div>
-      <div class="profile-row"><span class="profile-key">역대 최고가 (ATH)</span><span class="profile-val" id="cg-ath">-</span></div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-        <a class="profile-link" href="https://polkadot.network" target="_blank" rel="noopener">🌐 공식 사이트</a>
+      <div class="profile-row"><span class="profile-key">역대 최고가 (ATH)</span><span class="profile-val num" id="cg-ath">-</span></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);">
+        <a class="profile-link" href="https://polkadot.network" target="_blank" rel="noopener">🌐 공식</a>
         <a class="profile-link" href="https://polkadot.network/whitepaper/" target="_blank" rel="noopener">📄 백서</a>
-        <a class="profile-link" href="https://polkadot.subscan.io" target="_blank" rel="noopener">🔍 블록 탐색기</a>
+        <a class="profile-link" href="https://polkadot.subscan.io" target="_blank" rel="noopener">🔍 탐색기</a>
         <a class="profile-link" href="https://github.com/paritytech/polkadot" target="_blank" rel="noopener">💻 GitHub</a>
       </div>
       <div style="margin-top:10px;">
@@ -408,11 +392,33 @@
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <a class="exchange-badge" href="https://upbit.com/exchange?code=CRIX.UPBIT.KRW-DOT" target="_blank" rel="noopener">업비트</a>
           <a class="exchange-badge" href="https://www.bithumb.com/react/trade/order/DOT-KRW" target="_blank" rel="noopener">빗썸</a>
+        </div>
+      </div>
+      <div style="margin-top:10px;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">해외 거래소</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <a class="exchange-badge" href="https://www.binance.com/trade/DOT_USDT" target="_blank" rel="noopener">Binance</a>
         </div>
       </div>
-      <div style="font-size:10px;color:var(--text3);margin-top:8px;">Data: <span id="cg-source">CoinPaprika</span></div>
+      <div style="font-size:10px;color:var(--text3);margin-top:8px;">출처: <span id="cg-source">CoinPaprika</span></div>
     </div>
+
+  </div><!-- /main-grid -->
+
+  <!-- 뉴스 섹션 (차트 아래 full-width) -->
+  <div style="max-width:1200px;margin:1.5rem auto 0;padding:0 1.5rem;">
+    <div class="news-header">
+      폴카닷 최신 뉴스
+      <a href="https://www.blockmedia.co.kr/tag/%ED%8F%B4%EC%B9%B4%EB%8B%B7" target="_blank">더보기 →</a>
+    </div>
+    <div class="news-list" id="newsList">
+      <div class="news-loading">뉴스 불러오는 중...</div>
+    </div>
+  </div>
+
+
+  <!-- ══ SEO 강화 섹션 ══ -->
+  <div style="max-width:1200px;margin:0 auto;padding:0 1.5rem;">
 
     <div style="margin-bottom:1.5rem;border-top:1px solid var(--border);">
       <h2 style="font-size:14px;font-weight:700;margin:16px 0 4px;">폴카닷(DOT) 자주 묻는 질문 (FAQ)</h2>
