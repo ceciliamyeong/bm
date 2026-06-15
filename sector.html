@@ -31,7 +31,7 @@
   <script type="application/ld+json" id="jsonLd">{}</script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -58,7 +58,7 @@
     .sector-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 2rem; }
     .sector-tab {
       padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600;
-      font-family: 'JetBrains Mono', monospace; border: 1px solid var(--border2);
+      font-family: Arial, sans-serif; border: 1px solid var(--border2);
       background: #ffffff; color: var(--text2); cursor: pointer;
       text-decoration: none; transition: all 0.15s; white-space: nowrap;
     }
@@ -76,33 +76,33 @@
     }
     .coin-card:hover { border-color: var(--border2); box-shadow: 0 4px 20px rgba(0,0,0,0.07); transform: translateY(-1px); }
     .coin-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-    .coin-dot { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; }
+    .coin-dot { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0; font-family: Arial, sans-serif; }
     .coin-card-name { font-size: 15px; font-weight: 700; }
-    .coin-card-ticker { font-size: 11px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
-    .coin-card-price { font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace; letter-spacing: -0.03em; margin-bottom: 4px; }
-    .coin-card-chg { font-size: 12px; font-family: 'JetBrains Mono', monospace; font-weight: 600; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 10px; }
+    .coin-card-ticker { font-size: 11px; color: var(--text3); font-family: Arial, sans-serif; }
+    .coin-card-price { font-size: 20px; font-weight: 700; font-family: Arial, sans-serif; letter-spacing: -0.03em; margin-bottom: 4px; }
+    .coin-card-chg { font-size: 12px; font-family: Arial, sans-serif; font-weight: 600; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 10px; }
     .coin-card-chg.up { background: var(--up-bg); color: var(--up); }
     .coin-card-chg.down { background: var(--down-bg); color: var(--down); }
     .coin-card-meta { display: flex; gap: 0; border-top: 0.5px solid var(--border); padding-top: 10px; }
     .coin-meta-item { flex: 1; }
     .coin-meta-item + .coin-meta-item { border-left: 0.5px solid var(--border); padding-left: 10px; }
-    .coin-meta-label { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
-    .coin-meta-value { font-size: 12px; font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+    .coin-meta-label { font-size: 10px; font-family: Arial, sans-serif; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+    .coin-meta-value { font-size: 12px; font-family: Arial, sans-serif; font-weight: 600; }
     .coin-meta-value.up { color: var(--up); }
     .coin-meta-value.down { color: var(--down); }
     .coin-sectors { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 10px; }
-    .coin-sector-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--border); color: var(--text2); font-family: 'JetBrains Mono', monospace; }
+    .coin-sector-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--border); color: var(--text2); font-family: Arial, sans-serif; }
     .coin-sector-badge.current { background: var(--text); color: #ffffff; border-color: var(--text); }
-    .etf-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; background: rgba(15,110,86,0.08); border: 1px solid rgba(15,110,86,0.25); color: var(--accent); font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+    .etf-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; background: rgba(15,110,86,0.08); border: 1px solid rgba(15,110,86,0.25); color: var(--accent); font-family: Arial, sans-serif; font-weight: 600; }
 
-    .loading-msg { text-align: center; color: var(--text3); font-family: 'JetBrains Mono', monospace; font-size: 13px; padding: 3rem; }
+    .loading-msg { text-align: center; color: var(--text3); font-family: Arial, sans-serif; font-size: 13px; padding: 3rem; }
 
     /* ── SEO 텍스트 섹션 ── */
     .seo-section { margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); }
     .seo-section h2 { font-size: 15px; font-weight: 700; margin-bottom: 0.75rem; color: var(--text); }
     .seo-section p { font-size: 13px; color: var(--text2); line-height: 1.9; margin-bottom: 0.75rem; }
 
-    footer { border-top: 0.5px solid var(--border); padding: 1.5rem; text-align: center; font-size: 12px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+    footer { border-top: 0.5px solid var(--border); padding: 1.5rem; text-align: center; font-size: 12px; color: var(--text3); font-family: Arial, sans-serif; }
   </style>
 </head>
 <body>
