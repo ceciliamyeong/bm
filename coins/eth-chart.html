@@ -239,6 +239,12 @@
   .sector-label { font-size: 10px; font-family: Arial, sans-serif; font-variant-numeric: tabular-nums; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; margin-right: 2px; }
   .sector-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: Arial, sans-serif; font-variant-numeric: tabular-nums; border: 1px solid; letter-spacing: 0.02em; transition: opacity 0.15s; text-decoration: none; }
   .sector-badge:hover { opacity: 0.75; cursor: pointer; }
+  .narrative-text {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: "Noto Sans KR", system-ui, sans-serif;
+    padding-left: 2px;
+  }
   .sb-layer1    { background: rgba(37,99,235,0.08);   border-color: rgba(37,99,235,0.3);   color: #2563eb; }
   .sb-store     { background: rgba(247,147,26,0.1);   border-color: rgba(247,147,26,0.35);  color: #b45309; }
   .sb-defi      { background: rgba(139,92,246,0.08);  border-color: rgba(139,92,246,0.3);   color: #7c3aed; }
@@ -658,8 +664,8 @@
 
   <!-- SECTOR BADGES -->
   <div class="sector-row">
-    <a href="../sector.html?sector=Layer1" class="sector-badge sb-layer1" style="text-decoration:none">⛓ Layer 1</a>
-    <a href="../sector.html?sector=Smart Contract" class="sector-badge sb-smart" style="text-decoration:none">📜 Smart Contract</a>
+    <a href="../sector.html?sector=Layer1" class="sector-badge sb-layer1" style="text-decoration:none">⛓ Layer1</a>
+    <span class="narrative-text">The First Smart Contract Platform</span>
   </div>
 
   <!-- KPI STRIP -->
@@ -962,6 +968,10 @@ async function fetchPrice() {
       const d = await upbitR.value.json();
       krwPrice = d[0]?.trade_price || 0;
     }
+    // Upbit 실패 시 Binance USD × 실시간 환율로 fallback
+    if (!krwPrice && usdPrice > 0 && cachedUsdKrw > 0) {
+      krwPrice = usdPrice * cachedUsdKrw;
+    }
     document.getElementById('coinPrice').textContent = '$' + Math.round(usdPrice).toLocaleString();
     const chgEl = document.getElementById('coinChange');
     chgEl.textContent = (chgPct >= 0 ? '+' : '') + chgPct.toFixed(2) + '%';
@@ -1226,7 +1236,7 @@ document.querySelectorAll('.period-btn').forEach(btn => {
 });
 
 // ── INIT ─────────────────────────────────────────────────────
-Promise.all([fetchUsdKrw(), fetchPrice()]);
+fetchUsdKrw().then(() => fetchPrice());
 loadChart('1m', 360, 1);
 fetchNews();
 loadEtfFlow();
