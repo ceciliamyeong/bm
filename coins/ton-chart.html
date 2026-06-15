@@ -163,6 +163,12 @@
   .sector-row { display: flex; align-items: center; gap: 6px; margin-bottom: 1rem; flex-wrap: wrap; }
   .sector-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: Arial, sans-serif; border: 1px solid; letter-spacing: 0.02em; transition: opacity 0.15s; text-decoration: none; }
   .sector-badge:hover { opacity: 0.75; cursor: default; }
+  .narrative-text {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: "Noto Sans KR", system-ui, sans-serif;
+    padding-left: 2px;
+  }
   .sb-social { background: rgba(0,136,204,0.08); border-color: rgba(0,136,204,0.3); color: #0088cc; }
 
   .kpi-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.25rem; }
@@ -270,6 +276,7 @@
   <!-- SECTOR BADGE -->
   <div class="sector-row">
     <a href="../sector.html?sector=Social" class="sector-badge sb-social">💬 Social</a>
+    <span class="narrative-text">Telegram-Native</span>
   </div>
 
   <!-- KPI STRIP — 업비트 없으므로 김치 프리미엄 제거, 4칸 -->
