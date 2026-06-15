@@ -112,24 +112,25 @@
     --down: #e03131;
     --down-bg: rgba(224,49,49,.08);
     --r: 10px;
-    --shadow: none;
+    --shadow: 0 4px 16px rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.2);
   }
 
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #111214;
-      --bg2: #1a1c1f;
-      --bg3: #222426;
-      --card: #1a1c1f;
-      --text: #e8e8e8;
-      --text2: #aaaaaa;
-      --text3: #666666;
-      --border: rgba(255,255,255,0.08);
-      --border2: rgba(255,255,255,0.15);
-      --accent: #5ba3e8;
-      --main: #5ba3e8;
-      --main-rgb: 91,163,232;
-      --shadow: none;
+      --bg: #151515;
+      --bg2: #000000;
+      --bg3: #111111;
+      --card: #000000;
+      --text: #f0f0f0;
+      --text2: #d1d1d1;
+      --text3: #999999;
+      --border: #333333;
+      --border2: #555555;
+      --accent: #337abd;
+      --main: #337abd;
+      --main-rgb: 51,122,189;
+      --main-dark: #1e4d78;
+      --shadow: 0 4px 16px rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.2);
       --up: #4caf82;
       --up-bg: rgba(76,175,130,.12);
       --down: #e05555;
@@ -211,6 +212,12 @@
   .sector-label { font-size: 10px; font-family: Arial, sans-serif; font-variant-numeric: tabular-nums; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; margin-right: 2px; }
   .sector-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: Arial, sans-serif; font-variant-numeric: tabular-nums; border: 1px solid; letter-spacing: 0.02em; transition: opacity 0.15s; text-decoration: none; }
   .sector-badge:hover { opacity: 0.75; cursor: default; }
+  .narrative-text {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: "Noto Sans KR", system-ui, sans-serif;
+    padding-left: 2px;
+  }
   .sb-layer1   { background: rgba(37,99,235,0.08);   border-color: rgba(37,99,235,0.3);   color: #2563eb; }
   .sb-smart    { background: rgba(98,126,234,0.1);   border-color: rgba(98,126,234,0.35);  color: #4f6fd4; }
   .sb-defi     { background: rgba(139,92,246,0.08);  border-color: rgba(139,92,246,0.3);   color: #7c3aed; }
@@ -599,7 +606,7 @@
 
   <!-- COIN HEADER -->
   <div class="coin-header">
-    <div class="coin-icon">✦</div>
+    <div class="coin-icon" style="background:none !important; padding:0; overflow:hidden;"><img src="data:image/png;base64,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" width="36" height="36" style="border-radius:50%;object-fit:cover;display:block;" alt="XLM"></div>
     <div>
       <h1 class="coin-title" style="display:inline;font-size:inherit;font-weight:inherit;">스텔라루멘</h1>
       <span class="coin-symbol">XLM</span>
@@ -613,6 +620,7 @@
   <!-- SECTOR BADGES -->
   <div class="sector-row">
     <a href="../sector.html?sector=Payments" class="sector-badge sb-payments">💸 Payments</a>
+    <span class="narrative-text">Remittance / RWA Rails</span>
   </div>
 
   <!-- KPI STRIP -->
@@ -768,7 +776,7 @@ const C = {
   text:    isDark ? '#666564' : '#9a9894',
   up:      '#3B6D11',
   down:    '#A32D2D',
-  line:    isDark ? '#5ba3e8' : '#337abd',
+  line:    '#337abd',
   fillTop: isDark ? 'rgba(29,158,117,0.18)' : 'rgba(15,110,86,0.10)',
   fillBot: 'rgba(0,0,0,0)',
 };
@@ -813,6 +821,10 @@ async function fetchPrice() {
     if (upbitR.status === 'fulfilled') {
       const d = await upbitR.value.json();
       krwPrice = d[0]?.trade_price || 0;
+    }
+    // Upbit 실패 시 Binance USD × 실시간 환율로 fallback
+    if (!krwPrice && usdPrice > 0 && cachedUsdKrw > 0) {
+      krwPrice = usdPrice * cachedUsdKrw;
     }
     document.getElementById('coinPrice').textContent = '$' + usdPrice.toFixed(4);
     const chgEl = document.getElementById('coinChange');
@@ -876,7 +888,7 @@ function initChart() {
   const wrap = document.getElementById('lwChart');
   lwChart = LightweightCharts.createChart(wrap, {
     width: wrap.clientWidth, height: wrap.clientHeight || 360,
-    layout: { background: { color: C.bg }, textColor: C.text, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 },
+    layout: { background: { color: C.bg }, textColor: C.text, fontFamily: "Arial, sans-serif", fontSize: 11 },
     grid: { vertLines: { color: C.grid }, horzLines: { color: C.grid } },
     crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
     rightPriceScale: { borderColor: C.border },
@@ -971,7 +983,7 @@ async function fetchNews() {
 ;
 
 // ── INIT ─────────────────────────────────────────────────────
-Promise.all([fetchUsdKrw(), fetchPrice()]);
+fetchUsdKrw().then(() => fetchPrice());
 loadChart('1m', 360, 1);
 fetchNews();
 
