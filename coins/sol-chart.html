@@ -650,8 +650,8 @@
 
   <!-- SECTOR BADGES -->
   <div class="sector-row">
-    <a href="../sector.html?sector=Layer1" class="sector-badge sb-layer1">⛓ Layer 1</a>
-    <a href="../sector.html?sector=Smart Contract" class="sector-badge sb-smart">📜 Smart Contract</a>
+    <a href="../sector.html?sector=Layer1" class="sector-badge sb-layer1">⛓ Layer1</a>
+    <span class="narrative-text">High-Performance L1</span>
   </div>
   <!-- KPI STRIP -->
   <div class="kpi-strip">
@@ -951,6 +951,10 @@ async function fetchPrice() {
       const d = await upbitR.value.json();
       krwPrice = d[0]?.trade_price || 0;
     }
+    // Upbit 실패 시 Binance USD × 실시간 환율로 fallback
+    if (!krwPrice && usdPrice > 0 && cachedUsdKrw > 0) {
+      krwPrice = usdPrice * cachedUsdKrw;
+    }
     document.getElementById('coinPrice').textContent = '$' + Math.round(usdPrice).toLocaleString();
     const chgEl = document.getElementById('coinChange');
     chgEl.textContent = (chgPct >= 0 ? '+' : '') + chgPct.toFixed(2) + '%';
@@ -1215,7 +1219,7 @@ document.querySelectorAll('.period-btn').forEach(btn => {
 });
 
 // ── INIT ─────────────────────────────────────────────────────
-Promise.all([fetchUsdKrw(), fetchPrice()]);
+fetchUsdKrw().then(() => fetchPrice());
 loadChart('1m', 360, 1);
 fetchNews();
 loadEtfFlow();
