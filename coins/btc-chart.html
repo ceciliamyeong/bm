@@ -1217,6 +1217,10 @@ async function fetchPrice() {
       const d = await upbitR.value.json();
       krwPrice = d[0]?.trade_price || 0;
     }
+    // Upbit 실패 시 Binance USD × 실시간 환율로 fallback
+    if (!krwPrice && usdPrice > 0 && cachedUsdKrw > 0) {
+      krwPrice = usdPrice * cachedUsdKrw;
+    }
     document.getElementById('coinPrice').textContent = '$' + Math.round(usdPrice).toLocaleString();
     const chgEl = document.getElementById('coinChange');
     chgEl.textContent = (chgPct >= 0 ? '+' : '') + chgPct.toFixed(2) + '%';
@@ -1472,7 +1476,7 @@ document.querySelectorAll('.period-btn').forEach(btn => {
 });
 
 // ── INIT ─────────────────────────────────────────────────────
-Promise.all([fetchUsdKrw(), fetchPrice()]);
+fetchUsdKrw().then(() => fetchPrice());
 loadChart('1m', 360, 1);
 fetchNews();
 loadEtfFlow();
@@ -1571,7 +1575,5 @@ function toggleFaq(el) {
 
 </script>
 
-</body>
-</html>
 </body>
 </html>
