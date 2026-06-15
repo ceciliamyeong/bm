@@ -112,24 +112,25 @@
     --down: #e03131;
     --down-bg: rgba(224,49,49,.08);
     --r: 10px;
-    --shadow: none;
+    --shadow: 0 4px 16px rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.2);
   }
 
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #111214;
-      --bg2: #1a1c1f;
-      --bg3: #222426;
-      --card: #1a1c1f;
-      --text: #e8e8e8;
-      --text2: #aaaaaa;
-      --text3: #666666;
-      --border: rgba(255,255,255,0.08);
-      --border2: rgba(255,255,255,0.15);
-      --accent: #5ba3e8;
-      --main: #5ba3e8;
-      --main-rgb: 91,163,232;
-      --shadow: none;
+      --bg: #151515;
+      --bg2: #000000;
+      --bg3: #111111;
+      --card: #000000;
+      --text: #f0f0f0;
+      --text2: #d1d1d1;
+      --text3: #999999;
+      --border: #333333;
+      --border2: #555555;
+      --accent: #337abd;
+      --main: #337abd;
+      --main-rgb: 51,122,189;
+      --main-dark: #1e4d78;
+      --shadow: 0 4px 16px rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.2);
       --up: #4caf82;
       --up-bg: rgba(76,175,130,.12);
       --down: #e05555;
@@ -643,11 +644,7 @@
 
   <!-- COIN HEADER -->
   <div class="coin-header">
-    <div class="coin-icon">
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M3 5h14v2.5L8.5 13H17v2H3v-2.5L11.5 7H3V5z" fill="white"/>
-      </svg>
-    </div>
+    <div class="coin-icon" style="background:none !important; padding:0; overflow:hidden;"><img src="data:image/png;base64,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" width="36" height="36" style="border-radius:50%;object-fit:cover;display:block;" alt="ZEC"></div>
     <div>
       <h1 class="coin-title" style="display:inline;font-size:inherit;font-weight:inherit;">지캐시</h1>
       <span class="coin-symbol">ZEC</span>
@@ -661,6 +658,7 @@
   <!-- SECTOR BADGES -->
   <div class="sector-row">
     <a href="../sector.html?sector=Privacy" class="sector-badge sb-privacy">🔒 Privacy</a>
+    <span class="narrative-text">Privacy Coin</span>
   </div>
   <!-- KPI STRIP -->
   <div class="kpi-strip">
@@ -788,35 +786,7 @@
         </div>
       </div>
 
-      <!-- ── ZEC 프라이버시 & 네트워크 지표 ── -->
-      <div class="etf-section">
-        <div class="etf-header">
-          <span class="etf-title">🔒 프라이버시 & 네트워크 지표</span>
-          <span class="etf-source">DATA: Blockchair</span>
-        </div>
-        <div class="etf-kpi-row">
-          <div class="etf-kpi-cell">
-            <div class="etf-kpi-label">해시레이트 (24H 평균)</div>
-            <div class="etf-kpi-value" id="netHashrate">—</div>
-            <div class="etf-kpi-date">Sol/s</div>
-          </div>
-          <div class="etf-kpi-cell">
-            <div class="etf-kpi-label">채굴 난이도</div>
-            <div class="etf-kpi-value" id="netDifficulty">—</div>
-            <div class="etf-kpi-date"></div>
-          </div>
-          <div class="etf-kpi-cell">
-            <div class="etf-kpi-label">24H 트랜잭션</div>
-            <div class="etf-kpi-value" id="netTxCount">—</div>
-            <div class="etf-kpi-date"></div>
-          </div>
-          <div class="etf-kpi-cell">
-            <div class="etf-kpi-label">총 발행량</div>
-            <div class="etf-kpi-value" id="netSupply">—</div>
-            <div class="etf-kpi-date">최대 21M ZEC</div>
-          </div>
-        </div>
-      </div>
+
     </div>
 
     <!-- 뉴스 사이드바 -->
@@ -1006,7 +976,7 @@ function initChart() {
   const wrap = document.getElementById('lwChart');
   lwChart = LightweightCharts.createChart(wrap, {
     width: wrap.clientWidth, height: wrap.clientHeight || 360,
-    layout: { background: { color: C.bg }, textColor: C.text, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 },
+    layout: { background: { color: C.bg }, textColor: C.text, fontFamily: "Arial, sans-serif", fontSize: 11 },
     grid: { vertLines: { color: C.grid }, horzLines: { color: C.grid } },
     crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
     rightPriceScale: { borderColor: C.border },
@@ -1158,8 +1128,8 @@ async function loadEtfFlow() {
         indexAxis: 'y', responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + fmtVol(ctx.parsed.x) } } },
         scales: {
-          x: { grid: { color: C.grid }, ticks: { font: { family: "'JetBrains Mono', monospace", size: 10 }, color: C.text, callback: v => fmtVol(v) } },
-          y: { grid: { color: 'transparent' }, ticks: { font: { family: "'JetBrains Mono', monospace", size: 11 }, color: C.text } },
+          x: { grid: { color: C.grid }, ticks: { font: { family: "Arial, sans-serif", size: 10 }, color: C.text, callback: v => fmtVol(v) } },
+          y: { grid: { color: 'transparent' }, ticks: { font: { family: "Arial, sans-serif", size: 11 }, color: C.text } },
         },
       },
     });
