@@ -231,7 +231,13 @@
   .sector-row { display: flex; align-items: center; gap: 6px; margin-bottom: 1rem; flex-wrap: wrap; }
   .sector-label { font-size: 10px; font-family: Arial, sans-serif; font-variant-numeric: tabular-nums; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; margin-right: 2px; }
   .sector-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: Arial, sans-serif; font-variant-numeric: tabular-nums; border: 1px solid; letter-spacing: 0.02em; transition: opacity 0.15s; text-decoration: none; }
-  .sector-badge:hover { opacity: 0.75; cursor: pointer; }
+  .sector-badge:hover { opacity: 0.75; cursor: default; }
+  .narrative-text {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: "Noto Sans KR", system-ui, sans-serif;
+    padding-left: 2px;
+  }
   .sb-layer1   { background: rgba(37,99,235,0.08);  border-color: rgba(37,99,235,0.3);   color: #2563eb; }
   .sb-payments { background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.3);  color: #059669; }
   .sb-privacy  { background: rgba(234,179,8,0.08);  border-color: rgba(234,179,8,0.3);   color: #92400e; }
@@ -664,12 +670,7 @@
 
   <!-- COIN HEADER -->
   <div class="coin-header">
-    <div class="coin-icon">
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M15.5 2H18L12.5 7.5C11.12 8.88 8.88 8.88 7.5 7.5L2 2H4.5L8.64 6.14C9.39 6.89 10.61 6.89 11.36 6.14L15.5 2Z" fill="white"/>
-        <path d="M4.5 18H2L7.5 12.5C8.88 11.12 11.12 11.12 12.5 12.5L18 18H15.5L11.36 13.86C10.61 13.11 9.39 13.11 8.64 13.86L4.5 18Z" fill="white"/>
-      </svg>
-    </div>
+    <div class="coin-icon" style="background:none !important; padding:0; overflow:hidden;"><img src="data:image/png;base64,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" width="36" height="36" style="border-radius:50%;object-fit:cover;display:block;" alt="XRP"></div>
     <div>
       <h1 class="coin-title" style="display:inline;font-size:inherit;font-weight:inherit;">엑스알피</h1>
       <span class="coin-symbol">XRP</span>
@@ -682,8 +683,8 @@
 
   <!-- SECTOR BADGES -->
   <div class="sector-row">
-    <a href="../sector.html?sector=Layer1" class="sector-badge sb-layer1">⛓ Layer 1</a>
     <a href="../sector.html?sector=Payments" class="sector-badge sb-payments">💸 Payments</a>
+    <span class="narrative-text">Cross-Border Payments Infra</span>
   </div>
   <!-- KPI STRIP -->
   <div class="kpi-strip">
