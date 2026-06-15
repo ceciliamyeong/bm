@@ -112,24 +112,25 @@
     --down: #e03131;
     --down-bg: rgba(224,49,49,.08);
     --r: 10px;
-    --shadow: none;
+    --shadow: 0 4px 16px rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.2);
   }
 
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #111214;
-      --bg2: #1a1c1f;
-      --bg3: #222426;
-      --card: #1a1c1f;
-      --text: #e8e8e8;
-      --text2: #aaaaaa;
-      --text3: #666666;
-      --border: rgba(255,255,255,0.08);
-      --border2: rgba(255,255,255,0.15);
-      --accent: #5ba3e8;
-      --main: #5ba3e8;
-      --main-rgb: 91,163,232;
-      --shadow: none;
+      --bg: #151515;
+      --bg2: #000000;
+      --bg3: #111111;
+      --card: #000000;
+      --text: #f0f0f0;
+      --text2: #d1d1d1;
+      --text3: #999999;
+      --border: #333333;
+      --border2: #555555;
+      --accent: #337abd;
+      --main: #337abd;
+      --main-rgb: 51,122,189;
+      --main-dark: #1e4d78;
+      --shadow: 0 4px 16px rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.2);
       --up: #4caf82;
       --up-bg: rgba(76,175,130,.12);
       --down: #e05555;
@@ -211,6 +212,12 @@
   .sector-label { font-size: 10px; font-family: Arial, sans-serif; font-variant-numeric: tabular-nums; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; margin-right: 2px; }
   .sector-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: Arial, sans-serif; font-variant-numeric: tabular-nums; border: 1px solid; letter-spacing: 0.02em; transition: opacity 0.15s; text-decoration: none; }
   .sector-badge:hover { opacity: 0.75; cursor: default; }
+  .narrative-text {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: "Noto Sans KR", system-ui, sans-serif;
+    padding-left: 2px;
+  }
   .sb-meme     { background: rgba(234,179,8,0.1);   border-color: rgba(234,179,8,0.35);  color: #a16207; }
   .sb-payments { background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.3);  color: #059669; }
   /* ── KPI STRIP ── */
@@ -596,7 +603,7 @@
 
   <!-- COIN HEADER -->
   <div class="coin-header">
-    <div class="coin-icon">🐕</div>
+    <div class="coin-icon" style="background:#c2a33e !important; font-size:20px;">🐕</div>
     <div>
       <h1 class="coin-title" style="display:inline;font-size:inherit;font-weight:inherit;">도지코인</h1>
       <span class="coin-symbol">DOGE</span>
@@ -610,6 +617,7 @@
   <!-- SECTOR BADGES -->
   <div class="sector-row">
     <a href="../sector.html?sector=Meme" class="sector-badge sb-meme" style="text-decoration:none">🐕 Meme</a>
+    <span class="narrative-text">OG Meme</span>
   </div>
 
   <!-- KPI STRIP -->
@@ -793,7 +801,7 @@ const C = {
   text:    isDark ? '#666564' : '#9a9894',
   up:      '#3B6D11',
   down:    '#A32D2D',
-  line:    isDark ? '#5ba3e8' : '#337abd',
+  line:    '#337abd',
   fillTop: isDark ? 'rgba(29,158,117,0.18)' : 'rgba(15,110,86,0.10)',
   fillBot: 'rgba(0,0,0,0)',
 };
@@ -838,6 +846,10 @@ async function fetchPrice() {
     if (upbitR.status === 'fulfilled') {
       const d = await upbitR.value.json();
       krwPrice = d[0]?.trade_price || 0;
+    }
+    // Upbit 실패 시 Binance USD × 실시간 환율로 fallback
+    if (!krwPrice && usdPrice > 0 && cachedUsdKrw > 0) {
+      krwPrice = usdPrice * cachedUsdKrw;
     }
     document.getElementById('coinPrice').textContent = usdPrice.toFixed(4);
     const chgEl = document.getElementById('coinChange');
@@ -901,7 +913,7 @@ function initChart() {
   const wrap = document.getElementById('lwChart');
   lwChart = LightweightCharts.createChart(wrap, {
     width: wrap.clientWidth, height: wrap.clientHeight || 360,
-    layout: { background: { color: C.bg }, textColor: C.text, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 },
+    layout: { background: { color: C.bg }, textColor: C.text, fontFamily: "Arial, sans-serif", fontSize: 11 },
     grid: { vertLines: { color: C.grid }, horzLines: { color: C.grid } },
     crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
     rightPriceScale: { borderColor: C.border },
@@ -1071,12 +1083,12 @@ async function loadEtfFlow() {
           scales: {
             x: {
               grid: { color: C.grid },
-              ticks: { font: { family: "'JetBrains Mono', monospace", size: 10 }, color: C.text, maxRotation: 0, maxTicksLimit: 10 },
+              ticks: { font: { family: "Arial, sans-serif", size: 10 }, color: C.text, maxRotation: 0, maxTicksLimit: 10 },
             },
             y: {
               grid: { color: C.grid },
               ticks: {
-                font: { family: "'JetBrains Mono', monospace", size: 10 },
+                font: { family: "Arial, sans-serif", size: 10 },
                 color: C.text,
                 callback: v => (v >= 0 ? '+' : '') + '$' + v + 'M',
               },
@@ -1103,7 +1115,7 @@ document.querySelectorAll('.period-btn').forEach(btn => {
 });
 
 // ── INIT ─────────────────────────────────────────────────────
-Promise.all([fetchUsdKrw(), fetchPrice()]);
+fetchUsdKrw().then(() => fetchPrice());
 loadChart('1m', 360, 1);
 fetchNews();
 loadEtfFlow();
