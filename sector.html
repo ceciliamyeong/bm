@@ -290,8 +290,8 @@ function renderSeoSection(sector, coins) {
 // ── 가격 fetch (Binance / MEXC / Bybit) ──────────────────
 async function fetchPrices(tickers) {
   const stables    = new Set(['USDT','USDC']);
-  const MEXC_ONLY  = new Set(['CC']);
-  const BYBIT_ONLY = new Set(['HYPE']);
+  const MEXC_ONLY  = new Set([]);
+  const BYBIT_ONLY = new Set(['HYPE', 'CC']);
 
   const toFetch      = tickers.filter(t => !stables.has(t) && !MEXC_ONLY.has(t) && !BYBIT_ONLY.has(t) && !priceCache[t]);
   const toFetchMexc  = tickers.filter(t => MEXC_ONLY.has(t)  && !priceCache[t]);
