@@ -107,24 +107,25 @@
     --down: #e03131;
     --down-bg: rgba(224,49,49,.08);
     --r: 10px;
-    --shadow: none;
+    --shadow: 0 4px 16px rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.2);
   }
 
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #111214;
-      --bg2: #1a1c1f;
-      --bg3: #222426;
-      --card: #1a1c1f;
-      --text: #e8e8e8;
-      --text2: #aaaaaa;
-      --text3: #666666;
-      --border: rgba(255,255,255,0.08);
-      --border2: rgba(255,255,255,0.15);
-      --accent: #5ba3e8;
-      --main: #5ba3e8;
-      --main-rgb: 91,163,232;
-      --shadow: none;
+      --bg: #151515;
+      --bg2: #000000;
+      --bg3: #111111;
+      --card: #000000;
+      --text: #f0f0f0;
+      --text2: #d1d1d1;
+      --text3: #999999;
+      --border: #333333;
+      --border2: #555555;
+      --accent: #337abd;
+      --main: #337abd;
+      --main-rgb: 51,122,189;
+      --main-dark: #1e4d78;
+      --shadow: 0 4px 16px rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.2);
       --up: #4caf82;
       --up-bg: rgba(76,175,130,.12);
       --down: #e05555;
@@ -536,6 +537,7 @@
   <!-- SECTOR BADGES -->
   <div class="sector-row">
     <a href="../sector.html?sector=Stablecoin" class="sector-badge sb-stable">💵 Stablecoin</a>
+    <span class="narrative-text">Stablecoin</span>
   </div>
   <!-- KPI STRIP -->
   <div class="kpi-strip">
@@ -693,7 +695,7 @@ const C = {
   text:    isDark ? '#666564' : '#9a9894',
   up:      '#3B6D11',
   down:    '#A32D2D',
-  line:    isDark ? '#5ba3e8' : '#337abd',
+  line:    '#337abd',
   fillTop: isDark ? 'rgba(29,158,117,0.18)' : 'rgba(15,110,86,0.10)',
   fillBot: 'rgba(0,0,0,0)',
 };
@@ -803,7 +805,7 @@ function initChart() {
   const wrap = document.getElementById('lwChart');
   lwChart = LightweightCharts.createChart(wrap, {
     width: wrap.clientWidth, height: wrap.clientHeight || 360,
-    layout: { background: { color: C.bg }, textColor: C.text, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 },
+    layout: { background: { color: C.bg }, textColor: C.text, fontFamily: "Arial, sans-serif", fontSize: 11 },
     grid: { vertLines: { color: C.grid }, horzLines: { color: C.grid } },
     crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
     rightPriceScale: { borderColor: C.border },
