@@ -622,40 +622,24 @@
 
     </div>
 
-    <!-- 뉴스 사이드바 -->
+    <!-- 사이드바: 기본 정보 -->
     <div class="news-sidebar">
-      <div class="news-header">
-        테더 최신 뉴스
-        <a href="https://www.blockmedia.co.kr/tag/usdt" target="_blank">더보기 →</a>
-      </div>
-      <div class="news-list" id="newsList">
-        <div class="news-loading">뉴스 불러오는 중...</div>
-      </div>
-    </div>
-
-  </div>
-
-
-  <!-- ══ SEO 강화 섹션 ══ -->
-  <div style="max-width:1200px;margin:0 auto;padding:0 1.5rem;">
-
-    <div style="margin-bottom:1.5rem;">
-      <h2 style="font-size:15px;font-weight:700;margin-bottom:14px;color:var(--text);">테더(USDT) 기본 정보</h2>
+      <h2 style="font-size:15px;font-weight:700;margin-bottom:14px;color:var(--text);">기본 정보</h2>
       <div class="profile-row"><span class="profile-key">발행사</span><span class="profile-val">Tether Limited</span></div>
-      <div class="profile-row"><span class="profile-key">설립자</span><span class="profile-val">Brock Pierce, Reeve Collins, Craig Sellars</span></div>
+      <div class="profile-row"><span class="profile-key">설립자</span><span class="profile-val" style="font-size:11px;text-align:right;">Brock Pierce, Reeve Collins, Craig Sellars</span></div>
       <div class="profile-row"><span class="profile-key">출시일</span><span class="profile-val">2014년 (구 Realcoin)</span></div>
       <div class="profile-row"><span class="profile-key">시가총액</span><span class="profile-val num" id="cg-mktcap">-</span></div>
       <div class="profile-row"><span class="profile-key">시총 순위</span><span class="profile-val num" id="cg-rank">-</span></div>
       <div class="profile-row"><span class="profile-key">24H 거래량</span><span class="profile-val num" id="cg-vol">-</span></div>
-      <div class="profile-row"><span class="profile-key">거래량/시총 비율</span><span class="profile-val num" id="cg-vol-mktcap">-</span></div>
+      <div class="profile-row"><span class="profile-key">거래량/시총</span><span class="profile-val num" id="cg-vol-mktcap">-</span></div>
       <div class="profile-row"><span class="profile-key">유통 공급량</span><span class="profile-val num" id="cg-supply">-</span></div>
-      <div class="profile-row"><span class="profile-key">최대 공급량</span><span class="profile-val">무제한 (수요에 따라 발행)</span></div>
-      <div class="profile-row"><span class="profile-key">페그</span><span class="profile-val">1 USDT = $1.00 USD</span></div>
-      <div class="profile-row"><span class="profile-key">발행 블록체인</span><span class="profile-val">Ethereum · Tron · Solana · Avalanche 외</span></div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-        <a class="profile-link" href="https://tether.to" target="_blank" rel="noopener">🌐 공식 사이트</a>
-        <a class="profile-link" href="https://tether.to/en/transparency" target="_blank" rel="noopener">📊 준비금 현황</a>
-        <a class="profile-link" href="https://etherscan.io/token/0xdac17f958d2ee523a2206206994597c13d831ec7" target="_blank" rel="noopener">🔍 블록 탐색기</a>
+      <div class="profile-row"><span class="profile-key">최대 공급량</span><span class="profile-val" style="font-size:11px;">무제한 (수요에 따라)</span></div>
+      <div class="profile-row"><span class="profile-key">페그</span><span class="profile-val num">1 USDT = $1.00</span></div>
+      <div class="profile-row"><span class="profile-key">발행 체인</span><span class="profile-val" style="font-size:11px;text-align:right;">ETH · Tron · SOL 외</span></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);">
+        <a class="profile-link" href="https://tether.to" target="_blank" rel="noopener">🌐 공식</a>
+        <a class="profile-link" href="https://tether.to/en/transparency" target="_blank" rel="noopener">📊 준비금</a>
+        <a class="profile-link" href="https://etherscan.io/token/0xdac17f958d2ee523a2206206994597c13d831ec7" target="_blank" rel="noopener">🔍 탐색기</a>
       </div>
       <div style="margin-top:10px;">
         <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">국내 거래소</div>
@@ -673,6 +657,22 @@
       </div>
       <div style="font-size:10px;color:var(--text3);margin-top:8px;">출처: <span id="cg-source">CoinPaprika</span></div>
     </div>
+
+  </div>
+
+  <!-- 뉴스 섹션 (차트 아래 full-width) -->
+  <div style="max-width:1200px;margin:1.5rem auto 0;padding:0 1.5rem;">
+    <div class="news-header">
+      테더 최신 뉴스
+      <a href="https://www.blockmedia.co.kr/tag/usdt" target="_blank">더보기 →</a>
+    </div>
+    <div class="news-list" id="newsList">
+      <div class="news-loading">뉴스 불러오는 중...</div>
+    </div>
+  </div>
+
+  <!-- ══ SEO 강화 섹션 ══ -->
+  <div style="max-width:1200px;margin:0 auto;padding:0 1.5rem;">
 
     <div style="margin-bottom:1.5rem;border-top:1px solid var(--border);">
       <h2 style="font-size:14px;font-weight:700;margin:16px 0 4px;">테더(USDT) 자주 묻는 질문 (FAQ)</h2>
