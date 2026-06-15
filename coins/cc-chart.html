@@ -113,10 +113,10 @@
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #111214; --bg2: #1a1c1f; --bg3: #222426; --card: #1a1c1f;
-      --text: #e8e8e8; --text2: #aaaaaa; --text3: #666666;
-      --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.15);
-      --accent: #5ba3e8; --main: #5ba3e8; --main-rgb: 91,163,232;
+      --bg: #151515; --bg2: #000000; --bg3: #111111; --card: #000000;
+      --text: #f0f0f0; --text2: #d1d1d1; --text3: #999999;
+      --border: #333333; --border2: #555555;
+      --accent: #337abd; --main: #337abd; --main-rgb: 51,122,189;
       --shadow: none; --up: #4caf82; --up-bg: rgba(76,175,130,.12);
       --down: #e05555; --down-bg: rgba(224,85,85,.12);
     }
@@ -139,6 +139,12 @@
   .sector-row { display: flex; align-items: center; gap: 6px; margin-bottom: 1rem; flex-wrap: wrap; }
   .sector-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: Arial, sans-serif; border: 1px solid; letter-spacing: 0.02em; transition: opacity 0.15s; text-decoration: none; }
   .sector-badge:hover { opacity: 0.75; cursor: default; }
+  .narrative-text {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: "Noto Sans KR", system-ui, sans-serif;
+    padding-left: 2px;
+  }
   .sb-enterprise { background: rgba(26,86,219,0.08); border-color: rgba(26,86,219,0.3); color: #1a56db; }
 
   .kpi-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 1.25rem; }
@@ -232,7 +238,7 @@
 
   <!-- COIN HEADER -->
   <div class="coin-header">
-    <div class="coin-icon">C</div>
+    <div class="coin-icon" style="background:none !important; padding:0; overflow:hidden;"><img src="data:image/png;base64,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" width="36" height="36" style="border-radius:50%;object-fit:cover;display:block;" alt="Canton"></div>
     <div>
       <h1 class="coin-title" style="display:inline;font-size:inherit;font-weight:inherit;">캔톤</h1>
       <span class="coin-symbol">CC</span>
@@ -246,6 +252,7 @@
   <!-- SECTOR BADGE -->
   <div class="sector-row">
     <a href="../sector.html?sector=Enterprise" class="sector-badge sb-enterprise">🏢 Enterprise</a>
+    <span class="narrative-text">Enterprise-Focused Permissioned L1</span>
   </div>
 
   <!-- KPI STRIP -->
@@ -403,7 +410,7 @@ const C = {
   border:  isDark ? '#333331' : '#e0dfdb',
   text:    isDark ? '#666564' : '#9a9894',
   up:      '#3B6D11', down: '#A32D2D',
-  line:    isDark ? '#5ba3e8' : '#337abd',
+  line:    '#337abd',
   fillTop: isDark ? 'rgba(29,158,117,0.18)' : 'rgba(15,110,86,0.10)',
   fillBot: 'rgba(0,0,0,0)',
 };
@@ -447,6 +454,10 @@ async function fetchPrice() {
     if (upbitR.status === 'fulfilled') {
       const d = await upbitR.value.json();
       krwPrice = d[0]?.trade_price || 0;
+    }
+    // Upbit 실패 시 Binance USD × 실시간 환율로 fallback
+    if (!krwPrice && usdPrice > 0 && cachedUsdKrw > 0) {
+      krwPrice = usdPrice * cachedUsdKrw;
     }
     document.getElementById('coinPrice').textContent = '$' + usdPrice.toFixed(4);
     const chgEl = document.getElementById('coinChange');
@@ -515,7 +526,7 @@ function initChart() {
   const wrap = document.getElementById('lwChart');
   lwChart = LightweightCharts.createChart(wrap, {
     width: wrap.clientWidth, height: wrap.clientHeight || 360,
-    layout: { background: { color: C.bg }, textColor: C.text, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 },
+    layout: { background: { color: C.bg }, textColor: C.text, fontFamily: "Arial, sans-serif", fontSize: 11 },
     grid: { vertLines: { color: C.grid }, horzLines: { color: C.grid } },
     crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
     rightPriceScale: { borderColor: C.border },
@@ -652,7 +663,7 @@ async function loadCoinProfile() {
 function toggleFaq(el) { el.parentElement.classList.toggle('open'); }
 
 // ── INIT ─────────────────────────────────────────────────────
-Promise.all([fetchUsdKrw(), fetchPrice()]);
+fetchUsdKrw().then(() => fetchPrice());
 loadChart('1m', 360, 1);
 fetchNews();
 
