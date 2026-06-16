@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hyperliquid Market Dashboard</title>
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --bg2: #141417;
+    --bg3: #1a1a1f;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8e8ec;
+    --text2: #888893;
+    --text3: #55555f;
+    --green: #23c97d;
+    --green-bg: rgba(35,201,125,0.1);
+    --red: #f05454;
+    --red-bg: rgba(240,84,84,0.1);
+    --amber: #f0a832;
+    --amber-bg: rgba(240,168,50,0.1);
+    --accent: #5c6fff;
+    --accent-dim: rgba(92,111,255,0.15);
+    --font: -apple-system, 'Helvetica Neue', sans-serif;
+    --font-mono: 'SF Mono', 'Fira Code', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 13px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+  .logo-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: blink 2s ease infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .update-time {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--font-mono);
+  }
+  .refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    color: var(--text2);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .refresh-btn svg { width: 13px; height: 13px; }
+
+  /* ── KPI strip ── */
+  .kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .kpi {
+    background: var(--bg);
+    padding: 14px 24px;
+  }
+  .kpi-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    margin-bottom: 5px;
+  }
+  .kpi-value {
+    font-size: 20px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+  .kpi-sub {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 2px;
+  }
+
+  /* ── Controls ── */
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .search-wrap {
+    position: relative;
+    flex: 0 0 auto;
+  }
+  .search-wrap input {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 12px;
+    padding: 6px 10px 6px 30px;
+    width: 160px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-wrap input:focus { border-color: var(--accent); }
+  .search-wrap input::placeholder { color: var(--text3); }
+  .search-icon {
+    position: absolute;
+    left: 9px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text3);
+    font-size: 13px;
+    pointer-events: none;
+  }
+
+  .filter-group { display: flex; gap: 4px; }
+  .filt-btn {
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text2);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .filt-btn:hover { border-color: var(--border2); color: var(--text); }
+  .filt-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+  .result-count {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--font-mono);
+  }
+
+  /* ── Table ── */
+  .table-wrap {
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  colgroup col.col-coin  { width: 13%; }
+  colgroup col.col-price { width: 13%; }
+  colgroup col.col-chg   { width: 10%; }
+  colgroup col.col-fr    { width: 12%; }
+  colgroup col.col-oi    { width: 14%; }
+  colgroup col.col-vol   { width: 14%; }
+  colgroup col.col-mark  { width: 13%; }
+  colgroup col.col-liq   { width: 11%; }
+
+  thead tr {
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    padding: 9px 16px;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text3);
+    text-align: right;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    background: var(--bg);
+    transition: color 0.15s;
+  }
+  th:first-child { text-align: left; }
+  th:hover { color: var(--text2); }
+  th.sort-desc::after { content: ' ↓'; color: var(--accent); }
+  th.sort-asc::after  { content: ' ↑'; color: var(--accent); }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+  tbody tr:hover { background: var(--bg2); }
+  tbody tr:last-child { border-bottom: none; }
+
+  td {
+    padding: 9px 16px;
+    text-align: right;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  td:first-child { text-align: left; font-family: var(--font); }
+
+  .coin-cell { display: flex; flex-direction: column; }
+  .coin-name { font-size: 13px; font-weight: 600; color: var(--text); font-family: var(--font); letter-spacing: -0.01em; }
+  .coin-tag  { font-size: 10px; color: var(--text3); font-family: var(--font); margin-top: 1px; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+  }
+  .badge-up   { background: var(--green-bg); color: var(--green); }
+  .badge-dn   { background: var(--red-bg);   color: var(--red); }
+  .badge-warn { background: var(--amber-bg); color: var(--amber); }
+  .badge-neu  { background: rgba(255,255,255,0.05); color: var(--text2); }
+
+  /* ── States ── */
+  .state-row td {
+    text-align: center;
+    padding: 48px 16px;
+    color: var(--text3);
+    font-family: var(--font);
+    font-size: 13px;
+  }
+  .spin {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+    header { padding: 12px 16px; }
+    .kpi { padding: 12px 16px; }
+    .controls { padding: 10px 16px; }
+    th, td { padding: 8px 10px; }
+    colgroup col.col-liq,
+    colgroup col.col-mark { display: none; }
+    .hide-mobile { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-dot"></span>
+    Hyperliquid Perps
+  </div>
+  <div class="header-right">
+    <span class="update-time" id="update-time">—</span>
+    <button class="refresh-btn" onclick="loadData()">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1.5 8A6.5 6.5 0 1 0 4 3.5"/>
+        <polyline points="1.5,1.5 1.5,3.5 3.5,3.5"/>
+      </svg>
+      새로고침
+    </button>
+  </div>
+</header>
+
+<div class="kpi-strip">
+  <div class="kpi">
+    <div class="kpi-label">총 마켓</div>
+    <div class="kpi-value" id="k-markets">—</div>
+    <div class="kpi-sub">Perpetual pairs</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">총 OI</div>
+    <div class="kpi-value" id="k-oi">—</div>
+    <div class="kpi-sub">Open Interest (USD)</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">24h 거래량</div>
+    <div class="kpi-value" id="k-vol">—</div>
+    <div class="kpi-sub">Notional volume</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">평균 펀딩비</div>
+    <div class="kpi-value" id="k-fr">—</div>
+    <div class="kpi-sub" id="k-fr-sub">8h rate</div>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="search-wrap">
+    <span class="search-icon">⌕</span>
+    <input type="text" id="search" placeholder="코인 검색..." oninput="applyFilters()">
+  </div>
+  <div class="filter-group">
+    <button class="filt-btn active" onclick="setFilter('all', this)">전체</button>
+    <button class="filt-btn" onclick="setFilter('up', this)">상승</button>
+    <button class="filt-btn" onclick="setFilter('dn', this)">하락</button>
+    <button class="filt-btn" onclick="setFilter('highfr', this)">고펀딩</button>
+    <button class="filt-btn" onclick="setFilter('negfr', this)">음펀딩</button>
+    <button class="filt-btn" onclick="setFilter('highoi', this)">고OI</button>
+  </div>
+  <span class="result-count" id="result-count"></span>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <colgroup>
+      <col class="col-coin">
+      <col class="col-price">
+      <col class="col-chg">
+      <col class="col-fr">
+      <col class="col-oi">
+      <col class="col-vol">
+      <col class="col-mark hide-mobile">
+      <col class="col-liq hide-mobile">
+    </colgroup>
+    <thead>
+      <tr>
+        <th onclick="sortBy('coin')">코인</th>
+        <th onclick="sortBy('price')">마크가격</th>
+        <th onclick="sortBy('chg')">24h 변동</th>
+        <th onclick="sortBy('fr')">펀딩비 (8h)</th>
+        <th onclick="sortBy('oi')">OI</th>
+        <th onclick="sortBy('vol')">24h 거래량</th>
+        <th class="hide-mobile" onclick="sortBy('mark')">전일 종가</th>
+        <th class="hide-mobile" onclick="sortBy('premium')">프리미엄</th>
+      </tr>
+    </thead>
+    <tbody id="tbody">
+      <tr class="state-row">
+        <td colspan="8"><span class="spin"></span>데이터 불러오는 중...</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+let allData = [];
+let sortCol = 'vol';
+let sortDir = -1;
+let filterMode = 'all';
+
+async function loadData() {
+  setLoading(true);
+  try {
+    const [ctxRes] = await Promise.all([
+      fetch('https://api.hyperliquid.xyz/info', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'metaAndAssetCtxs' })
+      })
+    ]);
+
+    if (!ctxRes.ok) throw new Error('API error ' + ctxRes.status);
+    const ctx = await ctxRes.json();
+
+    const universe = ctx[0]?.universe || [];
+    const ctxList  = ctx[1] || [];
+
+    allData = universe.map((coin, i) => {
+      const c = ctxList[i] || {};
+      const mark  = parseFloat(c.markPx  || 0);
+      const prev  = parseFloat(c.prevDayPx || mark);
+      const mid   = parseFloat(c.midPx   || mark);
+      const chg   = prev > 0 ? (mark - prev) / prev * 100 : 0;
+      const fr    = parseFloat(c.funding || 0) * 100;
+      const oi    = parseFloat(c.openInterest || 0) * mark;
+      const vol   = parseFloat(c.dayNtlVlm || 0);
+      const premium = mid > 0 && mark > 0 ? (mid - mark) / mark * 100 : 0;
+      return { coin: coin.name, price: mark, prev, chg, fr, oi, vol, mark, mid, premium };
+    }).filter(d => d.price > 0);
+
+    updateKPI();
+    applyFilters();
+
+    const now = new Date();
+    document.getElementById('update-time').textContent =
+      now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  } catch (e) {
+    document.getElementById('tbody').innerHTML =
+      `<tr class="state-row"><td colspan="8">⚠ 데이터 로드 실패: ${e.message}</td></tr>`;
+    document.getElementById('update-time').textContent = '로드 실패';
+  }
+  setLoading(false);
+}
+
+function setLoading(on) {
+  if (on && allData.length === 0) {
+    document.getElementById('tbody').innerHTML =
+      '<tr class="state-row"><td colspan="8"><span class="spin"></span>데이터 불러오는 중...</td></tr>';
+  }
+}
+
+function updateKPI() {
+  const totalOI  = allData.reduce((a, d) => a + d.oi, 0);
+  const totalVol = allData.reduce((a, d) => a + d.vol, 0);
+  const avgFR    = allData.reduce((a, d) => a + d.fr, 0) / allData.length;
+
+  document.getElementById('k-markets').textContent = allData.length;
+  document.getElementById('k-oi').textContent  = '$' + fmtB(totalOI);
+  document.getElementById('k-vol').textContent = '$' + fmtB(totalVol);
+  document.getElementById('k-fr').textContent  = (avgFR >= 0 ? '+' : '') + avgFR.toFixed(4) + '%';
+  document.getElementById('k-fr').style.color  = avgFR >= 0 ? 'var(--green)' : 'var(--red)';
+}
+
+function getFiltered() {
+  const q = document.getElementById('search').value.trim().toUpperCase();
+  const top20OI = allData.slice().sort((a,b)=>b.oi-a.oi).slice(0,20).map(d=>d.coin);
+  return allData.filter(d => {
+    if (q && !d.coin.toUpperCase().includes(q)) return false;
+    if (filterMode === 'up')     return d.chg >= 0;
+    if (filterMode === 'dn')     return d.chg < 0;
+    if (filterMode === 'highfr') return d.fr > 0.005;
+    if (filterMode === 'negfr')  return d.fr < 0;
+    if (filterMode === 'highoi') return top20OI.includes(d.coin);
+    return true;
+  });
+}
+
+function applyFilters() {
+  const filtered = getFiltered();
+  const sorted   = getSorted(filtered);
+  renderTable(sorted);
+  document.getElementById('result-count').textContent =
+    sorted.length + ' / ' + allData.length + ' 마켓';
+}
+
+function getSorted(data) {
+  return [...data].sort((a, b) => {
+    if (sortCol === 'coin') return sortDir * a.coin.localeCompare(b.coin);
+    return sortDir * (b[sortCol] - a[sortCol]);
+  });
+}
+
+function renderTable(data) {
+  if (!data.length) {
+    document.getElementById('tbody').innerHTML =
+      '<tr class="state-row"><td colspan="8">검색 결과 없음</td></tr>';
+    return;
+  }
+
+  const cols = ['coin','price','chg','fr','oi','vol','mark','premium'];
+  document.querySelectorAll('th').forEach((th, i) => {
+    th.classList.remove('sort-asc','sort-desc');
+    if (cols[i] === sortCol) th.classList.add(sortDir === -1 ? 'sort-desc' : 'sort-asc');
+  });
+
+  document.getElementById('tbody').innerHTML = data.map(d => {
+    const chgBadge = badge(d.chg >= 0 ? 'up' : 'dn',
+      (d.chg >= 0 ? '+' : '') + d.chg.toFixed(2) + '%');
+    const frBadge  = badge(d.fr < 0 ? 'dn' : d.fr > 0.005 ? 'warn' : 'up',
+      (d.fr >= 0 ? '+' : '') + d.fr.toFixed(4) + '%');
+    const premBadge = badge(Math.abs(d.premium) < 0.01 ? 'neu' : d.premium > 0 ? 'up' : 'dn',
+      (d.premium >= 0 ? '+' : '') + d.premium.toFixed(3) + '%');
+
+    return `<tr>
+      <td><div class="coin-cell">
+        <span class="coin-name">${d.coin}</span>
+        <span class="coin-tag">PERP · USDC</span>
+      </div></td>
+      <td>${fmtPrice(d.price)}</td>
+      <td>${chgBadge}</td>
+      <td>${frBadge}</td>
+      <td>$${fmtB(d.oi)}</td>
+      <td>$${fmtB(d.vol)}</td>
+      <td class="hide-mobile">${fmtPrice(d.prev)}</td>
+      <td class="hide-mobile">${premBadge}</td>
+    </tr>`;
+  }).join('');
+}
+
+function badge(type, text) {
+  return `<span class="badge badge-${type}">${text}</span>`;
+}
+
+function fmtB(v) {
+  if (v >= 1e9) return (v / 1e9).toFixed(2) + 'B';
+  if (v >= 1e6) return (v / 1e6).toFixed(2) + 'M';
+  if (v >= 1e3) return (v / 1e3).toFixed(1) + 'K';
+  return v.toFixed(0);
+}
+
+function fmtPrice(v) {
+  if (!v || v === 0) return '—';
+  if (v >= 10000) return '$' + v.toLocaleString('en-US', { maximumFractionDigits: 0 });
+  if (v >= 1000)  return '$' + v.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  if (v >= 1)     return '$' + v.toFixed(3);
+  return '$' + v.toPrecision(4);
+}
+
+function sortBy(col) {
+  if (sortCol === col) sortDir *= -1;
+  else { sortCol = col; sortDir = col === 'coin' ? 1 : -1; }
+  applyFilters();
+}
+
+function setFilter(mode, btn) {
+  filterMode = mode;
+  document.querySelectorAll('.filt-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+
+loadData();
+setInterval(loadData, 30000);
+</script>
+</body>
+</html>
