@@ -93,6 +93,22 @@ def fetch_upbit_pairs() -> List[Tuple[str, float]]:
         time.sleep(0.1)
     return out
 
+def fetch_upbit_change_rates() -> Dict[str, float]:
+    """업비트 전체 KRW 페어의 24h 등락률 반환. {KRW-XXX: signed_change_rate}"""
+    markets = http_get(UPBIT_MARKETS, {"isDetails": "false"})
+    krw_markets = [m["market"] for m in markets if m.get("market", "").startswith("KRW-")]
+    rates: Dict[str, float] = {}
+    for i in range(0, len(krw_markets), 100):
+        chunk = krw_markets[i:i+100]
+        tickers = http_get(UPBIT_TICKER, {"markets": ",".join(chunk)})
+        for t in tickers:
+            sym = t.get("market")
+            rate = t.get("signed_change_rate")
+            if sym and rate is not None:
+                rates[sym] = float(rate)
+        time.sleep(0.1)
+    return rates
+
 def fetch_bithumb_pairs() -> List[Tuple[str, float]]:
     j = http_get(BITHUMB_TICKER_ALL)
     data = j.get("data", {})
@@ -208,6 +224,7 @@ def run():
     ts_label = ts.strftime("%m/%d %H:%M KST")
 
     up = fetch_upbit_pairs()
+    up_change_rates = fetch_upbit_change_rates()
     bt = fetch_bithumb_pairs()
     co = fetch_coinone_pairs()
 
@@ -248,8 +265,29 @@ def run():
         top10.append({
             "symbol": sym,
             "value": float(val),
-            "share_pct": (float(val) / combined_total * 100.0) if combined_total > 0 else 0.0
+            "share_pct": (float(val) / combined_total * 100.0) if combined_total > 0 else 0.0,
+            "change_rate_24h": up_change_rates.get(sym)  # 없으면 null
         })
+
+    # ── 위너/루저: 업비트 기준 등락률, 스테이블 제외, 거래대금 50억 이상
+    STABLE_SYMS = {"KRW-USDT", "KRW-USDC", "KRW-DAI", "KRW-PYUSD", "KRW-RLUSD", "KRW-BUSD"}
+    MIN_VOL = 5_000_000_000  # 50억
+
+    # 업비트 거래대금 맵
+    up_vol_map = {sym: val for sym, val in up}
+
+    ranked = []
+    for sym, rate in up_change_rates.items():
+        if sym in STABLE_SYMS:
+            continue
+        vol = up_vol_map.get(sym, 0)
+        if vol < MIN_VOL:
+            continue
+        ranked.append({"symbol": sym, "change_rate_24h": rate, "upbit_volume_24h": float(vol)})
+
+    ranked_sorted = sorted(ranked, key=lambda x: x["change_rate_24h"], reverse=True)
+    winners = ranked_sorted[:5]
+    losers = ranked_sorted[-5:][::-1]  # 하락 큰 순서
 
     latest = {
         "schema": "krw_rolling24h_v1",
@@ -275,6 +313,12 @@ def run():
             "rest_total_24h": rest_total,
             "top10_share_pct": top10_share,
             "coins": top10
+        },
+        "winner_loser": {
+            "basis": "upbit_24h_change_rate",
+            "filter": "stable_excluded, min_volume_5B",
+            "winners": winners,
+            "losers": losers
         }
     }
 
