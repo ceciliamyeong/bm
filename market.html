@@ -208,11 +208,11 @@ footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);font-si
   </div>
 
   <!-- Top10 -->
-  <div class="sec-hd"><h2>Top 10 자산</h2><span>합산 거래대금 기준</span></div>
+  <div class="sec-hd"><h2>국내 거래대금 상위 코인</h2><span>Top 10 · 4대 거래소 합산 기준</span></div>
   <div class="card" style="overflow:hidden">
     <table>
       <thead><tr>
-        <th class="l">자산</th><th>24h 거래대금</th><th>비중</th>
+        <th class="l">자산</th><th>24h 거래대금</th><th>비중</th><th>등락률(업비트)</th>
       </tr></thead>
       <tbody id="top10Body"></tbody>
     </table>
@@ -221,6 +221,13 @@ footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);font-si
   <!-- Exchange Top5 -->
   <div class="sec-hd"><h2>거래소별 Top5</h2><span>어떤 알트에 쏠렸는지 · 투자한 금융그룹</span></div>
   <div class="ex-grid" id="exGrid"></div>
+
+  <!-- 업비트 수익률 상/하위 -->
+  <div class="sec-hd"><h2>업비트 수익률 상/하위 Top5</h2><span>24h 등락률 기준 · 거래대금 50억 이상 · 스테이블 제외</span></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" id="wlGrid">
+    <div class="card panel" id="winnerCard"></div>
+    <div class="card panel" id="loserCard"></div>
+  </div>
 
   <!-- 김치프리미엄 -->
   <div class="sec-hd"><h2>스마트 김치프리미엄</h2><span>업비트 KRW vs 바이낸스 USD × 환율</span></div>
@@ -243,7 +250,7 @@ footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);font-si
   </div>
 
   <!-- BM20 섹터 히트맵 -->
-  <div class="sec-hd"><h2>BM20 섹터별 현황</h2><span>당일 수익률 · BM20 비중 가중 · <span id="sectorDate">-</span></span></div>
+  <div class="sec-hd"><h2>디지털자산 섹터 수익률 현황</h2><span>당일 수익률 · BM20 비중 가중 · <span id="sectorDate">-</span></span></div>
   <div class="card panel">
     <div id="heatmap" class="heatmap"></div>
     <div style="font-size:11.5px;color:var(--ink3);margin-top:12px">
@@ -456,6 +463,10 @@ function drawTop10(coins){
   document.getElementById('top10Body').innerHTML=coins.map((c,i)=>{
     const sym=c.symbol.replace('KRW-','');
     const col=coinColor(sym);
+    const cr = c.change_rate_24h;
+    const crHtml = cr != null
+      ? `<span class="${cr>=0?'pos':'neg'}">${cr>=0?'+':''}${(cr*100).toFixed(2)}%</span>`
+      : `<span style="color:var(--ink3)">-</span>`;
     return `<tr>
       <td class="l"><div class="coin-cell">
         <span class="rk num">${i+1}</span>
@@ -464,8 +475,41 @@ function drawTop10(coins){
       </div></td>
       <td class="num">${fmt.tri(c.value)}</td>
       <td class="num">${c.share_pct.toFixed(2)}%</td>
+      <td class="num">${crHtml}</td>
     </tr>`;
   }).join('');
+}
+
+function drawWinnerLoser(wl){
+  if(!wl) return;
+  const render = (items, isWinner) => {
+    const max = Math.max(...items.map(x=>Math.abs(x.change_rate_24h)));
+    const color = isWinner ? 'var(--up)' : 'var(--down)';
+    const bgColor = isWinner ? 'var(--up-bg)' : 'var(--down-bg)';
+    const icon = isWinner ? '▲' : '▼';
+    const title = isWinner ? '수익률 상위 Top 5' : '수익률 하위 Top 5';
+    const rows = items.map((x,i)=>{
+      const sym = x.symbol.replace('KRW-','');
+      const col = coinColor(sym);
+      const pct = (x.change_rate_24h*100).toFixed(2);
+      const barW = max>0 ? (Math.abs(x.change_rate_24h)/max*100).toFixed(0) : 0;
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line2)">
+        <span style="color:var(--ink3);font-size:12px;font-weight:700;font-family:Arial;width:16px">${i+1}</span>
+        <span class="coin-ic" style="background:${col};width:24px;height:24px;font-size:9px">${sym.slice(0,3)}</span>
+        <span style="font-size:13px;font-weight:600;flex:1">${sym}</span>
+        <div style="width:60px;height:4px;background:var(--line2);border-radius:2px;overflow:hidden">
+          <div style="width:${barW}%;height:100%;background:${color};border-radius:2px"></div>
+        </div>
+        <span style="font-size:13px;font-weight:700;font-family:Arial;color:${color};width:56px;text-align:right">${x.change_rate_24h>=0?'+':''}${pct}%</span>
+      </div>`;
+    }).join('');
+    return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
+        <span style="font-size:13px;color:${color}">${icon}</span>
+        <span style="font-size:14px;font-weight:700;color:${color}">${title}</span>
+      </div>${rows}`;
+  };
+  document.getElementById('winnerCard').innerHTML = render(wl.winners, true);
+  document.getElementById('loserCard').innerHTML  = render(wl.losers, false);
 }
 
 function drawExTop5(byEx){
@@ -587,6 +631,7 @@ async function load(){
     drawDonut(shares);
 
     drawTop10(t10.coins);
+    drawWinnerLoser(latest.winner_loser);
     drawExTop5(latest.by_exchange_top);
     drawKimchi(kimchi);
 
