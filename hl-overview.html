@@ -117,6 +117,9 @@ td:nth-child(2){text-align:left;font-family:var(--font)}
 .cat-tag{font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px}
 
 /* State */
+.page-btn{padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:12px;font-family:var(--font);cursor:pointer;transition:all .15s}
+.page-btn:hover:not(:disabled){border-color:var(--blue);color:var(--blue)}
+.page-btn:disabled{opacity:.35;cursor:default}
 .state-row td{text-align:center!important;padding:48px!important;color:var(--text3);font-family:var(--font);font-size:13px}
 .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -153,50 +156,7 @@ td:nth-child(2){text-align:left;font-family:var(--font)}
     <div class="kpi-card"><div class="kpi-accent" style="background:#d97706"></div><div class="kpi-label">평균 펀딩비</div><div class="kpi-value" id="k-fr">—</div><div class="kpi-note" id="k-fr-note">8h rate</div></div>
     <div class="kpi-card"><div class="kpi-accent" style="background:#7c3aed"></div><div class="kpi-label">마켓 수</div><div class="kpi-value" id="k-cnt">—</div><div class="kpi-note" id="k-cnt-note">퍼페추얼 페어</div></div>
   </div>
-
-  <!-- 거래량 상위 10 -->
-  <div class="card chart-wrap">
-    <div class="sec-title">거래량 상위 10개</div>
     <div class="sec-sub">24h 명목 거래량 기준</div>
-    <div class="chart-inner"><canvas id="chart-vol" height="240"></canvas></div>
-  </div>
-
-  <!-- 버블 차트 -->
-  <div class="card chart-wrap">
-    <div class="sec-title">OI 버블 차트</div>
-    <div class="sec-sub">버블 크기 = OI · X축 = 펀딩비 · Y축 = 24h 변동률</div>
-    <div class="chart-inner"><canvas id="chart-bubble" height="300"></canvas></div>
-  </div>
-
-  <!-- 펀딩비 분포 -->
-  <div class="card chart-wrap">
-    <div class="sec-title">펀딩비 분포</div>
-    <div class="sec-sub">전체 마켓 수 기준</div>
-    <div class="chart-inner"><canvas id="chart-fr" height="200"></canvas></div>
-  </div>
-
-  <!-- 히트맵 -->
-  <div class="card hm-wrap">
-    <div class="sec-title">펀딩비 히트맵</div>
-    <div class="sec-sub">셀 크기 = OI 비례 · 색상 = 8h 펀딩비</div>
-    <div class="hm-legend">
-      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#0a7c4a"></div>&gt;+0.02%</div>
-      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#22a86b"></div>+0.005~</div>
-      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#bbf7d0"></div>0~+</div>
-      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#fecaca"></div>~0</div>
-      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#f87171"></div>~-0.02%</div>
-      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#c0392b"></div>&lt;-0.02%</div>
-    </div>
-    <div class="hm-grid" id="heatmap"></div>
-  </div>
-
-  <!-- 펀딩비 주목 코인 -->
-  <div class="card">
-    <div class="chart-wrap" style="padding-bottom:0">
-      <div class="sec-title">펀딩비 주목 코인</div>
-      <div class="sec-sub">절댓값 상위 10개</div>
-    </div>
-    <div class="fr-list" id="fr-list" style="padding-top:0"></div>
   </div>
 
   <!-- 전체 마켓 -->
@@ -240,6 +200,46 @@ td:nth-child(2){text-align:left;font-family:var(--font)}
         </tbody>
       </table>
     </div>
+    <!-- 페이지네이션 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--border)">
+      <button class="page-btn" id="page-prev" onclick="changePage(-1)">← 이전</button>
+      <span id="page-info" style="font-size:12px;color:var(--text3);font-family:var(--mono)"></span>
+      <button class="page-btn" id="page-next" onclick="changePage(1)">다음 →</button>
+    </div>
+  </div>
+
+
+  <!-- 버블 차트 -->
+  <div class="card chart-wrap">
+    <div class="sec-title">OI 버블 차트</div>
+    <div class="sec-sub">버블 크기 = OI · X축 = 펀딩비 · Y축 = 24h 변동률</div>
+    <div class="chart-inner"><canvas id="chart-bubble" height="300"></canvas></div>
+  </div>
+    <div class="sec-sub">전체 마켓 수 기준</div>
+  </div>
+
+  <!-- 히트맵 -->
+  <div class="card hm-wrap">
+    <div class="sec-title">펀딩비 히트맵</div>
+    <div class="sec-sub">셀 크기 = OI 비례 · 색상 = 8h 펀딩비</div>
+    <div class="hm-legend">
+      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#0a7c4a"></div>&gt;+0.02%</div>
+      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#22a86b"></div>+0.005~</div>
+      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#bbf7d0"></div>0~+</div>
+      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#fecaca"></div>~0</div>
+      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#f87171"></div>~-0.02%</div>
+      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#c0392b"></div>&lt;-0.02%</div>
+    </div>
+    <div class="hm-grid" id="heatmap"></div>
+  </div>
+
+  <!-- 펀딩비 주목 코인 -->
+  <div class="card">
+    <div class="chart-wrap" style="padding-bottom:0">
+      <div class="sec-title">펀딩비 주목 코인</div>
+      <div class="sec-sub">절댓값 상위 10개</div>
+    </div>
+    <div class="fr-list" id="fr-list" style="padding-top:0"></div>
   </div>
 
 </div><!-- /container -->
@@ -257,8 +257,10 @@ let hip3Data   = [];
 let currentTab = 'crypto';
 let sortCol    = 'vol';
 let sortDir    = -1;
-let filtModes  = new Set(); // 복수 선택
+let filtModes  = new Set();
 let catMode    = 'all';
+let currentPage = 1;
+const PAGE_SIZE = 20;
 let charts     = {};
 
 // ── 유틸 ──
@@ -388,7 +390,6 @@ function renderCharts() {
 
   // 거래량 상위 10
   const top10Vol = [...d].sort((a,b)=>b.vol-a.vol).slice(0,10);
-  buildBar('chart-vol', top10Vol.map(r=>r.coin), top10Vol.map(r=>r.vol),
     i=>`rgba(11,163,96,${1-i*0.07})`);
 
   // 버블 차트
@@ -436,7 +437,6 @@ function renderCharts() {
     {name:'<-0.02%',       color:'#c0392b', count:d.filter(r=>r.fr<-0.02).length},
   ].filter(b=>b.count>0);
 
-  const frCanvas = document.getElementById('chart-fr');
   if (charts['fr']) charts['fr'].destroy();
   charts['fr'] = new Chart(frCanvas, {
     type:'doughnut',
@@ -496,7 +496,9 @@ function renderFRList() {
 }
 
 // ── Table ──
-function applyFilters() {
+let _filteredSorted = [];
+
+function applyFilters(resetPage=true) {
   const q   = document.getElementById('search').value.trim().toUpperCase();
   let data  = currentData().filter(r=>!q||r.coin.toUpperCase().includes(q));
   if (filtModes.has('up'))     data=data.filter(r=>r.chg>=0);
@@ -505,13 +507,26 @@ function applyFilters() {
   if (filtModes.has('negfr'))  data=data.filter(r=>r.fr<0);
   if (currentTab==='hip3'&&catMode!=='all') data=data.filter(r=>r.cat===catMode);
 
-  const sorted = [...data].sort((a,b)=>
+  _filteredSorted = [...data].sort((a,b)=>
     sortCol==='coin'?sortDir*a.coin.localeCompare(b.coin):sortDir*(b[sortCol]-a[sortCol])
   );
 
-  document.getElementById('tbl-count').textContent = sorted.length+'/'+currentData().length;
+  if (resetPage) currentPage=1;
+  renderTable();
+}
 
-  // 헤더 정렬 표시
+function renderTable() {
+  const total   = _filteredSorted.length;
+  const pages   = Math.max(1, Math.ceil(total/PAGE_SIZE));
+  if (currentPage>pages) currentPage=pages;
+  const start   = (currentPage-1)*PAGE_SIZE;
+  const pageData = _filteredSorted.slice(start, start+PAGE_SIZE);
+
+  document.getElementById('tbl-count').textContent = total+'/'+currentData().length;
+  document.getElementById('page-info').textContent = `${currentPage} / ${pages} 페이지`;
+  document.getElementById('page-prev').disabled = currentPage<=1;
+  document.getElementById('page-next').disabled = currentPage>=pages;
+
   const cols = ['coin','price','chg','fr','oi','vol'];
   document.querySelectorAll('thead th').forEach((th,i)=>{
     th.classList.remove('asc','desc');
@@ -521,18 +536,19 @@ function applyFilters() {
   const isHip3 = currentTab==='hip3';
   const colSpan = isHip3?8:7;
 
-  if (!sorted.length) {
+  if (!pageData.length) {
     document.getElementById('tbody').innerHTML=`<tr class="state-row"><td colspan="${colSpan}">검색 결과 없음</td></tr>`;
     return;
   }
 
-  document.getElementById('tbody').innerHTML = sorted.map((r,i)=>{
+  document.getElementById('tbody').innerHTML = pageData.map((r,i)=>{
+    const rank = start+i+1;
     const chgB = `<span class="badge badge-${r.chg>=0?'up':'dn'}">${r.chg>=0?'+':''}${r.chg.toFixed(2)}%</span>`;
     const frB  = `<span class="badge badge-${r.fr<0?'dn':r.fr>0.01?'warn':'up'}">${r.fr>=0?'+':''}${r.fr.toFixed(4)}%</span>`;
     const catCell = isHip3&&r.cat
       ? `<td><span class="cat-tag" style="background:${CAT_META[r.cat]?.bg};color:${CAT_META[r.cat]?.color}">${CAT_META[r.cat]?.label}</span></td>` : '';
     return `<tr>
-      <td>${i+1}</td>
+      <td>${rank}</td>
       <td><div class="coin-name">${r.coin}</div><div class="coin-sub">PERP</div></td>
       ${catCell}
       <td>${fmtPrice(r.price)}</td>
@@ -542,6 +558,11 @@ function applyFilters() {
       <td>${fmtB(r.vol)}</td>
     </tr>`;
   }).join('');
+}
+
+function changePage(dir) {
+  currentPage += dir;
+  renderTable();
 }
 
 function sortBy(col) {
@@ -585,7 +606,7 @@ function switchTab(tab,btn) {
   btn.classList.add('active');
   document.getElementById('cat-row').style.display = tab==='hip3'?'flex':'none';
   document.getElementById('search').value='';
-  filtModes.clear(); catMode='all'; sortCol='vol'; sortDir=-1;
+  filtModes.clear(); catMode='all'; sortCol='vol'; sortDir=-1; currentPage=1;
   document.querySelectorAll('.filt-btn.toggle').forEach(b=>b.classList.remove('active'));
   document.querySelector('.filt-btn:not(.toggle)').classList.add('active');
   document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
