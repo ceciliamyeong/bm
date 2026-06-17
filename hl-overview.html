@@ -388,10 +388,6 @@ function renderCharts() {
   const d = currentData();
   const maxOI = Math.max(...d.map(r=>r.oi));
 
-  // 거래량 상위 10
-  const top10Vol = [...d].sort((a,b)=>b.vol-a.vol).slice(0,10);
-    i=>`rgba(11,163,96,${1-i*0.07})`);
-
   // 버블 차트
   const bubbleData = d.map(r=>({
     x: r.fr,
