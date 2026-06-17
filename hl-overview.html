@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>하이퍼리퀴드 마켓 오버뷰 — 블록미디어</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:#f4f5f8; --surface:#fff; --border:#e4e7ed; --border2:#d0d5de;
+  --text:#0f1117; --text2:#4a5068; --text3:#9098b1;
+  --green:#0ba360; --green-bg:#edf7f2;
+  --red:#e03a3a;   --red-bg:#fdf0f0;
+  --amber:#d97706; --amber-bg:#fef3e2;
+  --blue:#2563eb;  --blue-bg:#eff4ff;
+  --font:-apple-system,'Helvetica Neue',sans-serif;
+  --mono:'SF Mono','Fira Code',monospace;
+  --r:12px; --sh:0 1px 4px rgba(0,0,0,0.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;line-height:1.5}
+
+/* Header */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between}
+.header-left .sub{font-size:11px;color:var(--text3);margin-bottom:2px}
+.header-left .title{font-size:15px;font-weight:700;letter-spacing:-.02em}
+.header-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.live-pill{display:flex;align-items:center;gap:5px;background:var(--green-bg);color:var(--green);font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 2s ease infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.update-time{font-size:10px;color:var(--text3);font-family:var(--mono)}
+
+/* Tabs */
+.tabs{background:var(--surface);border-bottom:1px solid var(--border);display:flex;padding:0 16px}
+.tab-btn{padding:10px 16px;font-size:13px;font-family:var(--font);cursor:pointer;border:none;border-bottom:2px solid transparent;background:none;color:var(--text3);font-weight:400;margin-bottom:-1px;transition:all .15s}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
+.tab-badge{font-size:10px;background:#f2f4f7;color:var(--text3);padding:1px 5px;border-radius:3px;margin-left:4px;font-weight:600}
+.tab-btn.active .tab-badge{background:var(--blue-bg);color:var(--blue)}
+
+/* Container */
+.container{padding:14px 14px 48px}
+
+/* Card */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh);margin-bottom:12px}
+
+/* KPI 2x2 */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh);padding:14px 14px 12px;position:relative;overflow:hidden}
+.kpi-accent{position:absolute;top:0;left:0;right:0;height:3px}
+.kpi-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:5px}
+.kpi-value{font-size:20px;font-weight:700;font-family:var(--mono);letter-spacing:-.03em;line-height:1.1}
+.kpi-note{font-size:10px;color:var(--text3);margin-top:3px}
+
+/* Section head */
+.sec-title{font-size:14px;font-weight:700;margin-bottom:2px}
+.sec-sub{font-size:11px;color:var(--text3);margin-bottom:14px}
+
+/* Chart wrap */
+.chart-wrap{padding:16px}
+.chart-inner{position:relative}
+
+/* Heatmap */
+.hm-wrap{padding:16px}
+.hm-legend{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.hm-legend-item{display:flex;align-items:center;gap:3px;font-size:10px;color:var(--text3)}
+.hm-legend-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+.hm-grid{display:flex;flex-wrap:wrap;gap:4px}
+.hm-cell{border-radius:8px;cursor:default;transition:transform .1s,box-shadow .1s}
+.hm-cell:hover{transform:translateY(-2px);box-shadow:0 4px 10px rgba(0,0,0,0.12)}
+.hm-cell .hm-coin{font-weight:700;line-height:1.2}
+.hm-cell .hm-fr{font-family:var(--mono);opacity:.85;margin-top:2px}
+
+/* FR list */
+.fr-list{padding:16px}
+.fr-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)}
+.fr-row:last-child{border-bottom:none}
+.fr-rank{font-size:10px;color:var(--text3);width:16px;text-align:right;flex-shrink:0}
+.fr-coin{font-size:13px;font-weight:700;width:54px;flex-shrink:0}
+.fr-cat{font-size:10px;font-weight:600;padding:1px 5px;border-radius:3px;flex-shrink:0}
+.fr-bar-wrap{flex:1;height:5px;background:#f2f4f7;border-radius:3px}
+.fr-bar{height:100%;border-radius:3px}
+.fr-val{font-size:12px;font-family:var(--mono);font-weight:600;flex-shrink:0;min-width:70px;text-align:right}
+
+/* Table */
+.table-toolbar{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+.search-wrap{position:relative}
+.search-wrap input{width:100%;background:#f2f4f7;border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:13px;padding:7px 10px 7px 28px;outline:none;font-family:var(--font)}
+.search-wrap input:focus{border-color:var(--blue);background:#fff}
+.search-icon{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:14px;pointer-events:none}
+.filter-row{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.filt-btn{padding:5px 11px;border-radius:6px;font-size:12px;font-family:var(--font);cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-weight:400;transition:all .15s}
+.filt-btn.active{border-color:var(--blue);background:var(--blue-bg);color:var(--blue);font-weight:600}
+.cat-btn{padding:5px 11px;border-radius:6px;font-size:12px;font-family:var(--font);cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text2);transition:all .15s}
+.cat-btn.active{border-color:#7c3aed;background:#f5f3ff;color:#7c3aed;font-weight:600}
+.tbl-count{margin-left:auto;font-size:11px;color:var(--text3);font-family:var(--mono)}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:460px}
+thead tr{background:#f2f4f7;border-bottom:1px solid var(--border)}
+th{padding:9px 10px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);text-align:right;cursor:pointer;white-space:nowrap;user-select:none;transition:color .15s}
+th:first-child{text-align:center;width:32px}
+th:nth-child(2){text-align:left}
+th.asc::after{content:' ↑';color:var(--blue)}
+th.desc::after{content:' ↓';color:var(--blue)}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:hover{background:#f8f9fc}
+tbody tr:last-child{border-bottom:none}
+td{padding:9px 10px;text-align:right;font-family:var(--mono);font-size:12px;white-space:nowrap}
+td:first-child{text-align:center;font-family:var(--font);color:var(--text3);font-size:11px}
+td:nth-child(2){text-align:left;font-family:var(--font)}
+.coin-name{font-size:13px;font-weight:700}
+.coin-sub{font-size:10px;color:var(--text3)}
+
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;font-family:var(--mono)}
+.badge-up{background:var(--green-bg);color:var(--green)}
+.badge-dn{background:var(--red-bg);color:var(--red)}
+.badge-warn{background:var(--amber-bg);color:var(--amber)}
+.cat-tag{font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px}
+
+/* State */
+.state-row td{text-align:center!important;padding:48px!important;color:var(--text3);font-family:var(--font);font-size:13px}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="sub">블록미디어 데이터</div>
+    <div class="title">하이퍼리퀴드 마켓 오버뷰</div>
+  </div>
+  <div class="header-right">
+    <div class="live-pill"><span class="live-dot"></span>LIVE</div>
+    <div class="update-time" id="update-time">—</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('crypto',this)">
+    크립토 퍼페추얼 <span class="tab-badge" id="badge-crypto">—</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('hip3',this)">
+    주식·지수·원자재 <span class="tab-badge" id="badge-hip3">HIP-3</span>
+  </button>
+</div>
+
+<div class="container">
+
+  <!-- KPI 2x2 -->
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-accent" style="background:#2563eb"></div><div class="kpi-label">총 OI</div><div class="kpi-value" id="k-oi">—</div><div class="kpi-note">오픈 인터레스트</div></div>
+    <div class="kpi-card"><div class="kpi-accent" style="background:#0ba360"></div><div class="kpi-label">24h 거래량</div><div class="kpi-value" id="k-vol">—</div><div class="kpi-note">명목 거래량</div></div>
+    <div class="kpi-card"><div class="kpi-accent" style="background:#d97706"></div><div class="kpi-label">평균 펀딩비</div><div class="kpi-value" id="k-fr">—</div><div class="kpi-note" id="k-fr-note">8h rate</div></div>
+    <div class="kpi-card"><div class="kpi-accent" style="background:#7c3aed"></div><div class="kpi-label">마켓 수</div><div class="kpi-value" id="k-cnt">—</div><div class="kpi-note" id="k-cnt-note">퍼페추얼 페어</div></div>
+  </div>
+
+  <!-- 거래량 상위 10 -->
+  <div class="card chart-wrap">
+    <div class="sec-title">거래량 상위 10개</div>
+    <div class="sec-sub">24h 명목 거래량 기준</div>
+    <div class="chart-inner"><canvas id="chart-vol" height="240"></canvas></div>
+  </div>
+
+  <!-- 버블 차트 -->
+  <div class="card chart-wrap">
+    <div class="sec-title">OI 버블 차트</div>
+    <div class="sec-sub">버블 크기 = OI · X축 = 펀딩비 · Y축 = 24h 변동률</div>
+    <div class="chart-inner"><canvas id="chart-bubble" height="300"></canvas></div>
+  </div>
+
+  <!-- 펀딩비 분포 -->
+  <div class="card chart-wrap">
+    <div class="sec-title">펀딩비 분포</div>
+    <div class="sec-sub">전체 마켓 수 기준</div>
+    <div class="chart-inner"><canvas id="chart-fr" height="200"></canvas></div>
+  </div>
+
+  <!-- 히트맵 -->
+  <div class="card hm-wrap">
+    <div class="sec-title">펀딩비 히트맵</div>
+    <div class="sec-sub">셀 크기 = OI 비례 · 색상 = 8h 펀딩비</div>
+    <div class="hm-legend">
+      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#0a7c4a"></div>&gt;+0.02%</div>
+      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#22a86b"></div>+0.005~</div>
+      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#bbf7d0"></div>0~+</div>
+      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#fecaca"></div>~0</div>
+      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#f87171"></div>~-0.02%</div>
+      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#c0392b"></div>&lt;-0.02%</div>
+    </div>
+    <div class="hm-grid" id="heatmap"></div>
+  </div>
+
+  <!-- 펀딩비 주목 코인 -->
+  <div class="card">
+    <div class="chart-wrap" style="padding-bottom:0">
+      <div class="sec-title">펀딩비 주목 코인</div>
+      <div class="sec-sub">절댓값 상위 10개</div>
+    </div>
+    <div class="fr-list" id="fr-list" style="padding-top:0"></div>
+  </div>
+
+  <!-- 전체 마켓 -->
+  <div style="font-size:14px;font-weight:700;margin-bottom:10px">전체 마켓</div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="table-toolbar">
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input type="text" id="search" placeholder="코인 검색..." oninput="applyFilters()">
+      </div>
+      <div class="filter-row">
+        <button class="filt-btn active" onclick="setFilt('all',this)">전체</button>
+        <button class="filt-btn toggle" onclick="toggleFilt('up',this)">상승</button>
+        <button class="filt-btn toggle" onclick="toggleFilt('dn',this)">하락</button>
+        <button class="filt-btn toggle" onclick="toggleFilt('highfr',this)">고펀딩</button>
+        <button class="filt-btn toggle" onclick="toggleFilt('negfr',this)">음펀딩</button>
+        <span class="tbl-count" id="tbl-count"></span>
+      </div>
+      <div class="filter-row" id="cat-row" style="display:none">
+        <button class="cat-btn active" onclick="setCat('all',this)">전체</button>
+        <button class="cat-btn" onclick="setCat('stock',this)">주식</button>
+        <button class="cat-btn" onclick="setCat('index',this)">지수</button>
+        <button class="cat-btn" onclick="setCat('commodity',this)">원자재</button>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead id="thead">
+          <tr>
+            <th>#</th>
+            <th onclick="sortBy('coin')">코인</th>
+            <th onclick="sortBy('price')">가격</th>
+            <th onclick="sortBy('chg')">24h</th>
+            <th onclick="sortBy('fr')">펀딩비</th>
+            <th onclick="sortBy('oi')">OI</th>
+            <th onclick="sortBy('vol')">거래량</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr class="state-row"><td colspan="7"><span class="spin"></span>데이터 불러오는 중...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+const CAT_META = {
+  stock:     { label:'주식',   color:'#2563eb', bg:'#eff4ff' },
+  index:     { label:'지수',   color:'#d97706', bg:'#fef3e2' },
+  commodity: { label:'원자재', color:'#0ba360', bg:'#edf7f2' },
+};
+const HIP3_DEXES = ['xyz','cash','flx','km'];
+
+let cryptoData = [];
+let hip3Data   = [];
+let currentTab = 'crypto';
+let sortCol    = 'vol';
+let sortDir    = -1;
+let filtModes  = new Set(); // 복수 선택
+let catMode    = 'all';
+let charts     = {};
+
+// ── 유틸 ──
+const fmtB = v => {
+  if (v>=1e9) return '$'+(v/1e9).toFixed(2)+'B';
+  if (v>=1e6) return '$'+(v/1e6).toFixed(1)+'M';
+  if (v>=1e3) return '$'+(v/1e3).toFixed(0)+'K';
+  return '$'+v.toFixed(0);
+};
+const fmtPrice = v => {
+  if (!v) return '—';
+  if (v>=10000) return '$'+v.toLocaleString('en-US',{maximumFractionDigits:0});
+  if (v>=100)   return '$'+v.toFixed(1);
+  if (v>=1)     return '$'+v.toFixed(3);
+  return '$'+v.toPrecision(4);
+};
+const frColor = fr => {
+  if (fr> 0.02)  return {bg:'#0a7c4a',fg:'#fff'};
+  if (fr> 0.005) return {bg:'#22a86b',fg:'#fff'};
+  if (fr>=0)     return {bg:'#d1fae5',fg:'#065f46'};
+  if (fr>-0.005) return {bg:'#fee2e2',fg:'#7f1d1d'};
+  if (fr>-0.02)  return {bg:'#f87171',fg:'#fff'};
+  return              {bg:'#c0392b',fg:'#fff'};
+};
+const guessCategory = name => {
+  const n = name.toUpperCase();
+  if (['SPX','NDX','DJI','NIKKEI','DAX','FTSE','SP500','NAS100'].some(k=>n.includes(k))) return 'index';
+  if (['GOLD','SILVER','XAU','XAG','OIL','WTI','NATGAS','BRENT','COPPER'].some(k=>n.includes(k))) return 'commodity';
+  return 'stock';
+};
+
+// ── Fetch ──
+async function fetchPerp(dex) {
+  const body = dex ? {type:'metaAndAssetCtxs',dex} : {type:'metaAndAssetCtxs'};
+  const res = await fetch('https://api.hyperliquid.xyz/info',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if (!res.ok) throw new Error('HTTP '+res.status);
+  return res.json();
+}
+function parseCtx(ctx, dex) {
+  const universe = ctx[0]?.universe||[];
+  const ctxList  = ctx[1]||[];
+  return universe.map((coin,i)=>{
+    const c    = ctxList[i]||{};
+    const mark = parseFloat(c.markPx||0);
+    const prev = parseFloat(c.prevDayPx||mark);
+    const chg  = prev>0?(mark-prev)/prev*100:0;
+    const fr   = parseFloat(c.funding||0)*100;
+    const oi   = parseFloat(c.openInterest||0)*mark;
+    const vol  = parseFloat(c.dayNtlVlm||0);
+    const cat  = dex ? guessCategory(coin.name) : null;
+    return {coin:coin.name,price:mark,prev,chg,fr,oi,vol,dex:dex||'',cat};
+  }).filter(d=>d.price>0);
+}
+
+async function loadAll() {
+  try {
+    const [cryptoCtx,...hip3Ctxs] = await Promise.all([
+      fetchPerp(null),
+      ...HIP3_DEXES.map(d=>fetchPerp(d).catch(()=>null))
+    ]);
+    cryptoData = parseCtx(cryptoCtx,'');
+    hip3Data   = [];
+    HIP3_DEXES.forEach((dex,i)=>{
+      if (hip3Ctxs[i]) hip3Data.push(...parseCtx(hip3Ctxs[i],dex));
+    });
+    hip3Data = hip3Data.filter(d=>d.vol>0);
+
+    document.getElementById('badge-crypto').textContent = cryptoData.length;
+    document.getElementById('badge-hip3').textContent   = hip3Data.length || 'HIP-3';
+    document.getElementById('update-time').textContent  =
+      new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+    render();
+  } catch(e) {
+    document.getElementById('tbody').innerHTML = `<tr class="state-row"><td colspan="7">⚠ 로드 실패: ${e.message}</td></tr>`;
+  }
+}
+
+function currentData() { return currentTab==='crypto' ? cryptoData : hip3Data; }
+
+function render() {
+  updateKPI();
+  renderCharts();
+  renderHeatmap();
+  renderFRList();
+  applyFilters();
+}
+
+// ── KPI ──
+function updateKPI() {
+  const d = currentData();
+  const totalOI  = d.reduce((a,r)=>a+r.oi,0);
+  const totalVol = d.reduce((a,r)=>a+r.vol,0);
+  const avgFR    = d.length ? d.reduce((a,r)=>a+r.fr,0)/d.length : 0;
+  document.getElementById('k-oi').textContent  = fmtB(totalOI);
+  document.getElementById('k-vol').textContent = fmtB(totalVol);
+  document.getElementById('k-cnt').textContent = d.length;
+  document.getElementById('k-cnt-note').textContent = currentTab==='hip3'?'HIP-3 마켓':'퍼페추얼 페어';
+  const frEl = document.getElementById('k-fr');
+  frEl.textContent = (avgFR>=0?'+':'')+avgFR.toFixed(4)+'%';
+  frEl.style.color = avgFR>=0?'var(--green)':'var(--red)';
+  document.getElementById('k-fr-note').textContent = avgFR>=0?'롱 포지션 우세':'숏 포지션 우세';
+}
+
+// ── Charts ──
+function buildBar(id, labels, values, colorFn) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(canvas, {
+    type:'bar',
+    data:{ labels, datasets:[{ data:values, backgroundColor:values.map((_,i)=>colorFn(i)), borderRadius:5 }] },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>fmtB(c.raw)}} },
+      scales:{
+        x:{ ticks:{callback:v=>fmtB(v),font:{size:9,family:'monospace'},color:'#9098b1'}, grid:{color:'#e4e7ed'}, border:{display:false} },
+        y:{ ticks:{font:{size:12,weight:'600'},color:'#0f1117'}, grid:{display:false}, border:{display:false} }
+      }
+    }
+  });
+}
+
+function renderCharts() {
+  const d = currentData();
+  const maxOI = Math.max(...d.map(r=>r.oi));
+
+  // 거래량 상위 10
+  const top10Vol = [...d].sort((a,b)=>b.vol-a.vol).slice(0,10);
+  buildBar('chart-vol', top10Vol.map(r=>r.coin), top10Vol.map(r=>r.vol),
+    i=>`rgba(11,163,96,${1-i*0.07})`);
+
+  // 버블 차트
+  const bubbleData = d.map(r=>({
+    x: r.fr,
+    y: r.chg,
+    r: Math.max(4, Math.sqrt(r.oi/maxOI)*32),
+    coin: r.coin, oi: r.oi, fr: r.fr, chg: r.chg,
+    color: r.chg>=0 ? 'rgba(11,163,96,0.55)' : 'rgba(224,58,58,0.55)',
+    border: r.chg>=0 ? '#0ba360' : '#e03a3a',
+  }));
+
+  const bCanvas = document.getElementById('chart-bubble');
+  if (charts['bubble']) charts['bubble'].destroy();
+  charts['bubble'] = new Chart(bCanvas, {
+    type:'bubble',
+    data:{ datasets:[{ data:bubbleData, backgroundColor:bubbleData.map(d=>d.color), borderColor:bubbleData.map(d=>d.border), borderWidth:1 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          callbacks:{
+            label: ctx => {
+              const d = ctx.raw;
+              return [`${d.coin}`, `펀딩비: ${d.fr>=0?'+':''}${d.fr.toFixed(4)}%`, `24h: ${d.chg>=0?'+':''}${d.chg.toFixed(2)}%`, `OI: ${fmtB(d.oi)}`];
+            }
+          }
+        }
+      },
+      scales:{
+        x:{ title:{display:true,text:'펀딩비 (%)',font:{size:10},color:'#9098b1'}, ticks:{callback:v=>v.toFixed(3)+'%',font:{size:9,family:'monospace'},color:'#9098b1'}, grid:{color:'#e4e7ed'}, border:{display:false} },
+        y:{ title:{display:true,text:'24h 변동률 (%)',font:{size:10},color:'#9098b1'}, ticks:{callback:v=>v.toFixed(1)+'%',font:{size:9,family:'monospace'},color:'#9098b1'}, grid:{color:'#e4e7ed'}, border:{display:false} }
+      }
+    }
+  });
+
+  // 펀딩비 분포 도넛
+  const bins = [
+    {name:'>+0.02%',       color:'#0a7c4a', count:d.filter(r=>r.fr>0.02).length},
+    {name:'+0.005~0.02%',  color:'#22a86b', count:d.filter(r=>r.fr>0.005&&r.fr<=0.02).length},
+    {name:'0~+0.005%',     color:'#bbf7d0', count:d.filter(r=>r.fr>=0&&r.fr<=0.005).length},
+    {name:'-0.005~0%',     color:'#fecaca', count:d.filter(r=>r.fr<0&&r.fr>=-0.005).length},
+    {name:'-0.02~-0.005%', color:'#f87171', count:d.filter(r=>r.fr<-0.005&&r.fr>=-0.02).length},
+    {name:'<-0.02%',       color:'#c0392b', count:d.filter(r=>r.fr<-0.02).length},
+  ].filter(b=>b.count>0);
+
+  const frCanvas = document.getElementById('chart-fr');
+  if (charts['fr']) charts['fr'].destroy();
+  charts['fr'] = new Chart(frCanvas, {
+    type:'doughnut',
+    data:{ labels:bins.map(b=>b.name), datasets:[{data:bins.map(b=>b.count), backgroundColor:bins.map(b=>b.color), borderWidth:2, borderColor:'#fff'}] },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'60%',
+      plugins:{
+        legend:{position:'right', labels:{font:{size:10,family:'Inter'},color:'#4a5068',padding:8,boxWidth:10}},
+        tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw}개`}}
+      }
+    }
+  });
+}
+
+// ── 히트맵 ──
+function renderHeatmap() {
+  const d = currentData();
+  const top = [...d].sort((a,b)=>b.oi-a.oi).slice(0, currentTab==='crypto'?25:20);
+  const maxOI = Math.max(...top.map(r=>r.oi));
+  const wrap  = document.getElementById('heatmap');
+
+  wrap.innerHTML = top.map(r=>{
+    const {bg,fg} = frColor(r.fr);
+    const ratio   = r.oi/maxOI;
+    const minW    = ratio>0.3?'120px':ratio>0.08?'88px':'68px';
+    const fs      = ratio>0.3?13:ratio>0.08?12:11;
+    const pad     = ratio>0.3?'10px 12px':ratio>0.08?'8px 10px':'6px 8px';
+    const frTxt   = (r.fr>=0?'+':'')+r.fr.toFixed(4)+'%';
+    return `<div class="hm-cell" style="background:${bg};color:${fg};min-width:${minW};flex:1 1 ${minW};padding:${pad}" title="${r.coin} | FR: ${frTxt} | OI: ${fmtB(r.oi)}">
+      <div class="hm-coin" style="font-size:${fs}px">${r.coin}</div>
+      <div class="hm-fr" style="font-size:${fs-1}px">${frTxt}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── FR List ──
+function renderFRList() {
+  const d      = currentData();
+  const top10  = [...d].sort((a,b)=>Math.abs(b.fr)-Math.abs(a.fr)).slice(0,10);
+  const maxAbs = Math.max(...top10.map(r=>Math.abs(r.fr)));
+  const wrap   = document.getElementById('fr-list');
+
+  wrap.innerHTML = top10.map((r,i)=>{
+    const pct   = maxAbs>0?Math.abs(r.fr)/maxAbs*100:0;
+    const color = r.fr>=0?'#0ba360':'#e03a3a';
+    const frTxt = (r.fr>=0?'+':'')+r.fr.toFixed(4)+'%';
+    const catTag = r.cat && CAT_META[r.cat]
+      ? `<span class="fr-cat" style="background:${CAT_META[r.cat].bg};color:${CAT_META[r.cat].color}">${CAT_META[r.cat].label}</span>` : '';
+    return `<div class="fr-row">
+      <span class="fr-rank">${i+1}</span>
+      <span class="fr-coin">${r.coin}</span>
+      ${catTag}
+      <div class="fr-bar-wrap"><div class="fr-bar" style="width:${pct}%;background:${color}"></div></div>
+      <span class="fr-val" style="color:${color}">${frTxt}</span>
+    </div>`;
+  }).join('');
+}
+
+// ── Table ──
+function applyFilters() {
+  const q   = document.getElementById('search').value.trim().toUpperCase();
+  let data  = currentData().filter(r=>!q||r.coin.toUpperCase().includes(q));
+  if (filtModes.has('up'))     data=data.filter(r=>r.chg>=0);
+  if (filtModes.has('dn'))     data=data.filter(r=>r.chg<0);
+  if (filtModes.has('highfr')) data=data.filter(r=>r.fr>0.005);
+  if (filtModes.has('negfr'))  data=data.filter(r=>r.fr<0);
+  if (currentTab==='hip3'&&catMode!=='all') data=data.filter(r=>r.cat===catMode);
+
+  const sorted = [...data].sort((a,b)=>
+    sortCol==='coin'?sortDir*a.coin.localeCompare(b.coin):sortDir*(b[sortCol]-a[sortCol])
+  );
+
+  document.getElementById('tbl-count').textContent = sorted.length+'/'+currentData().length;
+
+  // 헤더 정렬 표시
+  const cols = ['coin','price','chg','fr','oi','vol'];
+  document.querySelectorAll('thead th').forEach((th,i)=>{
+    th.classList.remove('asc','desc');
+    if (i>0&&cols[i-1]===sortCol) th.classList.add(sortDir===1?'asc':'desc');
+  });
+
+  const isHip3 = currentTab==='hip3';
+  const colSpan = isHip3?8:7;
+
+  if (!sorted.length) {
+    document.getElementById('tbody').innerHTML=`<tr class="state-row"><td colspan="${colSpan}">검색 결과 없음</td></tr>`;
+    return;
+  }
+
+  document.getElementById('tbody').innerHTML = sorted.map((r,i)=>{
+    const chgB = `<span class="badge badge-${r.chg>=0?'up':'dn'}">${r.chg>=0?'+':''}${r.chg.toFixed(2)}%</span>`;
+    const frB  = `<span class="badge badge-${r.fr<0?'dn':r.fr>0.01?'warn':'up'}">${r.fr>=0?'+':''}${r.fr.toFixed(4)}%</span>`;
+    const catCell = isHip3&&r.cat
+      ? `<td><span class="cat-tag" style="background:${CAT_META[r.cat]?.bg};color:${CAT_META[r.cat]?.color}">${CAT_META[r.cat]?.label}</span></td>` : '';
+    return `<tr>
+      <td>${i+1}</td>
+      <td><div class="coin-name">${r.coin}</div><div class="coin-sub">PERP</div></td>
+      ${catCell}
+      <td>${fmtPrice(r.price)}</td>
+      <td>${chgB}</td>
+      <td>${frB}</td>
+      <td>${fmtB(r.oi)}</td>
+      <td>${fmtB(r.vol)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function sortBy(col) {
+  if (sortCol===col) sortDir*=-1;
+  else { sortCol=col; sortDir=-1; }
+  applyFilters();
+}
+function setFilt(mode,btn) {
+  // 전체 버튼 — 필터 초기화
+  filtModes.clear();
+  document.querySelectorAll('.filt-btn.toggle').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.filt-btn:not(.toggle)').classList.add('active');
+  applyFilters();
+}
+function toggleFilt(mode,btn) {
+  // 전체 버튼 비활성화
+  document.querySelector('.filt-btn:not(.toggle)').classList.remove('active');
+  if (filtModes.has(mode)) {
+    filtModes.delete(mode);
+    btn.classList.remove('active');
+  } else {
+    filtModes.add(mode);
+    btn.classList.add('active');
+  }
+  // 아무것도 선택 안 됐으면 전체로 복귀
+  if (filtModes.size===0) {
+    document.querySelector('.filt-btn:not(.toggle)').classList.add('active');
+  }
+  applyFilters();
+}
+function setCat(mode,btn) {
+  catMode=mode;
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+
+function switchTab(tab,btn) {
+  currentTab=tab;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('cat-row').style.display = tab==='hip3'?'flex':'none';
+  document.getElementById('search').value='';
+  filtModes.clear(); catMode='all'; sortCol='vol'; sortDir=-1;
+  document.querySelectorAll('.filt-btn.toggle').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.filt-btn:not(.toggle)').classList.add('active');
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.cat-btn').classList.add('active');
+
+  // 테이블 헤더 재구성
+  const isHip3 = tab==='hip3';
+  document.getElementById('thead').innerHTML = `<tr>
+    <th>#</th>
+    <th onclick="sortBy('coin')">코인</th>
+    ${isHip3?'<th>구분</th>':''}
+    <th onclick="sortBy('price')">가격</th>
+    <th onclick="sortBy('chg')">24h</th>
+    <th onclick="sortBy('fr')">펀딩비</th>
+    <th onclick="sortBy('oi')">OI</th>
+    <th onclick="sortBy('vol')">거래량</th>
+  </tr>`;
+
+  render();
+}
+
+loadAll();
+setInterval(loadAll, 30000);
+</script>
+</body>
+</html>
