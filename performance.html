@@ -258,7 +258,7 @@
       <div class="section-title">
         <span class="dot" style="background:var(--yellow);"></span>
         BM20 vs BTC — 연초 이후 누적 수익률 (YTD)
-        <span class="sub">최근 90일 기준</span>
+        <span class="sub">연초 이후 (YTD)</span>
       </div>
       <div class="panel">
         <!-- KPI -->
@@ -696,17 +696,18 @@ async function loadData() {
 
   async function loadYTDData() {
     const bust = Date.now();
-    const DAYS = 90;
+    
 
     // 1) market_history.csv 로드 (bm20, sentiment, kimchi)
     const mhRes = await fetch(`/out/history/market_history.csv?${bust}`);
     const mhText = await mhRes.text();
     const allRows = parseCSV(mhText).filter(d => d.date && d.bm20_level);
 
-    // 최근 90일 필터
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - DAYS);
-    const cutoffStr = cutoff.toISOString().slice(0, 10);
+    
+
+
+    // YTD 필터 (연초 1월 1일 기준)
+    const cutoffStr = `${new Date().getFullYear()}-01-01`;
     const mhRows = allRows.filter(d => d.date >= cutoffStr);
 
     // 2) btc_usd_series.json 로드 (BTC 가격)
@@ -715,7 +716,7 @@ async function loadData() {
     const btcMap = {};
     btcRaw.forEach(d => { btcMap[d.date] = d.price; });
 
-    // 3) 기준값 (90일 전 첫 날)
+    // 3) 기준값 (연초 첫 날)
     const baseRow = mhRows[0];
     const baseDate = baseRow?.date;
     const btcBase = btcMap[baseDate] || 1;
@@ -737,7 +738,7 @@ async function loadData() {
       YTD_SENT.push(sentVal);
       YTD_BTC_PX.push(btcPx);
 
-      // 수익률 계산 (90일 첫날 기준)
+      // 수익률 계산 (연초 기준)
       const btcRet = btcPx && btcBase ? ((btcPx / btcBase) - 1) * 100 : null;
       const bm20Ret = bm20Lv && bm20Base ? ((bm20Lv / bm20Base) - 1) * 100 : null;
       YTD_BTC.push(btcRet !== null ? Math.round(btcRet * 100) / 100 : null);
