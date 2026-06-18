@@ -44,7 +44,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13
 .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh);padding:14px 14px 12px;position:relative;overflow:hidden}
 .kpi-accent{position:absolute;top:0;left:0;right:0;height:3px}
 .kpi-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:5px}
-.kpi-value{font-size:20px;font-weight:700;font-family:var(--mono);letter-spacing:-.03em;line-height:1.1}
+.kpi-value{font-size:21px;font-weight:800;font-family:var(--mono);letter-spacing:-.03em;line-height:1.1}
 .kpi-note{font-size:10px;color:var(--text3);margin-top:3px}
 
 /* 전체 마켓 테이블 */
@@ -73,12 +73,12 @@ th.desc::after{content:' ↓';color:var(--blue)}
 tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
 tbody tr:hover{background:#f8f9fc}
 tbody tr:last-child{border-bottom:none}
-td{padding:9px 12px;text-align:right;font-family:var(--mono);font-size:12px;white-space:nowrap}
+td{padding:9px 12px;text-align:right;font-family:var(--mono);font-size:12px;font-weight:600;white-space:nowrap}
 td:first-child{text-align:center;font-family:var(--font);color:var(--text3);font-size:11px}
 td:nth-child(2){text-align:left;font-family:var(--font)}
 .coin-name{font-size:13px;font-weight:700}
 .coin-sub{font-size:10px;color:var(--text3)}
-.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;font-family:var(--mono)}
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;font-family:var(--mono)}
 .badge-up{background:var(--green-bg);color:var(--green)}
 .badge-dn{background:var(--red-bg);color:var(--red)}
 .badge-warn{background:var(--amber-bg);color:var(--amber)}
@@ -217,7 +217,9 @@ td:nth-child(2){text-align:left;font-family:var(--font)}
   <div class="card chart-wrap">
     <div class="sec-title">OI 버블 차트</div>
     <div class="sec-sub">버블 크기 = OI · X축 = 펀딩비 · Y축 = 24h 변동률</div>
-    <canvas id="chart-bubble" height="220"></canvas>
+    <div style="position:relative;height:260px;width:100%">
+      <canvas id="chart-bubble"></canvas>
+    </div>
   </div>
 
   <!-- 히트맵 -->
