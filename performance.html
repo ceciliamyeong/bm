@@ -246,9 +246,9 @@
   <!-- Range selector -->
   <div class="range-bar">
     <button class="range-btn" data-days="14">14일</button>
-    <button class="range-btn active" data-days="30">30일</button>
+    <button class="range-btn" data-days="30">30일</button>
     <button class="range-btn" data-days="60">60일</button>
-    <button class="range-btn" data-days="0">전체</button>
+    <button class="range-btn active" data-days="0">전체</button>
   </div>
 
   <div id="loadingMsg" class="loading">데이터 로딩 중...</div>
@@ -258,7 +258,7 @@
       <div class="section-title">
         <span class="dot" style="background:var(--yellow);"></span>
         BM20 vs BTC — 연초 이후 누적 수익률 (YTD)
-        <span class="sub">최근 90일 기준</span>
+        <span class="sub">연초 이후 (YTD)</span>
       </div>
       <div class="panel">
         <!-- KPI -->
@@ -439,7 +439,7 @@ const TYPE_COLOR = {
 // ── 전역 차트 인스턴스 ────────────────────────────────
 let charts = {};
 let allData = [];
-let currentDays = 30;
+let currentDays = 0;
 
 function sliceData(days) {
   if (!days || days <= 0) return allData;
@@ -616,8 +616,6 @@ function renderAll(days) {
   // 5. 환율
   if (!charts.fx) charts.fx = echarts.init(document.getElementById('fxChart'));
   const fxData = data.map(d => num(d.usdkrw)).filter(v => v && v > 0);
-  const fxMin = Math.floor(Math.min(...fxData) / 10) * 10 - 20;
-  const fxMax = Math.ceil(Math.max(...fxData) / 10) * 10 + 20;
   charts.fx.setOption({
     backgroundColor: 'transparent',
     tooltip: { ...TOOLTIP, formatter: params => {
@@ -627,7 +625,7 @@ function renderAll(days) {
     } },
     grid: { left: 56, right: 16, top: 16, bottom: 48 },
     xAxis: X_AXIS(dates),
-    yAxis: { ...Y_AXIS('KRW', v => v.toFixed(0)), min: fxMin, max: fxMax },
+    yAxis: { ...Y_AXIS('KRW', v => v.toFixed(0)), min: 1400, max: 1550 },
     series: [
       { type:'line', smooth:true, symbolSize:3,
          data: data.map(d => { const v = num(d.usdkrw); return (v && v > 0) ? v : null; }),
@@ -698,17 +696,13 @@ async function loadData() {
 
   async function loadYTDData() {
     const bust = Date.now();
-    const DAYS = 90;
-
     // 1) market_history.csv 로드 (bm20, sentiment, kimchi)
     const mhRes = await fetch(`/out/history/market_history.csv?${bust}`);
     const mhText = await mhRes.text();
     const allRows = parseCSV(mhText).filter(d => d.date && d.bm20_level);
 
-    // 최근 90일 필터
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - DAYS);
-    const cutoffStr = cutoff.toISOString().slice(0, 10);
+    // YTD 1월 1일 기준 고정
+    const cutoffStr = `${new Date().getFullYear()}-01-01`;
     const mhRows = allRows.filter(d => d.date >= cutoffStr);
 
     // 2) btc_usd_series.json 로드 (BTC 가격)
