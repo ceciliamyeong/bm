@@ -623,9 +623,11 @@ function renderAll(days) {
       const d = data[i];
       return `<b>${d.date}</b><br/>USD/KRW ${num(d.usdkrw)?.toFixed(1) ?? '-'}`;
     } },
+    const fxMin = Math.floor(Math.min(...fxData) / 10) * 10 - 20;
+    const fxMax = Math.ceil(Math.max(...fxData) / 10) * 10 + 20;
     grid: { left: 56, right: 16, top: 16, bottom: 48 },
     xAxis: X_AXIS(dates),
-    yAxis: { ...Y_AXIS('KRW', v => v.toFixed(0)), min: 1400, max: 1550 },
+    yAxis: { ...Y_AXIS('KRW', v => v.toFixed(0)), min: fxMin, max: fxMax },
     series: [
       { type:'line', smooth:true, symbolSize:3,
          data: data.map(d => { const v = num(d.usdkrw); return (v && v > 0) ? v : null; }),
