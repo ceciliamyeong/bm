@@ -246,9 +246,9 @@
   <!-- Range selector -->
   <div class="range-bar">
     <button class="range-btn" data-days="14">14일</button>
-    <button class="range-btn active" data-days="30">30일</button>
+    <button class="range-btn" data-days="30">30일</button>
     <button class="range-btn" data-days="60">60일</button>
-    <button class="range-btn" data-days="0">전체</button>
+    <button class="range-btn active" data-days="0">전체</button>
   </div>
 
   <div id="loadingMsg" class="loading">데이터 로딩 중...</div>
@@ -439,7 +439,7 @@ const TYPE_COLOR = {
 // ── 전역 차트 인스턴스 ────────────────────────────────
 let charts = {};
 let allData = [];
-let currentDays = 30;
+let currentDays = 0;
 
 function sliceData(days) {
   if (!days || days <= 0) return allData;
@@ -696,17 +696,12 @@ async function loadData() {
 
   async function loadYTDData() {
     const bust = Date.now();
-    
-
     // 1) market_history.csv 로드 (bm20, sentiment, kimchi)
     const mhRes = await fetch(`/out/history/market_history.csv?${bust}`);
     const mhText = await mhRes.text();
     const allRows = parseCSV(mhText).filter(d => d.date && d.bm20_level);
 
-    
-
-
-    // YTD 필터 (연초 1월 1일 기준)
+    // YTD 1월 1일 기준 고정
     const cutoffStr = `${new Date().getFullYear()}-01-01`;
     const mhRows = allRows.filter(d => d.date >= cutoffStr);
 
@@ -716,7 +711,7 @@ async function loadData() {
     const btcMap = {};
     btcRaw.forEach(d => { btcMap[d.date] = d.price; });
 
-    // 3) 기준값 (연초 첫 날)
+    // 3) 기준값 (90일 전 첫 날)
     const baseRow = mhRows[0];
     const baseDate = baseRow?.date;
     const btcBase = btcMap[baseDate] || 1;
@@ -738,7 +733,7 @@ async function loadData() {
       YTD_SENT.push(sentVal);
       YTD_BTC_PX.push(btcPx);
 
-      // 수익률 계산 (연초 기준)
+      // 수익률 계산 (90일 첫날 기준)
       const btcRet = btcPx && btcBase ? ((btcPx / btcBase) - 1) * 100 : null;
       const bm20Ret = bm20Lv && bm20Base ? ((bm20Lv / bm20Base) - 1) * 100 : null;
       YTD_BTC.push(btcRet !== null ? Math.round(btcRet * 100) / 100 : null);
