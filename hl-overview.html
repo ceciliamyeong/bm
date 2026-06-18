@@ -217,7 +217,7 @@ td:nth-child(2){text-align:left;font-family:var(--font)}
   <div class="card chart-wrap">
     <div class="sec-title">OI 버블 차트</div>
     <div class="sec-sub">버블 크기 = OI · X축 = 펀딩비 · Y축 = 24h 변동률</div>
-    <canvas id="chart-bubble" height="300"></canvas>
+    <canvas id="chart-bubble" height="220"></canvas>
   </div>
 
   <!-- 히트맵 -->
@@ -409,6 +409,7 @@ function renderBubble() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      clip: false,
       plugins: {
         legend: {display: false},
         tooltip: {
@@ -438,12 +439,12 @@ function renderBubble() {
         y: {
           title: {display:true, text:'24h 변동률 (%)', font:{size:10}, color:'#9098b1'},
           ticks: {
-            callback: v => (typeof v === 'number' ? v.toFixed(1) : v) + '%',
+            callback: v => (typeof v === 'number' ? v.toFixed(0) : v) + '%',
             font:{size:9, family:'monospace'}, color:'#9098b1',
-            maxTicksLimit: 8
+            stepSize: 5, maxTicksLimit: 9
           },
           grid:  {color:'#e4e7ed'}, border:{display:false},
-          min: -20, max: 20
+          min: -20, max: 20, beginAtZero: false
         }
       }
     }
@@ -508,11 +509,11 @@ function applyFilters() {
   if (filtModes.has('negfr'))  data = data.filter(r => r.fr < 0);
   if (currentTab === 'hip3' && catMode !== 'all') data = data.filter(r => r.cat === catMode);
 
-  filteredSorted = [...data].sort((a,b) =>
-    sortCol === 'coin'
-      ? sortDir * a.coin.localeCompare(b.coin)
-      : sortDir * (b[sortCol] - a[sortCol])
-  );
+  filteredSorted = [...data].sort((a,b) => {
+    if (sortCol === 'coin') return sortDir * a.coin.localeCompare(b.coin);
+    // sortDir=-1: 내림차순(b-a), sortDir=1: 오름차순(a-b)
+    return sortDir === -1 ? b[sortCol] - a[sortCol] : a[sortCol] - b[sortCol];
+  });
 
   currentPage = 1;
   renderTable();
