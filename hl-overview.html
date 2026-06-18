@@ -153,7 +153,7 @@ td:nth-child(2){text-align:left;font-family:var(--font)}
       <div class="kpi-accent" style="background:#d97706"></div>
       <div class="kpi-label">평균 펀딩비</div>
       <div class="kpi-value" id="k-fr">—</div>
-      <div class="kpi-note" id="k-fr-note">8h rate</div>
+      <div class="kpi-note" id="k-fr-note">연율화 기준</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-accent" style="background:#7c3aed"></div>
@@ -225,14 +225,14 @@ td:nth-child(2){text-align:left;font-family:var(--font)}
   <!-- 히트맵 -->
   <div class="card hm-wrap">
     <div class="sec-title">펀딩비 히트맵</div>
-    <div class="sec-sub">셀 크기 = OI 비례 · 색상 = 8h 펀딩비</div>
+    <div class="sec-sub">셀 크기 = OI 비례 · 색상 = 연율화 펀딩비</div>
     <div class="hm-legend">
-      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#0a7c4a"></div>&gt;+0.02%</div>
-      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#22a86b"></div>+0.005~</div>
-      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#bbf7d0"></div>0~+</div>
-      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#fecaca"></div>~0</div>
-      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#f87171"></div>~-0.02%</div>
-      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#c0392b"></div>&lt;-0.02%</div>
+      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#0a7c4a"></div>&gt;+20%</div>
+      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#22a86b"></div>+5~20%</div>
+      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#bbf7d0"></div>0~+5%</div>
+      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#fecaca"></div>~0%</div>
+      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#f87171"></div>-5~-20%</div>
+      <div class="hm-legend-item"><div class="hm-legend-dot" style="background:#c0392b"></div>&lt;-20%</div>
     </div>
     <div class="hm-grid" id="heatmap"></div>
   </div>
@@ -286,12 +286,12 @@ const fmtPrice = v => {
   return '$' + v.toPrecision(4);
 };
 const frColor = fr => {
-  if (fr >  0.02)  return {bg:'#0a7c4a', fg:'#fff'};
-  if (fr >  0.005) return {bg:'#22a86b', fg:'#fff'};
-  if (fr >= 0)     return {bg:'#d1fae5', fg:'#065f46'};
-  if (fr > -0.005) return {bg:'#fee2e2', fg:'#7f1d1d'};
-  if (fr > -0.02)  return {bg:'#f87171', fg:'#fff'};
-  return                  {bg:'#c0392b', fg:'#fff'};
+  if (fr >  20)  return {bg:'#0a7c4a', fg:'#fff'};   // >+20% 연율
+  if (fr >  5)   return {bg:'#22a86b', fg:'#fff'};   // +5~20%
+  if (fr >= 0)   return {bg:'#d1fae5', fg:'#065f46'}; // 0~+5%
+  if (fr > -5)   return {bg:'#fee2e2', fg:'#7f1d1d'}; // -5~0%
+  if (fr > -20)  return {bg:'#f87171', fg:'#fff'};   // -20~-5%
+  return                {bg:'#c0392b', fg:'#fff'};    // <-20%
 };
 const guessCategory = name => {
   const n = name.toUpperCase();
@@ -320,11 +320,13 @@ function parseCtx(ctx, dex) {
     const mark = parseFloat(c.markPx  || 0);
     const prev = parseFloat(c.prevDayPx || mark);
     const chg  = prev > 0 ? (mark - prev) / prev * 100 : 0;
-    const fr   = parseFloat(c.funding || 0) * 100;
+    const fr   = parseFloat(c.funding || 0) * 100 * 1095; // 연율화 (8h × 3 × 365)
     const oi   = parseFloat(c.openInterest || 0) * mark;
     const vol  = parseFloat(c.dayNtlVlm || 0);
     const cat  = dex ? guessCategory(coin.name) : null;
-    return {coin: coin.name, price: mark, prev, chg, fr, oi, vol, dex: dex||'', cat};
+    // DEX 접두어 제거 (예: xyz:SPCX → SPCX)
+    const coinName = coin.name.includes(':') ? coin.name.split(':')[1] : coin.name;
+    return {coin: coinName, price: mark, prev, chg, fr, oi, vol, dex: dex||'', cat};
   }).filter(d => d.price > 0);
 }
 
@@ -376,7 +378,7 @@ function updateKPI() {
   document.getElementById('k-cnt-note').textContent = currentTab === 'hip3' ? 'HIP-3 마켓' : '퍼페추얼 페어';
 
   const frEl = document.getElementById('k-fr');
-  frEl.textContent = (avgFR >= 0 ? '+' : '') + avgFR.toFixed(4) + '%';
+  frEl.textContent = (avgFR >= 0 ? '+' : '') + avgFR.toFixed(2) + '%';
   frEl.style.color = avgFR >= 0 ? 'var(--green)' : 'var(--red)';
   document.getElementById('k-fr-note').textContent = avgFR >= 0 ? '롱 포지션 우세' : '숏 포지션 우세';
 }
@@ -420,7 +422,7 @@ function renderBubble() {
               const d = ctx.raw;
               return [
                 d.coin,
-                '펀딩비: ' + (d.fr >= 0 ? '+' : '') + d.fr.toFixed(4) + '%',
+                '펀딩비: ' + (d.fr >= 0 ? '+' : '') + d.fr.toFixed(2) + '%',
                 '24h: '   + (d.chg >= 0 ? '+' : '') + d.chg.toFixed(2) + '%',
                 'OI: '    + fmtB(d.oi)
               ];
@@ -466,7 +468,7 @@ function renderHeatmap() {
     const minW  = ratio > 0.3 ? '120px' : ratio > 0.08 ? '88px' : '68px';
     const fs    = ratio > 0.3 ? 13 : ratio > 0.08 ? 12 : 11;
     const pad   = ratio > 0.3 ? '10px 12px' : ratio > 0.08 ? '8px 10px' : '6px 8px';
-    const frTxt = (r.fr >= 0 ? '+' : '') + r.fr.toFixed(4) + '%';
+    const frTxt = (r.fr >= 0 ? '+' : '') + r.fr.toFixed(2) + '%';
     return `<div class="hm-cell" style="background:${bg};color:${fg};min-width:${minW};flex:1 1 ${minW};padding:${pad}"
       title="${r.coin} | FR: ${frTxt} | OI: ${fmtB(r.oi)}">
       <div style="font-size:${fs}px;font-weight:700;line-height:1.2">${r.coin}</div>
@@ -485,7 +487,7 @@ function renderFRList() {
   document.getElementById('fr-list').innerHTML = top10.map((r, i) => {
     const pct   = maxAbs > 0 ? Math.abs(r.fr) / maxAbs * 100 : 0;
     const color = r.fr >= 0 ? '#0ba360' : '#e03a3a';
-    const frTxt = (r.fr >= 0 ? '+' : '') + r.fr.toFixed(4) + '%';
+    const frTxt = (r.fr >= 0 ? '+' : '') + r.fr.toFixed(2) + '%';
     const catTag = r.cat && CAT_META[r.cat]
       ? `<span style="font-size:10px;font-weight:600;padding:1px 5px;border-radius:3px;background:${CAT_META[r.cat].bg};color:${CAT_META[r.cat].color};flex-shrink:0">${CAT_META[r.cat].label}</span>` : '';
     return `<div class="fr-row">
@@ -507,7 +509,7 @@ function applyFilters() {
 
   if (filtModes.has('up'))     data = data.filter(r => r.chg >= 0);
   if (filtModes.has('dn'))     data = data.filter(r => r.chg < 0);
-  if (filtModes.has('highfr')) data = data.filter(r => r.fr > 0.005);
+  if (filtModes.has('highfr')) data = data.filter(r => r.fr > 5.475);
   if (filtModes.has('negfr'))  data = data.filter(r => r.fr < 0);
   if (currentTab === 'hip3' && catMode !== 'all') data = data.filter(r => r.cat === catMode);
 
@@ -551,7 +553,7 @@ function renderTable() {
   document.getElementById('tbody').innerHTML = pageData.map((r, i) => {
     const rank = start + i + 1;
     const chgB = `<span class="badge badge-${r.chg>=0?'up':'dn'}">${r.chg>=0?'+':''}${r.chg.toFixed(2)}%</span>`;
-    const frB  = `<span class="badge badge-${r.fr<0?'dn':r.fr>0.01?'warn':'up'}">${r.fr>=0?'+':''}${r.fr.toFixed(4)}%</span>`;
+    const frB  = `<span class="badge badge-${r.fr<0?'dn':r.fr>10?'warn':'up'}">${r.fr>=0?'+':''}${r.fr.toFixed(2)}%</span>`;
     const catCell = isHip3 && r.cat
       ? `<td><span class="cat-tag" style="background:${CAT_META[r.cat]?.bg};color:${CAT_META[r.cat]?.color}">${CAT_META[r.cat]?.label}</span></td>` : '';
     return `<tr>
