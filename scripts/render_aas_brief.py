@@ -57,6 +57,19 @@ def _fmt_price(p: float) -> str:
     return f"{p:.8f}"
 
 
+def _factor_badge(onchain: float, social: float, momentum: float) -> str:
+    """팩터 비중 기반 주요 팩터 배지 — 한글, 색 구분"""
+    factors = [("온체인", onchain, "f-onchain"), ("소셜", social, "f-social"), ("모멘텀", momentum, "f-momentum")]
+    # 0보다 큰 팩터만 비중 내림차순 정렬
+    active = sorted([(n, v, c) for n, v, c in factors if v > 0], key=lambda x: x[1], reverse=True)
+    if not active:
+        return '<span class="driver-badge f-na">—</span>'
+    badges = []
+    for name, val, cls in active:
+        badges.append(f'<span class="driver-badge {cls}">{name} {val:.0f}%</span>')
+    return ' '.join(badges)
+
+
 def _action_badge(rsi: float, comment: str) -> str:
     if "고래" in comment or "accum" in comment.lower():
         return '<span class="badge badge-accum">ACCUM 🐋</span>'
@@ -185,17 +198,22 @@ def _fetch_raw(path: str) -> requests.Response | None:
 
 
 def _table_row(rank: int, sym: str, aas: float, price: float,
-               chg: float, rsi: float, comment: str, hq: bool = False) -> str:
+               chg: float, rsi: float, comment: str, hq: bool = False,
+               onchain: float = 0, social: float = 0, momentum: float = 0,
+               logo_url: str = "") -> str:
+    logo_html = (
+        f'<img class="logo" src="{logo_url}" alt="{sym}" '
+        f'onerror="this.style.display=\'none\'">'
+    ) if logo_url else ""
     return f"""
     <tr class="{'hq' if hq else ''}">
-      <td><span class="rank-c {'top' if rank <= 3 else ''}">{rank}</span></td>
-      <td class="sym">{sym}</td>
-      <td class="aas">{aas:.2f}</td>
-      <td class="price">{_fmt_price(price)}</td>
-      <td class="chg {_color_class(chg)}">{_fmt_chg(chg)}</td>
-      <td class="rsi">{rsi:.0f}</td>
-      <td>{_action_badge(rsi, comment)}</td>
-      <td class="cmt {_comment_class(comment)}">{comment}</td>
+      <td class="t-rank">{rank}</td>
+      <td><div class="t-sym">{logo_html}{sym}</div></td>
+      <td class="t-clm">{aas:.2f}</td>
+      <td class="t-h24 {_color_class(chg)}">{_fmt_chg(chg)}</td>
+      <td class="t-rsi">{rsi:.0f}</td>
+      <td>{_factor_badge(onchain, social, momentum)}</td>
+      <td class="t-comment">{comment}</td>
     </tr>"""
 
 
@@ -290,11 +308,22 @@ def render() -> None:
                 "관심 집중" if aas >= 1.0 else
                 "모니터링"
             )
+            # 팩터 컬럼 (없으면 0)
+            onchain  = float(row.get("onchain_pct",  row.get("onchain",  0) or 0))
+            social   = float(row.get("social_pct",   row.get("social",   0) or 0))
+            momentum = float(row.get("momentum_pct", row.get("momentum", 0) or 0))
+            # 합이 0이면 코멘트 기반 추정
+            if onchain + social + momentum == 0:
+                if "온체인" in comment:   onchain = 100
+                elif "모멘텀" in comment: momentum = 100
+                else:                     social = 100
             top10_rows_html += _table_row(
                 rank=int(row["Rank"]), sym=sym,
                 aas=aas, price=float(row["price"]),
                 chg=chg, rsi=rsi,
-                comment=comment, hq=(aas >= 1.5)
+                comment=comment, hq=(aas >= 1.5),
+                onchain=onchain, social=social, momentum=momentum,
+                logo_url=COIN_LOGO_URL.get(sym, ""),
             )
 
     # 7. 대시보드 통계
@@ -305,8 +334,10 @@ def render() -> None:
         excl1     = chg_vals.iloc[1:].mean() if len(chg_vals) > 1 else avg_top10
         best_row  = top10_df.loc[chg_vals.idxmax()]
         worst_row = top10_df.loc[chg_vals.idxmin()]
-        best_str  = f"{best_row['symbol']} ({_fmt_chg(float(best_row['24h']))})"
-        worst_str = f"{worst_row['symbol']} ({_fmt_chg(float(worst_row['24h']))})"
+        best_chg  = float(best_row['24h'])
+        worst_chg = float(worst_row['24h'])
+        best_str  = f"{best_row['symbol']} <span class='rank-val up'>{_fmt_chg(best_chg)}</span>"
+        worst_str = f"{worst_row['symbol']} <span class='rank-val down'>{_fmt_chg(worst_chg)}</span>"
     else:
         avg_top10 = median = excl1 = 0.0
         best_str = worst_str = "—"
