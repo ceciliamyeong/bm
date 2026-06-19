@@ -80,12 +80,17 @@ section { margin-top: 40px; }
 /* ── 등락색 유틸 ── */
 .up   { color: var(--up); }
 .down { color: var(--down); }
+.stat-v.up   { color: var(--up); }
+.stat-v.down { color: var(--down); }
+.rank-val.up   { color: var(--up); }
+.rank-val.down { color: var(--down); }
 
 /* ── Driver 배지 (팩터색) ── */
 .driver-badge {
-  display: inline-flex; align-items: center; font-size: 11px; font-weight: 600;
-  color: var(--fc); background: color-mix(in srgb, var(--fc) 12%, transparent);
-  padding: 3px 9px; border-radius: 999px; white-space: nowrap;
+  display: inline-flex; align-items: center; font-size: 11px; font-weight: 700;
+  color: var(--fc); background: color-mix(in srgb, var(--fc) 13%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fc) 25%, transparent);
+  padding: 3px 10px; border-radius: 999px; white-space: nowrap;
 }
 
 /* ── 로고 ── */
@@ -117,21 +122,21 @@ section { margin-top: 40px; }
 .summary-text { color: var(--text); font-size: 14.5px; }
 
 /* ── ③ 대시보드 ── */
-.stat { display: flex; justify-content: space-between; align-items: baseline; padding: 9px 0; border-bottom: 1px dashed var(--border); }
+.stat { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--border); }
 .stat:last-child { border-bottom: none; }
-.stat-k { color: var(--text-secondary); font-size: 13px; }
+.stat-k { color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
 .stat-v { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .stat-v.muted { color: var(--text-muted); font-weight: 600; }
-.dash-card-title { font-size: 12px; font-weight: 700; color: var(--text-muted); margin: 0 0 8px; letter-spacing: .04em; }
+.dash-card-title { font-size: 11px; font-weight: 700; color: var(--text-muted); margin: 0 0 12px; letter-spacing: .06em; text-transform: uppercase; padding-bottom: 10px; border-bottom: 2px solid var(--border); }
 /* 섹션 헤더 우측 노트 (예: 24h 기준) */
 .sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 0 16px; }
 .sec-head .sec-title { margin: 0; }
 .sec-note { font-size: 12px; color: var(--text-muted); font-weight: 600; white-space: nowrap; }
 /* 등락 카드 3단 위계 (캡션 / 종목 볼드 + 등락색 값) */
-.rank-stat { padding: 9px 0; border-bottom: 1px dashed var(--border); }
+.rank-stat { padding: 12px 0; border-bottom: 1px solid var(--border); }
 .rank-stat:last-child { border-bottom: none; }
-.rank-cap { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 3px; }
-.rank-main { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.rank-cap { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 5px; letter-spacing: .04em; }
+.rank-main { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .rank-sym { font-size: 15px; font-weight: 700; color: var(--text); }
 .rank-val { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
 
@@ -148,14 +153,16 @@ section { margin-top: 40px; }
 /* ── ⑤ Top10 테이블 ── */
 .table-scroll { overflow-x: auto; }
 table.top10 { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-table.top10 th { text-align: left; font-size: 11px; font-weight: 600; color: var(--text-muted); letter-spacing: .04em; padding: 0 12px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
-table.top10 td { padding: 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+table.top10 th { text-align: left; font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: .05em; text-transform: uppercase; padding: 0 12px 12px; border-bottom: 2px solid var(--border); white-space: nowrap; }
+table.top10 td { padding: 13px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
 table.top10 tr:last-child td { border-bottom: none; }
+table.top10 tr.hq { background: rgba(51,122,189,.04); border-left: 3px solid var(--brand-blue); }
+table.top10 tr:hover { background: var(--surface-2); }
 .t-rank { color: var(--text-muted); font-variant-numeric: tabular-nums; width: 32px; }
 .t-sym { display: flex; align-items: center; gap: 8px; font-weight: 700; }
-.t-clm { font-weight: 700; font-variant-numeric: tabular-nums; }
+.t-clm { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--brand-blue); }
 .t-rsi { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
-.t-comment { color: var(--text-secondary); font-size: 12.5px; max-width: 280px; }
+.t-comment { color: var(--text-secondary); font-size: 12.5px; max-width: 260px; line-height: 1.5; }
 .t-h24 { font-weight: 700; font-variant-numeric: tabular-nums; }
 
 /* ── ⑥ 기여도 누적 가로막대 ── */
@@ -249,16 +256,16 @@ svg.matrix { width: 100%; height: auto; display: block; font-family: var(--font)
     <p class="sec-label">Summary</p>
     <h2 class="sec-title">핵심 요약</h2>
     <div class="card">
-      <div class="summary-row"><div class="summary-tag">MARKET</div><div class="summary-text">코생지 Top 10이 24시간 평균 <span class="dn" style="font-weight:700">-0.65%</span> 상승하며 비트코인 대비 <span class="up" style="font-weight:700">+1.96%p</span>의 초과수익을 기록했다.</div></div>
-      <div class="summary-row"><div class="summary-tag">PATTERN</div><div class="summary-text">Top 10 중 <strong>1개 종목</strong>이 <strong>OVERSOLD</strong> 신호를 보이며 과매도 국면이 우세하다.</div></div>
-      <div class="summary-row"><div class="summary-tag">FOCUS</div><div class="summary-text">코생지 1.3 이상·RSI 35 이하 조건을 충족한 <strong>SOL, ETH, ATOM</strong> 종목의 추이를 주목할 필요가 있다.</div></div>
+      <div class="summary-row"><div class="summary-tag">시장</div><div class="summary-text">코생지 Top 10이 24시간 평균 <span class="dn" style="font-weight:700">-0.65%</span> 상승하며 비트코인 대비 <span class="up" style="font-weight:700">+2.01%p</span>의 초과수익을 기록했다.</div></div>
+      <div class="summary-row"><div class="summary-tag">패턴</div><div class="summary-text">Top 10 중 <strong>1개 종목</strong>이 <strong>OVERSOLD</strong> 신호를 보이며 과매도 국면이 우세하다.</div></div>
+      <div class="summary-row"><div class="summary-tag">주목</div><div class="summary-text">코생지 1.3 이상·RSI 35 이하 조건을 충족한 <strong>SOL, ETH, ATOM</strong> 종목의 추이를 주목할 필요가 있다.</div></div>
     </div>
   </section>
 
   <!-- ③ 시장 대시보드 -->
   
   <section>
-    <p class="sec-label">CLM Performance</p>
+    <p class="sec-label">퍼포먼스</p>
     <div class="sec-head">
       <h2 class="sec-title">코생지 퍼포먼스</h2>
       <span class="sec-note">24h 기준</span>
@@ -274,24 +281,24 @@ svg.matrix { width: 100%; height: auto; display: block; font-family: var(--font)
         <p class="dash-card-title">종목 등락</p>
         <div class="rank-stat">
           <span class="rank-cap">수익률 상위</span>
-          <span class="rank-main"><span class="rank-sym">ATOM (+1.19%)</span></span>
+          <div class="rank-main">ATOM <span class='rank-val up'>+1.19%</span></div>
         </div>
         <div class="rank-stat">
           <span class="rank-cap">수익률 하위</span>
-          <span class="rank-main"><span class="rank-sym">TRUMP (-3.97%)</span></span>
+          <div class="rank-main">TRUMP <span class='rank-val down'>-3.97%</span></div>
         </div>
       </div>
       <div class="card">
         <p class="dash-card-title">시장 비교</p>
-        <div class="stat"><span class="stat-k">비트코인</span><span class="stat-v dn">-2.61%</span></div>
-        <div class="stat"><span class="stat-k">알파 (vs BTC)</span><span class="stat-v up">+1.96%p</span></div>
+        <div class="stat"><span class="stat-k">비트코인</span><span class="stat-v dn">-2.66%</span></div>
+        <div class="stat"><span class="stat-k">알파 (vs BTC)</span><span class="stat-v up">+2.01%p</span></div>
       </div>
     </div>
   </section>
 
   <!-- ④ 메이저 카드 -->
   <section>
-    <p class="sec-label">Majors</p>
+    <p class="sec-label">메이저</p>
     <h2 class="sec-title">메이저 디지털자산</h2>
     <div class="grid-3">
           <div class="major-card">
@@ -368,108 +375,98 @@ svg.matrix { width: 100%; height: auto; display: block; font-family: var(--font)
     <div class="card table-scroll">
       <table class="top10">
         <thead><tr>
-          <th>순위</th><th>디지털자산</th><th>코생지</th><th>24h</th><th>RSI</th><th>우세 팩터</th><th>코멘트</th>
+          <th>순위</th><th>디지털자산</th><th>코생지</th><th>24H</th><th>RSI</th><th>주요 팩터</th><th>코멘트</th>
         </tr></thead>
         <tbody id="top10Body">
     <tr class="hq">
-      <td><span class="rank-c top">1</span></td>
-      <td class="sym">SOL</td>
-      <td class="aas">1.87</td>
-      <td class="price">73.4651</td>
-      <td class="chg dn">-0.68%</td>
-      <td class="rsi">49</td>
-      <td><span class="badge badge-specu">SPECU 🗣️</span></td>
-      <td class="cmt specu">관심 집중 - 단기 변동성 주의</td>
+      <td class="t-rank">1</td>
+      <td><div class="t-sym"><img class="logo" src="https://assets.coingecko.com/coins/images/4128/small/solana.png" alt="SOL" onerror="this.style.display='none'">SOL</div></td>
+      <td class="t-clm">1.87</td>
+      <td class="t-h24 dn">-0.68%</td>
+      <td class="t-rsi">49</td>
+      <td><span class="driver-badge f-social">소셜 100%</span></td>
+      <td class="t-comment">관심 집중 - 단기 변동성 주의</td>
     </tr>
     <tr class="hq">
-      <td><span class="rank-c top">2</span></td>
-      <td class="sym">ETH</td>
-      <td class="aas">1.76</td>
-      <td class="price">1,790.79</td>
-      <td class="chg dn">-0.18%</td>
-      <td class="rsi">45</td>
-      <td><span class="badge badge-specu">SPECU 🗣️</span></td>
-      <td class="cmt specu">관심 집중 - 단기 변동성 주의</td>
+      <td class="t-rank">2</td>
+      <td><div class="t-sym"><img class="logo" src="https://assets.coingecko.com/coins/images/279/small/ethereum.png" alt="ETH" onerror="this.style.display='none'">ETH</div></td>
+      <td class="t-clm">1.76</td>
+      <td class="t-h24 dn">-0.18%</td>
+      <td class="t-rsi">45</td>
+      <td><span class="driver-badge f-social">소셜 100%</span></td>
+      <td class="t-comment">관심 집중 - 단기 변동성 주의</td>
     </tr>
     <tr class="hq">
-      <td><span class="rank-c top">3</span></td>
-      <td class="sym">ATOM</td>
-      <td class="aas">1.71</td>
-      <td class="price">1.9877</td>
-      <td class="chg up">+1.19%</td>
-      <td class="rsi">60</td>
-      <td><span class="badge badge-specu">SPECU 🗣️</span></td>
-      <td class="cmt specu">관심 집중 - 단기 변동성 주의</td>
+      <td class="t-rank">3</td>
+      <td><div class="t-sym"><img class="logo" src="https://assets.coingecko.com/coins/images/1481/small/cosmos_hub.png" alt="ATOM" onerror="this.style.display='none'">ATOM</div></td>
+      <td class="t-clm">1.71</td>
+      <td class="t-h24 up">+1.19%</td>
+      <td class="t-rsi">60</td>
+      <td><span class="driver-badge f-social">소셜 100%</span></td>
+      <td class="t-comment">관심 집중 - 단기 변동성 주의</td>
     </tr>
     <tr class="">
-      <td><span class="rank-c ">4</span></td>
-      <td class="sym">TRUMP</td>
-      <td class="aas">1.47</td>
-      <td class="price">1.9078</td>
-      <td class="chg dn">-3.97%</td>
-      <td class="rsi">49</td>
-      <td><span class="badge badge-specu">SPECU 🗣️</span></td>
-      <td class="cmt specu">관심 집중</td>
+      <td class="t-rank">4</td>
+      <td><div class="t-sym">TRUMP</div></td>
+      <td class="t-clm">1.47</td>
+      <td class="t-h24 dn">-3.97%</td>
+      <td class="t-rsi">49</td>
+      <td><span class="driver-badge f-social">소셜 100%</span></td>
+      <td class="t-comment">관심 집중</td>
     </tr>
     <tr class="">
-      <td><span class="rank-c ">5</span></td>
-      <td class="sym">TRX</td>
-      <td class="aas">1.27</td>
-      <td class="price">0.316573</td>
-      <td class="chg dn">-0.63%</td>
-      <td class="rsi">30</td>
-      <td><span class="badge badge-specu">SPECU 🗣️</span></td>
-      <td class="cmt specu">관심 집중</td>
+      <td class="t-rank">5</td>
+      <td><div class="t-sym">TRX</div></td>
+      <td class="t-clm">1.27</td>
+      <td class="t-h24 dn">-0.63%</td>
+      <td class="t-rsi">30</td>
+      <td><span class="driver-badge f-social">소셜 100%</span></td>
+      <td class="t-comment">관심 집중</td>
     </tr>
     <tr class="">
-      <td><span class="rank-c ">6</span></td>
-      <td class="sym">DOT</td>
-      <td class="aas">0.99</td>
-      <td class="price">1.0132</td>
-      <td class="chg up">+0.38%</td>
-      <td class="rsi">42</td>
-      <td><span class="badge badge-specu">WATCH</span></td>
-      <td class="cmt ">모니터링</td>
+      <td class="t-rank">6</td>
+      <td><div class="t-sym"><img class="logo" src="https://assets.coingecko.com/coins/images/12171/small/polkadot.png" alt="DOT" onerror="this.style.display='none'">DOT</div></td>
+      <td class="t-clm">0.99</td>
+      <td class="t-h24 up">+0.38%</td>
+      <td class="t-rsi">42</td>
+      <td><span class="driver-badge f-social">소셜 100%</span></td>
+      <td class="t-comment">모니터링</td>
     </tr>
     <tr class="">
-      <td><span class="rank-c ">7</span></td>
-      <td class="sym">XRP</td>
-      <td class="aas">0.93</td>
-      <td class="price">1.2165</td>
-      <td class="chg dn">-1.71%</td>
-      <td class="rsi">51</td>
-      <td><span class="badge badge-specu">WATCH</span></td>
-      <td class="cmt ">모니터링</td>
+      <td class="t-rank">7</td>
+      <td><div class="t-sym"><img class="logo" src="https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png" alt="XRP" onerror="this.style.display='none'">XRP</div></td>
+      <td class="t-clm">0.93</td>
+      <td class="t-h24 dn">-1.71%</td>
+      <td class="t-rsi">51</td>
+      <td><span class="driver-badge f-social">소셜 100%</span></td>
+      <td class="t-comment">모니터링</td>
     </tr>
     <tr class="">
-      <td><span class="rank-c ">8</span></td>
-      <td class="sym">ETC</td>
-      <td class="aas">0.92</td>
-      <td class="price">7.3683</td>
-      <td class="chg dn">-0.72%</td>
-      <td class="rsi">45</td>
-      <td><span class="badge badge-specu">WATCH</span></td>
-      <td class="cmt ">모니터링</td>
+      <td class="t-rank">8</td>
+      <td><div class="t-sym">ETC</div></td>
+      <td class="t-clm">0.92</td>
+      <td class="t-h24 dn">-0.72%</td>
+      <td class="t-rsi">45</td>
+      <td><span class="driver-badge f-social">소셜 100%</span></td>
+      <td class="t-comment">모니터링</td>
     </tr>
     <tr class="">
-      <td><span class="rank-c ">9</span></td>
-      <td class="sym">BONK</td>
-      <td class="aas">0.83</td>
-      <td class="price">0.00000479</td>
-      <td class="chg dn">-0.48%</td>
-      <td class="rsi">45</td>
-      <td><span class="badge badge-specu">WATCH</span></td>
-      <td class="cmt ">모니터링</td>
+      <td class="t-rank">9</td>
+      <td><div class="t-sym">BONK</div></td>
+      <td class="t-clm">0.83</td>
+      <td class="t-h24 dn">-0.48%</td>
+      <td class="t-rsi">45</td>
+      <td><span class="driver-badge f-social">소셜 100%</span></td>
+      <td class="t-comment">모니터링</td>
     </tr>
     <tr class="">
-      <td><span class="rank-c ">10</span></td>
-      <td class="sym">PEPE</td>
-      <td class="aas">0.78</td>
-      <td class="price">0.00000295</td>
-      <td class="chg up">+0.31%</td>
-      <td class="rsi">42</td>
-      <td><span class="badge badge-specu">WATCH</span></td>
-      <td class="cmt ">모니터링</td>
+      <td class="t-rank">10</td>
+      <td><div class="t-sym">PEPE</div></td>
+      <td class="t-clm">0.78</td>
+      <td class="t-h24 up">+0.31%</td>
+      <td class="t-rsi">42</td>
+      <td><span class="driver-badge f-social">소셜 100%</span></td>
+      <td class="t-comment">모니터링</td>
     </tr>
         </tbody>
       </table>
@@ -478,7 +475,7 @@ svg.matrix { width: 100%; height: auto; display: block; font-family: var(--font)
 
   <!-- ⑥ 기여도 누적 가로막대 -->
   <section>
-    <p class="sec-label">FACTORS</p>
+    <p class="sec-label">팩터</p>
     <h2 class="sec-title">코생지 TOP 10 기여도</h2>
     <div class="card">
       <div class="legend">
@@ -582,7 +579,7 @@ svg.matrix { width: 100%; height: auto; display: block; font-family: var(--font)
   <!-- ⑦ 매트릭스 (인라인 SVG) -->
 
   <section>
-    <p class="sec-label">Matrix</p>
+    <p class="sec-label">매트릭스</p>
     <h2 class="sec-title">코생지 TOP 10 매트릭스</h2>
     <div class="card">
       <svg class="matrix" viewBox="0 0 800 440" preserveAspectRatio="xMidYMid meet" role="img" aria-label="코생지 RSI 매트릭스">
@@ -691,7 +688,7 @@ svg.matrix { width: 100%; height: auto; display: block; font-family: var(--font)
 
   <!-- ⑨ 코생지란 -->
   <section>
-    <p class="sec-label">About</p>
+    <p class="sec-label">소개</p>
     <h2 class="sec-title">코인 생명력 지표(Coin Liveness Metric)</h2>
     <div class="about-grid">
       <div class="card about-body">
