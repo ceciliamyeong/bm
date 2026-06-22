@@ -174,7 +174,7 @@ td:nth-child(2){text-align:left;font-family:var(--font)}
       <div class="kpi-accent" style="background:#d97706"></div>
       <div class="kpi-label">평균 펀딩비</div>
       <div class="kpi-value" id="k-fr">—</div>
-      <div class="kpi-note" id="k-fr-note">연율화 기준</div>
+      <div class="kpi-note" id="k-fr-note">%, 연율기준 (8h×3×365)</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-accent" style="background:#7c3aed"></div>
@@ -276,8 +276,87 @@ const CAT_META = {
   index:     { label:'지수',   color:'#d97706', bg:'#fef3e2' },
   commodity: { label:'원자재', color:'#0ba360', bg:'#edf7f2' },
 };
+
+// 크립토 풀네임 매핑
+const CRYPTO_NAME = {
+  BTC:'비트코인', ETH:'이더리움', SOL:'솔라나', XRP:'리플',
+  DOGE:'도지코인', ADA:'카르다노', AVAX:'아발란체', LINK:'체인링크',
+  DOT:'폴카닷', MATIC:'폴리곤', UNI:'유니스왑', ATOM:'코스모스',
+  LTC:'라이트코인', BCH:'비트코인캐시', NEAR:'니어프로토콜',
+  APT:'앱토스', ARB:'아비트럼', OP:'옵티미즘', SUI:'수이',
+  HYPE:'하이퍼리퀴드', INJ:'인젝티브', TIA:'셀레스티아',
+  SEI:'세이', STRK:'스타크넷', MANTA:'만타네트워크',
+  WIF:'도그위프햇', PEPE:'페페', SHIB:'시바이누',
+  FLOKI:'플로키', BONK:'봉크', WLD:'월드코인',
+  TAO:'비텐서', RNDR:'렌더', FET:'페치에이아이',
+  AGIX:'싱귤래리티넷', OCEAN:'오션프로토콜',
+  IMX:'이뮤터블X', BLUR:'블러', ENS:'이더리움네임서비스',
+  LDO:'리도다오', AAVE:'에이브', CRV:'커브다오',
+  MKR:'메이커', SNX:'신세틱스', COMP:'컴파운드',
+  GMX:'GMX', DYDX:'디와이디엑스', PENDLE:'펜들',
+  JTO:'지토', PYTH:'피스네트워크', JUP:'주피터',
+  ONDO:'온도파이낸스', ENA:'에테나', EIGEN:'아이겐레이어',
+  ETHFI:'에테르파이', RUNE:'토르체인', OSMO:'오스모시스',
+  FTM:'팬텀', KAS:'카스파', ICP:'인터넷컴퓨터',
+  FIL:'파일코인', AR:'아위브', GRT:'더그래프',
+  SAND:'더샌드박스', MANA:'디센트럴랜드', AXS:'엑시인피니티',
+  GALA:'갈라', IMX:'이뮤터블X', GODS:'갓언체인드',
+  STX:'스택스', ORDI:'오디', SATS:'SATS',
+  CFX:'컨플럭스', MASK:'마스크네트워크',
+  CYBER:'사이버커넥트', ID:'스페이스ID',
+  ZK:'zkSync', MINA:'미나프로토콜', FLOW:'플로우',
+  EGLD:'멀티버스X', KAVA:'카바', ZIL:'질리카',
+  ONE:'하모니', ICX:'아이콘', IOTA:'아이오타',
+  XTZ:'테조스', ALGO:'알고랜드', VET:'비체인',
+  HBAR:'헤데라', EOS:'이오스', TRX:'트론',
+  XLM:'스텔라루멘', XMR:'모네로', ZEC:'지캐시',
+  DASH:'대시', DCR:'디크레드', RVN:'레이븐코인',
+};
+
+// HIP-3 종목 풀네임 매핑
+const FULL_NAME = {
+  // 원자재/에너지
+  CL:       'WTI 원유',
+  BRENTOIL: '브렌트 원유',
+  GOLD:     '금',
+  SILVER:   '은',
+  NATGAS:   '천연가스',
+  COPPER:   '구리',
+  PLATINUM: '백금',
+  // 지수
+  XYZ100:   '나스닥100 (XYZ)',
+  SP500:    'S&P 500',
+  NDX:      '나스닥100',
+  DJI:      '다우존스',
+  NIKKEI:   '닛케이225',
+  DAX:      '독일 DAX',
+  FTSE:     '영국 FTSE100',
+  // 주식
+  SPCX:     'SpaceX (NASDAQ)',
+  SNDK:     '샌디스크',
+  MU:       '마이크론 테크놀로지',
+  INTC:     '인텔',
+  NVDA:     '엔비디아',
+  TSLA:     '테슬라',
+  AAPL:     '애플',
+  MSFT:     '마이크로소프트',
+  GOOGL:    '구글(알파벳)',
+  AMZN:     '아마존',
+  META:     '메타',
+  COIN:     '코인베이스',
+  PLTR:     '팔란티어',
+  MRVL:     '마벨 테크놀로지',
+  CRCL:     '서클',
+  SKHX:     'SK하이닉스',
+  DRAM:     'DRAM 지수',
+  // 기타
+  S:        '센티넬원',
+  AVNT:     '어반트 테크놀로지',
+  VINE:     '바인',
+};
+
 const HIP3_DEXES = ['xyz','cash','flx','km'];
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 // ── 상태 ──
 let cryptoData = [];
@@ -507,26 +586,26 @@ function renderFRList() {
 
   document.getElementById('fr-list').innerHTML = top10.map((r, i) => {
     const pct   = maxAbs > 0 ? Math.abs(r.fr) / maxAbs * 50 : 0; // 최대 50% (절반)
-    const color = r.fr >= 0 ? '#0ba360' : '#e03a3a';
+    const color = r.fr >= 0 ? 'var(--up)' : 'var(--down)';
     const frTxt = (r.fr >= 0 ? '+' : '') + r.fr.toFixed(2) + '%';
     const catTag = r.cat && CAT_META[r.cat]
       ? `<span style="font-size:10px;font-weight:600;padding:1px 5px;border-radius:3px;background:${CAT_META[r.cat].bg};color:${CAT_META[r.cat].color};flex-shrink:0">${CAT_META[r.cat].label}</span>` : '';
-    // 음수: 왼쪽 바 / 양수: 오른쪽 바
+    // 음수: 중앙에서 왼쪽 / 양수: 중앙에서 오른쪽
     const barHtml = r.fr >= 0
-      ? `<div style="width:50%;display:flex;justify-content:flex-end;align-items:center">
-           <div style="width:${pct}%;height:6px;background:#e8f5f0;border-radius:2px;overflow:hidden">
-             <div style="width:100%;height:100%;background:${color};border-radius:2px"></div>
+      ? `<div style="width:50%"></div>
+         <div style="width:2px;height:16px;background:var(--line);flex-shrink:0"></div>
+         <div style="width:50%;display:flex;justify-content:flex-start;align-items:center">
+           <div style="width:${pct}%;height:6px;background:var(--up-bg);border-radius:2px;overflow:hidden">
+             <div style="width:100%;height:100%;background:var(--up);border-radius:2px"></div>
+           </div>
+         </div>`
+      : `<div style="width:50%;display:flex;justify-content:flex-end;align-items:center">
+           <div style="width:${pct}%;height:6px;background:var(--down-bg);border-radius:2px;overflow:hidden">
+             <div style="width:100%;height:100%;background:var(--down);border-radius:2px"></div>
            </div>
          </div>
-         <div style="width:2px;height:16px;background:#d0d5de;flex-shrink:0"></div>
-         <div style="width:50%"></div>`
-      : `<div style="width:50%"></div>
-         <div style="width:2px;height:16px;background:#d0d5de;flex-shrink:0"></div>
-         <div style="width:50%;display:flex;justify-content:flex-start;align-items:center">
-           <div style="width:${pct}%;height:6px;background:#fde8e8;border-radius:2px;overflow:hidden">
-             <div style="width:100%;height:100%;background:${color};border-radius:2px"></div>
-           </div>
-         </div>`;
+         <div style="width:2px;height:16px;background:var(--line);flex-shrink:0"></div>
+         <div style="width:50%"></div>`;
     return `<div class="fr-row">
       <span style="font-size:10px;color:var(--text3);width:16px;text-align:right;flex-shrink:0">${i+1}</span>
       <span style="font-size:13px;font-weight:700;width:50px;flex-shrink:0">${r.coin}</span>
@@ -588,12 +667,15 @@ function renderTable() {
   document.getElementById('tbody').innerHTML = pageData.map((r, i) => {
     const rank = start + i + 1;
     const chgB = `<span class="badge badge-${r.chg>=0?'up':'dn'}">${r.chg>=0?'+':''}${r.chg.toFixed(2)}%</span>`;
-    const frB  = `<span class="badge badge-${r.fr<0?'dn':r.fr>10?'warn':'up'}">${r.fr>=0?'+':''}${r.fr.toFixed(2)}%</span>`;
+    const frB = isHip3
+      ? `<span class="badge badge-${r.fr<0?'dn':r.fr>10?'warn':'up'}">${r.fr>=0?'+':''}${r.fr.toFixed(2)}%</span><span style="font-size:10px;color:var(--ink3);margin-left:3px;white-space:nowrap">연율</span>`
+      : `<span class="badge badge-${r.fr<0?'dn':r.fr>10?'warn':'up'}">${r.fr>=0?'+':''}${r.fr.toFixed(2)}%</span>`;
     const catCell = isHip3 && r.cat
       ? `<td><span class="cat-tag" style="background:${CAT_META[r.cat]?.bg};color:${CAT_META[r.cat]?.color}">${CAT_META[r.cat]?.label}</span></td>` : '';
+    const fullName = FULL_NAME[r.coin] || CRYPTO_NAME[r.coin] || '';
     return `<tr>
       <td>${rank}</td>
-      <td><div class="coin-name">${r.coin}</div><div class="coin-sub">PERP</div></td>
+      <td><div class="coin-name">${r.coin}</div><div class="coin-sub">${fullName || 'PERP'}</div></td>
       ${catCell}
       <td>${fmtPrice(r.price)}</td>
       <td>${chgB}</td>
@@ -668,7 +750,7 @@ function switchTab(tab, btn) {
     ${isHip3 ? '<th>구분</th>' : ''}
     <th onclick="sortBy('price')" data-col="price">가격</th>
     <th onclick="sortBy('chg')" data-col="chg">24H</th>
-    <th onclick="sortBy('fr')" data-col="fr">펀딩비</th>
+    <th onclick="sortBy('fr')" data-col="fr">펀딩비${isHip3 ? '<span style="font-size:9px;font-weight:400;color:var(--ink3);margin-left:3px">연율</span>' : ''}</th>
     <th onclick="sortBy('oi')" data-col="oi">OI</th>
     <th onclick="sortBy('vol')" data-col="vol">거래량</th>
   </tr>`;
