@@ -37,7 +37,8 @@ header{background:rgba(255,255,255,.92);border-bottom:1px solid var(--line);posi
 .logo .sq{width:10px;height:10px;background:var(--main);border-radius:2px;transform:rotate(45deg)}
 .logo .sub{font-size:11px;font-weight:600;color:var(--ink3);background:var(--line2);padding:2px 7px;border-radius:99px}
 
-main{max-width:1200px;margin:0 auto;padding:0 32px 80px;position:relative;z-index:1}
+main{max-width:1200px;margin:0 auto;padding:0 16px 80px;position:relative;z-index:1}
+@media(min-width:600px){main{padding:0 32px 80px}}
 .hero{padding:52px 0 36px;border-bottom:1px solid var(--line);margin-bottom:36px}
 .hero-tag{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--main);background:rgba(var(--main-rgb),.08);padding:6px 14px;border-radius:99px;margin-bottom:18px;letter-spacing:.04em}
 .hero-tag .dot{width:6px;height:6px;border-radius:50%;background:var(--main);box-shadow:0 0 0 4px rgba(var(--main-rgb),.15);animation:pulse-ring 2s ease-in-out infinite}
@@ -85,15 +86,44 @@ main{max-width:1200px;margin:0 auto;padding:0 32px 80px;position:relative;z-inde
 .share-pct{width:44px;text-align:right;font-weight:700;font-family:'Outfit'}
 
 /* table */
-table{width:100%;border-collapse:collapse}
-thead th{font-size:11.5px;color:var(--ink3);font-weight:600;text-align:right;padding:0 14px 12px;border-bottom:1px solid var(--line)}
-thead th:first-child{text-align:left;padding-left:16px}
-tbody td{padding:11px 14px;border-bottom:1px solid var(--line2);font-size:13px;text-align:right}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+thead th{
+  font-size:12px;color:var(--ink3);font-weight:600;
+  text-align:right;padding:10px 16px 10px;
+  border-bottom:2px solid var(--line);
+  white-space:nowrap;
+}
+thead th:first-child{text-align:left;padding-left:20px;width:44%}
+thead th:nth-child(2){width:22%}
+thead th:nth-child(3){width:14%}
+thead th:nth-child(4){width:20%}
+tbody td{
+  padding:12px 16px;
+  border-bottom:1px solid var(--line2);
+  font-size:14px;
+  text-align:right;
+  vertical-align:middle;
+}
 tbody tr:last-child td{border-bottom:0}
-tbody tr:hover{background:#fafbfc}
-.l{text-align:left;padding-left:16px!important}
-.coin-cell{display:flex;align-items:center;gap:9px}
-.coin-ic{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff;font-family:'Outfit';flex:0 0 auto}
+tbody tr:hover{background:#f7f9fc}
+.l{text-align:left;padding-left:20px!important}
+.coin-cell{display:flex;align-items:center;gap:10px}
+.coin-ic{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff;font-family:'Outfit';flex:0 0 auto;overflow:hidden;background:#e2e2e2}
+.coin-ic img{width:28px;height:28px;border-radius:50%;object-fit:cover;display:block}
+.coin-ic img.err{display:none}
+.coin-nm{font-weight:700;font-size:14px;color:var(--ink)}
+.rk{color:var(--ink3);font-family:Arial;font-weight:700;width:20px;display:inline-block;text-align:center;font-size:13px}
+/* 테이블 모바일 스크롤 */
+.tbl-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+/* 섹션 가로폭 통일 */
+.kpi-grid,.row2,.kimchi-grid,.ex-grid,.heatmap{width:100%}
+/* 수익률 그리드 모바일 */
+@media(max-width:560px){
+  #wlGrid{grid-template-columns:1fr!important}
+  .kimchi-grid{grid-template-columns:1fr}
+  .nav{padding:0 16px}
+  .hero{padding:32px 0 24px}
+}
 .coin-nm{font-weight:600;font-size:13px}
 .rk{color:var(--ink3);font-family:'Outfit';font-weight:700;width:18px;display:inline-block;text-align:center}
 
@@ -106,10 +136,10 @@ tbody tr:hover{background:#fafbfc}
 .ex-head b{font-size:14px;font-weight:700}
 .ex-grp{font-size:11px;color:var(--ink3);margin-bottom:12px;padding-left:1px;font-weight:500}
 .ex-grp strong{color:var(--ink2);font-weight:600}
-.ex-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line2);font-size:13px}
+.ex-row{display:flex;align-items:center;gap:7px;padding:8px 0;border-bottom:1px solid var(--line2);font-size:13px}
 .ex-row:last-child{border-bottom:0}
-.ex-rk{color:var(--ink3);font-weight:700;font-family:'Outfit';width:12px}
-.ex-sym{font-weight:700;flex:1}
+.ex-rk{color:var(--ink3);font-weight:700;font-family:'Outfit';width:12px;flex:0 0 auto}
+.ex-sym{font-weight:700;flex:1;font-size:13px}
 .ex-bar-wrap{width:60px}
 .ex-bar{height:5px;border-radius:3px;opacity:.5}
 .ex-pct{width:40px;text-align:right;font-family:'Outfit';font-weight:700;font-size:12px}
@@ -210,12 +240,14 @@ footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);font-si
   <!-- Top10 -->
   <div class="sec-hd"><h2>국내 거래대금 상위 코인</h2><span>Top 10 · 4대 거래소 합산 기준</span></div>
   <div class="card" style="overflow:hidden">
+    <div class="tbl-wrap">
     <table>
       <thead><tr>
         <th class="l">자산</th><th>24h 거래대금</th><th>비중</th><th>등락률(업비트)</th>
       </tr></thead>
       <tbody id="top10Body"></tbody>
     </table>
+    </div>
   </div>
 
   <!-- Exchange Top5 -->
@@ -287,6 +319,33 @@ const COIN_COLOR = {
   H:'#e6007a',ADA:'#0033ad',SOL:'#9945ff',DOGE:'#c2a633',RLUSD:'#346aa9',
 };
 function coinColor(sym){return COIN_COLOR[sym]||'#92a0ad';}
+
+// 코인게코 slug 매핑 (주요 코인)
+const CG_SLUG = {
+  BTC:'bitcoin',ETH:'ethereum',XRP:'ripple',SOL:'solana',
+  DOGE:'dogecoin',ADA:'cardano',LINK:'chainlink',TON:'toncoin',
+  SUI:'sui',AVAX:'avalanche-2',SHIB:'shiba-inu',NEAR:'near',
+  WLD:'worldcoin-wld',PEPE:'pepe',DOT:'polkadot',ATOM:'cosmos',
+  XLM:'stellar',HBAR:'hedera-hashgraph',LTC:'litecoin',BCH:'bitcoin-cash',
+  ONDO:'ondo-finance',UNI:'uniswap',ETC:'ethereum-classic',
+  AAVE:'aave',FIL:'filecoin',APT:'aptos',ENA:'ethena',
+  ALGO:'algorand',TRX:'tron',USDT:'tether',USDC:'usd-coin',
+  RLUSD:'rlusd',HYPE:'hyperliquid',TAO:'bittensor',
+};
+
+function coinLogo(sym){
+  const upbitUrl = `https://static.upbit.com/logos/${sym}.png`;
+  const cgId = CG_SLUG[sym];
+  const fallbackUrl = cgId
+    ? `https://assets.coingecko.com/coins/images/1/small/${cgId}.png`
+    : null;
+
+  return `<img
+    src="${upbitUrl}"
+    alt="${sym}"
+    onerror="this.onerror=null;${fallbackUrl ? `this.src='${fallbackUrl}';this.onerror=function(){this.style.display='none';this.parentNode.innerHTML='<span style=\\'font-size:9px;font-weight:700;\\'>${sym.slice(0,3)}</span>'}` : `this.style.display='none';this.parentNode.innerHTML='<span style=\\'font-size:9px;font-weight:700;\\'>${sym.slice(0,3)}</span>'`}"
+  >`;
+}
 
 const fmt = {
   tri:  v => {
@@ -470,7 +529,7 @@ function drawTop10(coins){
     return `<tr>
       <td class="l"><div class="coin-cell">
         <span class="rk num">${i+1}</span>
-        <span class="coin-ic" style="background:${col}">${sym.slice(0,3)}</span>
+        <span class="coin-ic">${coinLogo(sym)}</span>
         <span class="coin-nm">${sym}</span>
       </div></td>
       <td class="num">${fmt.tri(c.value)}</td>
@@ -495,7 +554,7 @@ function drawWinnerLoser(wl){
       const barW = max>0 ? (Math.abs(x.change_rate_24h)/max*100).toFixed(0) : 0;
       return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line2)">
         <span style="color:var(--ink3);font-size:12px;font-weight:700;font-family:Arial;width:16px">${i+1}</span>
-        <span class="coin-ic" style="background:${col};width:24px;height:24px;font-size:9px">${sym.slice(0,3)}</span>
+        <span class="coin-ic" style="width:24px;height:24px;font-size:9px">${coinLogo(sym)}</span>
         <span style="font-size:13px;font-weight:600;flex:1">${sym}</span>
         <div style="width:60px;height:4px;background:var(--line2);border-radius:2px;overflow:hidden">
           <div style="width:${barW}%;height:100%;background:${color};border-radius:2px"></div>
@@ -537,6 +596,7 @@ function drawExTop5(byEx){
         const bw=Math.min(pct*1.8,56);
         return `<div class="ex-row">
           <span class="ex-rk">${i+1}</span>
+          <span class="coin-ic" style="width:22px;height:22px;flex:0 0 auto">${coinLogo(sym)}</span>
           <span class="ex-sym">${sym}</span>
           <span class="ex-bar-wrap"><div class="ex-bar" style="width:${bw}px;background:${EX[k].c}"></div></span>
           <span class="ex-pct">${pct}%</span>
