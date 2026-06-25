@@ -1,57 +1,6 @@
 [
   {
     "schema": "smart_kimchi_v2",
-    "timestamp_kst": "2026-05-31T05:15:24+0900",
-    "timestamp_label": "05/31 05:15 KST",
-    "prices": {
-      "upbit": {
-        "KRW-BTC": 109520000.0,
-        "KRW-ETH": 3003000.0,
-        "KRW-XRP": 1997.0,
-        "KRW-USDT": 1480.0
-      },
-      "binance": {
-        "BTCUSDT": 73957.26,
-        "ETHUSDT": 2028.98,
-        "XRPUSDT": 1.3483
-      },
-      "fx": {
-        "USDKRW": 1505.8,
-        "source": "exchangerate.host"
-      }
-    },
-    "kimchi_premium_pct": {
-      "BTC": -1.657,
-      "ETH": -1.71,
-      "XRP": -1.639
-    },
-    "cb_premium_pct": -0.152,
-    "kimchi_delta_pp": {
-      "BTC": -0.049,
-      "ETH": -0.148,
-      "XRP": -0.009
-    },
-    "driver_share_pct": {
-      "BTC": 23.7,
-      "ETH": 72.1,
-      "XRP": 4.2
-    },
-    "diagnostics": {
-      "local_usdt_premium_hint_pct": -1.713
-    },
-    "smart_kimchi": {
-      "type": "Reverse/Outflow",
-      "rationale": "역김프 구간 → 해외가 더 비싸거나 국내 매수 약함/해외 이동 가능성",
-      "score_v1": 41.7,
-      "inputs": {
-        "total_krw_24h": 2519619529828.369,
-        "top10_share_pct": 62.68465282502359,
-        "stable_dominance_pct": 4.985132472820395
-      }
-    }
-  },
-  {
-    "schema": "smart_kimchi_v2",
     "timestamp_kst": "2026-05-31T16:04:12+0900",
     "timestamp_label": "05/31 16:04 KST",
     "prices": {
@@ -13766,6 +13715,57 @@
         "total_krw_24h": 2421851984300.564,
         "top10_share_pct": 58.82038187668485,
         "stable_dominance_pct": 9.312668746168967
+      }
+    }
+  },
+  {
+    "schema": "smart_kimchi_v2",
+    "timestamp_kst": "2026-06-26T07:19:05+0900",
+    "timestamp_label": "06/26 07:19 KST",
+    "prices": {
+      "upbit": {
+        "KRW-BTC": 91085000.0,
+        "KRW-ETH": 2388000.0,
+        "KRW-XRP": 1582.0,
+        "KRW-USDT": 1521.0
+      },
+      "binance": {
+        "BTCUSDT": 59896.0,
+        "ETHUSDT": 1569.69,
+        "XRPUSDT": 1.0403
+      },
+      "fx": {
+        "USDKRW": 1543.64,
+        "source": "yahoo_finance_direct"
+      }
+    },
+    "kimchi_premium_pct": {
+      "BTC": -1.485,
+      "ETH": -1.446,
+      "XRP": -1.485
+    },
+    "cb_premium_pct": -0.149,
+    "kimchi_delta_pp": {
+      "BTC": 0.04,
+      "ETH": 0.095,
+      "XRP": 0.037
+    },
+    "driver_share_pct": {
+      "BTC": 23.3,
+      "ETH": 55.2,
+      "XRP": 21.4
+    },
+    "diagnostics": {
+      "local_usdt_premium_hint_pct": -1.467
+    },
+    "smart_kimchi": {
+      "type": "Reverse/Outflow",
+      "rationale": "역김프 구간 → 해외가 더 비싸거나 국내 매수 약함/해외 이동 가능성",
+      "score_v1": 42.6,
+      "inputs": {
+        "total_krw_24h": 2418552489126.896,
+        "top10_share_pct": 58.609056580549556,
+        "stable_dominance_pct": 9.335365077302498
       }
     }
   }
