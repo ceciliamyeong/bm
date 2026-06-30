@@ -20,10 +20,10 @@
       --red:    #dc2626;
       --blue:   #2563eb;
       --orange: #ea580c;
-      --purple: #7c3aed;
+      --purple: #337abd;
       --yellow: #d97706;
-      --up:     #16a34a;
-      --down:   #dc2626;
+      --up:     #e0565b;
+      --down:   #2f6ad0;
 
       --shadow: 0 4px 16px rgba(50,50,93,.08), 0 1px 3px rgba(0,0,0,.04);
       --radius: 10px;
@@ -40,11 +40,11 @@
     }
 
     /* ── Hero (마켓랩 스타일) ── */
-    .hero-tag{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--purple);background:rgba(124,58,237,.08);padding:6px 14px;border-radius:99px;margin-bottom:16px;letter-spacing:.04em}
-    .hero-tag .dot{width:6px;height:6px;border-radius:50%;background:var(--purple);box-shadow:0 0 0 4px rgba(124,58,237,.15);animation:pulse-ring 2s ease-in-out infinite}
+    .hero-tag{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--purple);background:rgba(51,122,189,.08);padding:6px 14px;border-radius:99px;margin-bottom:16px;letter-spacing:.04em}
+    .hero-tag .dot{width:6px;height:6px;border-radius:50%;background:var(--purple);box-shadow:0 0 0 4px rgba(51,122,189,.15);animation:pulse-ring 2s ease-in-out infinite}
     @keyframes pulse-ring{0%,100%{opacity:1}50%{opacity:.4}}
     .hero{max-width:1200px;margin:0 auto;padding:40px 20px 28px}
-    .hero h1{font-size:32px;font-weight:800;color:var(--text);letter-spacing:-.03em;margin-bottom:10px}
+    .hero h1{font-size:35px;font-weight:800;color:var(--text);letter-spacing:-.03em;margin-bottom:10px}
     .hero h1 .accent{color:var(--purple)}
     .hero-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12.5px;color:var(--text2);margin-top:14px}
     .hero-meta .chip{background:var(--bg3);border:1px solid var(--border);border-radius:999px;padding:4px 12px;font-size:12px;color:var(--text2)}
@@ -72,8 +72,8 @@
       letter-spacing: -0.04em;
     }
     .page-badge {
-      background: rgba(124,58,237,0.08);
-      border: 1px solid rgba(124,58,237,0.25);
+      background: rgba(51,122,189,0.08);
+      border: 1px solid rgba(51,122,189,0.25);
       border-radius: 6px;
       padding: 2px 10px;
       font-size: 12px;
@@ -152,7 +152,7 @@
     .sub-nav a:hover { color: var(--text); border-color: var(--purple); }
     .sub-nav a .sec-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
-    .sub-nav a.active-overview   { background: rgba(124,58,237,0.07); border-color: var(--purple); color: var(--purple); }
+    .sub-nav a.active-overview   { background: rgba(51,122,189,0.07); border-color: var(--purple); color: var(--purple); }
     .sub-nav a.active-series     { background: rgba(37,99,235,0.07);  border-color: var(--blue);   color: var(--blue);   }
     .sub-nav a.active-comparison { background: rgba(22,163,74,0.07);  border-color: var(--green);  color: var(--green);  }
     .sub-nav a.active-movers     { background: rgba(217,119,6,0.07);  border-color: var(--yellow); color: var(--yellow); }
@@ -291,7 +291,7 @@
       transition: all .15s;
     }
     .btn:hover { border-color: var(--text2); color: var(--text); }
-    .btn.active { border-color: var(--purple); color: var(--purple); background: rgba(124,58,237,0.08); font-weight: 700; }
+    .btn.active { border-color: var(--purple); color: var(--purple); background: rgba(51,122,189,0.08); font-weight: 700; }
 
     /* ── Pill ── */
     .pill {
@@ -496,7 +496,7 @@
       margin-top: 12px;
       text-decoration: none;
       transition: border-color .2s, background .2s;
-    " onmouseover="this.style.borderColor='var(--purple)';this.style.background='#f5f3ff'"
+    " onmouseover="this.style.borderColor='var(--purple)';this.style.background='#eef4fb'"
        onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--bg2)'">
       <div>
         <div style="font-size:13px; font-weight:700; color:var(--text);">📈 7년 백테스트 리포트</div>
@@ -555,7 +555,7 @@
       }
       .tl-badge-in   { background: rgba(37,99,235,.08);  color: var(--blue);   border: 1px solid rgba(37,99,235,.2); }
       .tl-badge-out  { background: rgba(220,38,38,.07);  color: var(--red);    border: 1px solid rgba(220,38,38,.18); }
-      .tl-badge-str  { background: rgba(124,58,237,.08); color: var(--purple); border: 1px solid rgba(124,58,237,.2); }
+      .tl-badge-str  { background: rgba(51,122,189,.08); color: var(--purple); border: 1px solid rgba(51,122,189,.2); }
 
       .tl-preview { display: flex; gap: 3px; align-items: center; }
       .tl-tmini {
@@ -965,7 +965,7 @@
         { type: 'value', position: 'right', scale: true, ...DARK_YAXIS, axisLabel: { ...DARK_YAXIS.axisLabel, formatter: v => '$' + Math.round(v).toLocaleString() } }
       ],
       series: [
-        { name: 'BM20', type: 'line', data: data.map(d => Math.round(d.v)), smooth: true, showSymbol: false, lineStyle: { color: '#7c3aed', width: 2 }, itemStyle: { color: '#7c3aed' }, areaStyle: { opacity: 0.06, color: '#7c3aed' } },
+        { name: 'BM20', type: 'line', data: data.map(d => Math.round(d.v)), smooth: true, showSymbol: false, lineStyle: { color: '#337abd', width: 2 }, itemStyle: { color: '#337abd' }, areaStyle: { opacity: 0.06, color: '#337abd' } },
         { name: 'BTC',  type: 'line', data: dates.map(d => btcMap.get(d)),  yAxisIndex: 1, smooth: true, showSymbol: false, lineStyle: { color: '#f0883e', width: 2 }, itemStyle: { color: '#f0883e' } }
       ]
     }, true);
@@ -1031,7 +1031,7 @@
     // BM20 vs NASDAQ
     { const dates = alignedDatesWith(ndqMap, bm20Map);
       bm20NasdaqChart.setOption({ ...commonOpt, xAxis: { ...commonOpt.xAxis, data: dates }, yAxis: yAxisPair, series: [
-        { name: 'BM20',   type: 'line', data: seriesFromMap(dates, bm20Map), showSymbol: false, connectNulls: true, lineStyle: { color: '#7c3aed', width: 2 }, itemStyle: { color: '#7c3aed' } },
+        { name: 'BM20',   type: 'line', data: seriesFromMap(dates, bm20Map), showSymbol: false, connectNulls: true, lineStyle: { color: '#337abd', width: 2 }, itemStyle: { color: '#337abd' } },
         { name: 'NASDAQ', type: 'line', data: seriesFromMap(dates, ndqMap),  yAxisIndex: 1, showSymbol: false, connectNulls: true, lineStyle: { color: '#2563eb', width: 2 }, itemStyle: { color: '#2563eb' } }
       ], legend: { bottom: 0, textStyle: { color: '#94a3b8' } } }, true); }
 
@@ -1045,7 +1045,7 @@
     // BM20 vs KOSPI
     { const dates = alignedDatesWith(kspMap, bm20Map);
       bm20KospiChart.setOption({ ...commonOpt, xAxis: { ...commonOpt.xAxis, data: dates }, yAxis: yAxisPair, series: [
-        { name: 'BM20',  type: 'line', data: seriesFromMap(dates, bm20Map), showSymbol: false, connectNulls: true, lineStyle: { color: '#7c3aed', width: 2 }, itemStyle: { color: '#7c3aed' } },
+        { name: 'BM20',  type: 'line', data: seriesFromMap(dates, bm20Map), showSymbol: false, connectNulls: true, lineStyle: { color: '#337abd', width: 2 }, itemStyle: { color: '#337abd' } },
         { name: 'KOSPI', type: 'line', data: seriesFromMap(dates, kspMap),  yAxisIndex: 1, showSymbol: false, connectNulls: true, lineStyle: { color: '#16a34a', width: 2 }, itemStyle: { color: '#16a34a' } }
       ], legend: { bottom: 0, textStyle: { color: '#94a3b8' } } }, true); }
   }
@@ -1150,7 +1150,7 @@
   function drawSparks(){
     const N = 20;
     const tail = arr => arr.slice(-N).map(d=>d.v);
-    qs("#spk-bm20") && (qs("#spk-bm20").innerHTML = sparkSVG(tail(SERIES), '#7c3aed'));
+    qs("#spk-bm20") && (qs("#spk-bm20").innerHTML = sparkSVG(tail(SERIES), '#337abd'));
     qs("#spk-btc")  && (qs("#spk-btc").innerHTML  = sparkSVG(tail(BTC_SERIES), '#f7931a'));
     qs("#spk-ndq")  && (qs("#spk-ndq").innerHTML  = sparkSVG(tail(NASDAQ_SERIES), '#2563eb'));
     qs("#spk-ksp")  && (qs("#spk-ksp").innerHTML  = sparkSVG(tail(KOSPI_SERIES), '#16a34a'));
