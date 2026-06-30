@@ -61,6 +61,7 @@
     display:inline-flex;align-items:center;justify-content:center;cursor:help}
   .card .val{font-size:29px;font-weight:900;margin-top:10px}
   .card .val.up{color:var(--pos-text)}
+  .card .val.dn{color:var(--neg-text)}
 
   /* section */
   section{margin-top:52px}
@@ -86,6 +87,15 @@
   .pill.dn{background:var(--neg-bg);color:var(--neg-text)}
   .pager{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;color:var(--muted);font-size:13px;border-top:1px solid var(--line)}
   .pager button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 14px;font-family:inherit;font-size:13px;color:#445;cursor:pointer}
+  .pager button:disabled{opacity:.35;cursor:default}
+  .avatar{width:24px;height:24px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+    font-size:9px;font-weight:900;color:#fff;letter-spacing:-.5px}
+  .searchrow{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 0;gap:10px}
+  .searchbox{display:flex;align-items:center;gap:7px;background:#f3f5f8;border:1px solid var(--line);border-radius:9px;
+    padding:8px 12px;font-size:13px;color:var(--muted);width:220px}
+  .searchbox input{border:0;background:transparent;outline:0;font-family:inherit;font-size:13px;color:var(--ink);width:100%}
+  thead th[data-col]{cursor:pointer;user-select:none}
+  thead th[data-col]:hover .s{color:var(--accent)}
 
   /* viz panels */
   .viz{border:1px solid var(--line);border-radius:18px;margin-top:16px;padding:22px}
@@ -143,47 +153,55 @@
         </ul>
       </div>
     </span>
-    <div class="live"><span class="pulse"></span>LIVE · 오후 02:28:26</div>
+    <div class="live"><span class="pulse"></span>LIVE · <span id="livetime">—</span></div>
   </div>
 
   <p class="intro">하이퍼리퀴드(Hyperliquid)는 탈중앙화 무기한 선물 거래소입니다. 블록미디어 하이퍼리퀴드 시장 현황은 전체 시장 상황을 실시간으로 한눈에 파악할 수 있는 대시보드입니다. 시장 전체의 총 미결제 약정(OI) · 24시간 거래량 · 평균 펀딩비 같은 핵심 지표는 물론 개별 디지털자산의 가격과 등락률을 확인할 수 있습니다.</p>
 
   <div class="seg">
-    <button class="on">디지털자산 <span class="cnt">230</span></button>
-    <button>주식·지수·원자재 (HIP-3) <span class="cnt">97</span></button>
+    <button class="on" id="seg-crypto" onclick="switchTab('crypto',this)">디지털자산 <span class="cnt" id="cnt-crypto">—</span></button>
+    <button id="seg-hip3" onclick="switchTab('hip3',this)">주식·지수·원자재 (HIP-3) <span class="cnt" id="cnt-hip3">—</span></button>
   </div>
 
   <div class="cards">
-    <div class="card"><div class="lbl">총 미결제 약정 <span class="ic" title="미결제 약정(OI). 아직 청산되지 않은 전체 포지션의 명목가치 합계로, 시장에 유입된 자금 규모를 나타냅니다.">i</span></div><div class="val">$8.41B</div></div>
-    <div class="card"><div class="lbl">24h 거래량 <span class="ic" title="명목 거래량. 거래 수량을 명목 가치로 환산해 24시간 동안 합산한 값.">i</span></div><div class="val">$11.7B</div></div>
-    <div class="card"><div class="lbl">평균 펀딩비 <span class="ic" title="8시간마다 정산되는 펀딩비를 1년 기준으로 환산한 값. 양수면 롱 포지션 우세, 음수면 숏 포지션 우세.">i</span></div><div class="val up">+4.12%</div></div>
-    <div class="card"><div class="lbl">취급 종목 수</div><div class="val">230</div></div>
+    <div class="card"><div class="lbl">총 미결제 약정 <span class="ic" title="미결제 약정(OI). 아직 청산되지 않은 전체 포지션의 명목가치 합계로, 시장에 유입된 자금 규모를 나타냅니다.">i</span></div><div class="val" id="k-oi">—</div></div>
+    <div class="card"><div class="lbl">24h 거래량 <span class="ic" title="명목 거래량. 거래 수량을 명목 가치로 환산해 24시간 동안 합산한 값.">i</span></div><div class="val" id="k-vol">—</div></div>
+    <div class="card"><div class="lbl">평균 펀딩비 <span class="ic" title="8시간마다 정산되는 펀딩비를 1년 기준으로 환산한 값. 양수면 롱 포지션 우세, 음수면 숏 포지션 우세.">i</span></div><div class="val" id="k-fr">—</div></div>
+    <div class="card"><div class="lbl">취급 종목 수</div><div class="val" id="k-cnt">—</div></div>
   </div>
 
   <!-- 전체 종목 -->
   <section>
     <div class="sec-title">전체 종목</div>
     <div class="panel">
+      <div class="searchrow">
+        <div class="searchbox"><span>🔍</span><input id="search" placeholder="코인 검색..." oninput="applyFilters()"></div>
+        <span class="tbl-count" id="tbl-count"></span>
+      </div>
       <table>
         <thead><tr>
           <th class="l">#</th>
-          <th class="l">종목명 <span class="find">🔍</span></th>
-          <th>가격 <span class="s">↕</span></th>
-          <th>24h 변동률 <span class="s">↕</span></th>
-          <th>펀딩비 <span class="s">↕</span></th>
-          <th>미결제 약정 <span class="s">↕</span></th>
-          <th class="act">24h 거래량 <span class="s">↓</span></th>
+          <th class="l" data-col="coin" onclick="sortBy('coin')">종목명 <span class="s">↕</span></th>
+          <th data-col="price" onclick="sortBy('price')">가격 <span class="s">↕</span></th>
+          <th data-col="chg" onclick="sortBy('chg')">24h 변동률 <span class="s">↕</span></th>
+          <th data-col="fr" onclick="sortBy('fr')">펀딩비 <span class="s">↕</span></th>
+          <th data-col="oi" onclick="sortBy('oi')">미결제 약정 <span class="s">↕</span></th>
+          <th class="act" data-col="vol" onclick="sortBy('vol')">24h 거래량 <span class="s">↓</span></th>
         </tr></thead>
-        <tbody id="tbody"></tbody>
+        <tbody id="tbody"><tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">데이터 불러오는 중...</td></tr></tbody>
       </table>
-      <div class="pager"><button>← 이전</button><span>1 / 10 페이지</span><button>다음 →</button></div>
+      <div class="pager">
+        <button id="page-prev" onclick="changePage(-1)">← 이전</button>
+        <span id="page-info">— / — 페이지</span>
+        <button id="page-next" onclick="changePage(1)">다음 →</button>
+      </div>
     </div>
   </section>
 
   <!-- 버블 차트 -->
   <section>
     <div class="sec-title">미결제 약정 버블 차트</div>
-    <p class="sec-desc">펀딩비와 가격 등락을 기준으로 시장 위치를 시각화하며, 버블 크기는 미결제 약정(OI) 규모를 나타냅니다. 우상단일수록 높은 펀딩비와 가격 상승이 겹쳐 자금이 한쪽으로 쏠린 상태를 의미합니다. 좌하단은 낮은 펀딩비·가격 하락 구간이며, 중앙은 변동이 안정적인 상태입니다.</p>
+    <p class="sec-desc">펀딩비와 가격 등락을 기준으로 시장 위치를 시각화하며, 버블 크기는 미결제 약정(OI) 규모를 나타냅니다. 우상단일수록 높은 펀딩비와 가격 상승이 겹쳐 자금이 한쪽으로 쏠린 상태를 의미합니다. 좌하단은 낮은 펀딩비·가격 하락 구간이며, 중앙은 변동이 안정적인 상태입니다. (OI 상위 40개 종목)</p>
     <div class="viz">
       <div class="legend"><span><i style="background:#e0565b"></i>롱 우세</span><span><i style="background:#4078dc"></i>숏 우세</span></div>
       <div class="scatter"><div class="plot" id="plot"></div></div>
@@ -193,7 +211,7 @@
   <!-- 펀딩비 히트맵 -->
   <section>
     <div class="sec-title">펀딩비 히트맵</div>
-    <p class="sec-desc">셀 크기는 미결제 약정(OI) 규모에 비례하며, 색상은 펀딩비의 방향과 강도를 나타냅니다. 빨간색일수록 롱 포지션 우위, 파란색일수록 숏 포지션 우위를 의미하며 색상이 진할수록 특정 방향으로의 포지션 쏠림이 강한 상태를 나타냅니다.</p>
+    <p class="sec-desc">셀 크기는 미결제 약정(OI) 규모에 비례하며, 색상은 펀딩비의 방향과 강도를 나타냅니다. 빨간색일수록 롱 포지션 우위, 파란색일수록 숏 포지션 우위를 의미하며 색상이 진할수록 특정 방향으로의 포지션 쏠림이 강한 상태를 나타냅니다. (OI 상위 25개 종목)</p>
     <div class="viz">
       <div class="hlegend">
         <span><i style="background:#b53034"></i>&gt; +20%</span><span><i style="background:#e0565b"></i>+5~20%</span>
@@ -218,63 +236,253 @@
 </div>
 
 <script>
-const L = id => `https://coin-images.coingecko.com/coins/images/${id}/large/x.png`;
-const coins = [
-  {sym:'BTC', name:'비트코인', price:'$108,240', chg:1.84, fund:1.92, oi:2100, oiL:'$2.10B', vol:'$3.42B', logo:'https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png'},
-  {sym:'ETH', name:'이더리움', price:'$3,948.6', chg:2.31, fund:2.45, oi:1280, oiL:'$1.28B', vol:'$2.10B', logo:'https://coin-images.coingecko.com/coins/images/279/large/ethereum.png'},
-  {sym:'SOL', name:'솔라나', price:'$214.78', chg:-1.12, fund:-0.88, oi:612.4, oiL:'$612.4M', vol:'$988.0M', logo:'https://coin-images.coingecko.com/coins/images/4128/large/solana.png'},
-  {sym:'HYPE', name:'하이퍼리퀴드', price:'$41.26', chg:4.07, fund:6.31, oi:540.1, oiL:'$540.1M', vol:'$720.3M', logo:'https://coin-images.coingecko.com/coins/images/50882/large/hyperliquid.jpg'},
-  {sym:'XRP', name:'리플', price:'$2.486', chg:-0.64, fund:0.41, oi:402.7, oiL:'$402.7M', vol:'$510.6M', logo:'https://coin-images.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png'},
-  {sym:'DOGE', name:'도지코인', price:'$0.2284', chg:-2.05, fund:-1.34, oi:288, oiL:'$288.0M', vol:'$361.2M', logo:'https://coin-images.coingecko.com/coins/images/5/large/dogecoin.png'},
-  {sym:'SUI', name:'수이', price:'$3.612', chg:3.18, fund:3.92, oi:201.5, oiL:'$201.5M', vol:'$240.1M', logo:'https://coin-images.coingecko.com/coins/images/26375/large/sui-ocean-square.png'},
-  {sym:'AVAX', name:'아발란체', price:'$38.94', chg:0.52, fund:0.77, oi:176.3, oiL:'$176.3M', vol:'$190.4M', logo:'https://coin-images.coingecko.com/coins/images/12559/large/Avalanche_Circle_RedWhite_Trans.png'},
-  {sym:'LINK', name:'체인링크', price:'$22.18', chg:-0.91, fund:-0.55, oi:150.2, oiL:'$150.2M', vol:'$165.7M', logo:'https://coin-images.coingecko.com/coins/images/877/large/Chainlink_Logo_500.png'},
-  {sym:'PEPE', name:'페페', price:'$0.00001842', chg:5.64, fund:8.07, oi:132.9, oiL:'$132.9M', vol:'$210.8M', logo:'https://coin-images.coingecko.com/coins/images/29850/large/pepe-token.jpeg'},
-];
-const sign = v => (v>=0?'+':'') + v.toFixed(2) + '%';
+/* ───────────────────── 상수 ───────────────────── */
+const PAGE_SIZE = 10;
+const HIP3_DEXES = ['xyz','cash','flx','km'];
 
-/* table */
-document.getElementById('tbody').innerHTML = coins.map((c,i)=>`
-  <tr>
-    <td class="rank">${i+1}</td>
-    <td><div class="asset"><img src="${c.logo}" alt=""><div><div class="nm">${c.name}</div><div class="tk">${c.sym}</div></div></div></td>
-    <td>${c.price}</td>
-    <td><span class="pill ${c.chg>=0?'up':'dn'}">${sign(c.chg)}</span></td>
-    <td><span class="pill ${c.fund>=0?'up':'dn'}">${sign(c.fund)}</span></td>
-    <td>${c.oiL}</td>
-    <td>${c.vol}</td>
-  </tr>`).join('');
+const CAT_META = {
+  stock:     { label:'주식',   color:'#337abd' },
+  index:     { label:'지수',   color:'#d97706' },
+  commodity: { label:'원자재', color:'#1ca672' },
+};
 
-/* heatmap color by funding */
+const CRYPTO_NAME = {
+  BTC:'비트코인', ETH:'이더리움', SOL:'솔라나', XRP:'리플', DOGE:'도지코인',
+  ADA:'카르다노', AVAX:'아발란체', LINK:'체인링크', DOT:'폴카닷', UNI:'유니스왑',
+  ATOM:'코스모스', LTC:'라이트코인', BCH:'비트코인캐시', NEAR:'니어프로토콜',
+  APT:'앱토스', ARB:'아비트럼', OP:'옵티미즘', SUI:'수이', HYPE:'하이퍼리퀴드',
+  INJ:'인젝티브', TIA:'셀레스티아', SEI:'세이', STRK:'스타크넷', WIF:'도그위프햇',
+  PEPE:'페페', SHIB:'시바이누', FLOKI:'플로키', BONK:'봉크', WLD:'월드코인',
+  TAO:'비텐서', RNDR:'렌더', FET:'페치에이아이', IMX:'이뮤터블X', BLUR:'블러',
+  ENS:'이더리움네임서비스', LDO:'리도다오', AAVE:'에이브', CRV:'커브다오',
+  MKR:'메이커', SNX:'신세틱스', COMP:'컴파운드', GMX:'GMX', DYDX:'디와이디엑스',
+  PENDLE:'펜들', JTO:'지토', PYTH:'피스네트워크', JUP:'주피터', ONDO:'온도파이낸스',
+  ENA:'에테나', EIGEN:'아이겐레이어', RUNE:'토르체인', OSMO:'오스모시스',
+  FTM:'팬텀', KAS:'카스파', ICP:'인터넷컴퓨터', FIL:'파일코인', GRT:'더그래프',
+  SAND:'더샌드박스', MANA:'디센트럴랜드', AXS:'엑시인피니티', GALA:'갈라',
+  STX:'스택스', ORDI:'오디', CFX:'컨플럭스', MASK:'마스크네트워크', ZK:'zkSync',
+  MINA:'미나프로토콜', FLOW:'플로우', EGLD:'멀티버스X', KAVA:'카바', ZIL:'질리카',
+  ICX:'아이콘', XTZ:'테조스', ALGO:'알고랜드', VET:'비체인', HBAR:'헤데라',
+  EOS:'이오스', TRX:'트론', XLM:'스텔라루멘', XMR:'모네로', ZEC:'지캐시', DASH:'대시',
+};
+
+const FULL_NAME = {
+  CL:'WTI 원유', BRENTOIL:'브렌트 원유', GOLD:'금', SILVER:'은', NATGAS:'천연가스',
+  COPPER:'구리', PLATINUM:'백금', XYZ100:'나스닥100 (XYZ)', SP500:'S&P 500',
+  NDX:'나스닥100', DJI:'다우존스', NIKKEI:'닛케이225', DAX:'독일 DAX', FTSE:'영국 FTSE100',
+  SPCX:'SpaceX (NASDAQ)', SNDK:'샌디스크', MU:'마이크론 테크놀로지', INTC:'인텔',
+  NVDA:'엔비디아', TSLA:'테슬라', AAPL:'애플', MSFT:'마이크로소프트', GOOGL:'구글(알파벳)',
+  AMZN:'아마존', META:'메타', COIN:'코인베이스', PLTR:'팔란티어', MRVL:'마벨 테크놀로지',
+  CRCL:'서클', SKHX:'SK하이닉스', DRAM:'DRAM 지수', S:'센티넬원', AVNT:'어반트 테크놀로지', VINE:'바인',
+};
+
+// 주요 종목 로고 (CoinGecko). 매핑에 없는 종목은 이니셜 아바타로 대체
+const LOGO = {
+  BTC:1, ETH:279, SOL:4128, XRP:44, DOGE:5, ADA:975, AVAX:12559, LINK:877, DOT:6636,
+  UNI:12504, ATOM:3794, LTC:2, BCH:780, NEAR:10365, APT:26455, ARB:16547, OP:25244,
+  SUI:26375, HYPE:50882, INJ:12882, TIA:22861, SEI:28205, WIF:33566, PEPE:29850,
+  SHIB:11939, FLOKI:16746, BONK:28600, WLD:31069, TAO:22601, RNDR:11636, FET:5972,
+  IMX:17233, BLUR:23121, ENS:19785, LDO:21185, AAVE:12645, CRV:12124, MKR:1364,
+  SNX:2586, COMP:10775, GMX:11857, DYDX:28324, PENDLE:15069, JTO:31760, PYTH:31924,
+  JUP:34188, ONDO:26580, ENA:34188, EIGEN:32417, RUNE:4157, OSMO:16724, FTM:4001,
+  KAS:25751, ICP:8916, FIL:12817, GRT:13397, SAND:6210, MANA:878, AXS:13029,
+  GALA:12493, STX:4847, ORDI:30429, CFX:5803, MASK:14051, ZK:38967, MINA:8862,
+  FLOW:4558, EGLD:6892, KAVA:4846, ZIL:2687, ICX:1060, XTZ:976, ALGO:4030, VET:1042,
+  HBAR:4642, EOS:738, TRX:1094, XLM:512, XMR:69, ZEC:486, DASH:131,
+};
+const logoUrl = id => `https://coin-images.coingecko.com/coins/images/${id}/large/x.png`;
+const AVATAR_COLORS = ['#337abd','#1ca672','#d97706','#7c3aed','#e0565b','#0ba360','#4078dc'];
+function avatarColor(sym){
+  let h=0; for(let i=0;i<sym.length;i++) h=sym.charCodeAt(i)+((h<<5)-h);
+  return AVATAR_COLORS[Math.abs(h)%AVATAR_COLORS.length];
+}
+function assetIcon(c){
+  if(LOGO[c.sym]) return `<img src="${logoUrl(LOGO[c.sym])}" alt="" onerror="this.outerHTML='<div class=avatar style=background:${avatarColor(c.sym)}>${c.sym.slice(0,2)}</div>'">`;
+  return `<div class="avatar" style="background:${avatarColor(c.sym)}">${c.sym.slice(0,2)}</div>`;
+}
+
+/* ───────────────────── 상태 ───────────────────── */
+let cryptoData = [];
+let hip3Data   = [];
+let currentTab = 'crypto';
+let sortCol    = 'vol';
+let sortDir    = -1;
+let currentPage = 1;
+let filteredSorted = [];
+
+/* ───────────────────── 유틸 ───────────────────── */
+const sign  = v => (v>=0?'+':'') + v.toFixed(2) + '%';
+const fmtB  = v => {
+  if (!v || isNaN(v)) return '$0';
+  if (v >= 1e9) return '$' + (v/1e9).toFixed(2) + 'B';
+  if (v >= 1e6) return '$' + (v/1e6).toFixed(1) + 'M';
+  if (v >= 1e3) return '$' + (v/1e3).toFixed(0) + 'K';
+  return '$' + v.toFixed(0);
+};
+const fmtPrice = v => {
+  if (!v || isNaN(v)) return '—';
+  if (v >= 10000) return '$' + v.toLocaleString('en-US',{maximumFractionDigits:0});
+  if (v >= 100)   return '$' + v.toFixed(1);
+  if (v >= 1)     return '$' + v.toFixed(3);
+  return '$' + v.toPrecision(4);
+};
+const guessCategory = name => {
+  const n = name.toUpperCase();
+  if (['SPX','NDX','DJI','NIKKEI','DAX','FTSE','SP500','XYZ100'].some(k=>n.includes(k))) return 'index';
+  if (['GOLD','SILVER','XAU','XAG','OIL','WTI','NATGAS','BRENT','COPPER','PLATINUM'].some(k=>n.includes(k))) return 'commodity';
+  return 'stock';
+};
+
+/* ───────────────────── Hyperliquid API ───────────────────── */
+async function fetchPerp(dex){
+  const body = dex ? {type:'metaAndAssetCtxs', dex} : {type:'metaAndAssetCtxs'};
+  const res = await fetch('https://api.hyperliquid.xyz/info', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error('HTTP '+res.status);
+  return res.json();
+}
+function parseCtx(ctx, dex){
+  const universe = ctx[0]?.universe || [];
+  const ctxList  = ctx[1] || [];
+  return universe.map((coin,i)=>{
+    const c = ctxList[i] || {};
+    const price = parseFloat(c.markPx || 0);
+    const prev  = parseFloat(c.prevDayPx || price);
+    const chg   = prev>0 ? (price-prev)/prev*100 : 0;
+    const fund  = parseFloat(c.funding || 0)*100*1095; // 8h×3×365 연율화
+    const oi    = parseFloat(c.openInterest || 0)*price;
+    const vol   = parseFloat(c.dayNtlVlm || 0);
+    const cat   = dex ? guessCategory(coin.name) : null;
+    const sym   = coin.name.includes(':') ? coin.name.split(':')[1] : coin.name;
+    const name  = dex ? (FULL_NAME[sym]||sym) : (CRYPTO_NAME[sym]||sym);
+    return {sym, name, price, chg, fund, oi, vol, cat};
+  }).filter(d=>d.price>0);
+}
+async function loadAll(){
+  try{
+    const [cryptoCtx, ...hip3Ctxs] = await Promise.all([
+      fetchPerp(null),
+      ...HIP3_DEXES.map(d=>fetchPerp(d).catch(()=>null))
+    ]);
+    cryptoData = parseCtx(cryptoCtx, '');
+    hip3Data = [];
+    HIP3_DEXES.forEach((dex,i)=>{ if(hip3Ctxs[i]) hip3Data.push(...parseCtx(hip3Ctxs[i], dex)); });
+    hip3Data = hip3Data.filter(d=>d.vol>0);
+
+    document.getElementById('cnt-crypto').textContent = cryptoData.length;
+    document.getElementById('cnt-hip3').textContent   = hip3Data.length || 'HIP-3';
+    document.getElementById('livetime').textContent =
+      new Date().toLocaleTimeString('ko-KR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+    renderAll();
+  }catch(e){ console.error('loadAll error:', e); }
+}
+function currentData(){ return currentTab==='crypto' ? cryptoData : hip3Data; }
+
+/* ───────────────────── KPI ───────────────────── */
+function updateKPI(){
+  const d = currentData();
+  if(!d.length) return;
+  const totalOI  = d.reduce((a,r)=>a+r.oi,0);
+  const totalVol = d.reduce((a,r)=>a+r.vol,0);
+  const avgFR    = d.reduce((a,r)=>a+r.fund,0)/d.length;
+  document.getElementById('k-oi').textContent  = fmtB(totalOI);
+  document.getElementById('k-vol').textContent = fmtB(totalVol);
+  document.getElementById('k-cnt').textContent = d.length;
+  const frEl = document.getElementById('k-fr');
+  frEl.textContent = sign(avgFR);
+  frEl.className = 'val ' + (avgFR>=0 ? 'up' : 'dn');
+}
+
+/* ───────────────────── 테이블 ───────────────────── */
+function applyFilters(){
+  const q = document.getElementById('search').value.trim().toUpperCase();
+  let data = currentData().filter(r => !q || r.sym.toUpperCase().includes(q) || r.name.toUpperCase().includes(q));
+  filteredSorted = [...data].sort((a,b)=>{
+    if(sortCol==='coin') return sortDir * a.sym.localeCompare(b.sym);
+    return sortDir===-1 ? b[sortCol]-a[sortCol] : a[sortCol]-b[sortCol];
+  });
+  document.getElementById('tbl-count').textContent = filteredSorted.length + ' / ' + currentData().length;
+  currentPage = 1;
+  renderTable();
+}
+function renderTable(){
+  document.querySelectorAll('thead th[data-col] .s').forEach(s=>s.textContent='↕');
+  const activeTh = document.querySelector(`thead th[data-col="${sortCol}"] .s`);
+  if(activeTh) activeTh.textContent = sortDir===1 ? '↑' : '↓';
+
+  const total = filteredSorted.length;
+  const pages = Math.max(1, Math.ceil(total/PAGE_SIZE));
+  if(currentPage>pages) currentPage = pages;
+  const start = (currentPage-1)*PAGE_SIZE;
+  const pageData = filteredSorted.slice(start, start+PAGE_SIZE);
+
+  document.getElementById('page-info').textContent = currentPage + ' / ' + pages + ' 페이지';
+  document.getElementById('page-prev').disabled = currentPage<=1;
+  document.getElementById('page-next').disabled = currentPage>=pages;
+
+  if(!pageData.length){
+    document.getElementById('tbody').innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">검색 결과 없음</td></tr>`;
+    return;
+  }
+  document.getElementById('tbody').innerHTML = pageData.map((c,i)=>`
+    <tr>
+      <td class="rank">${start+i+1}</td>
+      <td><div class="asset">${assetIcon(c)}<div><div class="nm">${c.name}</div><div class="tk">${c.sym}</div></div></div></td>
+      <td>${fmtPrice(c.price)}</td>
+      <td><span class="pill ${c.chg>=0?'up':'dn'}">${sign(c.chg)}</span></td>
+      <td><span class="pill ${c.fund>=0?'up':'dn'}">${sign(c.fund)}</span></td>
+      <td>${fmtB(c.oi)}</td>
+      <td>${fmtB(c.vol)}</td>
+    </tr>`).join('');
+}
+function changePage(dir){ currentPage += dir; renderTable(); }
+function sortBy(col){
+  if(sortCol===col) sortDir *= -1; else { sortCol = col; sortDir = -1; }
+  applyFilters();
+}
+
+/* ───────────────────── 버블 차트 (OI 상위 40) ───────────────────── */
+function renderBubble(){
+  const plot = document.getElementById('plot');
+  plot.innerHTML = '';
+  const d = [...currentData()].sort((a,b)=>b.oi-a.oi).slice(0,40);
+  if(!d.length) return;
+  const frVals = d.map(c=>c.fund), chgVals = d.map(c=>c.chg);
+  const xMin = Math.min(-1, Math.floor(Math.min(...frVals))-1);
+  const xMax = Math.max(1, Math.ceil(Math.max(...frVals))+1);
+  const yMin = Math.min(-5, Math.floor(Math.min(...chgVals))-1);
+  const yMax = Math.max(5, Math.ceil(Math.max(...chgVals))+1);
+  const px = f => ((f-xMin)/(xMax-xMin))*100, py = c => (1-(c-yMin)/(yMax-yMin))*100;
+
+  const xTicks = [xMin, Math.round((xMin+xMax)/2), 0, xMax].filter((v,i,a)=>a.indexOf(v)===i).sort((a,b)=>a-b);
+  xTicks.forEach(v=>{ const e=document.createElement('div'); e.className='axlbl';
+    e.style.left=`calc(${px(v)}% - 6px)`; e.style.bottom='-22px'; e.textContent=v+'%'; plot.appendChild(e);});
+  const yTicks = [yMin, Math.round(yMin/2), 0, Math.round(yMax/2), yMax].filter((v,i,a)=>a.indexOf(v)===i);
+  yTicks.forEach(v=>{ const e=document.createElement('div'); e.className='axlbl';
+    e.style.top=`calc(${py(v)}% - 8px)`; e.style.left='-30px'; e.textContent=v+'%'; plot.appendChild(e);});
+
+  const maxOi = Math.max(...d.map(c=>c.oi));
+  d.forEach(c=>{
+    const r = 12+40*Math.sqrt(c.oi/maxOi);
+    const b = document.createElement('div'); b.className = 'bub ' + (c.fund>=0?'r':'b');
+    b.style.left = Math.min(100,Math.max(0,px(c.fund)))+'%';
+    b.style.top  = Math.min(100,Math.max(0,py(c.chg)))+'%';
+    b.style.width = r+'px'; b.style.height = r+'px';
+    if(r>32) b.textContent = c.sym;
+    b.title = `${c.sym} · 펀딩 ${sign(c.fund)} · 24h ${sign(c.chg)} · OI ${fmtB(c.oi)}`;
+    plot.appendChild(b);
+  });
+  const xl=document.createElement('div'); xl.className='axlbl'; xl.style.left='45%'; xl.style.bottom='-38px'; xl.textContent='펀딩비 (연율)'; plot.appendChild(xl);
+}
+
+/* ───────────────────── 펀딩비 히트맵 (squarified treemap, OI 상위 25) ───────────────────── */
 function fcolor(f){
   if(f>20) return ['#b53034','#fff']; if(f>5) return ['#e0565b','#fff'];
   if(f>=0) return ['#f6c9cc','#7a1418']; if(f>-5) return ['#c9dcf6','#15407f'];
   if(f>-20) return ['#3a6fc9','#fff']; return ['#1e3f7f','#fff'];
 }
-
-/* bubble scatter: X=funding, Y=24h change, size~sqrt(OI) */
-(function(){
-  const plot=document.getElementById('plot');
-  const xMin=-2.5,xMax=9.5,yMin=-3.5,yMax=7.5;
-  const px=f=>((f-xMin)/(xMax-xMin))*100, py=c=>(1-(c-yMin)/(yMax-yMin))*100;
-  // gridlines + axis labels
-  [0,2,5,8].forEach(v=>{ const e=document.createElement('div'); e.className='axlbl';
-    e.style.left=`calc(${px(v)}% - 6px)`; e.style.bottom='-22px'; e.textContent=v+'%'; plot.appendChild(e);});
-  [-2,0,2,5].forEach(v=>{ const e=document.createElement('div'); e.className='axlbl';
-    e.style.top=`calc(${py(v)}% - 8px)`; e.style.left='-30px'; e.textContent=v+'%'; plot.appendChild(e);});
-  const maxOi=Math.max(...coins.map(c=>c.oi));
-  coins.forEach(c=>{
-    const r=14+44*Math.sqrt(c.oi/maxOi);
-    const b=document.createElement('div'); b.className='bub '+(c.fund>=0?'r':'b');
-    b.style.left=px(c.fund)+'%'; b.style.top=py(c.chg)+'%'; b.style.width=r+'px'; b.style.height=r+'px';
-    if(r>34) b.textContent=c.sym;
-    b.title=`${c.sym} · 펀딩 ${sign(c.fund)} · 24h ${sign(c.chg)} · OI ${c.oiL}`;
-    plot.appendChild(b);
-  });
-  const xl=document.createElement('div'); xl.className='axlbl'; xl.style.left='45%'; xl.style.bottom='-38px'; xl.textContent='펀딩비 (연율)'; plot.appendChild(xl);
-})();
-
-/* squarified treemap by OI */
 function squarify(items,x,y,w,h){
   items=items.slice().sort((a,b)=>b.oi-a.oi);
   const tot=items.reduce((s,d)=>s+d.oi,0), A=w*h;
@@ -285,34 +493,58 @@ function squarify(items,x,y,w,h){
   items.forEach(it=>{const len=Math.min(W,H);if(!row.length){row.push(it);ra+=it.area;return;}const cur=worst(row,len);row.push(it);ra+=it.area;if(worst(row,len)>cur){row.pop();ra-=it.area;flush();row.push(it);ra+=it.area;}});
   if(row.length)flush(); return out;
 }
-(function(){
-  const c=document.getElementById('treemap'); const W=c.clientWidth||1066, H=262;
-  squarify(coins,0,0,W,H).forEach(r=>{
+function renderHeatmap(){
+  const c = document.getElementById('treemap'); c.innerHTML='';
+  const W = c.clientWidth||1066, H = 262;
+  const top = [...currentData()].sort((a,b)=>b.oi-a.oi).slice(0,25);
+  if(!top.length) return;
+  squarify(top,0,0,W,H).forEach(r=>{
     const [bg,fg]=fcolor(r.fund); const small=r.w<150;
     const d=document.createElement('div'); d.className='hcell';
     d.style.cssText+=`left:${r.x+2}px;top:${r.y+2}px;width:${r.w-4}px;height:${r.h-4}px;background:${bg};color:${fg}`;
     d.innerHTML = small
-      ? `<img src="${r.logo}"><div class="tk">${r.sym}</div><div class="pc">${sign(r.fund)}</div>`
-      : `<div style="display:flex;align-items:center;gap:8px"><img src="${r.logo}"><span class="tk">${r.sym}</span></div><div class="pc" style="margin-top:8px">${sign(r.fund)}</div>`;
+      ? `${assetIcon(r)}<div class="tk">${r.sym}</div><div class="pc">${sign(r.fund)}</div>`
+      : `<div style="display:flex;align-items:center;gap:8px">${assetIcon(r)}<span class="tk">${r.sym}</span></div><div class="pc" style="margin-top:8px">${sign(r.fund)}</div>`;
     c.appendChild(d);
   });
-})();
+}
 
-/* observation bars: sorted by |funding| desc, diverging from center */
-(function(){
+/* ───────────────────── 펀딩비 관찰 유의 (절대값 상위 10) ───────────────────── */
+function renderBars(){
   const wrap=document.getElementById('bars');
-  const sorted=coins.slice().sort((a,b)=>Math.abs(b.fund)-Math.abs(a.fund));
-  const maxAbs=Math.max(...coins.map(c=>Math.abs(c.fund)));
-  const center=50; // % center baseline
+  const sorted=[...currentData()].sort((a,b)=>Math.abs(b.fund)-Math.abs(a.fund)).slice(0,10);
+  if(!sorted.length){ wrap.innerHTML=''; return; }
+  const maxAbs=Math.max(...sorted.map(c=>Math.abs(c.fund)));
+  const center=50;
   wrap.innerHTML=sorted.map((c,i)=>{
-    const len=(Math.abs(c.fund)/maxAbs)*48; // up to 48% of track
+    const len=maxAbs>0 ? (Math.abs(c.fund)/maxAbs)*48 : 0;
     const pos=c.fund>=0;
     const fill=pos?`left:${center}%;width:${len}%`:`left:${center-len}%;width:${len}%`;
     return `<div class="bar-row"><span class="rk">${i+1}</span>
-      <span class="co"><img src="${c.logo}"><b>${c.sym}</b></span>
+      <span class="co">${assetIcon(c)}<b>${c.sym}</b></span>
       <div class="track"><div class="fill ${pos?'r':'b'}" style="${fill}">${sign(c.fund)}</div></div></div>`;
   }).join('');
-})();
+}
+
+/* ───────────────────── 탭 전환 / 전체 렌더 ───────────────────── */
+function renderAll(){
+  updateKPI();
+  applyFilters();
+  renderBubble();
+  renderHeatmap();
+  renderBars();
+}
+function switchTab(tab, btn){
+  currentTab = tab;
+  document.querySelectorAll('.seg button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('search').value = '';
+  sortCol = 'vol'; sortDir = -1; currentPage = 1;
+  renderAll();
+}
+
+loadAll();
+setInterval(loadAll, 30000);
 </script>
 </body>
 </html>
