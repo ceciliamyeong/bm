@@ -201,7 +201,7 @@
   <!-- 버블 차트 -->
   <section>
     <div class="sec-title">미결제 약정 버블 차트</div>
-    <p class="sec-desc">펀딩비와 가격 등락을 기준으로 시장 위치를 시각화하며, 버블 크기는 미결제 약정(OI) 규모를 나타냅니다. 우상단일수록 높은 펀딩비와 가격 상승이 겹쳐 자금이 한쪽으로 쏠린 상태를 의미합니다. 좌하단은 낮은 펀딩비·가격 하락 구간이며, 중앙은 변동이 안정적인 상태입니다. (OI 상위 40개 종목)</p>
+    <p class="sec-desc">펀딩비와 가격 등락을 기준으로 시장 위치를 시각화하며, 버블 크기는 미결제 약정(OI) 규모를 나타냅니다. 우상단일수록 높은 펀딩비와 가격 상승이 겹쳐 자금이 한쪽으로 쏠린 상태를 의미합니다. 좌하단은 낮은 펀딩비·가격 하락 구간이며, 중앙은 변동이 안정적인 상태입니다. (OI 상위 20개 종목)</p>
     <div class="viz">
       <div class="legend"><span><i style="background:#e0565b"></i>롱 우세</span><span><i style="background:#4078dc"></i>숏 우세</span></div>
       <div class="scatter"><div class="plot" id="plot"></div></div>
@@ -276,29 +276,15 @@ const FULL_NAME = {
   CRCL:'서클', SKHX:'SK하이닉스', DRAM:'DRAM 지수', S:'센티넬원', AVNT:'어반트 테크놀로지', VINE:'바인',
 };
 
-// 주요 종목 로고 (CoinGecko). 매핑에 없는 종목은 이니셜 아바타로 대체
-const LOGO = {
-  BTC:1, ETH:279, SOL:4128, XRP:44, DOGE:5, ADA:975, AVAX:12559, LINK:877, DOT:6636,
-  UNI:12504, ATOM:3794, LTC:2, BCH:780, NEAR:10365, APT:26455, ARB:16547, OP:25244,
-  SUI:26375, HYPE:50882, INJ:12882, TIA:22861, SEI:28205, WIF:33566, PEPE:29850,
-  SHIB:11939, FLOKI:16746, BONK:28600, WLD:31069, TAO:22601, RNDR:11636, FET:5972,
-  IMX:17233, BLUR:23121, ENS:19785, LDO:21185, AAVE:12645, CRV:12124, MKR:1364,
-  SNX:2586, COMP:10775, GMX:11857, DYDX:28324, PENDLE:15069, JTO:31760, PYTH:31924,
-  JUP:34188, ONDO:26580, ENA:34188, EIGEN:32417, RUNE:4157, OSMO:16724, FTM:4001,
-  KAS:25751, ICP:8916, FIL:12817, GRT:13397, SAND:6210, MANA:878, AXS:13029,
-  GALA:12493, STX:4847, ORDI:30429, CFX:5803, MASK:14051, ZK:38967, MINA:8862,
-  FLOW:4558, EGLD:6892, KAVA:4846, ZIL:2687, ICX:1060, XTZ:976, ALGO:4030, VET:1042,
-  HBAR:4642, EOS:738, TRX:1094, XLM:512, XMR:69, ZEC:486, DASH:131,
-};
-const logoUrl = id => `https://coin-images.coingecko.com/coins/images/${id}/large/x.png`;
+// 종목 로고: 심볼 기준 CoinCap 아이콘 CDN 사용 (ID 매핑 불필요, 404 시 이니셜 아바타로 폴백)
+const logoUrl = sym => `https://assets.coincap.io/assets/icons/${sym.toLowerCase()}@2x.png`;
 const AVATAR_COLORS = ['#337abd','#1ca672','#d97706','#7c3aed','#e0565b','#0ba360','#4078dc'];
 function avatarColor(sym){
   let h=0; for(let i=0;i<sym.length;i++) h=sym.charCodeAt(i)+((h<<5)-h);
   return AVATAR_COLORS[Math.abs(h)%AVATAR_COLORS.length];
 }
 function assetIcon(c){
-  if(LOGO[c.sym]) return `<img src="${logoUrl(LOGO[c.sym])}" alt="" onerror="this.outerHTML='<div class=avatar style=background:${avatarColor(c.sym)}>${c.sym.slice(0,2)}</div>'">`;
-  return `<div class="avatar" style="background:${avatarColor(c.sym)}">${c.sym.slice(0,2)}</div>`;
+  return `<img src="${logoUrl(c.sym)}" alt="" onerror="this.outerHTML='<div class=avatar style=background:${avatarColor(c.sym)}>${c.sym.slice(0,2)}</div>'">`;
 }
 
 /* ───────────────────── 상태 ───────────────────── */
@@ -447,31 +433,60 @@ function sortBy(col){
 function renderBubble(){
   const plot = document.getElementById('plot');
   plot.innerHTML = '';
-  const d = [...currentData()].sort((a,b)=>b.oi-a.oi).slice(0,40);
+  const d = [...currentData()].sort((a,b)=>b.oi-a.oi).slice(0,20);
   if(!d.length) return;
+
+  // 극단치 1~2개가 축을 늘려버리는 걸 막기 위해 분위수 기준으로 범위를 잡음
+  const pct = (arr, p) => { const s=[...arr].sort((a,b)=>a-b); const i=Math.min(s.length-1, Math.max(0, Math.round((s.length-1)*p))); return s[i]; };
   const frVals = d.map(c=>c.fund), chgVals = d.map(c=>c.chg);
-  const xMin = Math.min(-1, Math.floor(Math.min(...frVals))-1);
-  const xMax = Math.max(1, Math.ceil(Math.max(...frVals))+1);
-  const yMin = Math.min(-5, Math.floor(Math.min(...chgVals))-1);
-  const yMax = Math.max(5, Math.ceil(Math.max(...chgVals))+1);
-  const px = f => ((f-xMin)/(xMax-xMin))*100, py = c => (1-(c-yMin)/(yMax-yMin))*100;
+  const xLo = Math.min(0, pct(frVals,0.05)), xHi = Math.max(0, pct(frVals,0.95));
+  const xPad = Math.max(0.5, (xHi-xLo)*0.25);
+  const xMin = Math.floor(xLo-xPad), xMax = Math.ceil(xHi+xPad);
+  const yLo = Math.min(0, pct(chgVals,0.05)), yHi = Math.max(0, pct(chgVals,0.95));
+  const yPad = Math.max(1, (yHi-yLo)*0.3);
+  const yMin = Math.floor(yLo-yPad), yMax = Math.ceil(yHi+yPad);
+  const W = plot.clientWidth||1000, H = plot.clientHeight||370;
+  const px = f => Math.min(W,Math.max(0, ((Math.min(xMax,Math.max(xMin,f))-xMin)/(xMax-xMin))*W));
+  const py = c => Math.min(H,Math.max(0, (1-(Math.min(yMax,Math.max(yMin,c))-yMin)/(yMax-yMin))*H));
 
   const xTicks = [xMin, Math.round((xMin+xMax)/2), 0, xMax].filter((v,i,a)=>a.indexOf(v)===i).sort((a,b)=>a-b);
   xTicks.forEach(v=>{ const e=document.createElement('div'); e.className='axlbl';
-    e.style.left=`calc(${px(v)}% - 6px)`; e.style.bottom='-22px'; e.textContent=v+'%'; plot.appendChild(e);});
+    e.style.left=`${px(v)-6}px`; e.style.bottom='-22px'; e.textContent=v+'%'; plot.appendChild(e);});
   const yTicks = [yMin, Math.round(yMin/2), 0, Math.round(yMax/2), yMax].filter((v,i,a)=>a.indexOf(v)===i);
   yTicks.forEach(v=>{ const e=document.createElement('div'); e.className='axlbl';
-    e.style.top=`calc(${py(v)}% - 8px)`; e.style.left='-30px'; e.textContent=v+'%'; plot.appendChild(e);});
+    e.style.top=`${py(v)-8}px`; e.style.left='-30px'; e.textContent=v+'%'; plot.appendChild(e);});
 
   const maxOi = Math.max(...d.map(c=>c.oi));
-  d.forEach(c=>{
-    const r = 12+40*Math.sqrt(c.oi/maxOi);
-    const b = document.createElement('div'); b.className = 'bub ' + (c.fund>=0?'r':'b');
-    b.style.left = Math.min(100,Math.max(0,px(c.fund)))+'%';
-    b.style.top  = Math.min(100,Math.max(0,py(c.chg)))+'%';
-    b.style.width = r+'px'; b.style.height = r+'px';
-    if(r>32) b.textContent = c.sym;
-    b.title = `${c.sym} · 펀딩 ${sign(c.fund)} · 24h ${sign(c.chg)} · OI ${fmtB(c.oi)}`;
+  const nodes = d.map(c=>{
+    const r = 14+38*Math.sqrt(c.oi/maxOi);
+    return {c, r, x: px(c.fund), y: py(c.chg)};
+  });
+  // 겹치는 버블끼리 살짝 밀어내는 간단한 충돌 회피 (반복적 분리)
+  for(let iter=0; iter<120; iter++){
+    let moved = false;
+    for(let i=0;i<nodes.length;i++){
+      for(let j=i+1;j<nodes.length;j++){
+        const a=nodes[i], b=nodes[j];
+        let dx=b.x-a.x, dy=b.y-a.y;
+        let dist=Math.sqrt(dx*dx+dy*dy)||0.01;
+        const minDist=a.r+b.r-4;
+        if(dist<minDist){
+          moved = true;
+          const overlap=(minDist-dist)/2;
+          dx/=dist; dy/=dist;
+          a.x-=dx*overlap; a.y-=dy*overlap;
+          b.x+=dx*overlap; b.y+=dy*overlap;
+        }
+      }
+    }
+    if(!moved) break;
+  }
+  nodes.forEach(({c,r,x,y})=>{
+    const b=document.createElement('div'); b.className='bub '+(c.fund>=0?'r':'b');
+    b.style.left=Math.min(W,Math.max(0,x))+'px'; b.style.top=Math.min(H,Math.max(0,y))+'px';
+    b.style.width=r+'px'; b.style.height=r+'px';
+    if(r>30) b.textContent=c.sym;
+    b.title=`${c.sym} · 펀딩 ${sign(c.fund)} · 24h ${sign(c.chg)} · OI ${fmtB(c.oi)}`;
     plot.appendChild(b);
   });
   const xl=document.createElement('div'); xl.className='axlbl'; xl.style.left='45%'; xl.style.bottom='-38px'; xl.textContent='펀딩비 (연율)'; plot.appendChild(xl);
