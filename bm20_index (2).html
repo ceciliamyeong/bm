@@ -1,0 +1,1381 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>BM20 지수 | 블록미디어 데이터</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
+
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+  <style>
+    :root {
+      --bg:     #ffffff;
+      --bg2:    #fbfbfb;
+      --bg3:    #f7f7f7;
+      --border: #e2e2e2;
+      --text:   #161616;
+      --text2:  #64748b;
+      --green:  #16a34a;
+      --red:    #dc2626;
+      --blue:   #2563eb;
+      --orange: #ea580c;
+      --purple: #7c3aed;
+      --yellow: #d97706;
+      --up:     #16a34a;
+      --down:   #dc2626;
+
+      --shadow: 0 4px 16px rgba(50,50,93,.08), 0 1px 3px rgba(0,0,0,.04);
+      --radius: 10px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── Hero (마켓랩 스타일) ── */
+    .hero-tag{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--purple);background:rgba(124,58,237,.08);padding:6px 14px;border-radius:99px;margin-bottom:16px;letter-spacing:.04em}
+    .hero-tag .dot{width:6px;height:6px;border-radius:50%;background:var(--purple);box-shadow:0 0 0 4px rgba(124,58,237,.15);animation:pulse-ring 2s ease-in-out infinite}
+    @keyframes pulse-ring{0%,100%{opacity:1}50%{opacity:.4}}
+    .hero{max-width:1200px;margin:0 auto;padding:40px 20px 28px}
+    .hero h1{font-size:32px;font-weight:800;color:var(--text);letter-spacing:-.03em;margin-bottom:10px}
+    .hero h1 .accent{color:var(--purple)}
+    .hero-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12.5px;color:var(--text2);margin-top:14px}
+    .hero-meta .chip{background:var(--bg3);border:1px solid var(--border);border-radius:999px;padding:4px 12px;font-size:12px;color:var(--text2)}
+    .hero-meta .chip b{color:var(--text);font-weight:700}
+
+    header {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .site-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text);
+      text-decoration: none;
+      letter-spacing: -0.04em;
+    }
+    .page-badge {
+      background: rgba(124,58,237,0.08);
+      border: 1px solid rgba(124,58,237,0.25);
+      border-radius: 6px;
+      padding: 2px 10px;
+      font-size: 12px;
+      color: var(--purple);
+      font-weight: 600;
+    }
+    .header-meta { font-size: 12px; color: var(--text2); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .header-meta .chip {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 11px;
+      color: var(--text2);
+      white-space: nowrap;
+    }
+    .header-meta .chip b { color: var(--text); font-weight: 600; }
+
+    /* ── Top Nav ── */
+    nav.top-nav {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      position: sticky;
+      top: 49px;
+      z-index: 95;
+    }
+    nav.top-nav a {
+      color: var(--text2);
+      text-decoration: none;
+      padding: 10px 14px;
+      font-size: 13px;
+      white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      transition: color .2s, border-color .2s;
+    }
+    nav.top-nav a:hover { color: var(--text); }
+    nav.top-nav a.active { color: var(--purple); border-bottom-color: var(--purple); }
+
+    /* ── Sub Nav (pill style) ── */
+    .sub-nav {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      position: sticky;
+      top: 89px;
+      z-index: 90;
+    }
+    .sub-nav::-webkit-scrollbar { display: none; }
+    .sub-nav a {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text2);
+      text-decoration: none;
+      white-space: nowrap;
+      transition: all .2s;
+      box-shadow: var(--shadow);
+    }
+    .sub-nav a:hover { color: var(--text); border-color: var(--purple); }
+    .sub-nav a .sec-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+    .sub-nav a.active-overview   { background: rgba(124,58,237,0.07); border-color: var(--purple); color: var(--purple); }
+    .sub-nav a.active-series     { background: rgba(37,99,235,0.07);  border-color: var(--blue);   color: var(--blue);   }
+    .sub-nav a.active-comparison { background: rgba(22,163,74,0.07);  border-color: var(--green);  color: var(--green);  }
+    .sub-nav a.active-movers     { background: rgba(217,119,6,0.07);  border-color: var(--yellow); color: var(--yellow); }
+    .sub-nav a.active-universe   { background: rgba(234,88,12,0.07);  border-color: var(--orange); color: var(--orange); }
+
+    .dot-overview   { background: var(--purple); }
+    .dot-series     { background: var(--blue);   }
+    .dot-comparison { background: var(--green);  }
+    .dot-movers     { background: var(--yellow); }
+    .dot-universe   { background: var(--orange); }
+
+    /* ── Layout ── */
+    main { max-width: 1200px; margin: 0 auto; padding: 24px 16px 48px; }
+
+    @media (max-width: 640px) {
+      main { padding: 16px 8px 48px; }
+      .panel { border-radius: 6px; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .kpi-value { font-size: 18px; }
+    }
+
+    /* ── Section ── */
+    /* ── Section ── */
+    .section { margin-top: 32px; scroll-margin-top: 110px; }
+    .section:first-child { margin-top: 0; }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid rgba(37,99,235,0.15);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      letter-spacing: -0.03em;
+    }
+    .section-title .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--purple);
+      flex-shrink: 0;
+    }
+    .section-title .dot.blue   { background: var(--blue); }
+    .section-title .dot.green  { background: var(--green); }
+    .section-title .dot.yellow { background: var(--yellow); }
+    .section-title .dot.orange { background: var(--orange); }
+    .section-title .sub {
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--text2);
+    }
+    .section-title .toolbar { margin-left: auto; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+    /* ── KPI Cards (마켓랩 스타일) ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .kpi-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 16px 14px;
+      box-shadow: var(--shadow);
+      transition: box-shadow .2s;
+    }
+    .kpi-card:hover { box-shadow: 0 4px 12px rgba(15,23,42,0.08); }
+    .kpi-label {
+      font-size: 12px;
+      color: var(--text2);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .kpi-label .kpi-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .kpi-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+    .kpi-note { font-size: 12px; font-weight: 600; margin-top: 4px; color: var(--text2); }
+    .kpi-spark { height: 28px; margin-top: 10px; }
+    .kpi-spark svg { display: block; width: 100%; height: 100%; }
+
+    /* delta colors */
+    .delta.up   { color: var(--up);   }
+    .delta.down { color: var(--down); }
+
+    /* ── Panel / Widget ── */
+    .panel {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    .panel:last-child { margin-bottom: 0; }
+    .widget { padding: 14px; min-width: 0; }
+
+    .widget-head {
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+    .widget-head h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0;
+    }
+
+    /* ── Chart ── */
+    .chart { width: 100%; max-width: 100%; height: 340px; box-sizing: border-box; }
+
+    @media (max-width: 640px) {
+      .chart { height: 260px; }
+      .widget { padding: 10px 8px; }
+    }
+
+    /* ── Controls ── */
+    .btn {
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      color: var(--text2);
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .btn:hover { border-color: var(--text2); color: var(--text); }
+    .btn.active { border-color: var(--purple); color: var(--purple); background: rgba(124,58,237,0.08); font-weight: 700; }
+
+    /* ── Pill ── */
+    .pill {
+      font-size: 11px;
+      color: var(--text2);
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      padding: 3px 8px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    /* ── Widgets grid ── */
+    .widgets {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 900px) { .widgets { grid-template-columns: repeat(2, 1fr); } }
+
+    /* ── Universe chips ── */
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 14px;
+    }
+    .chip-sym {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: 12px;
+      color: var(--text);
+    }
+    .chip-sym b { color: var(--blue); }
+    .chip-sym span { color: var(--text2); margin-left: 4px; }
+
+    /* ── Movers text ── */
+    .movers-text {
+      padding: 12px 14px;
+      font-size: 13px;
+      line-height: 1.9;
+      color: var(--text2);
+      border-bottom: 1px solid var(--border);
+    }
+    .movers-text b { color: var(--text); }
+  </style>
+</head>
+
+<body>
+
+<div class="hero">
+  <div class="hero-tag"><span class="dot"></span>블록미디어 데이터 · 자체 산출 지수</div>
+  <h1>BM20 <span class="accent">지수</span></h1>
+  <p style="color:var(--text2);font-size:13.5px">글로벌 시가총액 Top20 기반 디지털자산 벤치마크 지수</p>
+  <div class="hero-meta">
+    <span class="chip">ASOF <b id="metaAsOf">-</b></span>
+    <span class="chip">1D <b id="metaDelta">-</b></span>
+  </div>
+</div>
+
+<main>
+
+  <!-- ── OVERVIEW ── -->
+  <section class="section" id="sec-overview">
+    <div class="section-title">
+      <span class="dot"></span> 개요
+      <span class="sub">BM20 지수 및 주요 시장 지표</span>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label"><span class="kpi-dot" style="background:var(--purple)"></span>BM20 1일</div>
+        <div class="kpi-value" id="kpiBm20_1d">-</div>
+        <div class="kpi-note" id="kpiBm20_lvl">-</div>
+        <div class="kpi-spark" id="spk-bm20"></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label"><span class="kpi-dot" style="background:#f7931a"></span>BTC 1일</div>
+        <div class="kpi-value" id="kpiBtc_1d">-</div>
+        <div class="kpi-note" id="kpiBtc_px">-</div>
+        <div class="kpi-spark" id="spk-btc"></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label"><span class="kpi-dot" style="background:var(--blue)"></span>나스닥 1일</div>
+        <div class="kpi-value" id="kpiNdq_1d">-</div>
+        <div class="kpi-note" id="kpiNdq_px">-</div>
+        <div class="kpi-spark" id="spk-ndq"></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label"><span class="kpi-dot" style="background:var(--green)"></span>코스피 1일</div>
+        <div class="kpi-value" id="kpiKsp_1d">-</div>
+        <div class="kpi-note" id="kpiKsp_px">-</div>
+        <div class="kpi-spark" id="spk-ksp"></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label"><span class="kpi-dot" style="background:var(--text2)"></span>원/달러 환율</div>
+        <div class="kpi-value" id="kpiUsdkRw">-</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label"><span class="kpi-dot" style="background:var(--orange)"></span>김치프리미엄</div>
+        <div class="kpi-value" id="kimchiValue">-</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── INDEX SERIES ── -->
+  <section class="section" id="sec-series">
+    <div class="section-title">
+      <span class="dot blue"></span> 지수 추이
+      <span class="sub">BM20 vs BTC 지수 추이</span>
+      <div class="toolbar">
+        <button class="btn active" id="btn1y">1년</button>
+        <button class="btn" id="btnytd">연초대비</button>
+        <button class="btn" id="btnall">전체</button>
+        <span class="pill" id="seriesStatus">-</span>
+      </div>
+    </div>
+    <div class="panel">
+      <div id="seriesChart" class="chart"></div>
+    </div>
+  </section>
+
+  <!-- ── CORRELATION ── -->
+  <section class="section" id="sec-comparison">
+    <div class="section-title">
+      <span class="dot green"></span> 시장 상관관계
+      <span class="sub">BTC·BM20 vs NASDAQ·KOSPI 상관관계</span>
+      <div class="toolbar">
+        <button class="btn" id="cmp60" onclick="setCmpPeriod(60)">60일</button>
+        <button class="btn active" id="cmp90" onclick="setCmpPeriod(90)">90일</button>
+        <button class="btn" id="cmpall" onclick="setCmpPeriod(0)">전체</button>
+      </div>
+    </div>
+    <div class="widgets">
+      <div class="panel widget">
+        <div class="widget-head"><h4>BTC 대 나스닥</h4></div>
+        <div id="btcNasdaqChart" class="chart"></div>
+      </div>
+      <div class="panel widget">
+        <div class="widget-head"><h4>BM20 대 나스닥</h4></div>
+        <div id="bm20NasdaqChart" class="chart"></div>
+      </div>
+      <div class="panel widget">
+        <div class="widget-head"><h4>BTC 대 코스피</h4></div>
+        <div id="btcKospiChart" class="chart"></div>
+      </div>
+      <div class="panel widget">
+        <div class="widget-head"><h4>BM20 대 코스피</h4></div>
+        <div id="bm20KospiChart" class="chart"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── TOP MOVERS ── -->
+  <section class="section" id="sec-movers">
+    <div class="section-title">
+      <span class="dot yellow"></span> 등락 상위 &amp; 히트맵
+      <span class="sub">구성 종목 당일 등락 현황</span>
+    </div>
+    <div class="panel widget">
+      <div class="widget-head"><h4>등락 트리맵 · 전 종목 당일 등락 (크기 = 비중, 스테이블 제외)</h4></div>
+      <div id="perfBar" class="chart" style="height:400px;"></div>
+    </div>
+  </section>
+
+  <!-- ── UNIVERSE ── -->
+  <section class="section" id="sec-universe">
+    <div class="section-title">
+      <span class="dot orange"></span> 구성 종목
+      <span class="sub">BM20 구성 종목 및 비중</span>
+      <span class="toolbar" style="margin-left:auto">
+        <span class="pill" id="uniAsof">—</span>
+      </span>
+    </div>
+
+    <div id="sectorLegend" style="display:none;"></div>
+
+
+
+
+
+    <!-- 섹터 도넛 -->
+    <div class="panel" style="margin-bottom:12px; display:flex; align-items:center; gap:0; overflow:hidden;">
+      <div id="sectorDonut" style="width:260px; height:260px; flex-shrink:0;"></div>
+      <div id="donutLegend" style="flex:1; padding:0 20px; font-size:13px; line-height:2;"></div>
+    </div>
+
+    <!-- 백테스트 리포트 링크 -->
+    <a href="https://data.blockmedia.co.kr/report.html" target="_blank" style="
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-top: 12px;
+      text-decoration: none;
+      transition: border-color .2s, background .2s;
+    " onmouseover="this.style.borderColor='var(--purple)';this.style.background='#f5f3ff'"
+       onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--bg2)'">
+      <div>
+        <div style="font-size:13px; font-weight:700; color:var(--text);">📈 7년 백테스트 리포트</div>
+        <div style="font-size:11px; color:var(--text2); margin-top:3px;">2018~2025 · BM20 지수 백테스트 전체 결과 보기</div>
+      </div>
+      <span style="font-size:16px; color:var(--purple);">→</span>
+    </a>
+  </section>
+
+  <!-- ── PORTFOLIO TIMELINE ── -->
+  <section class="section" id="sec-timeline" style="scroll-margin-top:110px; margin-top:32px;">
+    <div class="section-title">
+      <span class="dot blue"></span> 포트폴리오 변천사
+      <span class="sub">2018 Q1 — 2026 Q2 · 34개 분기 리밸런싱 히스토리</span>
+    </div>
+
+    <style>
+      /* ── Timeline styles ── */
+      .tl-year-header {
+        display: flex; align-items: center; gap: 12px;
+        margin-bottom: 10px; cursor: pointer; user-select: none;
+      }
+      .tl-year-label {
+        font-size: 13px; font-weight: 700; color: var(--text2);
+        letter-spacing: 0.04em; flex-shrink: 0; width: 42px;
+      }
+      .tl-year-line { flex: 1; height: 1px; background: var(--border); }
+      .tl-year-toggle { font-size: 11px; color: var(--text2); transition: transform .2s; }
+      .tl-year-group.collapsed .tl-year-toggle { transform: rotate(-90deg); }
+
+      .tl-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
+        gap: 10px; margin-bottom: 20px;
+      }
+      .tl-year-group.collapsed .tl-grid { display: none; }
+
+      .tl-card {
+        background: var(--bg2); border: 1px solid var(--border);
+        border-radius: var(--radius); overflow: hidden;
+        transition: border-color .15s, box-shadow .15s; cursor: pointer;
+      }
+      .tl-card:hover { border-color: rgba(37,99,235,.3); box-shadow: 0 2px 8px rgba(15,23,42,.06); }
+      .tl-card.tl-expanded { border-color: rgba(37,99,235,.35); }
+
+      .tl-card-head {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 11px 14px; border-bottom: 1px solid transparent; transition: border-color .15s;
+      }
+      .tl-card.tl-expanded .tl-card-head { border-bottom-color: var(--border); }
+
+      .tl-qtag { font-size: 13px; font-weight: 700; color: var(--text); font-family: monospace; }
+      .tl-badges { display: flex; gap: 5px; flex-wrap: wrap; }
+      .tl-badge {
+        font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600;
+      }
+      .tl-badge-in   { background: rgba(37,99,235,.08);  color: var(--blue);   border: 1px solid rgba(37,99,235,.2); }
+      .tl-badge-out  { background: rgba(220,38,38,.07);  color: var(--red);    border: 1px solid rgba(220,38,38,.18); }
+      .tl-badge-str  { background: rgba(124,58,237,.08); color: var(--purple); border: 1px solid rgba(124,58,237,.2); }
+
+      .tl-preview { display: flex; gap: 3px; align-items: center; }
+      .tl-tmini {
+        font-size: 9px; padding: 2px 5px; border-radius: 3px;
+        background: var(--bg3); border: 1px solid var(--border);
+        color: var(--text2); font-family: monospace; font-weight: 600;
+      }
+      .tl-tmini.t1 { background: rgba(37,99,235,.08); color: var(--blue); border-color: rgba(37,99,235,.2); }
+      .tl-tmore { font-size: 9px; color: var(--text2); }
+      .tl-expand-icon { color: var(--text2); font-size: 12px; transition: transform .2s; }
+      .tl-card.tl-expanded .tl-expand-icon { transform: rotate(180deg); }
+
+      .tl-body { max-height: 0; overflow: hidden; transition: max-height .35s ease; }
+      .tl-card.tl-expanded .tl-body { max-height: 800px; }
+      .tl-body-inner { padding: 14px; }
+
+      .tl-sec-label {
+        font-size: 10px; color: var(--text2); text-transform: uppercase;
+        letter-spacing: .08em; margin-bottom: 7px; font-weight: 600;
+      }
+
+      .tl-wbar {
+        display: flex; height: 26px; border-radius: 5px; overflow: hidden;
+        gap: 1px; margin-bottom: 10px;
+      }
+      .tl-wseg {
+        display: flex; align-items: center; justify-content: center;
+        font-size: 9px; font-weight: 700; color: rgba(255,255,255,.85);
+        overflow: hidden; white-space: nowrap; transition: opacity .15s;
+      }
+      .tl-wseg:hover { opacity: .82; filter: brightness(1.06); }
+
+      .tl-t3grid { display: flex; flex-wrap: wrap; gap: 5px; }
+      .tl-tok {
+        font-size: 11px; padding: 4px 8px; border-radius: 5px;
+        background: var(--bg3); border: 1px solid var(--border);
+        color: var(--text2); font-family: monospace; transition: all .12s;
+      }
+      .tl-tok:hover { border-color: rgba(37,99,235,.3); color: var(--blue); background: rgba(37,99,235,.04); }
+      .tl-tok.tl-new { background: rgba(37,99,235,.07); border-color: rgba(37,99,235,.25); color: var(--blue); }
+
+      .tl-changes {
+        display: flex; gap: 7px; flex-wrap: wrap;
+        padding-top: 10px; border-top: 1px solid var(--border); margin-top: 10px;
+      }
+      .tl-chi { font-size: 11px; font-family: monospace; }
+      .tl-chi-in  { color: var(--blue); }
+      .tl-chi-out { color: var(--red); }
+      .tl-chi-str { color: var(--purple); }
+
+      .tl-stats {
+        display: grid; grid-template-columns: repeat(3, 1fr);
+        gap: 1px; background: var(--border); border-radius: 5px; overflow: hidden; margin-top: 8px;
+      }
+      .tl-stat { background: var(--bg3); padding: 7px 10px; text-align: center; }
+      .tl-stat-v { font-size: 13px; font-weight: 800; color: var(--text); font-family: monospace; }
+      .tl-stat-l { font-size: 10px; color: var(--text2); margin-top: 2px; }
+
+      @media (max-width: 600px) {
+        .tl-grid { grid-template-columns: 1fr; }
+        .tl-preview { display: none; }
+      }
+    </style>
+
+    <!-- 범례 -->
+    <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:20px; font-size:12px; color:var(--text2);">
+      <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--blue);margin-right:5px;vertical-align:middle;"></span>T1 고정 대형주</span>
+      <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:rgba(100,116,139,.4);margin-right:5px;vertical-align:middle;"></span>T3 균등 편입</span>
+      <span style="color:var(--blue); font-weight:600;">■ 신규 편입</span>
+      <span style="color:var(--red); font-weight:600;">■ 이탈</span>
+    </div>
+
+    <div id="tlTimeline"></div>
+  </section>
+
+  <script>
+  (function(){
+    const DATA = {
+      "2026Q2": ["BTC:0.3","ETH:0.2","USDT:0.05","BNB:0.05","XRP:0.05","SOL:0.05","TRX:0.02","DOGE:0.02","HYPE:0.02","ADA:0.02","BCH:0.02","LINK:0.02","XLM:0.02","LTC:0.02","ZEC:0.02","AVAX:0.02","HBAR:0.02","SHIB:0.02","SUI:0.02","CC:0.02"],
+      "2026Q1": ["BTC:0.32","ETH:0.2","XRP:0.05","USDT:0.05","BNB:0.05","SOL:0.05","TRX:0.02","DOGE:0.02","ADA:0.02","BCH:0.02","LINK:0.02","HYPE:0.02","ZEC:0.02","XLM:0.02","SUI:0.02","LTC:0.02","AVAX:0.02","HBAR:0.02","SHIB:0.02","TON:0.02"],
+      "2025Q4": ["BTC:0.32","ETH:0.2","XRP:0.05","USDT:0.05","BNB:0.05","SOL:0.05","DOGE:0.02","TRX:0.02","ADA:0.02","HYPE:0.02","LINK:0.02","SUI:0.02","AVAX:0.02","XLM:0.02","BCH:0.02","HBAR:0.02","LTC:0.02","SHIB:0.02","TON:0.02","DOT:0.02"],
+      "2025Q3": ["BTC:0.32","ETH:0.2","USDT:0.05","XRP:0.05","BNB:0.05","SOL:0.05","TRX:0.02","DOGE:0.02","ADA:0.02","HYPE:0.02","SUI:0.02","BCH:0.02","LINK:0.02","XLM:0.02","AVAX:0.02","TON:0.02","SHIB:0.02","HBAR:0.02","LTC:0.02","DOT:0.02"],
+      "2025Q2": ["BTC:0.32","ETH:0.2","USDT:0.05","XRP:0.05","BNB:0.05","SOL:0.05","DOGE:0.02","TRX:0.02","ADA:0.02","LINK:0.02","TON:0.02","XLM:0.02","SHIB:0.02","AVAX:0.02","SUI:0.02","HBAR:0.02","DOT:0.02","BCH:0.02","LTC:0.02","HYPE:0.02"],
+      "2025Q1": ["BTC:0.32","ETH:0.2","XRP:0.05","USDT:0.05","SOL:0.05","BNB:0.05","DOGE:0.02","ADA:0.02","TRX:0.02","AVAX:0.02","SUI:0.02","LINK:0.02","TON:0.02","SHIB:0.02","XLM:0.02","DOT:0.02","HBAR:0.02","BCH:0.02","UNI:0.02","LTC:0.02"],
+      "2024Q4": ["BTC:0.32","ETH:0.2","USDT:0.05","BNB:0.05","SOL:0.05","XRP:0.05","DOGE:0.02","TON:0.02","TRX:0.02","ADA:0.02","AVAX:0.02","SHIB:0.02","LINK:0.02","BCH:0.02","DOT:0.02","NEAR:0.02","SUI:0.02","LTC:0.02","TAO:0.02","APT:0.02"],
+      "2024Q3": ["BTC:0.32","ETH:0.2","USDT:0.05","BNB:0.05","SOL:0.05","XRP:0.05","TON:0.02","DOGE:0.02","ADA:0.02","TRX:0.02","AVAX:0.02","SHIB:0.02","DOT:0.02","LINK:0.02","BCH:0.02","NEAR:0.02","MATIC:0.02","LTC:0.02","UNI:0.02","ICP:0.02"],
+      "2024Q2": ["BTC:0.32","ETH:0.2","USDT:0.05","BNB:0.05","SOL:0.05","XRP:0.05","DOGE:0.02","ADA:0.02","TON:0.02","AVAX:0.02","SHIB:0.02","BCH:0.02","DOT:0.02","TRX:0.02","LINK:0.02","MATIC:0.02","ICP:0.02","LTC:0.02","NEAR:0.02","UNI:0.02"],
+      "2024Q1": ["BTC:0.32","ETH:0.2","USDT:0.05","BNB:0.05","SOL:0.05","XRP:0.05","ADA:0.02","AVAX:0.02","DOGE:0.02","TRX:0.02","DOT:0.02","MATIC:0.02","TON:0.02","LINK:0.02","SHIB:0.02","ICP:0.02","LTC:0.02","BCH:0.02","ATOM:0.02","UNI:0.02"],
+      "2023Q4": ["BTC:0.32","ETH:0.2","USDT:0.05","BNB:0.05","SOL:0.05","XRP:0.05","ADA:0.02","DOGE:0.02","TRX:0.02","TON:0.02","MATIC:0.02","DOT:0.02","LTC:0.02","BCH:0.02","LINK:0.02","SHIB:0.02","AVAX:0.02","XLM:0.02","ATOM:0.02","UNI:0.02"],
+      "2023Q3": ["BTC:0.3","ETH:0.2","USDT:0.05","BNB:0.05","SOL:0.05","XRP:0.05","ADA:0.02","DOGE:0.02","LTC:0.02","TRX:0.02","DOT:0.02","MATIC:0.02","BCH:0.02","TON:0.02","AVAX:0.02","SHIB:0.02","LINK:0.02","ATOM:0.02","UNI:0.02","XMR:0.02","XLM:0.02"],
+      "2023Q2": ["BTC:0.32","ETH:0.2","USDT:0.05","BNB:0.05","SOL:0.05","XRP:0.05","ADA:0.02","DOGE:0.02","MATIC:0.02","DOT:0.02","LTC:0.02","SHIB:0.02","TRX:0.02","AVAX:0.02","LINK:0.02","UNI:0.02","ATOM:0.02","XMR:0.02","ETC:0.02","XLM:0.02"],
+      "2023Q1": ["BTC:0.32","ETH:0.2","USDT:0.05","BNB:0.05","SOL:0.05","XRP:0.05","DOGE:0.02","ADA:0.02","MATIC:0.02","LTC:0.02","TRX:0.02","DOT:0.02","SHIB:0.02","UNI:0.02","AVAX:0.02","LINK:0.02","TON:0.02","XMR:0.02","ATOM:0.02","ETC:0.02"],
+      "2022Q4": ["BTC:0.32","ETH:0.2","USDT:0.05","BNB:0.05","SOL:0.05","XRP:0.05","ADA:0.02","DOGE:0.02","DOT:0.02","MATIC:0.02","SHIB:0.02","TRX:0.02","AVAX:0.02","UNI:0.02","LTC:0.02","ETC:0.02","LINK:0.02","ATOM:0.02","XLM:0.02","NEAR:0.02"],
+      "2022Q3": ["BTC:0.32","ETH:0.2","USDT:0.05","BNB:0.05","SOL:0.05","XRP:0.05","ADA:0.02","DOGE:0.02","DOT:0.02","TRX:0.02","SHIB:0.02","AVAX:0.02","MATIC:0.02","UNI:0.02","LTC:0.02","LINK:0.02","XLM:0.02","NEAR:0.02","ATOM:0.02","BCH:0.02"],
+      "2022Q2": ["BTC:0.32","ETH:0.2","USDT:0.05","BNB:0.05","SOL:0.05","XRP:0.05","ADA:0.02","AVAX:0.02","DOT:0.02","DOGE:0.02","SHIB:0.02","MATIC:0.02","NEAR:0.02","ATOM:0.02","UNI:0.02","TRX:0.02","BCH:0.02","ETC:0.02","ALGO:0.02","XLM:0.02"],
+      "2022Q1": ["BTC:0.32","ETH:0.2","BNB:0.05","USDT:0.05","SOL:0.05","XRP:0.05","ADA:0.02","DOT:0.02","AVAX:0.02","DOGE:0.02","SHIB:0.02","MATIC:0.02","UNI:0.02","ALGO:0.02","LTC:0.02","LINK:0.02","NEAR:0.02","BCH:0.02","ATOM:0.02","TRX:0.02"],
+      "2021Q4": ["BTC:0.3","ETH:0.2","XRP:0.05","USDT:0.05","BNB:0.05","ADA:0.0233","SOL:0.0233","USDC:0.0233","DOT:0.0233","DOGE:0.0233","AVAX:0.0233","UNI:0.0233","LINK:0.0233","ALGO:0.0233","LTC:0.0233","BCH:0.0233","MATIC:0.0233","XLM:0.0233","ATOM:0.0233","ICP:0.0233"],
+      "2021Q3": ["BTC:0.3","ETH:0.2","XRP:0.05","USDT:0.05","BNB:0.05","ADA:0.0233","DOGE:0.0233","USDC:0.0233","DOT:0.0233","UNI:0.0233","BCH:0.0233","LTC:0.0233","SOL:0.0233","LINK:0.0233","MATIC:0.0233","ETC:0.0233","THETA:0.0233","ICP:0.0233","XLM:0.0233","VET:0.0233"],
+      "2021Q2": ["BTC:0.3","ETH:0.2","XRP:0.05","USDT:0.05","BNB:0.05","ADA:0.0233","DOT:0.0233","UNI:0.0233","USDC:0.0233","BCH:0.0233","LTC:0.0233","LINK:0.0233","THETA:0.0233","FIL:0.0233","XLM:0.0233","TRX:0.0233","DOGE:0.0233","SOL:0.0233","VET:0.0233","EOS:0.0233"],
+      "2021Q1": ["BTC:0.3","ETH:0.2","XRP:0.05","USDT:0.05","BNB:0.05","LTC:0.0233","DOT:0.0233","BCH:0.0233","ADA:0.0233","LINK:0.0233","USDC:0.0233","XLM:0.0233","EOS:0.0233","THETA:0.0233","TRX:0.0233","XEM:0.0233","VET:0.0233","XMR:0.0233","XTZ:0.0233","UNI:0.0233"],
+      "2020Q4": ["BTC:0.3","ETH:0.2","XRP:0.1","USDT:0.05","BNB:0.05","BCH:0.02","LINK:0.02","DOT:0.02","LTC:0.02","ADA:0.02","EOS:0.02","TRX:0.02","XMR:0.02","XTZ:0.02","XLM:0.02","NEO:0.02","ATOM:0.02","XEM:0.02","UNI:0.02","THETA:0.02"],
+      "2020Q3": ["BTC:0.3","ETH:0.2","XRP:0.1","USDT:0.05","BNB:0.05","BCH:0.02","LTC:0.02","ADA:0.02","EOS:0.02","XTZ:0.02","LINK:0.02","XLM:0.02","TRX:0.02","XMR:0.02","VET:0.02","NEO:0.02","ETC:0.02","MIOTA:0.02","DASH:0.02","ATOM:0.02"],
+      "2020Q2": ["BTC:0.3","ETH:0.2","XRP:0.1","USDT:0.05","BNB:0.05","BCH:0.02","LTC:0.02","EOS:0.02","XTZ:0.02","XMR:0.02","XLM:0.02","TRX:0.02","ADA:0.02","LINK:0.02","ATOM:0.02","DASH:0.02","ETC:0.02","NEO:0.02","MIOTA:0.02","XEM:0.02"],
+      "2020Q1": ["BTC:0.3","ETH:0.2","XRP:0.1","USDT:0.05","BNB:0.05","BCH:0.02","LTC:0.02","EOS:0.02","XMR:0.02","XLM:0.02","TRX:0.02","ADA:0.02","XTZ:0.02","ATOM:0.02","NEO:0.02","LINK:0.02","ETC:0.02","MIOTA:0.02","DASH:0.02","MKR:0.02"],
+      "2019Q4": ["BTC:0.3","ETH:0.2","XRP:0.1","USDT:0.0235","BCH:0.0235","LTC:0.0235","EOS:0.0235","BNB:0.0235","XLM:0.0235","ADA:0.0235","TRX:0.0235","XMR:0.0235","LINK:0.0235","MIOTA:0.0235","DASH:0.0235","XTZ:0.0235","ETC:0.0235","ATOM:0.0235","XEM:0.0235","MKR:0.0235"],
+      "2019Q3": ["BTC:0.3","ETH:0.2","XRP:0.1","LTC:0.0235","BCH:0.0235","EOS:0.0235","BNB:0.0235","USDT:0.0235","TRX:0.0235","ADA:0.0235","XLM:0.0235","XMR:0.0235","DASH:0.0235","NEO:0.0235","LINK:0.0235","MIOTA:0.0235","ATOM:0.0235","ETC:0.0235","XEM:0.0235","MKR:0.0235"],
+      "2019Q2": ["BTC:0.3","ETH:0.2","XRP:0.1","BCH:0.0235","LTC:0.0235","EOS:0.0235","BNB:0.0235","XLM:0.0235","ADA:0.0235","USDT:0.0235","TRX:0.0235","DASH:0.0235","XMR:0.0235","MIOTA:0.0235","ETC:0.0235","NEO:0.0235","MKR:0.0235","ONT:0.0235","XEM:0.0235","ZEC:0.0235"],
+      "2019Q1": ["BTC:0.3","ETH:0.2","XRP:0.1","BCH:0.0235","EOS:0.0235","LTC:0.0235","XLM:0.0235","USDT:0.0235","TRX:0.0235","ADA:0.0235","MIOTA:0.0235","XMR:0.0235","BNB:0.0235","DASH:0.0235","XEM:0.0235","ETC:0.0235","NEO:0.0235","MKR:0.0235","ZEC:0.0235","WAVES:0.0235"],
+      "2018Q4": ["BTC:0.3","ETH:0.2","XRP:0.1","BCH:0.0235","EOS:0.0235","XLM:0.0235","LTC:0.0235","USDT:0.0235","ADA:0.0235","XMR:0.0235","TRX:0.0235","MIOTA:0.0235","DASH:0.0235","BNB:0.0235","NEO:0.0235","ETC:0.0235","XEM:0.0235","XTZ:0.0235","VET:0.0235","DOGE:0.0235"],
+      "2018Q3": ["BTC:0.3","ETH:0.2","XRP:0.1","BCH:0.0235","EOS:0.0235","LTC:0.0235","XLM:0.0235","ADA:0.0235","MIOTA:0.0235","USDT:0.0235","TRX:0.0235","XMR:0.0235","NEO:0.0235","DASH:0.0235","BNB:0.0235","ETC:0.0235","XEM:0.0235","VEN:0.0235","OMG:0.0235","ONT:0.0235"],
+      "2018Q2": ["BTC:0.3","ETH:0.2","XRP:0.1","BCH:0.0235","LTC:0.0235","EOS:0.0235","ADA:0.0235","XLM:0.0235","NEO:0.0235","XMR:0.0235","MIOTA:0.0235","DASH:0.0235","USDT:0.0235","TRX:0.0235","XEM:0.0235","ETC:0.0235","BNB:0.0235","QTUM:0.0235","VEN:0.0235","OMG:0.0235"],
+      "2018Q1": ["BTC:0.3","ETH:0.2","XRP:0.1","BCH:0.0235","ADA:0.0235","XEM:0.0235","LTC:0.0235","TRX:0.0235","XLM:0.0235","MIOTA:0.0235","DASH:0.0235","EOS:0.0235","XMR:0.0235","NEO:0.0235","QTUM:0.0235","BTG:0.0235","ETC:0.0235","LSK:0.0235","ICX:0.0235","NANO:0.0235"],
+    };
+
+    const CMAP = {
+      BTC:'#f7931a',ETH:'#627eea',XRP:'#346aa9',USDT:'#26a17b',BNB:'#f3ba2f',SOL:'#9945ff',
+      ADA:'#0033ad',DOT:'#e6007a',DOGE:'#c3a634',AVAX:'#e84142',MATIC:'#8247e5',LINK:'#375bd2',
+      TRX:'#ef0027',SHIB:'#ffa409',TON:'#0088cc',NEAR:'#00c08b',LTC:'#bfbbbb',BCH:'#8dc351',
+      ATOM:'#2e3148',UNI:'#ff007a',XLM:'#14b6e7',HBAR:'#555555',SUI:'#4ca3ff',HYPE:'#10b981',
+      ZEC:'#f4b728',CC:'#7c3aed',APT:'#06b6d4',TAO:'#16a34a',ICP:'#f15a24',ALGO:'#000000',
+      VET:'#15bdff',ETC:'#669073',XMR:'#ff6600',DASH:'#008de4',NEO:'#58bf00',EOS:'#000000',
+      THETA:'#2ab8e6',MIOTA:'#131f37',MKR:'#1aab9b',WAVES:'#0155ff',ONT:'#32a4be',OMG:'#1a53f0',
+      QTUM:'#2e9ad0',BTG:'#eba809',LSK:'#0d4ea0',ICX:'#1fc5c9',NANO:'#209ce9',VEN:'#15bdff',
+      USDC:'#2775ca',XTZ:'#a6e000',XEM:'#67b2e8',FIL:'#0090ff',VET2:'#15bdff',
+    };
+
+    const QUARTERS = Object.keys(DATA);
+
+    function getT1(q) {
+      const yr = parseInt(q); const qi = parseInt(q.slice(5));
+      if (yr < 2020) return ['BTC','ETH','XRP'];
+      if (yr === 2020) return ['BTC','ETH','XRP','USDT','BNB'];
+      if (yr === 2021) return ['BTC','ETH','XRP','USDT','BNB'];
+      return ['BTC','ETH','XRP','USDT','BNB','SOL'];
+    }
+
+    function syms(q) { return DATA[q].map(x=>x.split(':')[0]); }
+    function prevQ(q) { const i = QUARTERS.indexOf(q); return i < QUARTERS.length-1 ? QUARTERS[i+1] : null; }
+
+    function diff(q) {
+      const p = prevQ(q); if(!p) return {added:[],removed:[],struct:false};
+      const c = syms(q), pv = syms(p);
+      const added = c.filter(s=>!pv.includes(s));
+      const removed = pv.filter(s=>!c.includes(s));
+      const t1c = getT1(q), t1p = getT1(p);
+      const struct = JSON.stringify([...t1c].sort()) !== JSON.stringify([...t1p].sort());
+      return {added, removed, struct};
+    }
+
+    function renderCard(q) {
+      const tokens = DATA[q];
+      const t1 = getT1(q);
+      const t1tok = tokens.filter(t=>t1.includes(t.split(':')[0]));
+      const t3tok = tokens.filter(t=>!t1.includes(t.split(':')[0]));
+      const {added, removed, struct} = diff(q);
+      const p = prevQ(q);
+
+      let badges = '';
+      if(struct) badges += `<span class="tl-badge tl-badge-str">구조변경</span>`;
+      if(added.length) badges += `<span class="tl-badge tl-badge-in">+${added.join(' +')}</span>`;
+      if(removed.length) badges += `<span class="tl-badge tl-badge-out">-${removed.join(' -')}</span>`;
+
+      const preview = t1.slice(0,3).map(s=>`<span class="tl-tmini t1">${s}</span>`).join('') +
+        `<span class="tl-tmore">+${tokens.length-3}</span>`;
+
+      const wbar = tokens.map(t=>{
+        const [sym,w] = t.split(':'); const wf=parseFloat(w); const pct=(wf*100).toFixed(1);
+        const isT1=t1.includes(sym); const col=CMAP[sym]||'#94a3b8';
+        const lbl = pct>=4?sym:(pct>=2.5?sym.slice(0,3):'');
+        return `<div class="tl-wseg" style="width:${pct}%;background:${col};opacity:${isT1?1:.75}" title="${sym} ${pct}%">${lbl}</div>`;
+      }).join('');
+
+      const t3html = t3tok.map(t=>{
+        const sym=t.split(':')[0]; const isNew=added.includes(sym);
+        return `<span class="tl-tok${isNew?' tl-new':''}">${sym}</span>`;
+      }).join('');
+
+      let changes='';
+      if(added.length||removed.length||struct){
+        const addH=added.map(s=>`<span class="tl-chi tl-chi-in">▲${s}</span>`).join('');
+        const remH=removed.map(s=>`<span class="tl-chi tl-chi-out">▼${s}</span>`).join('');
+        const strH=struct?`<span class="tl-chi tl-chi-str">⚡구조변경</span>`:'';
+        changes=`<div class="tl-changes">${strH}${addH}${remH}</div>`;
+      }
+
+      const t1w=t1tok.reduce((a,t)=>a+parseFloat(t.split(':')[1]),0);
+      const t3w=t3tok[0]?parseFloat(t3tok[0].split(':')[1])*100:2;
+      const chgCount=added.length>0?'+'+added.length:(removed.length>0?'-'+removed.length:'—');
+
+      return `
+        <div class="tl-card" onclick="this.classList.toggle('tl-expanded')">
+          <div class="tl-card-head">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span class="tl-qtag">${q}</span>
+              <div class="tl-badges">${badges}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="tl-preview">${preview}</div>
+              <span class="tl-expand-icon">▾</span>
+            </div>
+          </div>
+          <div class="tl-body">
+            <div class="tl-body-inner">
+              <div class="tl-sec-label">비중 구성</div>
+              <div class="tl-wbar">${wbar}</div>
+              <div class="tl-sec-label">T3 종목 (${t3tok.length}개 · ~${t3w.toFixed(2)}%)</div>
+              <div class="tl-t3grid">${t3html}</div>
+              ${changes}
+              <div class="tl-stats">
+                <div class="tl-stat"><div class="tl-stat-v">${tokens.length}</div><div class="tl-stat-l">총 종목수</div></div>
+                <div class="tl-stat"><div class="tl-stat-v">${(t1w*100).toFixed(0)}%</div><div class="tl-stat-l">T1 비중</div></div>
+                <div class="tl-stat"><div class="tl-stat-v">${chgCount}</div><div class="tl-stat-l">변경종목</div></div>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function render(){
+      const years={};
+      QUARTERS.forEach(q=>{ const yr=q.slice(0,4); if(!years[yr])years[yr]=[]; years[yr].push(q); });
+      const tl=document.getElementById('tlTimeline');
+
+      Object.keys(years).sort((a,b)=>b-a).forEach((yr,idx)=>{
+        const qs=years[yr];
+        const grp=document.createElement('div');
+        grp.className='tl-year-group'+(idx>0?' collapsed':'');
+        grp.innerHTML=`<div class="tl-year-header" onclick="this.closest('.tl-year-group').classList.toggle('collapsed')">
+          <span class="tl-year-label">${yr}</span>
+          <div class="tl-year-line"></div>
+          <span class="tl-year-toggle">▾</span>
+        </div>`;
+        const grid=document.createElement('div');
+        grid.className='tl-grid';
+        grid.innerHTML=qs.map(renderCard).join('');
+        grp.appendChild(grid);
+        tl.appendChild(grp);
+      });
+    }
+
+    render();
+  })();
+  </script>
+
+</main>
+
+<!-- ── Sub-nav scroll active ── -->
+<script>
+(function(){
+  const ACTIVE_CLASS = {
+    'sec-overview':   'active-overview',
+    'sec-series':     'active-series',
+    'sec-comparison': 'active-comparison',
+    'sec-movers':     'active-movers',
+    'sec-universe':   'active-universe'
+  };
+  const links    = document.querySelectorAll('nav.sub-nav a');
+  const sections = [...links].map(a => document.querySelector(a.getAttribute('href')));
+
+  function onScroll(){
+    const scrollY = window.scrollY + 130;
+    let active = 0;
+    sections.forEach((sec, i) => { if (sec && sec.offsetTop <= scrollY) active = i; });
+    links.forEach((a, i) => {
+      const secId = a.getAttribute('href').slice(1);
+      const cls   = ACTIVE_CLASS[secId];
+      // 모든 active 클래스 제거 후 현재 것만 추가
+      Object.values(ACTIVE_CLASS).forEach(c => a.classList.remove(c));
+      if (i === active) a.classList.add(cls);
+    });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll(); // 초기 실행
+})();
+</script>
+
+<script>
+  const qs = s => document.querySelector(s);
+
+  // ── echarts 다크 공통 옵션 ──
+  const DARK_TOOLTIP = {
+    trigger: 'axis',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    backgroundColor: '#ffffff',
+    textStyle: { color: '#0f172a', fontSize: 12 },
+    extraCssText: 'box-shadow:0 8px 24px rgba(15,23,42,0.12); border-radius:8px; padding:10px 12px;'
+  };
+  const DARK_XAXIS = {
+    axisLine: { lineStyle: { color: '#e2e8f0' } },
+    axisTick: { show: false },
+    axisLabel: { color: '#94a3b8', hideOverlap: true }
+  };
+  const DARK_YAXIS = {
+    axisLine: { show: false },
+    axisTick: { show: false },
+    axisLabel: { color: '#94a3b8', formatter: v => Math.abs(v) >= 1000 ? Math.round(v).toLocaleString() : Number.isInteger(v) ? v : Math.round(v) },
+    splitLine: { lineStyle: { color: '#e2e8f0' } }
+  };
+
+  const fmtNum = (v, d = 0) => {
+    const n = Number(v); if (!Number.isFinite(n)) return "-";
+    return new Intl.NumberFormat('en-US', { maximumFractionDigits: d }).format(n);
+  };
+  const fmtPctRatio = (v, d = 2) => {
+    const n = Number(v); if (!Number.isFinite(n)) return "-";
+    return (n >= 0 ? "+" : "") + (n * 100).toFixed(d) + "%";
+  };
+  
+  const bust = () => "v=" + Date.now();
+
+  function lastTwoValid(arr){
+    let b = null, a = null;
+    for(let i = arr.length - 1; i >= 0; i--){
+      const v = Number(arr[i]?.v);
+      if(Number.isFinite(v)){ if(b === null) b = v; else { a = v; break; } }
+    }
+    return [a, b];
+  }
+
+  function lastValidPoint(arr){
+    for(let i = arr.length - 1; i >= 0; i--){
+      const v = Number(arr[i]?.v);
+      if(Number.isFinite(v)) return { date: arr[i].date, v };
+    }
+    return { date: null, v: null };
+  }
+
+  function pctChange(a, b){
+    a = Number(a); b = Number(b);
+    if(!Number.isFinite(a) || !Number.isFinite(b) || a === 0) return null;
+    return (b / a) - 1;
+  }
+
+  let seriesChart, perfChart, btcKospiChart, bm20KospiChart, btcNasdaqChart, bm20NasdaqChart;
+  let SERIES = [], BTC_SERIES = [], NASDAQ_SERIES = [], KOSPI_SERIES = [];
+
+  function initCharts(){
+    seriesChart     = echarts.init(qs("#seriesChart"));
+    perfChart       = echarts.init(qs("#perfBar"));
+    btcNasdaqChart  = echarts.init(qs("#btcNasdaqChart"));
+    bm20NasdaqChart = echarts.init(qs("#bm20NasdaqChart"));
+    btcKospiChart   = echarts.init(qs("#btcKospiChart"));
+    bm20KospiChart  = echarts.init(qs("#bm20KospiChart"));
+  }
+
+  async function fetchJson(url){
+    try {
+      
+      const r = await fetch(url + "?" + bust());
+      return r.ok ? await r.json() : null;
+    } catch(e) { return null; }
+  }
+
+  async function loadData(){
+    const res = await fetchJson("bm20_series.json");
+    if(res){
+      const arr = Array.isArray(res) ? res : (res.series || []);
+      SERIES = arr.map(d => ({ date: d.date, v: d.level, t: new Date(d.date) }));
+    }
+    const btc = await fetchJson("btc_usd_series.json");
+    if(btc) BTC_SERIES = btc.map(d => ({ date: d.date, v: d.price }));
+    const ndq = await fetchJson("nasdaq_series.json");
+    if(ndq) NASDAQ_SERIES = ndq.map(d => ({ date: d.date, v: d.price }));
+    const ksp = await fetchJson("kospi_series.json");
+    if(ksp) KOSPI_SERIES = ksp.map(d => ({ date: d.date, v: d.price }));
+  }
+
+  function renderSeries(mode){
+    const now = new Date();
+    let data = SERIES;
+    if(mode === "1Y") data = SERIES.filter(d => d.t > new Date(new Date().setFullYear(new Date().getFullYear()-1)));
+    else if(mode === "YTD") data = SERIES.filter(d => d.t > new Date(new Date().getFullYear(), 0, 1));
+
+    const dates = data.map(d => d.date);
+    const btcMap = new Map(BTC_SERIES.map(d => [d.date, d.v]));
+
+    seriesChart.setOption({
+      backgroundColor: 'transparent',
+      tooltip: {
+        ...DARK_TOOLTIP,
+        formatter: (p) => {
+          let res = `<b>${p[0].name}</b>`;
+          p.forEach(x => {
+            const val = Math.round(x.value).toLocaleString();
+            res += `<br/>${x.marker} ${x.seriesName}: ${x.seriesName === 'BTC' ? '$' + val : val}`;
+          });
+          return res;
+        }
+      },
+      toolbox: {
+        right: 10,
+        show: window.innerWidth >= 640,
+        iconStyle: { borderColor: '#94a3b8' },
+        emphasis: { iconStyle: { borderColor: '#0f172a' } },
+        feature: { dataZoom: { yAxisIndex: 'none' }, restore: {}, saveAsImage: {} }
+      },
+      dataZoom: [
+        { type: 'inside', xAxisIndex: 0 },
+        { type: 'slider', xAxisIndex: 0, height: 18, bottom: 25, borderColor: '#e2e8f0', fillerColor: 'rgba(88,166,255,.08)', handleStyle: { color: '#2563eb' }, textStyle: { color: '#94a3b8' } }
+      ],
+      grid: { top: 40, bottom: 60, left: '8%', right: '8%' },
+      legend: { bottom: 0, textStyle: { color: '#94a3b8' } },
+      xAxis: { type: 'category', data: dates, ...DARK_XAXIS },
+      yAxis: [
+        { type: 'value', ...DARK_YAXIS, axisLabel: { ...DARK_YAXIS.axisLabel, formatter: v => Math.round(v).toLocaleString() } },
+        { type: 'value', position: 'right', scale: true, ...DARK_YAXIS, axisLabel: { ...DARK_YAXIS.axisLabel, formatter: v => '$' + Math.round(v).toLocaleString() } }
+      ],
+      series: [
+        { name: 'BM20', type: 'line', data: data.map(d => Math.round(d.v)), smooth: true, showSymbol: false, lineStyle: { color: '#7c3aed', width: 2 }, itemStyle: { color: '#7c3aed' }, areaStyle: { opacity: 0.06, color: '#7c3aed' } },
+        { name: 'BTC',  type: 'line', data: dates.map(d => btcMap.get(d)),  yAxisIndex: 1, smooth: true, showSymbol: false, lineStyle: { color: '#f0883e', width: 2 }, itemStyle: { color: '#f0883e' } }
+      ]
+    }, true);
+    qs("#seriesStatus").textContent = `points: ${data.length}`;
+  }
+
+  let currentCmpPeriod = 90;
+
+  function setCmpPeriod(days) {
+    currentCmpPeriod = days;
+    ['cmp60','cmp90','cmpall'].forEach(id => document.getElementById(id).classList.remove('active'));
+    document.getElementById(days === 0 ? 'cmpall' : 'cmp' + days).classList.add('active');
+    renderComparison();
+  }
+
+  function renderComparison(){
+    const periodDays = currentCmpPeriod;
+    const btcMap  = new Map(BTC_SERIES.map(d => [d.date, d.v]));
+    const ndqMap  = new Map(NASDAQ_SERIES.map(d => [d.date, d.v]));
+    const kspMap  = new Map(KOSPI_SERIES.map(d => [d.date, d.v]));
+    const bm20Map = new Map(SERIES.map(d => [d.date, d.v]));
+    const isNum   = x => typeof x === "number" && Number.isFinite(x);
+
+    function alignedDatesWith(refMap, extraMap){
+      const refKeys = [...refMap.keys()].filter(dt => isNum(refMap.get(dt)));
+      const extraKeys = extraMap ? [...extraMap.keys()].filter(dt => isNum(extraMap.get(dt))) : [];
+      const all = [...new Set([...refKeys, ...extraKeys])].sort();
+      return periodDays > 0 ? all.slice(-periodDays) : all;
+    }
+    function seriesFromMap(dates, map){
+      return dates.map(dt => { const v = map.get(dt); return isNum(v) ? Math.round(v) : null; });
+    }
+
+    const commonOpt = {
+      backgroundColor: 'transparent',
+      tooltip: {
+        ...DARK_TOOLTIP,
+        formatter: (params) => {
+          let res = `<b>${params[0].name}</b>`;
+          params.forEach(p => {
+            const v = (p.value == null) ? "-" : Math.round(p.value).toLocaleString();
+            res += `<br/>${p.marker} ${p.seriesName}: ${v}`;
+          });
+          return res;
+        }
+      },
+      grid: { top: 40, bottom: 40, left: '8%', right: '8%' },
+      xAxis: { type: 'category', ...DARK_XAXIS }
+    };
+
+    const yAxisPair = [
+      { type: 'value', scale: true, ...DARK_YAXIS, axisLabel: { ...DARK_YAXIS.axisLabel, formatter: v => Math.round(v).toLocaleString() } },
+      { type: 'value', position: 'right', scale: true, ...DARK_YAXIS, axisLabel: { ...DARK_YAXIS.axisLabel, formatter: v => Math.round(v).toLocaleString() }, splitLine: { show: false } }
+    ];
+
+    // BTC vs NASDAQ
+    { const dates = alignedDatesWith(ndqMap);
+      btcNasdaqChart.setOption({ ...commonOpt, xAxis: { ...commonOpt.xAxis, data: dates }, yAxis: yAxisPair, series: [
+        { name: 'BTC',    type: 'line', data: seriesFromMap(dates, btcMap), showSymbol: false, connectNulls: true, lineStyle: { color: '#f0883e', width: 2 }, itemStyle: { color: '#f0883e' } },
+        { name: 'NASDAQ', type: 'line', data: seriesFromMap(dates, ndqMap), yAxisIndex: 1, showSymbol: false, connectNulls: true, lineStyle: { color: '#2563eb', width: 2 }, itemStyle: { color: '#2563eb' } }
+      ], legend: { bottom: 0, textStyle: { color: '#94a3b8' } } }, true); }
+
+    // BM20 vs NASDAQ
+    { const dates = alignedDatesWith(ndqMap, bm20Map);
+      bm20NasdaqChart.setOption({ ...commonOpt, xAxis: { ...commonOpt.xAxis, data: dates }, yAxis: yAxisPair, series: [
+        { name: 'BM20',   type: 'line', data: seriesFromMap(dates, bm20Map), showSymbol: false, connectNulls: true, lineStyle: { color: '#7c3aed', width: 2 }, itemStyle: { color: '#7c3aed' } },
+        { name: 'NASDAQ', type: 'line', data: seriesFromMap(dates, ndqMap),  yAxisIndex: 1, showSymbol: false, connectNulls: true, lineStyle: { color: '#2563eb', width: 2 }, itemStyle: { color: '#2563eb' } }
+      ], legend: { bottom: 0, textStyle: { color: '#94a3b8' } } }, true); }
+
+    // BTC vs KOSPI
+    { const dates = alignedDatesWith(kspMap);
+      btcKospiChart.setOption({ ...commonOpt, xAxis: { ...commonOpt.xAxis, data: dates }, yAxis: yAxisPair, series: [
+        { name: 'BTC',   type: 'line', data: seriesFromMap(dates, btcMap), showSymbol: false, connectNulls: true, lineStyle: { color: '#f0883e', width: 2 }, itemStyle: { color: '#f0883e' } },
+        { name: 'KOSPI', type: 'line', data: seriesFromMap(dates, kspMap), yAxisIndex: 1, showSymbol: false, connectNulls: true, lineStyle: { color: '#16a34a', width: 2 }, itemStyle: { color: '#16a34a' } }
+      ], legend: { bottom: 0, textStyle: { color: '#94a3b8' } } }, true); }
+
+    // BM20 vs KOSPI
+    { const dates = alignedDatesWith(kspMap, bm20Map);
+      bm20KospiChart.setOption({ ...commonOpt, xAxis: { ...commonOpt.xAxis, data: dates }, yAxis: yAxisPair, series: [
+        { name: 'BM20',  type: 'line', data: seriesFromMap(dates, bm20Map), showSymbol: false, connectNulls: true, lineStyle: { color: '#7c3aed', width: 2 }, itemStyle: { color: '#7c3aed' } },
+        { name: 'KOSPI', type: 'line', data: seriesFromMap(dates, kspMap),  yAxisIndex: 1, showSymbol: false, connectNulls: true, lineStyle: { color: '#16a34a', width: 2 }, itemStyle: { color: '#16a34a' } }
+      ], legend: { bottom: 0, textStyle: { color: '#94a3b8' } } }, true); }
+  }
+
+  function renderMovers(rows, universe){
+    if(!rows || rows.length === 0) return;
+    const sorted = [...rows].sort((a,b) => b.chg - a.chg);
+
+    const STABLE = new Set(['USDT','USDC','BUSD','DAI']);
+    // 스테이블은 트리맵에 포함하되 회색으로 (비중은 반영)
+    const nonStable = sorted.filter(r => !STABLE.has(r.sym));
+
+    // 비중 맵
+    const weightMap = {};
+    if(universe && universe.components){
+      universe.components.forEach(c => { weightMap[c.symbol] = c.weight; });
+    }
+
+    const maxAbs = Math.max(...nonStable.map(r => Math.abs(r.chg)), 0.001);
+
+    // 빨강↔초록 그라데이션: 변동폭 클수록 진하게(밝게), 작을수록 옅게
+    function chgColor(chg, isStable) {
+      if(isStable) return '#f0e8ee'; // 스테이블: 밝은 핑크빛 흰색
+      const ratio = Math.min(Math.abs(chg) / maxAbs, 1);
+      // ratio 1 = 가장 진한 색, 0 = 가장 옅은 색
+      const base = Math.round(40 + ratio * 215); // 40(옅) ~ 255(진)
+      const dim  = Math.round(15 + ratio * 30);  // 어두운 채널
+      if(chg >= 0) return `rgb(${dim},${base},${dim + 20})`;
+      else         return `rgb(${base},${dim},${dim})`;
+    }
+
+    const tmData = sorted.map(r => {
+      const isStable = STABLE.has(r.sym);
+      return {
+        name: r.sym,
+        value: weightMap[r.sym] ? weightMap[r.sym] * 100 : 2.33,
+        chg: r.chg,
+        isStable,
+        itemStyle: { color: chgColor(r.chg, isStable) }
+      };
+    });
+
+    perfChart.setOption({
+      backgroundColor: 'transparent',
+      tooltip: {
+        ...DARK_TOOLTIP, trigger: 'item',
+        formatter: p => p.data.isStable
+          ? `<b>${p.name}</b> (스테이블)<br/>비중: ${p.value.toFixed(1)}%`
+          : `<b>${p.name}</b><br/>${p.data.chg >= 0 ? '+' : ''}${(p.data.chg*100).toFixed(2)}%<br/>비중: ${p.value.toFixed(1)}%`
+      },
+      series: [{
+        type: 'treemap',
+        width: '100%', height: '100%',
+        roam: false, nodeClick: false,
+        breadcrumb: { show: false },
+        data: tmData,
+        label: {
+          show: true, position: 'inside',
+          formatter: p => {
+            if(p.data.isStable) return p.value >= 2 ? `{stb|${p.name}}` : `{stbxs|${p.name}}`;
+            const pctStr = (p.data.chg >= 0 ? '+' : '') + (p.data.chg*100).toFixed(1) + '%';
+            return p.value >= 4
+              ? `{sym|${p.name}}
+{pct|${pctStr}}`
+              : p.value >= 2 ? `{sm|${p.name}}
+{pct|${pctStr}}` : `{xs|${p.name}}`;
+          },
+          rich: {
+            sym: { fontSize: 16, fontWeight: 700, color: '#e6edf3', lineHeight: 26 },
+            sm:  { fontSize: 12, fontWeight: 700, color: '#e6edf3', lineHeight: 20 },
+            xs:  { fontSize: 10, fontWeight: 600, color: '#e6edf3', lineHeight: 16 },
+            pct: { fontSize: 11, color: 'rgba(230,237,243,0.9)', lineHeight: 18 }
+          }
+        },
+        itemStyle: { borderWidth: 2, borderColor: '#0d1117', gapWidth: 2 },
+        emphasis: { itemStyle: { shadowBlur: 8, shadowColor: 'rgba(0,0,0,.5)' } }
+      }]
+    });
+  }
+
+  function sparkSVG(values, color){
+    if(!values || values.length < 2) return '';
+    const w=140, h=28, pad=2;
+    const vals = values.filter(v => v != null && !isNaN(v));
+    if(vals.length < 2) return '';
+    const min = Math.min(...vals), max = Math.max(...vals);
+    const span = (max-min) || 1;
+    const step = (w-pad*2)/(vals.length-1);
+    const pts = vals.map((v,i)=>{
+      const x = pad + i*step;
+      const y = pad + (h-pad*2) * (1 - (v-min)/span);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    const last = vals[vals.length-1];
+    const lastX = pad + (vals.length-1)*step;
+    const lastY = pad + (h-pad*2) * (1 - (last-min)/span);
+    return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+      <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="2.2" fill="${color}"/>
+    </svg>`;
+  }
+  function drawSparks(){
+    const N = 20;
+    const tail = arr => arr.slice(-N).map(d=>d.v);
+    qs("#spk-bm20") && (qs("#spk-bm20").innerHTML = sparkSVG(tail(SERIES), '#7c3aed'));
+    qs("#spk-btc")  && (qs("#spk-btc").innerHTML  = sparkSVG(tail(BTC_SERIES), '#f7931a'));
+    qs("#spk-ndq")  && (qs("#spk-ndq").innerHTML  = sparkSVG(tail(NASDAQ_SERIES), '#2563eb'));
+    qs("#spk-ksp")  && (qs("#spk-ksp").innerHTML  = sparkSVG(tail(KOSPI_SERIES), '#16a34a'));
+  }
+
+  async function loadLatestAndMovers(){
+    const latest = await fetchJson("bm20_latest.json");
+    if(!latest) return;
+
+    qs("#metaAsOf").textContent  = latest.asOf;
+    qs("#metaDelta").textContent = fmtPctRatio(latest.bm20ChangePct);
+
+    // BM20 1D
+    const bm20Class = latest.bm20ChangePct >= 0 ? 'up' : 'down';
+    qs("#kpiBm20_1d").innerHTML = `<span class="delta ${bm20Class}">${fmtPctRatio(latest.bm20ChangePct)}</span>`;
+    qs("#kpiBm20_lvl").textContent = "지수 레벨 " + fmtNum(latest.bm20Level, 0);
+
+    // BTC 1D
+    { const [a,b] = lastTwoValid(BTC_SERIES); const r = pctChange(a,b);
+      const cl = r != null ? (r >= 0 ? 'up' : 'down') : '';
+      qs("#kpiBtc_1d").innerHTML = `<span class="delta ${cl}">${r == null ? "-" : fmtPctRatio(r)}</span>`;
+      qs("#kpiBtc_px").textContent = (b == null) ? "-" : ("$" + fmtNum(b,0)); }
+
+    // NASDAQ 1D
+    { const [a,b] = lastTwoValid(NASDAQ_SERIES); const r = pctChange(a,b);
+      const cl = r != null ? (r >= 0 ? 'up' : 'down') : '';
+      qs("#kpiNdq_1d").innerHTML = `<span class="delta ${cl}">${r == null ? "-" : fmtPctRatio(r)}</span>`;
+      const last = lastValidPoint(NASDAQ_SERIES);
+      qs("#kpiNdq_px").textContent = (last.v == null) ? "-" : `${fmtNum(last.v,0)} (asof ${last.date})`; }
+
+    // KOSPI 1D
+    { const [a,b] = lastTwoValid(KOSPI_SERIES); const r = pctChange(a,b);
+      const cl = r != null ? (r >= 0 ? 'up' : 'down') : '';
+      qs("#kpiKsp_1d").innerHTML = `<span class="delta ${cl}">${r == null ? "-" : fmtPctRatio(r)}</span>`;
+      const last = lastValidPoint(KOSPI_SERIES);
+      qs("#kpiKsp_px").textContent = (last.v == null) ? "-" : `${fmtNum(last.v,0)} (asof ${last.date})`; }
+
+    // USD/KRW
+    qs("#kpiUsdkRw").textContent =
+      (latest.kimchi_meta?.usdkrw != null) ? fmtNum(latest.kimchi_meta.usdkrw, 2) : "-";
+
+    // Kimchi Premium
+    qs("#kimchiValue").textContent =
+      (latest.kimchi_premium_pct != null) ? Number(latest.kimchi_premium_pct).toFixed(2) + "%" : "-";
+
+    // Universe Table — bm20_universe.json에서 별도 fetch
+    const universe = await fetchJson("bm20_universe.json");
+    if(universe && universe.components && universe.components.length) {
+      const KRW_LISTED = new Set(['BTC','ETH','XRP','USDT','SOL','ADA','DOGE','DOT','AVAX','MATIC','LINK','UNI','ATOM','LTC','ETC','TRX','BCH','NEAR','APT','OP','ARB','SUI','TON','FIL','HBAR','ICP','SHIB']);
+
+      const CORE    = new Set(['BTC','ETH']);
+      const L1      = new Set(['SOL','BNB','ADA','AVAX','TON','SUI','HBAR']);
+      const STABLE  = new Set(['USDT']);
+      const DEFI    = new Set(['LINK','HYPE','CC']);
+      const PAY     = new Set(['XRP','LTC','TRX','XLM','BCH']);
+      const MEME    = new Set(['DOGE','SHIB']);
+      const PRIVACY = new Set(['ZEC']);
+
+      const sorted = [...universe.components].sort((a,b) => b.weight - a.weight);
+      const maxW = sorted[0]?.weight || 1;
+
+      function getGroup(sym) {
+        if (CORE.has(sym))    return 'Core';
+        if (L1.has(sym))      return 'L1';
+        if (STABLE.has(sym))  return '스테이블';
+        if (DEFI.has(sym))    return 'DeFi/신규';
+        if (PAY.has(sym))     return '결제';
+        if (MEME.has(sym))    return '밈';
+        if (PRIVACY.has(sym)) return '프라이버시';
+        return 'Others';
+      }
+      const GROUP_STYLE = {
+        'Core':       'background:rgba(37,99,235,0.08);color:#1d4ed8',
+        'L1':         'background:rgba(124,58,237,0.08);color:#6d28d9',
+        '스테이블':    'background:rgba(20,184,166,0.08);color:#0f766e',
+        'DeFi/신규':  'background:rgba(22,163,74,0.08);color:#15803d',
+        '결제':       'background:rgba(234,88,12,0.08);color:#c2410c',
+        '밈':         'background:rgba(219,39,119,0.08);color:#be185d',
+        '프라이버시': 'background:rgba(100,116,139,0.08);color:#334155',
+        'Others':     'background:rgba(100,116,139,0.08);color:#475569',
+      };
+      const BAR_COLOR = {
+        'Core':       '#2563eb',
+        'L1':         '#7c3aed',
+        '스테이블':    '#14b8a6',
+        'DeFi/신규':  '#16a34a',
+        '결제':       '#ea580c',
+        '밈':         '#db2777',
+        '프라이버시': '#475569',
+        'Others':     '#64748b',
+      };
+
+      // 섹터 범례 동적 렌더링
+      const SECTOR_ORDER = ['Core','L1','결제','스테이블','DeFi/신규','밈','프라이버시'];
+      const SECTOR_DOT_COLOR = { 'Core':'#2563eb','L1':'#7c3aed','스테이블':'#14b8a6','DeFi/신규':'#16a34a','결제':'#ea580c','밈':'#db2777','프라이버시':'#475569' };
+      const SECTOR_TEXT_COLOR = { 'Core':'#1d4ed8','L1':'#6d28d9','스테이블':'#0f766e','DeFi/신규':'#15803d','결제':'#c2410c','밈':'#be185d','프라이버시':'#334155' };
+      const SECTOR_LABEL = { 'Core':'파랑','L1':'보라','스테이블':'청록','DeFi/신규':'초록','결제':'주황','밈':'핑크','프라이버시':'회색' };
+
+      const sectorMap = {};
+      sorted.forEach(c => {
+        const g = getGroup(c.symbol);
+        if(!sectorMap[g]) sectorMap[g] = { syms: [], weight: 0 };
+        sectorMap[g].syms.push(c.symbol);
+        sectorMap[g].weight += c.weight;
+      });
+
+      // ── 섹터 테이블 렌더 (색상 컬럼 제거)
+      const legendRows = SECTOR_ORDER.filter(g => sectorMap[g]).map((g, i, arr) => {
+        const isLast = i === arr.length - 1;
+        const d = sectorMap[g];
+        return `<tr style="${isLast ? '' : 'border-bottom:1px solid var(--border);'}">
+          <td style="padding:8px 14px; font-weight:700; width:120px;">
+            <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${SECTOR_DOT_COLOR[g]};margin-right:7px;vertical-align:middle;"></span>
+            <span style="color:${SECTOR_TEXT_COLOR[g]}">${g}</span>
+          </td>
+          <td style="padding:8px 14px; color:var(--text2); font-size:12px;">${d.syms.join(', ')}</td>
+          <td style="padding:8px 14px; text-align:right; font-weight:700; color:var(--text1); width:70px;">${(d.weight*100).toFixed(1)}%</td>
+        </tr>`;
+      }).join('');
+
+      const legendEl = document.getElementById('sectorLegend');
+      if(legendEl) legendEl.innerHTML = `
+        <table style="width:100%; border-collapse:collapse; font-size:12px;">
+          <thead>
+            <tr style="background:var(--bg3); border-bottom:1px solid var(--border);">
+              <th style="padding:8px 14px; font-weight:600; color:var(--text2); text-align:left;">섹터</th>
+              <th style="padding:8px 14px; font-weight:600; color:var(--text2); text-align:left;">종목</th>
+              <th style="padding:8px 14px; font-weight:600; color:var(--text2); text-align:right;">비중</th>
+            </tr>
+          </thead>
+          <tbody>${legendRows}</tbody>
+        </table>`;
+
+      // ── 섹터 도넛 렌더
+      const donutEl = document.getElementById('sectorDonut');
+      if(donutEl) {
+        const donutChart = echarts.init(donutEl);
+        const donutData = SECTOR_ORDER.filter(g => sectorMap[g]).map(g => ({
+          name: g,
+          value: parseFloat((sectorMap[g].weight * 100).toFixed(1)),
+          itemStyle: { color: SECTOR_DOT_COLOR[g] }
+        }));
+        donutChart.setOption({
+          backgroundColor: 'transparent',
+          tooltip: {
+            backgroundColor: '#161b22', borderColor: '#30363d',
+            textStyle: { color: '#e6edf3', fontSize: 12 },
+            formatter: p => `<b>${p.name}</b><br/>${p.value}%`
+          },
+          series: [{
+            type: 'pie',
+            radius: ['48%', '76%'],
+            center: ['50%', '50%'],
+            data: donutData,
+            label: { show: false },
+            labelLine: { show: false },
+            emphasis: { scale: true, scaleSize: 6 }
+          }]
+        });
+
+        // 범례 텍스트
+        const legendEl = document.getElementById('donutLegend');
+        if(legendEl) {
+          legendEl.innerHTML = SECTOR_ORDER.filter(g => sectorMap[g]).map(g =>
+            `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${SECTOR_DOT_COLOR[g]};flex-shrink:0;"></span>
+              <span style="color:${SECTOR_TEXT_COLOR[g]};font-weight:700;min-width:80px;">${g}</span>
+              <span style="color:var(--text2);font-size:12px;">${sectorMap[g].syms.join(', ')}</span>
+              <span style="margin-left:auto;font-weight:700;color:var(--text);padding-left:12px;">${(sectorMap[g].weight*100).toFixed(1)}%</span>
+            </div>`
+          ).join('');
+        }
+      }
+
+      qs('#uniAsof').textContent = 'asof ' + (universe.asOf || '—');
+    }
+
+    // Movers CSV
+    const date = latest.asOf;
+    const csvTxt = await (async () => {
+      const paths = [`bm20_daily_data_latest.csv`, `out/${date}/bm20_daily_data_${date}.csv`];
+      for(const p of paths){
+        const r = await fetch(p + "?" + bust());
+        if(r.ok) return await r.text();
+      }
+      return null;
+    })();
+
+    if(csvTxt){
+      const lines = csvTxt.trim().split('\n');
+      const headers = lines[0].split(',').map(s => s.trim());
+      const sIdx = headers.indexOf('symbol'), cIdx = headers.indexOf('price_change_pct');
+      const rows = lines.slice(1).map(l => {
+        const c = l.split(',');
+        return { sym: c[sIdx], chg: Number(c[cIdx])/100 };
+      }).filter(r => r.sym && !isNaN(r.chg));
+      renderMovers(rows, universe);
+    }
+  }
+
+  async function main(){
+    initCharts();
+    await loadData();
+    drawSparks();
+    await loadLatestAndMovers();
+
+    renderSeries("1Y");
+    renderComparison();
+
+    function updateBtn(id){
+      document.querySelectorAll(".btn").forEach(b => b.classList.remove("active"));
+      qs(id).classList.add("active");
+    }
+    qs("#btn1y").onclick  = () => { renderSeries("1Y");  updateBtn("#btn1y");  };
+    qs("#btnytd").onclick = () => { renderSeries("YTD"); updateBtn("#btnytd"); };
+    qs("#btnall").onclick = () => { renderSeries("ALL"); updateBtn("#btnall"); };
+
+    window.onresize = () => [
+      seriesChart, perfChart,
+      btcNasdaqChart, bm20NasdaqChart, btcKospiChart, bm20KospiChart
+    ].forEach(c => c?.resize());
+  }
+
+  main().catch(console.error);
+</script>
+
+</body>
+</html>
