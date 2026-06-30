@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>하이퍼리퀴드 시장 현황</title>
+<title>하이퍼리퀴드 시장 현황 — 블록미디어 마켓랩</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -14,6 +15,7 @@
     --red-strong:#e0565b; --red-soft:#f6c9cc; --red-text:#7a1418;
     --blue-soft:#c9dcf6; --blue-text:#15407f;
     --pos-bg:#fdeaeb; --pos-text:#d23b46; --neg-bg:#e9f0fb; --neg-text:#2f6ad0;
+    --mono:Arial,sans-serif;
     --radius:14px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -26,23 +28,23 @@
   .badge{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--accent);
     background:rgba(51,122,189,.08);border-radius:999px;padding:6px 12px;margin-bottom:20px}
   .badge .dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
-  .titlerow{display:flex;align-items:center;gap:12px;position:relative}
+  .titlerow{display:flex;align-items:center;gap:12px;position:relative;flex-wrap:wrap}
   .brand{width:36px;height:36px;border-radius:50%;object-fit:cover;flex:none}
   h1{font-size:35px;font-weight:800;letter-spacing:-.03em}
   .feat{position:relative;display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:700;
     color:var(--accent);background:rgba(51,122,189,.08);border-radius:999px;padding:5px 12px;cursor:pointer;margin-left:4px}
   .feat .i{width:15px;height:15px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;
     display:flex;align-items:center;justify-content:center;font-style:normal}
-  .pop{position:absolute;top:130%;left:0;width:360px;background:var(--ink);color:#fff;border-radius:10px;
+  .pop{position:absolute;top:130%;left:0;width:340px;background:var(--ink);color:#fff;border-radius:10px;
     padding:16px;box-shadow:0 12px 32px rgba(16,24,40,.28);opacity:0;visibility:hidden;transition:.15s;z-index:20}
   .feat:hover .pop{opacity:1;visibility:visible}
   .pop h4{color:#9fb6e6;font-size:12px;margin-bottom:12px}
-  .pop .close{position:absolute;top:12px;right:14px;color:#9fb6e6;font-size:14px;cursor:pointer}
   .pop li{list-style:none;font-size:12.5px;margin:10px 0;padding-left:14px;position:relative}
   .pop li::before{content:'';position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%;background:#9fb6e6}
   .pop li b{font-weight:900}
-  .live{position:absolute;right:0;top:6px;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:7px}
-  .live .pulse{width:8px;height:8px;border-radius:50%;background:#37c97a}
+  .live{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);margin-left:auto}
+  .live .pulse{width:8px;height:8px;border-radius:50%;background:#37c97a;animation:pulse-ring 2s ease-in-out infinite}
+  @keyframes pulse-ring{0%,100%{opacity:1}50%{opacity:.3}}
   .intro{color:var(--muted);font-size:13.5px;margin-top:18px;max-width:880px}
 
   /* segment */
@@ -59,9 +61,10 @@
   .card .lbl{font-size:13px;color:var(--muted);font-weight:500;display:flex;align-items:center;gap:6px}
   .card .ic{width:15px;height:15px;border-radius:50%;background:#e9ecf1;color:#aab2bd;font-size:9px;font-style:normal;
     display:inline-flex;align-items:center;justify-content:center;cursor:help}
-  .card .val{font-size:29px;font-weight:900;margin-top:10px}
+  .card .val{font-size:29px;font-weight:900;margin-top:10px;font-family:var(--mono)}
   .card .val.up{color:var(--pos-text)}
   .card .val.dn{color:var(--neg-text)}
+  .card .note{font-size:12px;color:var(--muted);margin-top:6px}
 
   /* section */
   section{margin-top:52px}
@@ -69,69 +72,66 @@
   .sec-desc{color:var(--muted);font-size:13px;margin-top:12px;max-width:840px}
   .panel{border:1px solid var(--line);border-radius:18px;margin-top:16px;overflow:hidden}
 
+  /* toolbar (search + filters) */
+  .toolbar{padding:16px 18px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;border-bottom:1px solid var(--line)}
+  .search-wrap{position:relative;flex:1;min-width:180px;max-width:280px}
+  .search-wrap input{width:100%;background:#f6f7f9;border:1px solid var(--line);border-radius:10px;
+    color:var(--ink);font-size:13px;font-family:inherit;padding:9px 12px 9px 32px;outline:none;transition:.15s}
+  .search-wrap input:focus{border-color:var(--accent);background:#fff}
+  .search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none}
+
+  .cat-btn{padding:7px 14px;border-radius:999px;font-size:12.5px;font-family:inherit;font-weight:700;cursor:pointer;
+    border:1px solid var(--line);background:#fff;color:var(--muted);transition:.15s}
+  .cat-btn.active{border-color:#7c3aed;background:#f5f3ff;color:#7c3aed}
+  .tbl-count{margin-left:auto;font-size:12px;color:var(--muted);font-family:var(--mono)}
+
   /* table */
-  table{width:100%;border-collapse:collapse}
-  thead th{font-size:12px;color:var(--muted);font-weight:700;padding:16px 18px;text-align:right;white-space:nowrap}
-  thead th.l{text-align:left}
+  .table-scroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;min-width:600px}
+  thead th{font-size:12px;color:var(--muted);font-weight:700;padding:16px 18px;text-align:right;white-space:nowrap;cursor:pointer;user-select:none}
+  thead th.l{text-align:left;cursor:default}
   thead th .s{color:#cbd5e1;margin-left:4px;font-weight:400}
-  thead th.act .s{color:var(--accent)}
-  thead th .find{opacity:.55;margin-left:6px}
-  tbody td{padding:14px 18px;text-align:right;font-size:15px;font-weight:700;border-top:1px solid var(--line)}
-  tbody td.rank{color:var(--muted);font-weight:500;text-align:left;width:46px}
-  .asset{display:flex;align-items:center;gap:12px;text-align:left}
-  .asset img{width:24px;height:24px;border-radius:50%}
+  thead th.asc .s,thead th.desc .s{color:var(--accent)}
+  tbody td{padding:14px 18px;text-align:right;font-size:15px;font-weight:700;border-top:1px solid var(--line);font-family:var(--mono)}
+  tbody td.rank{color:var(--muted);font-weight:500;text-align:left;width:46px;font-family:inherit}
+  tbody td:nth-child(2){text-align:left;font-family:'Noto Sans KR',sans-serif}
   .asset .nm{font-weight:700;font-size:15px}
   .asset .tk{font-size:12px;color:var(--muted);font-weight:500}
   .pill{display:inline-block;padding:4px 9px;border-radius:8px;font-size:13px;font-weight:700}
   .pill.up{background:var(--pos-bg);color:var(--pos-text)}
   .pill.dn{background:var(--neg-bg);color:var(--neg-text)}
+  .cat-tag{font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px}
   .pager{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;color:var(--muted);font-size:13px;border-top:1px solid var(--line)}
   .pager button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 14px;font-family:inherit;font-size:13px;color:#445;cursor:pointer}
   .pager button:disabled{opacity:.35;cursor:default}
-  .avatar{width:24px;height:24px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
-    font-size:9px;font-weight:900;color:#fff;letter-spacing:-.5px}
-  .searchrow{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 0;gap:10px}
-  .searchbox{display:flex;align-items:center;gap:7px;background:#f3f5f8;border:1px solid var(--line);border-radius:9px;
-    padding:8px 12px;font-size:13px;color:var(--muted);width:220px}
-  .searchbox input{border:0;background:transparent;outline:0;font-family:inherit;font-size:13px;color:var(--ink);width:100%}
-  thead th[data-col]{cursor:pointer;user-select:none}
-  thead th[data-col]:hover .s{color:var(--accent)}
 
   /* viz panels */
   .viz{border:1px solid var(--line);border-radius:18px;margin-top:16px;padding:22px}
-  /* bubble */
-  .scatter{position:relative;height:430px;margin-top:8px}
-  .plot{position:absolute;inset:24px 24px 36px 48px;border-left:1px solid var(--line);border-bottom:1px solid var(--line)}
-  .grid-x,.grid-y{position:absolute;background:#f4f6f9}
-  .bub{position:absolute;border-radius:50%;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;
-    font-size:11px;font-weight:700;color:#fff;opacity:.92}
-  .bub.r{background:rgba(224,86,91,.78);border:1.5px solid #e0565b}
-  .bub.b{background:rgba(64,120,220,.7);border:1.5px solid #4078dc}
-  .axlbl{position:absolute;font-size:11px;color:var(--muted)}
   .legend{display:flex;gap:18px;justify-content:flex-end;font-size:12px;color:#445;margin-bottom:6px}
   .legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+  .scatter{position:relative;height:300px;margin-top:8px}
 
-  /* heatmap treemap */
+  /* heatmap */
   .hlegend{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:#556;margin-bottom:14px}
   .hlegend i{display:inline-block;width:13px;height:13px;border-radius:3px;margin-right:6px;vertical-align:-2px}
-  .treemap{position:relative;height:262px}
-  .hcell{position:absolute;border-radius:11px;overflow:hidden;padding:10px}
-  .hcell img{width:24px;height:24px;border-radius:50%}
-  .hcell .tk{font-weight:900;font-size:14px;line-height:1.1}
-  .hcell .pc{font-weight:700;font-size:13px}
+  .hm-grid{display:flex;flex-wrap:wrap;gap:6px}
+  .hcell{border-radius:11px;padding:10px 12px;transition:transform .15s}
+  .hcell:hover{transform:translateY(-2px)}
+  .hcell .tk{font-weight:900;line-height:1.2}
+  .hcell .pc{font-weight:700;margin-top:4px;font-family:var(--mono)}
 
   /* observation bars */
-  .bar-row{display:grid;grid-template-columns:24px 130px 1fr;align-items:center;gap:10px;margin:9px 0}
+  .bar-row{display:grid;grid-template-columns:24px 70px 1fr;align-items:center;gap:10px;margin:9px 0}
   .bar-row .rk{color:var(--muted);font-size:14px}
-  .bar-row .co{display:flex;align-items:center;gap:8px}
-  .bar-row .co img{width:22px;height:22px;border-radius:50%}
-  .bar-row .co b{font-weight:700;font-size:14px}
+  .bar-row .co{font-weight:700;font-size:14px}
+  .bar-row .co .sub{font-size:11px;color:var(--muted);font-weight:500;margin-left:4px}
   .track{position:relative;height:24px;background:#f1f3f6;border-radius:6px}
-  .fill{position:absolute;top:0;height:24px;border-radius:6px;display:flex;align-items:center;padding:0 8px;font-size:13px;font-weight:700;color:#fff}
+  .fill{position:absolute;top:0;height:24px;border-radius:6px;display:flex;align-items:center;padding:0 8px;font-size:13px;font-weight:700;color:#fff;font-family:var(--mono)}
   .fill.r{background:linear-gradient(90deg,#f08a8e,#e0565b)}
   .fill.b{background:linear-gradient(90deg,#7aa6e8,#4078dc);justify-content:flex-end}
 
-  footer{margin-top:48px;display:flex;justify-content:space-between;color:#aeb4bd;font-size:12px;border-top:1px solid var(--line);padding-top:20px}
+  footer{margin-top:48px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;color:#aeb4bd;font-size:12px;border-top:1px solid var(--line);padding-top:20px}
+  .empty{text-align:center;padding:40px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -144,29 +144,28 @@
     <h1>하이퍼리퀴드 시장 현황</h1>
     <span class="feat"><span class="i">i</span>주요 기능 및 특징
       <div class="pop">
-        <span class="close">✕</span>
         <h4>주요 기능 및 특징</h4>
         <ul>
           <li><b>직관적인 시장 분석</b> 미결제 약정 버블 차트와 펀딩비 히트맵을 통해 시장의 자금 쏠림 현상과 포지션 방향성을 빠르게 파악할 수 있습니다.</li>
           <li><b>다양한 마켓 지원</b> 가상자산 무기한 선물뿐만 아니라, HIP-3 기반의 주식·지수·원자재 마켓도 탭 전환을 통해 간편하게 확인할 수 있습니다.</li>
-          <li><b>실시간 데이터 갱신</b> 대시보드의 모든 데이터는 약 30초 주기로 자동 업데이트됩니다.</li>
+          <li><b>실시간 데이터 갱신</b> 대시보드의 모든 데이터는 30초 주기로 자동 업데이트됩니다.</li>
         </ul>
       </div>
     </span>
-    <div class="live"><span class="pulse"></span>LIVE · <span id="livetime">—</span></div>
+    <div class="live"><span class="pulse"></span>LIVE · <span id="update-time">—</span></div>
   </div>
 
-  <p class="intro">하이퍼리퀴드(Hyperliquid)는 탈중앙화 무기한 선물 거래소입니다. 블록미디어 하이퍼리퀴드 시장 현황은 전체 시장 상황을 실시간으로 한눈에 파악할 수 있는 대시보드입니다. 시장 전체의 총 미결제 약정(OI) · 24시간 거래량 · 평균 펀딩비 같은 핵심 지표는 물론 개별 디지털자산의 가격과 등락률을 확인할 수 있습니다.</p>
+  <p class="intro">하이퍼리퀴드(Hyperliquid)는 탈중앙화 무기한 선물 거래소입니다. 블록미디어 하이퍼리퀴드 시장 현황은 전체 시장 상황을 실시간으로 한눈에 파악할 수 있는 대시보드입니다. 시장 전체의 총 미결제 약정(OI) · 24시간 거래량 · 평균 펀딩비 같은 핵심 지표는 물론 개별 종목의 가격과 등락률을 확인할 수 있습니다.</p>
 
   <div class="seg">
-    <button class="on" id="seg-crypto" onclick="switchTab('crypto',this)">디지털자산 <span class="cnt" id="cnt-crypto">—</span></button>
-    <button id="seg-hip3" onclick="switchTab('hip3',this)">주식·지수·원자재 (HIP-3) <span class="cnt" id="cnt-hip3">—</span></button>
+    <button class="on" id="tab-crypto" onclick="switchTab('crypto',this)">디지털자산 <span class="cnt" id="badge-crypto">—</span></button>
+    <button id="tab-hip3" onclick="switchTab('hip3',this)">주식·지수·원자재 (HIP-3) <span class="cnt" id="badge-hip3">—</span></button>
   </div>
 
   <div class="cards">
     <div class="card"><div class="lbl">총 미결제 약정 <span class="ic" title="미결제 약정(OI). 아직 청산되지 않은 전체 포지션의 명목가치 합계로, 시장에 유입된 자금 규모를 나타냅니다.">i</span></div><div class="val" id="k-oi">—</div></div>
     <div class="card"><div class="lbl">24h 거래량 <span class="ic" title="명목 거래량. 거래 수량을 명목 가치로 환산해 24시간 동안 합산한 값.">i</span></div><div class="val" id="k-vol">—</div></div>
-    <div class="card"><div class="lbl">평균 펀딩비<span style="font-size:10px;color:var(--muted);font-weight:400;margin-left:3px">연율</span> <span class="ic" title="8시간마다 정산되는 펀딩비를 1년 기준으로 환산한 값. 양수면 롱 포지션 우세, 음수면 숏 포지션 우세.">i</span></div><div class="val" id="k-fr">—</div></div>
+    <div class="card"><div class="lbl">평균 펀딩비 <span class="ic" title="8시간마다 정산되는 펀딩비를 1년 기준으로 환산한 값. 양수면 롱 포지션 우세, 음수면 숏 포지션 우세.">i</span></div><div class="val" id="k-fr">—</div><div class="note" id="k-fr-note"></div></div>
     <div class="card"><div class="lbl">취급 종목 수</div><div class="val" id="k-cnt">—</div></div>
   </div>
 
@@ -174,26 +173,39 @@
   <section>
     <div class="sec-title">전체 종목</div>
     <div class="panel">
-      <div class="searchrow">
-        <div class="searchbox"><span>🔍</span><input id="search" placeholder="코인 검색..." oninput="applyFilters()"></div>
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="search" placeholder="코인 검색..." oninput="applyFilters()">
+        </div>
         <span class="tbl-count" id="tbl-count"></span>
       </div>
-      <table>
-        <thead><tr>
-          <th class="l">#</th>
-          <th class="l" data-col="coin" onclick="sortBy('coin')">종목명 <span class="s">↕</span></th>
-          <th data-col="price" onclick="sortBy('price')">가격 <span class="s">↕</span></th>
-          <th data-col="chg" onclick="sortBy('chg')">24h 변동률 <span class="s">↕</span></th>
-          <th data-col="fr" onclick="sortBy('fr')">펀딩비<span style="font-size:10px;color:var(--muted);font-weight:400;margin-left:3px">연율</span> <span class="s">↕</span></th>
-          <th data-col="oi" onclick="sortBy('oi')">미결제 약정 <span class="s">↕</span></th>
-          <th class="act" data-col="vol" onclick="sortBy('vol')">24h 거래량 <span class="s">↓</span></th>
-        </tr></thead>
-        <tbody id="tbody"><tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">데이터 불러오는 중...</td></tr></tbody>
-      </table>
+      <div id="cat-row" style="display:none;padding:12px 18px;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--line)">
+        <button class="cat-btn active" onclick="setCat('all',this)">전체</button>
+        <button class="cat-btn" onclick="setCat('stock',this)">주식</button>
+        <button class="cat-btn" onclick="setCat('index',this)">지수</button>
+        <button class="cat-btn" onclick="setCat('commodity',this)">원자재</button>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead id="thead">
+            <tr>
+              <th class="l">#</th>
+              <th class="l" onclick="sortBy('coin')" data-col="coin">종목명</th>
+              <th onclick="sortBy('price')" data-col="price">가격 <span class="s">↕</span></th>
+              <th onclick="sortBy('chg')" data-col="chg">24h 변동률 <span class="s">↕</span></th>
+              <th onclick="sortBy('fr')" data-col="fr">펀딩비 <span class="s">↕</span></th>
+              <th onclick="sortBy('oi')" data-col="oi">미결제 약정 <span class="s">↕</span></th>
+              <th onclick="sortBy('vol')" data-col="vol">24h 거래량 <span class="s">↓</span></th>
+            </tr>
+          </thead>
+          <tbody id="tbody"><tr><td colspan="7" class="empty">데이터 불러오는 중...</td></tr></tbody>
+        </table>
+      </div>
       <div class="pager">
-        <button id="page-prev" onclick="changePage(-1)">← 이전</button>
+        <button id="page-prev" onclick="changePage(-1)" disabled>← 이전</button>
         <span id="page-info">— / — 페이지</span>
-        <button id="page-next" onclick="changePage(1)">다음 →</button>
+        <button id="page-next" onclick="changePage(1)" disabled>다음 →</button>
       </div>
     </div>
   </section>
@@ -201,31 +213,31 @@
   <!-- 버블 차트 -->
   <section>
     <div class="sec-title">미결제 약정 버블 차트</div>
-    <p class="sec-desc">펀딩비와 가격 등락을 기준으로 시장 위치를 시각화하며, 버블 크기는 미결제 약정(OI) 규모를 나타냅니다. 우상단일수록 높은 펀딩비와 가격 상승이 겹쳐 자금이 한쪽으로 쏠린 상태를 의미합니다. 좌하단은 낮은 펀딩비·가격 하락 구간이며, 중앙은 변동이 안정적인 상태입니다. (OI 상위 20개 종목)</p>
+    <p class="sec-desc">버블 크기는 미결제 약정(OI) 규모를, 위치는 펀딩비(X축)와 24시간 가격 변동률(Y축)을 나타냅니다. 초록은 가격 상승, 빨강은 가격 하락 종목입니다.</p>
     <div class="viz">
-      <div class="legend"><span><i style="background:#e0565b"></i>롱 우세</span><span><i style="background:#4078dc"></i>숏 우세</span></div>
-      <div class="scatter"><div class="plot" id="plot"></div></div>
+      <div class="legend"><span><i style="background:#1a7a4a"></i>가격 상승</span><span><i style="background:#e03131"></i>가격 하락</span></div>
+      <div class="scatter"><canvas id="chart-bubble"></canvas></div>
     </div>
   </section>
 
   <!-- 펀딩비 히트맵 -->
   <section>
     <div class="sec-title">펀딩비 히트맵</div>
-    <p class="sec-desc">셀 크기는 미결제 약정(OI) 규모에 비례하며, 색상은 연율 환산 펀딩비의 방향과 강도를 나타냅니다. 빨간색일수록 롱 포지션 우위, 파란색일수록 숏 포지션 우위를 의미하며 색상이 진할수록 특정 방향으로의 포지션 쏠림이 강한 상태를 나타냅니다. (OI 상위 25개 종목)</p>
+    <p class="sec-desc">셀 크기는 미결제 약정(OI) 규모에 비례하며, 색상은 펀딩비의 방향과 강도를 나타냅니다. 빨간색일수록 롱 포지션 우위, 파란색일수록 숏 포지션 우위를 의미하며 색상이 진할수록 쏠림이 강한 상태를 나타냅니다.</p>
     <div class="viz">
       <div class="hlegend">
         <span><i style="background:#b53034"></i>&gt; +20%</span><span><i style="background:#e0565b"></i>+5~20%</span>
         <span><i style="background:#f6c9cc"></i>0~+5%</span><span><i style="background:#eaecf0"></i>~0%</span>
-        <span><i style="background:#c9dcf6"></i>-5~-20%</span><span><i style="background:#3a6fc9"></i>&lt; -20%</span>
+        <span><i style="background:#c9dcf6"></i>-5~-20%</span><span><i style="background:#1e3f7f"></i>&lt; -20%</span>
       </div>
-      <div class="treemap" id="treemap"></div>
+      <div class="hm-grid" id="heatmap"></div>
     </div>
   </section>
 
   <!-- 펀딩비 관찰 유의 -->
   <section>
     <div class="sec-title">펀딩비 관찰 유의</div>
-    <p class="sec-desc">연율 환산 펀딩비의 절대값 기준 상위 10개 종목을 확인할 수 있습니다.</p>
+    <p class="sec-desc">절대값 기준 펀딩비 상위 10개 종목을 확인할 수 있습니다.</p>
     <div class="viz" id="bars"></div>
   </section>
 
@@ -236,79 +248,77 @@
 </div>
 
 <script>
-/* ───────────────────── 상수 ───────────────────── */
-const PAGE_SIZE = 10;
-const HIP3_DEXES = ['xyz','cash','flx','km'];
-
+// ── 상수 ──
 const CAT_META = {
-  stock:     { label:'주식',   color:'#337abd' },
-  index:     { label:'지수',   color:'#d97706' },
-  commodity: { label:'원자재', color:'#1ca672' },
+  stock:     { label:'주식',   color:'#2563eb', bg:'#eff4ff' },
+  index:     { label:'지수',   color:'#d97706', bg:'#fef3e2' },
+  commodity: { label:'원자재', color:'#0ba360', bg:'#edf7f2' },
 };
 
 const CRYPTO_NAME = {
-  BTC:'비트코인', ETH:'이더리움', SOL:'솔라나', XRP:'리플', DOGE:'도지코인',
-  ADA:'카르다노', AVAX:'아발란체', LINK:'체인링크', DOT:'폴카닷', UNI:'유니스왑',
-  ATOM:'코스모스', LTC:'라이트코인', BCH:'비트코인캐시', NEAR:'니어프로토콜',
-  APT:'앱토스', ARB:'아비트럼', OP:'옵티미즘', SUI:'수이', HYPE:'하이퍼리퀴드',
-  INJ:'인젝티브', TIA:'셀레스티아', SEI:'세이', STRK:'스타크넷', WIF:'도그위프햇',
-  PEPE:'페페', SHIB:'시바이누', FLOKI:'플로키', BONK:'봉크', WLD:'월드코인',
-  TAO:'비텐서', RNDR:'렌더', FET:'페치에이아이', IMX:'이뮤터블X', BLUR:'블러',
-  ENS:'이더리움네임서비스', LDO:'리도다오', AAVE:'에이브', CRV:'커브다오',
-  MKR:'메이커', SNX:'신세틱스', COMP:'컴파운드', GMX:'GMX', DYDX:'디와이디엑스',
-  PENDLE:'펜들', JTO:'지토', PYTH:'피스네트워크', JUP:'주피터', ONDO:'온도파이낸스',
-  ENA:'에테나', EIGEN:'아이겐레이어', RUNE:'토르체인', OSMO:'오스모시스',
-  FTM:'팬텀', KAS:'카스파', ICP:'인터넷컴퓨터', FIL:'파일코인', GRT:'더그래프',
-  SAND:'더샌드박스', MANA:'디센트럴랜드', AXS:'엑시인피니티', GALA:'갈라',
-  STX:'스택스', ORDI:'오디', CFX:'컨플럭스', MASK:'마스크네트워크', ZK:'zkSync',
-  MINA:'미나프로토콜', FLOW:'플로우', EGLD:'멀티버스X', KAVA:'카바', ZIL:'질리카',
-  ICX:'아이콘', XTZ:'테조스', ALGO:'알고랜드', VET:'비체인', HBAR:'헤데라',
-  EOS:'이오스', TRX:'트론', XLM:'스텔라루멘', XMR:'모네로', ZEC:'지캐시', DASH:'대시',
+  BTC:'비트코인', ETH:'이더리움', SOL:'솔라나', XRP:'리플',
+  DOGE:'도지코인', ADA:'카르다노', AVAX:'아발란체', LINK:'체인링크',
+  DOT:'폴카닷', MATIC:'폴리곤', UNI:'유니스왑', ATOM:'코스모스',
+  LTC:'라이트코인', BCH:'비트코인캐시', NEAR:'니어프로토콜',
+  APT:'앱토스', ARB:'아비트럼', OP:'옵티미즘', SUI:'수이',
+  HYPE:'하이퍼리퀴드', INJ:'인젝티브', TIA:'셀레스티아',
+  SEI:'세이', STRK:'스타크넷', MANTA:'만타네트워크',
+  WIF:'도그위프햇', PEPE:'페페', SHIB:'시바이누',
+  FLOKI:'플로키', BONK:'봉크', WLD:'월드코인',
+  TAO:'비텐서', RNDR:'렌더', FET:'페치에이아이',
+  AGIX:'싱귤래리티넷', OCEAN:'오션프로토콜',
+  IMX:'이뮤터블X', BLUR:'블러', ENS:'이더리움네임서비스',
+  LDO:'리도다오', AAVE:'에이브', CRV:'커브다오',
+  MKR:'메이커', SNX:'신세틱스', COMP:'컴파운드',
+  GMX:'GMX', DYDX:'디와이디엑스', PENDLE:'펜들',
+  JTO:'지토', PYTH:'피스네트워크', JUP:'주피터',
+  ONDO:'온도파이낸스', ENA:'에테나', EIGEN:'아이겐레이어',
+  ETHFI:'에테르파이', RUNE:'토르체인', OSMO:'오스모시스',
+  FTM:'팬텀', KAS:'카스파', ICP:'인터넷컴퓨터',
+  FIL:'파일코인', AR:'아위브', GRT:'더그래프',
+  SAND:'더샌드박스', MANA:'디센트럴랜드', AXS:'엑시인피니티',
+  GALA:'갈라', GODS:'갓언체인드',
+  STX:'스택스', ORDI:'오디', SATS:'SATS',
+  CFX:'컨플럭스', MASK:'마스크네트워크',
+  CYBER:'사이버커넥트', ID:'스페이스ID',
+  ZK:'zkSync', MINA:'미나프로토콜', FLOW:'플로우',
+  EGLD:'멀티버스X', KAVA:'카바', ZIL:'질리카',
+  ONE:'하모니', ICX:'아이콘', IOTA:'아이오타',
+  XTZ:'테조스', ALGO:'알고랜드', VET:'비체인',
+  HBAR:'헤데라', EOS:'이오스', TRX:'트론',
+  XLM:'스텔라루멘', XMR:'모네로', ZEC:'지캐시',
+  DASH:'대시', DCR:'디크레드', RVN:'레이븐코인',
 };
 
 const FULL_NAME = {
-  CL:'WTI 원유', BRENTOIL:'브렌트 원유', GOLD:'금', SILVER:'은', NATGAS:'천연가스',
-  COPPER:'구리', PLATINUM:'백금', XYZ100:'나스닥100 (XYZ)', SP500:'S&P 500',
-  NDX:'나스닥100', DJI:'다우존스', NIKKEI:'닛케이225', DAX:'독일 DAX', FTSE:'영국 FTSE100',
+  CL:'WTI 원유', BRENTOIL:'브렌트 원유', GOLD:'금', SILVER:'은',
+  NATGAS:'천연가스', COPPER:'구리', PLATINUM:'백금',
+  XYZ100:'나스닥100 (XYZ)', SP500:'S&P 500', NDX:'나스닥100', DJI:'다우존스',
+  NIKKEI:'닛케이225', DAX:'독일 DAX', FTSE:'영국 FTSE100',
   SPCX:'SpaceX (NASDAQ)', SNDK:'샌디스크', MU:'마이크론 테크놀로지', INTC:'인텔',
-  NVDA:'엔비디아', TSLA:'테슬라', AAPL:'애플', MSFT:'마이크로소프트', GOOGL:'구글(알파벳)',
-  AMZN:'아마존', META:'메타', COIN:'코인베이스', PLTR:'팔란티어', MRVL:'마벨 테크놀로지',
-  CRCL:'서클', SKHX:'SK하이닉스', DRAM:'DRAM 지수', S:'센티넬원', AVNT:'어반트 테크놀로지', VINE:'바인',
+  NVDA:'엔비디아', TSLA:'테슬라', AAPL:'애플', MSFT:'마이크로소프트',
+  GOOGL:'구글(알파벳)', AMZN:'아마존', META:'메타', COIN:'코인베이스',
+  PLTR:'팔란티어', MRVL:'마벨 테크놀로지', CRCL:'서클', SKHX:'SK하이닉스',
+  DRAM:'DRAM 지수', S:'센티넬원', AVNT:'어반트 테크놀로지', VINE:'바인',
 };
 
-// 종목 로고: CoinGecko markets API에서 실제 이미지 URL을 받아와 심볼로 매핑 (URL 추측 방식은 신뢰할 수 없어 폐기)
-const LOGO_MAP = {};
-async function loadLogos(){
-  try{
-    const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false');
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    const list = await res.json();
-    list.forEach(c=>{ LOGO_MAP[c.symbol.toUpperCase()] = c.image; });
-  }catch(e){ console.warn('로고 매핑 로드 실패:', e); }
-}
-const AVATAR_COLORS = ['#337abd','#1ca672','#d97706','#7c3aed','#e0565b','#0ba360','#4078dc'];
-function avatarColor(sym){
-  let h=0; for(let i=0;i<sym.length;i++) h=sym.charCodeAt(i)+((h<<5)-h);
-  return AVATAR_COLORS[Math.abs(h)%AVATAR_COLORS.length];
-}
-function assetIcon(c){
-  const url = LOGO_MAP[c.sym];
-  if(url) return `<img src="${url}" alt="" onerror="this.outerHTML='<div class=avatar style=background:${avatarColor(c.sym)}>${c.sym.slice(0,2)}</div>'">`;
-  return `<div class="avatar" style="background:${avatarColor(c.sym)}">${c.sym.slice(0,2)}</div>`;
-}
+const HIP3_DEXES = ['xyz','cash','flx','km'];
+const PAGE_SIZE = 10;
 
-/* ───────────────────── 상태 ───────────────────── */
+// ── 상태 ──
 let cryptoData = [];
 let hip3Data   = [];
 let currentTab = 'crypto';
 let sortCol    = 'vol';
 let sortDir    = -1;
+let filtModes  = new Set(); // kept for switchTab compat
+let catMode    = 'all';
 let currentPage = 1;
 let filteredSorted = [];
+let bubbleChart = null;
 
-/* ───────────────────── 유틸 ───────────────────── */
-const sign  = v => (v>=0?'+':'') + v.toFixed(2) + '%';
-const fmtB  = v => {
+// ── 유틸 ──
+const fmtB = v => {
   if (!v || isNaN(v)) return '$0';
   if (v >= 1e9) return '$' + (v/1e9).toFixed(2) + 'B';
   if (v >= 1e6) return '$' + (v/1e6).toFixed(1) + 'M';
@@ -317,258 +327,310 @@ const fmtB  = v => {
 };
 const fmtPrice = v => {
   if (!v || isNaN(v)) return '—';
-  if (v >= 10000) return '$' + v.toLocaleString('en-US',{maximumFractionDigits:0});
+  if (v >= 10000) return '$' + v.toLocaleString('en-US', {maximumFractionDigits:0});
   if (v >= 100)   return '$' + v.toFixed(1);
   if (v >= 1)     return '$' + v.toFixed(3);
   return '$' + v.toPrecision(4);
 };
+const sign = v => (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
+// 펀딩비 6단계 색상 (market.html 톤앤매너: 빨강=롱우세, 파랑=숏우세)
+const fcolor = f => {
+  if (f > 20)  return ['#b53034', '#fff'];
+  if (f > 5)   return ['#e0565b', '#fff'];
+  if (f >= 0)  return ['#f6c9cc', '#7a1418'];
+  if (f > -5)  return ['#c9dcf6', '#15407f'];
+  if (f > -20) return ['#3a6fc9', '#fff'];
+  return            ['#1e3f7f', '#fff'];
+};
 const guessCategory = name => {
   const n = name.toUpperCase();
-  if (['SPX','NDX','DJI','NIKKEI','DAX','FTSE','SP500','XYZ100'].some(k=>n.includes(k))) return 'index';
-  if (['GOLD','SILVER','XAU','XAG','OIL','WTI','NATGAS','BRENT','COPPER','PLATINUM'].some(k=>n.includes(k))) return 'commodity';
+  if (['SPX','NDX','DJI','NIKKEI','DAX','FTSE','SP500','NAS100'].some(k=>n.includes(k))) return 'index';
+  if (['GOLD','SILVER','XAU','XAG','OIL','WTI','NATGAS','BRENT','COPPER'].some(k=>n.includes(k))) return 'commodity';
   return 'stock';
 };
 
-/* ───────────────────── Hyperliquid API ───────────────────── */
-async function fetchPerp(dex){
+// ── Fetch ──
+async function fetchPerp(dex) {
   const body = dex ? {type:'metaAndAssetCtxs', dex} : {type:'metaAndAssetCtxs'};
   const res = await fetch('https://api.hyperliquid.xyz/info', {
-    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(body)
   });
-  if (!res.ok) throw new Error('HTTP '+res.status);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
   return res.json();
 }
-function parseCtx(ctx, dex){
+
+function parseCtx(ctx, dex) {
   const universe = ctx[0]?.universe || [];
   const ctxList  = ctx[1] || [];
-  return universe.map((coin,i)=>{
-    const c = ctxList[i] || {};
-    const price = parseFloat(c.markPx || 0);
-    const prev  = parseFloat(c.prevDayPx || price);
-    const chg   = prev>0 ? (price-prev)/prev*100 : 0;
-    const fund  = parseFloat(c.funding || 0)*100*1095; // 8h×3×365 연율화
-    const oi    = parseFloat(c.openInterest || 0)*price;
-    const vol   = parseFloat(c.dayNtlVlm || 0);
-    const cat   = dex ? guessCategory(coin.name) : null;
-    const sym   = coin.name.includes(':') ? coin.name.split(':')[1] : coin.name;
-    const name  = dex ? (FULL_NAME[sym]||sym) : (CRYPTO_NAME[sym]||sym);
-    return {sym, name, price, chg, fund, oi, vol, cat};
-  }).filter(d=>d.price>0);
+  return universe.map((coin, i) => {
+    const c    = ctxList[i] || {};
+    const mark = parseFloat(c.markPx  || 0);
+    const prev = parseFloat(c.prevDayPx || mark);
+    const chg  = prev > 0 ? (mark - prev) / prev * 100 : 0;
+    const fr   = parseFloat(c.funding || 0) * 100 * 1095; // 연율화 (8h × 3 × 365)
+    const oi   = parseFloat(c.openInterest || 0) * mark;
+    const vol  = parseFloat(c.dayNtlVlm || 0);
+    const cat  = dex ? guessCategory(coin.name) : null;
+    const coinName = coin.name.includes(':') ? coin.name.split(':')[1] : coin.name;
+    return {coin: coinName, price: mark, prev, chg, fr, oi, vol, dex: dex||'', cat};
+  }).filter(d => d.price > 0);
 }
-async function loadAll(){
-  try{
+
+async function loadAll() {
+  try {
     const [cryptoCtx, ...hip3Ctxs] = await Promise.all([
       fetchPerp(null),
-      ...HIP3_DEXES.map(d=>fetchPerp(d).catch(()=>null))
+      ...HIP3_DEXES.map(d => fetchPerp(d).catch(() => null))
     ]);
+
     cryptoData = parseCtx(cryptoCtx, '');
     hip3Data = [];
-    HIP3_DEXES.forEach((dex,i)=>{ if(hip3Ctxs[i]) hip3Data.push(...parseCtx(hip3Ctxs[i], dex)); });
-    hip3Data = hip3Data.filter(d=>d.vol>0);
+    HIP3_DEXES.forEach((dex, i) => {
+      if (hip3Ctxs[i]) hip3Data.push(...parseCtx(hip3Ctxs[i], dex));
+    });
+    hip3Data = hip3Data.filter(d => d.vol > 0);
 
-    document.getElementById('cnt-crypto').textContent = cryptoData.length;
-    document.getElementById('cnt-hip3').textContent   = hip3Data.length || 'HIP-3';
-    document.getElementById('livetime').textContent =
-      new Date().toLocaleTimeString('ko-KR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    document.getElementById('badge-crypto').textContent = cryptoData.length;
+    document.getElementById('badge-hip3').textContent   = hip3Data.length || 'HIP-3';
+    document.getElementById('update-time').textContent  =
+      new Date().toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
 
-    renderAll();
-  }catch(e){ console.error('loadAll error:', e); }
+    updateKPI();
+    applyFilters();
+    renderBubble();
+    renderHeatmap();
+    renderFRList();
+
+  } catch(e) {
+    console.error('loadAll error:', e);
+    document.getElementById('tbody').innerHTML =
+      `<tr><td colspan="7" class="empty">데이터를 불러오지 못했습니다. (${e.message})</td></tr>`;
+  }
 }
-function currentData(){ return currentTab==='crypto' ? cryptoData : hip3Data; }
 
-/* ───────────────────── KPI ───────────────────── */
-function updateKPI(){
+function currentData() {
+  return currentTab === 'crypto' ? cryptoData : hip3Data;
+}
+
+// ── KPI ──
+function updateKPI() {
   const d = currentData();
-  if(!d.length) return;
-  const totalOI  = d.reduce((a,r)=>a+r.oi,0);
-  const totalVol = d.reduce((a,r)=>a+r.vol,0);
-  const avgFR    = d.reduce((a,r)=>a+r.fund,0)/d.length;
+  if (!d.length) return;
+  const totalOI  = d.reduce((a,r) => a + r.oi,  0);
+  const totalVol = d.reduce((a,r) => a + r.vol, 0);
+  const avgFR    = d.reduce((a,r) => a + r.fr,  0) / d.length;
+
   document.getElementById('k-oi').textContent  = fmtB(totalOI);
   document.getElementById('k-vol').textContent = fmtB(totalVol);
   document.getElementById('k-cnt').textContent = d.length;
+
   const frEl = document.getElementById('k-fr');
   frEl.textContent = sign(avgFR);
-  frEl.className = 'val ' + (avgFR>=0 ? 'up' : 'dn');
+  frEl.className = 'val ' + (avgFR >= 0 ? 'up' : 'dn');
+  document.getElementById('k-fr-note').textContent =
+    (avgFR >= 0 ? '롱 포지션 우세' : '숏 포지션 우세') + ' · 연율 환산';
 }
 
-/* ───────────────────── 테이블 ───────────────────── */
-function applyFilters(){
-  const q = document.getElementById('search').value.trim().toUpperCase();
-  let data = currentData().filter(r => !q || r.sym.toUpperCase().includes(q) || r.name.toUpperCase().includes(q));
-  filteredSorted = [...data].sort((a,b)=>{
-    if(sortCol==='coin') return sortDir * a.sym.localeCompare(b.sym);
-    return sortDir===-1 ? b[sortCol]-a[sortCol] : a[sortCol]-b[sortCol];
-  });
-  document.getElementById('tbl-count').textContent = filteredSorted.length + ' / ' + currentData().length;
-  currentPage = 1;
-  renderTable();
-}
-function renderTable(){
-  document.querySelectorAll('thead th[data-col] .s').forEach(s=>s.textContent='↕');
-  const activeTh = document.querySelector(`thead th[data-col="${sortCol}"] .s`);
-  if(activeTh) activeTh.textContent = sortDir===1 ? '↑' : '↓';
+// ── 버블 차트 ──
+function renderBubble() {
+  const d = currentData();
+  if (!d.length) return;
+  const maxOI = Math.max(...d.map(r => r.oi));
 
-  const total = filteredSorted.length;
-  const pages = Math.max(1, Math.ceil(total/PAGE_SIZE));
-  if(currentPage>pages) currentPage = pages;
-  const start = (currentPage-1)*PAGE_SIZE;
-  const pageData = filteredSorted.slice(start, start+PAGE_SIZE);
+  const bubbleData = d.map(r => ({
+    x: r.fr, y: r.chg,
+    r: Math.max(4, Math.sqrt(r.oi / maxOI) * 32),
+    coin: r.coin, oi: r.oi, fr: r.fr, chg: r.chg,
+    color:  r.chg >= 0 ? 'rgba(26,122,74,0.45)' : 'rgba(224,49,49,0.45)',
+    border: r.chg >= 0 ? '#1a7a4a' : '#e03131',
+  }));
 
-  document.getElementById('page-info').textContent = currentPage + ' / ' + pages + ' 페이지';
-  document.getElementById('page-prev').disabled = currentPage<=1;
-  document.getElementById('page-next').disabled = currentPage>=pages;
-
-  if(!pageData.length){
-    document.getElementById('tbody').innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">검색 결과 없음</td></tr>`;
-    return;
-  }
-  document.getElementById('tbody').innerHTML = pageData.map((c,i)=>`
-    <tr>
-      <td class="rank">${start+i+1}</td>
-      <td><div class="asset">${assetIcon(c)}<div><div class="nm">${c.name}</div><div class="tk">${c.sym}</div></div></div></td>
-      <td>${fmtPrice(c.price)}</td>
-      <td><span class="pill ${c.chg>=0?'up':'dn'}">${sign(c.chg)}</span></td>
-      <td><span class="pill ${c.fund>=0?'up':'dn'}">${sign(c.fund)}</span></td>
-      <td>${fmtB(c.oi)}</td>
-      <td>${fmtB(c.vol)}</td>
-    </tr>`).join('');
-}
-function changePage(dir){ currentPage += dir; renderTable(); }
-function sortBy(col){
-  if(sortCol===col) sortDir *= -1; else { sortCol = col; sortDir = -1; }
-  applyFilters();
-}
-
-/* ───────────────────── 버블 차트 (OI 상위 40) ───────────────────── */
-function renderBubble(){
-  const plot = document.getElementById('plot');
-  plot.innerHTML = '';
-  const d = [...currentData()].sort((a,b)=>b.oi-a.oi).slice(0,20);
-  if(!d.length) return;
-
-  // 펀딩비는 0 근처에 쏠리고 일부만 큰 분포라 압축은 필요하지만,
-  // 로그는 너무 세게 눌러서 서로 다른 값들이 같은 위치로 뭉쳐 보이는 문제가 있었음 → 제곱근으로 완화
-  const fsqrt = v => Math.sign(v) * Math.sqrt(Math.abs(v));
-  const fr   = d.map(c=>fsqrt(c.fund));
-  const xMin = Math.min(...fr, -0.5) - 0.6, xMax = Math.max(...fr, 0.5) + 0.6;
-  const chg  = d.map(c=>c.chg);
-  const yMin = Math.min(...chg, -2) - 2, yMax = Math.max(...chg, 2) + 2;
-
-  const W = plot.clientWidth||1000, H = plot.clientHeight||370;
-  const px = f => ((fsqrt(f)-xMin)/(xMax-xMin))*W;
-  const py = c => (1-(c-yMin)/(yMax-yMin))*H;
-
-  const rawFunds = d.map(c=>c.fund);
-  const xTickVals = [...new Set([Math.floor(Math.min(...rawFunds)), 0, Math.ceil(Math.max(...rawFunds))])].sort((a,b)=>a-b);
-  xTickVals.forEach(v=>{ const e=document.createElement('div'); e.className='axlbl';
-    e.style.left=`${px(v)-10}px`; e.style.bottom='-22px'; e.textContent=(v>0?'+':'')+v+'%'; plot.appendChild(e);});
-  const yTickVals = [Math.round(yMin+1), Math.round(yMin/2), 0, Math.round(yMax/2), Math.round(yMax-1)].filter((v,i,a)=>a.indexOf(v)===i);
-  yTickVals.forEach(v=>{ const e=document.createElement('div'); e.className='axlbl';
-    e.style.top=`${py(v)-8}px`; e.style.left='-30px'; e.textContent=v+'%'; plot.appendChild(e);});
-
-  const maxOi = Math.max(...d.map(c=>c.oi));
-  const nodes = d.map(c=>{
-    const r = 14+38*Math.sqrt(c.oi/maxOi);
-    return {c, r, x: px(c.fund), y: py(c.chg)};
-  });
-  // 그래도 좌표가 거의 겹치는 경우를 위한 보조 충돌 회피
-  for(let iter=0; iter<150; iter++){
-    let moved = false;
-    for(let i=0;i<nodes.length;i++){
-      for(let j=i+1;j<nodes.length;j++){
-        const a=nodes[i], b=nodes[j];
-        let dx=b.x-a.x, dy=b.y-a.y;
-        let dist=Math.sqrt(dx*dx+dy*dy)||0.01;
-        const minDist=a.r+b.r-2;
-        if(dist<minDist){
-          moved = true;
-          const overlap=(minDist-dist)/2;
-          dx/=dist; dy/=dist;
-          a.x-=dx*overlap; a.y-=dy*overlap;
-          b.x+=dx*overlap; b.y+=dy*overlap;
+  const canvas = document.getElementById('chart-bubble');
+  if (bubbleChart) bubbleChart.destroy();
+  bubbleChart = new Chart(canvas, {
+    type: 'bubble',
+    data: { datasets: [{
+      data: bubbleData,
+      backgroundColor: bubbleData.map(d => d.color),
+      borderColor:     bubbleData.map(d => d.border),
+      borderWidth: 1
+    }]},
+    options: {
+      responsive: true, maintainAspectRatio: false, clip: false,
+      plugins: {
+        legend: {display:false},
+        tooltip: { callbacks: { label: ctx => {
+          const d = ctx.raw;
+          return [d.coin, '펀딩비: ' + sign(d.fr), '24h: ' + sign(d.chg), 'OI: ' + fmtB(d.oi)];
+        }}}
+      },
+      scales: {
+        x: {
+          title:{display:true, text:'펀딩비 (연율 %)', font:{size:11, family:"'Noto Sans KR'"}, color:'#929aa4'},
+          ticks:{callback:v=>(typeof v==='number'?v.toFixed(1):v)+'%', font:{size:10}, color:'#929aa4', maxTicksLimit:8},
+          grid:{color:'#eef0f3'}, border:{display:false}
+        },
+        y: {
+          title:{display:true, text:'24h 변동률 (%)', font:{size:11, family:"'Noto Sans KR'"}, color:'#929aa4'},
+          ticks:{callback:v=>(typeof v==='number'?v.toFixed(0):v)+'%', font:{size:10}, color:'#929aa4', maxTicksLimit:9},
+          grid:{color:'#eef0f3'}, border:{display:false}
         }
       }
     }
-    if(!moved) break;
-  }
-  nodes.forEach(({c,r,x,y})=>{
-    const b=document.createElement('div'); b.className='bub '+(c.fund>=0?'r':'b');
-    b.style.left=Math.min(W,Math.max(0,x))+'px'; b.style.top=Math.min(H,Math.max(0,y))+'px';
-    b.style.width=r+'px'; b.style.height=r+'px';
-    if(r>30) b.textContent=c.sym;
-    b.title=`${c.sym} · 펀딩 ${sign(c.fund)} · 24h ${sign(c.chg)} · OI ${fmtB(c.oi)}`;
-    plot.appendChild(b);
-  });
-  const xl=document.createElement('div'); xl.className='axlbl'; xl.style.left='45%'; xl.style.bottom='-38px'; xl.textContent='펀딩비 (연율)'; plot.appendChild(xl);
-}
-
-/* ───────────────────── 펀딩비 히트맵 (squarified treemap, OI 상위 25) ───────────────────── */
-function fcolor(f){
-  if(f>20) return ['#b53034','#fff']; if(f>5) return ['#e0565b','#fff'];
-  if(f>=0) return ['#f6c9cc','#7a1418']; if(f>-5) return ['#c9dcf6','#15407f'];
-  if(f>-20) return ['#3a6fc9','#fff']; return ['#1e3f7f','#fff'];
-}
-function squarify(items,x,y,w,h){
-  items=items.slice().sort((a,b)=>b.oi-a.oi);
-  const tot=items.reduce((s,d)=>s+d.oi,0), A=w*h;
-  items.forEach(it=>it.area=it.oi/tot*A);
-  const out=[]; let X=x,Y=y,W=w,H=h,row=[],ra=0;
-  const worst=(rw,len)=>{let mx=-1e9,mn=1e9,s=0;rw.forEach(it=>{s+=it.area;mx=Math.max(mx,it.area);mn=Math.min(mn,it.area)});const s2=s*s;return Math.max(len*len*mx/s2,s2/(len*len*mn));};
-  function flush(){const len=Math.min(W,H),th=ra/len;if(W>=H){let cy=Y;row.forEach(it=>{const ih=it.area/th;out.push({...it,x:X,y:cy,w:th,h:ih});cy+=ih});X+=th;W-=th;}else{let cx=X;row.forEach(it=>{const iw=it.area/th;out.push({...it,x:cx,y:Y,w:iw,h:th});cx+=iw});Y+=th;H-=th;}row=[];ra=0;}
-  items.forEach(it=>{const len=Math.min(W,H);if(!row.length){row.push(it);ra+=it.area;return;}const cur=worst(row,len);row.push(it);ra+=it.area;if(worst(row,len)>cur){row.pop();ra-=it.area;flush();row.push(it);ra+=it.area;}});
-  if(row.length)flush(); return out;
-}
-function renderHeatmap(){
-  const c = document.getElementById('treemap'); c.innerHTML='';
-  const W = c.clientWidth||1066, H = 262;
-  const top = [...currentData()].sort((a,b)=>b.oi-a.oi).slice(0,25);
-  if(!top.length) return;
-  squarify(top,0,0,W,H).forEach(r=>{
-    const [bg,fg]=fcolor(r.fund); const small=r.w<150;
-    const d=document.createElement('div'); d.className='hcell';
-    d.style.cssText+=`left:${r.x+2}px;top:${r.y+2}px;width:${r.w-4}px;height:${r.h-4}px;background:${bg};color:${fg}`;
-    d.innerHTML = small
-      ? `${assetIcon(r)}<div class="tk">${r.sym}</div><div class="pc">${sign(r.fund)}</div>`
-      : `<div style="display:flex;align-items:center;gap:8px">${assetIcon(r)}<span class="tk">${r.sym}</span></div><div class="pc" style="margin-top:8px">${sign(r.fund)}</div>`;
-    c.appendChild(d);
   });
 }
 
-/* ───────────────────── 펀딩비 관찰 유의 (절대값 상위 10) ───────────────────── */
-function renderBars(){
-  const wrap=document.getElementById('bars');
-  const sorted=[...currentData()].sort((a,b)=>Math.abs(b.fund)-Math.abs(a.fund)).slice(0,10);
-  if(!sorted.length){ wrap.innerHTML=''; return; }
-  const maxAbs=Math.max(...sorted.map(c=>Math.abs(c.fund)));
-  const center=50;
-  wrap.innerHTML=sorted.map((c,i)=>{
-    const len=maxAbs>0 ? (Math.abs(c.fund)/maxAbs)*48 : 0;
-    const pos=c.fund>=0;
-    const fill=pos?`left:${center}%;width:${len}%`:`left:${center-len}%;width:${len}%`;
-    return `<div class="bar-row"><span class="rk">${i+1}</span>
-      <span class="co">${assetIcon(c)}<b>${c.sym}</b></span>
-      <div class="track"><div class="fill ${pos?'r':'b'}" style="${fill}">${sign(c.fund)}</div></div></div>`;
+// ── 히트맵 ──
+function renderHeatmap() {
+  const d = currentData();
+  if (!d.length) return;
+  const top   = [...d].sort((a,b) => b.oi - a.oi).slice(0, currentTab === 'crypto' ? 25 : 20);
+  const maxOI = Math.max(...top.map(r => r.oi));
+
+  document.getElementById('heatmap').innerHTML = top.map(r => {
+    const [bg, fg] = fcolor(r.fr);
+    const ratio = r.oi / maxOI;
+    const minW  = ratio > 0.3 ? '140px' : ratio > 0.08 ? '104px' : '78px';
+    const fs    = ratio > 0.3 ? 15 : ratio > 0.08 ? 13 : 12;
+    const pad   = ratio > 0.3 ? '14px 16px' : ratio > 0.08 ? '11px 13px' : '9px 11px';
+    return `<div class="hcell" style="background:${bg};color:${fg};min-width:${minW};flex:1 1 ${minW};padding:${pad}"
+      title="${r.coin} | 펀딩비: ${sign(r.fr)} | OI: ${fmtB(r.oi)}">
+      <div class="tk" style="font-size:${fs}px">${r.coin}</div>
+      <div class="pc" style="font-size:${fs-2}px">${sign(r.fr)}</div>
+    </div>`;
   }).join('');
 }
 
-/* ───────────────────── 탭 전환 / 전체 렌더 ───────────────────── */
-function renderAll(){
+// ── 펀딩비 관찰 유의 ──
+function renderFRList() {
+  const d = currentData();
+  if (!d.length) return;
+  const top10  = [...d].sort((a,b) => Math.abs(b.fr) - Math.abs(a.fr)).slice(0, 10);
+  const maxAbs = Math.max(...top10.map(r => Math.abs(r.fr)));
+
+  document.getElementById('bars').innerHTML = top10.map((r, i) => {
+    const len = maxAbs > 0 ? (Math.abs(r.fr) / maxAbs) * 48 : 0;
+    const pos = r.fr >= 0;
+    const fill = pos ? `left:50%;width:${len}%` : `left:${50-len}%;width:${len}%`;
+    const catTag = r.cat && CAT_META[r.cat]
+      ? `<span class="sub">${CAT_META[r.cat].label}</span>` : '';
+    return `<div class="bar-row">
+      <span class="rk">${i+1}</span>
+      <span class="co">${r.coin}${catTag}</span>
+      <div class="track"><div class="fill ${pos?'r':'b'}" style="${fill}">${sign(r.fr)}</div></div>
+    </div>`;
+  }).join('');
+}
+
+// ── 테이블 ──
+function applyFilters() {
+  const q    = document.getElementById('search').value.trim().toUpperCase();
+  let data   = currentData().filter(r => !q || r.coin.toUpperCase().includes(q));
+  if (currentTab === 'hip3' && catMode !== 'all') data = data.filter(r => r.cat === catMode);
+
+  filteredSorted = [...data].sort((a,b) => {
+    if (sortCol === 'coin') return sortDir * a.coin.localeCompare(b.coin);
+    return sortDir === -1 ? b[sortCol] - a[sortCol] : a[sortCol] - b[sortCol];
+  });
+
+  currentPage = 1;
+  renderTable();
+}
+
+function renderTable() {
+  document.querySelectorAll('thead th[data-col]').forEach(th => {
+    th.classList.remove('asc','desc');
+    if (th.dataset.col === sortCol) th.classList.add(sortDir === 1 ? 'asc' : 'desc');
+  });
+
+  const total    = filteredSorted.length;
+  const pages    = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (currentPage > pages) currentPage = pages;
+  const start    = (currentPage - 1) * PAGE_SIZE;
+  const pageData = filteredSorted.slice(start, start + PAGE_SIZE);
+
+  document.getElementById('tbl-count').textContent = total + ' / ' + currentData().length;
+  document.getElementById('page-info').textContent = currentPage + ' / ' + pages + ' 페이지';
+  document.getElementById('page-prev').disabled     = currentPage <= 1;
+  document.getElementById('page-next').disabled     = currentPage >= pages;
+
+  const isHip3  = currentTab === 'hip3';
+  const colSpan = isHip3 ? 8 : 7;
+
+  if (!pageData.length) {
+    document.getElementById('tbody').innerHTML = `<tr><td colspan="${colSpan}" class="empty">검색 결과 없음</td></tr>`;
+    return;
+  }
+
+  document.getElementById('tbody').innerHTML = pageData.map((r, i) => {
+    const rank = start + i + 1;
+    const fullName = FULL_NAME[r.coin] || CRYPTO_NAME[r.coin] || '';
+    const catCell = isHip3 && r.cat
+      ? `<td><span class="cat-tag" style="background:${CAT_META[r.cat]?.bg};color:${CAT_META[r.cat]?.color}">${CAT_META[r.cat]?.label}</span></td>` : '';
+    return `<tr>
+      <td class="rank">${rank}</td>
+      <td><div class="asset"><div class="nm">${fullName || r.coin}</div><div class="tk">${r.coin}</div></div></td>
+      ${catCell}
+      <td>${fmtPrice(r.price)}</td>
+      <td><span class="pill ${r.chg>=0?'up':'dn'}">${sign(r.chg)}</span></td>
+      <td><span class="pill ${r.fr>=0?'up':'dn'}">${sign(r.fr)}</span></td>
+      <td>${fmtB(r.oi)}</td>
+      <td>${fmtB(r.vol)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function changePage(dir) { currentPage += dir; renderTable(); }
+
+function sortBy(col) {
+  if (sortCol === col) sortDir *= -1;
+  else { sortCol = col; sortDir = -1; }
+  applyFilters();
+}
+
+function setCat(mode, btn) {
+  catMode = mode;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+
+function switchTab(tab, btn) {
+  currentTab = tab;
+  document.getElementById('tab-crypto').classList.toggle('on', tab === 'crypto');
+  document.getElementById('tab-hip3').classList.toggle('on', tab === 'hip3');
+  const cr = document.getElementById('cat-row');
+  cr.style.display = tab === 'hip3' ? 'flex' : 'none';
+  document.getElementById('search').value = '';
+  filtModes.clear();
+  catMode = 'all'; sortCol = 'vol'; sortDir = -1; currentPage = 1;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.cat-btn')?.classList.add('active');
+
+  const isHip3 = tab === 'hip3';
+  document.getElementById('thead').innerHTML = `<tr>
+    <th class="l">#</th>
+    <th class="l" onclick="sortBy('coin')" data-col="coin">종목명</th>
+    ${isHip3 ? '<th class="l">구분</th>' : ''}
+    <th onclick="sortBy('price')" data-col="price">가격 <span class="s">↕</span></th>
+    <th onclick="sortBy('chg')" data-col="chg">24h 변동률 <span class="s">↕</span></th>
+    <th onclick="sortBy('fr')" data-col="fr">펀딩비${isHip3 ? ' <span style="font-weight:400">(연율)</span>' : ''} <span class="s">↕</span></th>
+    <th onclick="sortBy('oi')" data-col="oi">미결제 약정 <span class="s">↕</span></th>
+    <th onclick="sortBy('vol')" data-col="vol">24h 거래량 <span class="s">↓</span></th>
+  </tr>`;
+
   updateKPI();
   applyFilters();
   renderBubble();
   renderHeatmap();
-  renderBars();
-}
-function switchTab(tab, btn){
-  currentTab = tab;
-  document.querySelectorAll('.seg button').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
-  document.getElementById('search').value = '';
-  sortCol = 'vol'; sortDir = -1; currentPage = 1;
-  renderAll();
+  renderFRList();
 }
 
-loadLogos().then(loadAll);
+document.querySelector('.pop .close')?.addEventListener('click', e => e.stopPropagation());
+
+loadAll();
 setInterval(loadAll, 30000);
 </script>
 </body>
