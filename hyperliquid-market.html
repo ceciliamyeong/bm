@@ -166,7 +166,7 @@
   <div class="cards">
     <div class="card"><div class="lbl">총 미결제 약정 <span class="ic" title="미결제 약정(OI). 아직 청산되지 않은 전체 포지션의 명목가치 합계로, 시장에 유입된 자금 규모를 나타냅니다.">i</span></div><div class="val" id="k-oi">—</div></div>
     <div class="card"><div class="lbl">24h 거래량 <span class="ic" title="명목 거래량. 거래 수량을 명목 가치로 환산해 24시간 동안 합산한 값.">i</span></div><div class="val" id="k-vol">—</div></div>
-    <div class="card"><div class="lbl">평균 펀딩비 <span class="ic" title="8시간마다 정산되는 펀딩비를 1년 기준으로 환산한 값. 양수면 롱 포지션 우세, 음수면 숏 포지션 우세.">i</span></div><div class="val" id="k-fr">—</div></div>
+    <div class="card"><div class="lbl">평균 펀딩비<span style="font-size:10px;color:var(--muted);font-weight:400;margin-left:3px">연율</span> <span class="ic" title="8시간마다 정산되는 펀딩비를 1년 기준으로 환산한 값. 양수면 롱 포지션 우세, 음수면 숏 포지션 우세.">i</span></div><div class="val" id="k-fr">—</div></div>
     <div class="card"><div class="lbl">취급 종목 수</div><div class="val" id="k-cnt">—</div></div>
   </div>
 
@@ -184,7 +184,7 @@
           <th class="l" data-col="coin" onclick="sortBy('coin')">종목명 <span class="s">↕</span></th>
           <th data-col="price" onclick="sortBy('price')">가격 <span class="s">↕</span></th>
           <th data-col="chg" onclick="sortBy('chg')">24h 변동률 <span class="s">↕</span></th>
-          <th data-col="fr" onclick="sortBy('fr')">펀딩비 <span class="s">↕</span></th>
+          <th data-col="fr" onclick="sortBy('fr')">펀딩비<span style="font-size:10px;color:var(--muted);font-weight:400;margin-left:3px">연율</span> <span class="s">↕</span></th>
           <th data-col="oi" onclick="sortBy('oi')">미결제 약정 <span class="s">↕</span></th>
           <th class="act" data-col="vol" onclick="sortBy('vol')">24h 거래량 <span class="s">↓</span></th>
         </tr></thead>
@@ -211,7 +211,7 @@
   <!-- 펀딩비 히트맵 -->
   <section>
     <div class="sec-title">펀딩비 히트맵</div>
-    <p class="sec-desc">셀 크기는 미결제 약정(OI) 규모에 비례하며, 색상은 펀딩비의 방향과 강도를 나타냅니다. 빨간색일수록 롱 포지션 우위, 파란색일수록 숏 포지션 우위를 의미하며 색상이 진할수록 특정 방향으로의 포지션 쏠림이 강한 상태를 나타냅니다. (OI 상위 25개 종목)</p>
+    <p class="sec-desc">셀 크기는 미결제 약정(OI) 규모에 비례하며, 색상은 연율 환산 펀딩비의 방향과 강도를 나타냅니다. 빨간색일수록 롱 포지션 우위, 파란색일수록 숏 포지션 우위를 의미하며 색상이 진할수록 특정 방향으로의 포지션 쏠림이 강한 상태를 나타냅니다. (OI 상위 25개 종목)</p>
     <div class="viz">
       <div class="hlegend">
         <span><i style="background:#b53034"></i>&gt; +20%</span><span><i style="background:#e0565b"></i>+5~20%</span>
@@ -225,7 +225,7 @@
   <!-- 펀딩비 관찰 유의 -->
   <section>
     <div class="sec-title">펀딩비 관찰 유의</div>
-    <p class="sec-desc">절대값 기준 펀딩비 상위 10개 종목을 확인할 수 있습니다.</p>
+    <p class="sec-desc">연율 환산 펀딩비의 절대값 기준 상위 10개 종목을 확인할 수 있습니다.</p>
     <div class="viz" id="bars"></div>
   </section>
 
@@ -446,16 +446,16 @@ function renderBubble(){
   const d = [...currentData()].sort((a,b)=>b.oi-a.oi).slice(0,20);
   if(!d.length) return;
 
-  // 펀딩비는 0 근처에 쏠리고 일부만 극단적으로 큰 분포라, 선형 스케일 대신
-  // 부호유지 로그압축(symlog)을 써서 모든 점이 같은 경계에 쌓이지 않고 고유 위치를 갖게 함
-  const flog = v => Math.sign(v) * Math.log1p(Math.abs(v));
-  const fr   = d.map(c=>flog(c.fund));
-  const xMin = Math.min(...fr, -0.3) - 0.4, xMax = Math.max(...fr, 0.3) + 0.4;
+  // 펀딩비는 0 근처에 쏠리고 일부만 큰 분포라 압축은 필요하지만,
+  // 로그는 너무 세게 눌러서 서로 다른 값들이 같은 위치로 뭉쳐 보이는 문제가 있었음 → 제곱근으로 완화
+  const fsqrt = v => Math.sign(v) * Math.sqrt(Math.abs(v));
+  const fr   = d.map(c=>fsqrt(c.fund));
+  const xMin = Math.min(...fr, -0.5) - 0.6, xMax = Math.max(...fr, 0.5) + 0.6;
   const chg  = d.map(c=>c.chg);
   const yMin = Math.min(...chg, -2) - 2, yMax = Math.max(...chg, 2) + 2;
 
   const W = plot.clientWidth||1000, H = plot.clientHeight||370;
-  const px = f => ((flog(f)-xMin)/(xMax-xMin))*W;
+  const px = f => ((fsqrt(f)-xMin)/(xMax-xMin))*W;
   const py = c => (1-(c-yMin)/(yMax-yMin))*H;
 
   const rawFunds = d.map(c=>c.fund);
