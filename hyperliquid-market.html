@@ -95,6 +95,9 @@
   tbody td{padding:14px 18px;text-align:right;font-size:15px;font-weight:700;border-top:1px solid var(--line);font-family:var(--mono)}
   tbody td.rank{color:var(--muted);font-weight:500;text-align:left;width:46px;font-family:inherit}
   tbody td:nth-child(2){text-align:left;font-family:'Noto Sans KR',sans-serif}
+  .asset{display:flex;align-items:center;gap:10px}
+  .asset img{width:26px;height:26px;border-radius:50%;flex:none;background:#f3f5f8}
+  .asset .av{width:26px;height:26px;border-radius:50%;background:#e4e8ef;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:#7a8494;flex:none}
   .asset .nm{font-weight:700;font-size:15px}
   .asset .tk{font-size:12px;color:var(--muted);font-weight:500}
   .pill{display:inline-block;padding:4px 9px;border-radius:8px;font-size:13px;font-weight:700}
@@ -215,8 +218,9 @@
     <div class="sec-title">미결제 약정 버블 차트</div>
     <p class="sec-desc">버블 크기는 미결제 약정(OI) 규모를, 위치는 펀딩비(X축)와 24시간 가격 변동률(Y축)을 나타냅니다. 초록은 가격 상승, 빨강은 가격 하락 종목입니다.</p>
     <div class="viz">
-      <div class="legend"><span><i style="background:#1a7a4a"></i>가격 상승</span><span><i style="background:#e03131"></i>가격 하락</span></div>
+      <div class="legend"><span><i style="background:#dc383f"></i>가격 상승</span><span><i style="background:#2f6ad0"></i>가격 하락</span></div>
       <div class="scatter"><canvas id="chart-bubble"></canvas></div>
+      <p id="bubble-note" style="font-size:11.5px;color:var(--muted);margin-top:10px;line-height:1.6"></p>
     </div>
   </section>
 
@@ -249,6 +253,43 @@
 
 <script>
 // ── 상수 ──
+// CoinGecko 이미지 ID 매핑
+const CG_ID = {
+  BTC:'1', ETH:'279', SOL:'4128', XRP:'44', BNB:'825', DOGE:'5', ADA:'2010',
+  AVAX:'12559', LINK:'877', DOT:'12171', MATIC:'4713', UNI:'12504', ATOM:'3794',
+  LTC:'2', BCH:'780', NEAR:'10365', APT:'26455', ARB:'16547', OP:'11840',
+  SUI:'26375', HYPE:'50882', INJ:'3133', TIA:'22861', SEI:'28205', WIF:'33566',
+  PEPE:'29850', SHIB:'11939', FLOKI:'10804', BONK:'28600', WLD:'31069',
+  TAO:'28452', RNDR:'11636', FET:'3773', EIGEN:'38220', PENDLE:'20160',
+  JTO:'33256', PYTH:'30462', JUP:'33140', ONDO:'26580', ENA:'33171',
+  ETHFI:'38148', RUNE:'4157', OSMO:'20441', FTM:'3513', KAS:'20396',
+  ICP:'8916', FIL:'2299', AR:'8467', GRT:'6719', SAND:'12767',
+  MANA:'1966', AXS:'6783', GALA:'12493', STX:'4847', CFX:'3069',
+  MASK:'8350', ZK:'24198', MINA:'8646', FLOW:'4558', EGLD:'6892',
+  KAVA:'4846', ZIL:'2289', ICX:'2099', IOTA:'1720', XTZ:'2011',
+  ALGO:'4030', VET:'3077', HBAR:'4642', EOS:'1765', TRX:'1958',
+  XLM:'512', XMR:'69', ZEC:'486', DYDX:'11156', GMX:'11857',
+  LDO:'8000', AAVE:'7278', CRV:'6538', MKR:'1552', SNX:'2586',
+  COMP:'7083', BLUR:'17232', ENS:'13855', OCEAN:'3911',
+  AGIX:'2418', IMX:'10603', LIT:'6898', FARTCOIN:'35069',
+  PUMP:'34694', XPL:'', ZRO:'24758', MON:'', ASTER:'',
+  VVV:'', PAXG:'4705', ADA:'2010', SUI:'26375',
+};
+const logoUrl = sym => {
+  const id = CG_ID[sym];
+  if (!id) return null;
+  // 특수 케이스 처리
+  if (sym === 'HYPE') return 'https://coin-images.coingecko.com/coins/images/50882/large/hyperliquid.jpg';
+  if (sym === 'PEPE') return 'https://coin-images.coingecko.com/coins/images/29850/large/pepe-token.jpeg';
+  return `https://coin-images.coingecko.com/coins/images/${id}/large/${sym.toLowerCase()}.png`;
+};
+const logoHtml = (sym, size=26) => {
+  const url = logoUrl(sym);
+  return url
+    ? `<img src="${url}" width="${size}" height="${size}" style="border-radius:50%" onerror="this.outerHTML='<div class=av>${sym.slice(0,3)}</div>'">`
+    : `<div class="av" style="width:${size}px;height:${size}px">${sym.slice(0,3)}</div>`;
+};
+
 const CAT_META = {
   stock:     { label:'주식',   color:'#2563eb', bg:'#eff4ff' },
   index:     { label:'지수',   color:'#d97706', bg:'#fef3e2' },
@@ -439,16 +480,36 @@ function renderBubble() {
   if (!d.length) return;
   const maxOI = Math.max(...d.map(r => r.oi));
 
-  const bubbleData = d.map(r => ({
-    x: r.fr, y: r.chg,
-    r: Math.max(4, Math.sqrt(r.oi / maxOI) * 32),
-    coin: r.coin, oi: r.oi, fr: r.fr, chg: r.chg,
-    color:  r.chg >= 0 ? 'rgba(26,122,74,0.45)' : 'rgba(224,49,49,0.45)',
-    border: r.chg >= 0 ? '#1a7a4a' : '#e03131',
-  }));
+  // X축 범위: -5% ~ +5% (아웃라이어는 경계에 클리핑)
+  const X_MIN = -5, X_MAX = 5;
+
+  const bubbleData = d.map(r => {
+    const clippedFr = Math.max(X_MIN, Math.min(X_MAX, r.fr));
+    const isClipped = r.fr < X_MIN || r.fr > X_MAX;
+    return {
+      x: clippedFr, y: r.chg,
+      r: Math.max(4, Math.sqrt(r.oi / maxOI) * 32),
+      coin: r.coin, oi: r.oi, fr: r.fr, chg: r.chg,
+      clipped: isClipped,
+      color:  r.chg >= 0
+        ? (isClipped ? 'rgba(220,56,63,0.25)' : 'rgba(220,56,63,0.45)')
+        : (isClipped ? 'rgba(47,106,208,0.25)' : 'rgba(47,106,208,0.45)'),
+      border: r.chg >= 0 ? '#dc383f' : '#2f6ad0',
+    };
+  });
 
   const canvas = document.getElementById('chart-bubble');
   if (bubbleChart) bubbleChart.destroy();
+
+  // 아웃라이어 개수 표시
+  const outliers = d.filter(r => r.fr < X_MIN || r.fr > X_MAX);
+  const noteEl = document.getElementById('bubble-note');
+  if (noteEl) {
+    noteEl.textContent = outliers.length > 0
+      ? `※ 펀딩비 범위(${X_MIN}%~+${X_MAX}%) 초과 ${outliers.length}개 종목(${outliers.map(r=>r.coin).join(', ')})은 경계에 표시됩니다.`
+      : '';
+  }
+
   bubbleChart = new Chart(canvas, {
     type: 'bubble',
     data: { datasets: [{
@@ -461,15 +522,40 @@ function renderBubble() {
       responsive: true, maintainAspectRatio: false, clip: false,
       plugins: {
         legend: {display:false},
-        tooltip: { callbacks: { label: ctx => {
-          const d = ctx.raw;
-          return [d.coin, '펀딩비: ' + sign(d.fr), '24h: ' + sign(d.chg), 'OI: ' + fmtB(d.oi)];
-        }}}
+        tooltip: {
+          callbacks: {
+            title: () => '',
+            label: ctx => {
+              // 같은 위치(클리핑된 동일 fr 값)에 있는 코인 모두 표시
+              const cur = ctx.raw;
+              const nearby = bubbleData.filter(b =>
+                Math.abs(b.x - cur.x) < 0.3 && Math.abs(b.y - cur.y) < 1.5
+              );
+              if (nearby.length > 1) {
+                return [
+                  `📍 이 위치 ${nearby.length}개 종목`,
+                  ...nearby.map(b =>
+                    `${b.coin}  펀딩비 ${sign(b.fr)}  24h ${sign(b.chg)}  OI ${fmtB(b.oi)}`
+                  )
+                ];
+              }
+              return [
+                cur.coin + (cur.clipped ? ' ⚠ 범위 초과' : ''),
+                '펀딩비: ' + sign(cur.fr),
+                '24h: ' + sign(cur.chg),
+                'OI: ' + fmtB(cur.oi)
+              ];
+            }
+          },
+          padding: 12,
+          boxPadding: 4,
+        }
       },
       scales: {
         x: {
+          min: X_MIN, max: X_MAX,
           title:{display:true, text:'펀딩비 (연율 %)', font:{size:11, family:"'Noto Sans KR'"}, color:'#929aa4'},
-          ticks:{callback:v=>(typeof v==='number'?v.toFixed(1):v)+'%', font:{size:10}, color:'#929aa4', maxTicksLimit:8},
+          ticks:{callback:v=>(typeof v==='number'?v.toFixed(0):v)+'%', font:{size:10}, color:'#929aa4', maxTicksLimit:8},
           grid:{color:'#eef0f3'}, border:{display:false}
         },
         y: {
@@ -571,7 +657,7 @@ function renderTable() {
       ? `<td><span class="cat-tag" style="background:${CAT_META[r.cat]?.bg};color:${CAT_META[r.cat]?.color}">${CAT_META[r.cat]?.label}</span></td>` : '';
     return `<tr>
       <td class="rank">${rank}</td>
-      <td><div class="asset"><div class="nm">${fullName || r.coin}</div><div class="tk">${r.coin}</div></div></td>
+      <td><div class="asset">${logoHtml(r.coin)}<div><div class="nm">${fullName || r.coin}</div><div class="tk">${r.coin}</div></div></div></td>
       ${catCell}
       <td>${fmtPrice(r.price)}</td>
       <td><span class="pill ${r.chg>=0?'up':'dn'}">${sign(r.chg)}</span></td>
