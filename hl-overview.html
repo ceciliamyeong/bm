@@ -140,25 +140,15 @@
 <body>
 <div class="page">
 
-  <div class="badge"><span class="dot"></span>Hyperliquid · 탈중앙화 무기한 선물 거래소</div>
+  <div class="badge"><span class="dot"></span>Hyperliquid · 온체인 퍼페추얼 DEX</div>
 
   <div class="titlerow">
     <img class="brand" src="https://coin-images.coingecko.com/coins/images/50882/large/hyperliquid.jpg" alt="HL">
-    <h1>하이퍼리퀴드 시장 현황</h1>
-    <span class="feat"><span class="i">i</span>주요 기능 및 특징
-      <div class="pop">
-        <h4>주요 기능 및 특징</h4>
-        <ul>
-          <li><b>직관적인 시장 분석</b> 미결제 약정 버블 차트와 펀딩비 히트맵을 통해 시장의 자금 쏠림 현상과 포지션 방향성을 빠르게 파악할 수 있습니다.</li>
-          <li><b>다양한 마켓 지원</b> 가상자산 무기한 선물뿐만 아니라, HIP-3 기반의 주식·지수·원자재 마켓도 탭 전환을 통해 간편하게 확인할 수 있습니다.</li>
-          <li><b>실시간 데이터 갱신</b> 대시보드의 모든 데이터는 30초 주기로 자동 업데이트됩니다.</li>
-        </ul>
-      </div>
-    </span>
+    <h1>하이퍼리퀴드 <span style="color:var(--accent)">무기한 선물</span> 시장 현황</h1>
     <div class="live"><span class="pulse"></span>LIVE · <span id="update-time">—</span></div>
   </div>
 
-  <p class="intro">하이퍼리퀴드(Hyperliquid)는 탈중앙화 무기한 선물 거래소입니다. 블록미디어 하이퍼리퀴드 시장 현황은 전체 시장 상황을 실시간으로 한눈에 파악할 수 있는 대시보드입니다. 시장 전체의 총 미결제 약정(OI) · 24시간 거래량 · 평균 펀딩비 같은 핵심 지표는 물론 개별 종목의 가격과 등락률을 확인할 수 있습니다.</p>
+  <p class="intro">온체인 퍼페추얼 DEX · 실시간 시장 데이터 대시보드. 총 미결제 약정(OI) · 24시간 거래량 · 평균 펀딩비 핵심 지표와 개별 종목 데이터를 실시간으로 확인할 수 있습니다.</p>
 
   <div class="seg">
     <button class="on" id="tab-crypto" onclick="switchTab('crypto',this)">디지털자산 <span class="cnt" id="badge-crypto">—</span></button>
@@ -175,6 +165,7 @@
   <!-- 전체 종목 -->
   <section>
     <div class="sec-title">전체 종목</div>
+    <p class="sec-desc">24시간 거래량 상위 기준. 헤더 클릭으로 정렬 기준 변경 가능합니다.</p>
     <div class="panel">
       <div class="toolbar">
         <div class="search-wrap">
