@@ -167,6 +167,9 @@
     <div class="page-eyebrow"><span class="dot"></span>블록미디어 데이터 · Global</div>
     <h2 class="page-title">BTC <span class="accent">세계 거래량</span></h2>
     <p class="page-desc">통화별 비트코인 거래량 추이 · 2011년 이후 월별 데이터 · 출처: Bitcoinity</p>
+    <p style="font-size:12px;color:var(--text2);margin-top:-16px;margin-bottom:24px;">
+      📅 최신 데이터: <b id="lastDataDate">-</b> · 매월 말 업데이트
+    </p>
   </div>
 
   <!-- ── KPI ── -->
@@ -254,16 +257,26 @@
 let RAW_ABS = [];
 let RAW_PCT = [];
 
+let BTC_PRICE_KRW = null;
+
 async function loadData() {
   const bust = Date.now();
   try {
-    const [absRes, pctRes] = await Promise.all([
+    const [absRes, pctRes, priceRes] = await Promise.all([
       fetch(`/out/history/btc_volume_by_currency.json?${bust}`),
-      fetch(`/out/history/btc_share_by_currency.json?${bust}`)
+      fetch(`/out/history/btc_share_by_currency.json?${bust}`),
+      fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=krw')
     ]);
     if (!absRes.ok || !pctRes.ok) throw new Error('데이터 로드 실패');
     RAW_ABS = await absRes.json();
     RAW_PCT = await pctRes.json();
+    // 최신 데이터 날짜 표시
+    const lastDate = RAW_ABS[RAW_ABS.length - 1]?.date;
+    if (lastDate) document.getElementById('lastDataDate').textContent = lastDate;
+    if (priceRes.ok) {
+      const priceData = await priceRes.json();
+      BTC_PRICE_KRW = priceData?.bitcoin?.krw || null;
+    }
     renderKPI();
     renderShare(0);
     renderAbs(0);
@@ -307,10 +320,11 @@ function renderKPI() {
   const krwShare = total > 0 ? (f(last.KRW)/total*100).toFixed(1) : '-';
   const usdShare = total > 0 ? (f(last.USD)/total*100).toFixed(1) : '-';
   const jpyShare = total > 0 ? (f(last.JPY)/total*100).toFixed(1) : '-';
-  const price = parseInt(lastPct.price).toLocaleString();
+  const price = BTC_PRICE_KRW ? BTC_PRICE_KRW.toLocaleString() : parseInt(lastPct.price).toLocaleString();
+  const priceSub = BTC_PRICE_KRW ? '실시간 · CoinGecko' : last.date + ' 기준';
 
   const kpis = [
-    { label:'BTC 가격', dot:'#f7931a', val:'₩'+price, sub: last.date },
+    { label:'BTC 가격', dot:'#f7931a', val:'₩'+price, sub: priceSub },
     { label:'총 거래량', dot:'#337abd', val: fmtBtc(total), sub: last.date+' 기준' },
     { label:'USD 점유율', dot: COLORS.USD, val: usdShare+'%', sub:'달러 기준' },
     { label:'KRW 점유율', dot: COLORS.KRW, val: krwShare+'%', sub:'한국 원화' },
