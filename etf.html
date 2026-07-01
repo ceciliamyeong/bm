@@ -9,21 +9,21 @@
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
   <style>
     :root {
-      --bg:     #f5f7fa;
+      --bg:     #ffffff;
       --bg2:    #ffffff;
-      --bg3:    #f1f5f9;
-      --border: #e2e8f0;
-      --text:   #0f172a;
-      --text2:  #64748b;
-      --green:  #16a34a;
-      --red:    #dc2626;
-      --blue:   #2563eb;
+      --bg3:    #f8f9fb;
+      --border: #eef0f3;
+      --text:   #1b2030;
+      --text2:  #929aa4;
+      --accent: #337abd;
+      --pos:    #d23b46;
+      --neg:    #2f6ad0;
       --orange: #ea580c;
       --purple: #7c3aed;
       --yellow: #d97706;
       --xrp:    #346aa9;
-      --shadow-sm: 0 1px 3px rgba(15,23,42,0.06);
-      --shadow-md: 0 4px 12px rgba(15,23,42,0.08);
+      --shadow-sm: 0 1px 3px rgba(16,24,40,0.06);
+      --shadow-md: 0 4px 12px rgba(16,24,40,0.08);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -33,43 +33,13 @@
       font-size: 14px;
       line-height: 1.6;
     }
-    header {
-      background: var(--bg2);
-      border-bottom: 1px solid var(--border);
-      padding: 12px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 8px;
-      box-shadow: var(--shadow-sm);
-    }
-    .header-left { display: flex; align-items: center; gap: 12px; }
-    .site-title { font-size: 15px; font-weight: 800; color: var(--text); text-decoration: none; letter-spacing: -0.04em; }
-    .page-badge {
-      background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.2);
-      border-radius: 6px; padding: 2px 10px; font-size: 12px; color: var(--blue); font-weight: 600;
-    }
-    .header-meta { font-size: 12px; color: var(--text2); }
-    #updated-at { color: var(--text); font-weight: 600; }
-    nav {
-      background: var(--bg2); border-bottom: 1px solid var(--border);
-      padding: 0 20px; display: flex; gap: 4px; overflow-x: auto;
-    }
-    nav a {
-      color: var(--text2); text-decoration: none; padding: 10px 14px;
-      font-size: 13px; font-weight: 500; white-space: nowrap;
-      border-bottom: 2px solid transparent; transition: color .2s, border-color .2s;
-    }
-    nav a:hover { color: var(--text); }
-    nav a.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 700; }
     main { max-width: 1200px; margin: 0 auto; padding: 24px 16px; }
     .section-title {
       font-size: 16px; font-weight: 700; margin-bottom: 16px;
       padding-bottom: 8px; border-bottom: 2px solid rgba(37,99,235,0.15);
       display: flex; align-items: center; gap: 8px;
     }
-    .section-title .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--blue); }
+    .section-title .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
     .kpi-grid {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 12px; margin-bottom: 24px;
@@ -90,8 +60,8 @@
     @media (max-width: 640px) {
       .kpi-value { font-size: 18px; }
     }
-    .kpi-value.positive { color: var(--green); }
-    .kpi-value.negative { color: var(--red); }
+    .kpi-value.positive { color: var(--pos); }
+    .kpi-value.negative { color: var(--neg); }
     .kpi-sub { font-size: 11px; color: var(--text2); margin-top: 4px; }
     .tab-bar { display: flex; gap: 8px; margin-bottom: 16px; }
     .tab-btn {
@@ -99,7 +69,7 @@
       padding: 6px 16px; color: var(--text2); font-size: 13px; font-weight: 500;
       cursor: pointer; transition: all .2s; font-family: inherit;
     }
-    .tab-btn.active, .tab-btn:hover { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+    .tab-btn.active, .tab-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
     .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
     @media (max-width: 768px) { .chart-grid { grid-template-columns: 1fr; } }
     .chart-card {
@@ -122,10 +92,10 @@
     td:first-child { text-align: left; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: rgba(37,99,235,0.04); }
-    .ticker { font-weight: 700; color: var(--blue); }
+    .ticker { font-weight: 700; color: var(--accent); }
     .inst { color: var(--text2); font-size: 12px; font-weight: 400; }
-    .pos { color: var(--green); font-weight: 600; }
-    .neg { color: var(--red); font-weight: 600; }
+    .pos { color: var(--pos); font-weight: 600; }
+    .neg { color: var(--neg); font-weight: 600; }
     .null-val { color: var(--text2); }
     /* ── Coin Toggle ── */
     .coin-toggle { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
@@ -136,7 +106,7 @@
       color: var(--text2); transition: all .2s; font-family: inherit;
       box-shadow: 0 1px 3px rgba(15,23,42,0.06);
     }
-    .coin-btn:hover { border-color: var(--blue); color: var(--blue); }
+    .coin-btn:hover { border-color: var(--accent); color: var(--accent); }
     .coin-btn.active-btc  { background: rgba(247,147,26,0.08);  border-color: #f7931a; color: #f7931a; }
     .coin-btn.active-eth  { background: rgba(98,126,234,0.08);  border-color: #627eea; color: #627eea; }
     .coin-btn.active-sol  { background: rgba(153,69,255,0.08);  border-color: #9945ff; color: #9945ff; }
@@ -164,33 +134,26 @@
       border-top: 1px solid var(--border); padding: 20px; text-align: center;
       font-size: 12px; color: var(--text2); background: var(--bg2);
     }
-    footer a { color: var(--blue); text-decoration: none; }
+    footer a { color: var(--accent); text-decoration: none; }
     footer a:hover { text-decoration: underline; }
     .loading { color: var(--text2); font-size: 13px; }
   </style>
 </head>
 <body>
 
-<header>
-  <div class="header-left">
-    <a href="/" class="site-title">BLOCKMEDIA</a>
-    <span class="page-badge">US Crypto ETF</span>
-  </div>
-  <div class="header-meta">
-    Updated: <span id="updated-at">-</span>
-  </div>
-</header>
-
-<nav>
-  <a href="/index.html">🇰🇷 KRW Market</a>
-  <a href="/bm20_index.html">📊 BM20 Index</a>
-  <a href="/etf.html" class="active">🌐 US ETF Flow</a>
-  <a href="/history.html">₿ BTC 역사</a>
-  <a href="/performance.html">📈 Performance</a>
-  <a href="/clm_brief.html">🧠 코생지</a>
-</nav>
-
 <main>
+
+  <!-- 페이지 헤더 -->
+  <div style="margin-bottom:28px">
+    <div style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--accent);background:rgba(51,122,189,.1);border-radius:999px;padding:4px 10px;margin-bottom:14px">
+      <span style="width:6px;height:6px;border-radius:50%;background:#37c97a;display:inline-block"></span>
+      블록미디어 데이터 · 미국 현물 ETF
+    </div>
+    <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+      <h1 style="font-size:32px;font-weight:800;letter-spacing:-.03em;color:var(--text);line-height:1.2">US Crypto <span style="color:var(--accent)">Spot ETF</span></h1>
+    </div>
+    <p style="color:var(--text2);font-size:13px;margin-top:8px">미국 내 상장된 가상자산 현물 ETF의 자금 흐름 · AUM · 거래대금을 실시간으로 확인합니다. 업데이트: <span id="updated-at" style="color:var(--text);font-weight:600">-</span></p>
+  </div>
 
   <!-- Coin Toggle -->
   <div class="coin-toggle">
@@ -417,8 +380,8 @@ function renderCharts(coin) {
   const cumData  = sorted.map(d => ((d.cumNetInflow||0)   / 1e9).toFixed(3));
   const volData  = sorted.map(d => ((d.totalValueTraded||0) / 1e9).toFixed(2));
 
-  const flowColors  = flowData.map(v => parseFloat(v) >= 0 ? 'rgba(22,163,74,0.5)' : 'rgba(220,38,38,0.5)');
-  const flowBorders = flowData.map(v => parseFloat(v) >= 0 ? '#16a34a' : '#dc2626');
+  const flowColors  = flowData.map(v => parseFloat(v) >= 0 ? 'rgba(210,59,70,0.5)' : 'rgba(47,106,208,0.5)');
+  const flowBorders = flowData.map(v => parseFloat(v) >= 0 ? '#d23b46' : '#2f6ad0');
 
   const baseOpts = {
     responsive: true,
