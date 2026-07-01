@@ -253,40 +253,87 @@
 
 <script>
 // ── 상수 ──
-// CoinGecko 이미지 ID 매핑
-const CG_ID = {
-  BTC:'1', ETH:'279', SOL:'4128', XRP:'44', BNB:'825', DOGE:'5', ADA:'2010',
-  AVAX:'12559', LINK:'877', DOT:'12171', MATIC:'4713', UNI:'12504', ATOM:'3794',
-  LTC:'2', BCH:'780', NEAR:'10365', APT:'26455', ARB:'16547', OP:'11840',
-  SUI:'26375', HYPE:'50882', INJ:'3133', TIA:'22861', SEI:'28205', WIF:'33566',
-  PEPE:'29850', SHIB:'11939', FLOKI:'10804', BONK:'28600', WLD:'31069',
-  TAO:'28452', RNDR:'11636', FET:'3773', EIGEN:'38220', PENDLE:'20160',
-  JTO:'33256', PYTH:'30462', JUP:'33140', ONDO:'26580', ENA:'33171',
-  ETHFI:'38148', RUNE:'4157', OSMO:'20441', FTM:'3513', KAS:'20396',
-  ICP:'8916', FIL:'2299', AR:'8467', GRT:'6719', SAND:'12767',
-  MANA:'1966', AXS:'6783', GALA:'12493', STX:'4847', CFX:'3069',
-  MASK:'8350', ZK:'24198', MINA:'8646', FLOW:'4558', EGLD:'6892',
-  KAVA:'4846', ZIL:'2289', ICX:'2099', IOTA:'1720', XTZ:'2011',
-  ALGO:'4030', VET:'3077', HBAR:'4642', EOS:'1765', TRX:'1958',
-  XLM:'512', XMR:'69', ZEC:'486', DYDX:'11156', GMX:'11857',
-  LDO:'8000', AAVE:'7278', CRV:'6538', MKR:'1552', SNX:'2586',
-  COMP:'7083', BLUR:'17232', ENS:'13855', OCEAN:'3911',
-  AGIX:'2418', IMX:'10603', LIT:'6898', FARTCOIN:'35069',
-  PUMP:'34694', XPL:'', ZRO:'24758', MON:'', ASTER:'',
-  VVV:'', PAXG:'4705', ADA:'2010', SUI:'26375',
-};
-const logoUrl = sym => {
-  const id = CG_ID[sym];
-  if (!id) return null;
-  // 특수 케이스 처리
-  if (sym === 'HYPE') return 'https://coin-images.coingecko.com/coins/images/50882/large/hyperliquid.jpg';
-  if (sym === 'PEPE') return 'https://coin-images.coingecko.com/coins/images/29850/large/pepe-token.jpeg';
-  return `https://coin-images.coingecko.com/coins/images/${id}/large/${sym.toLowerCase()}.png`;
+// CoinGecko 정확한 이미지 URL 매핑
+const LOGO_URL = {
+  BTC:  'https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png',
+  ETH:  'https://coin-images.coingecko.com/coins/images/279/large/ethereum.png',
+  SOL:  'https://coin-images.coingecko.com/coins/images/4128/large/solana.png',
+  XRP:  'https://coin-images.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png',
+  BNB:  'https://coin-images.coingecko.com/coins/images/825/large/bnb-icon2_2x.png',
+  DOGE: 'https://coin-images.coingecko.com/coins/images/5/large/dogecoin.png',
+  ADA:  'https://coin-images.coingecko.com/coins/images/975/large/cardano.png',
+  AVAX: 'https://coin-images.coingecko.com/coins/images/12559/large/Avalanche_Circle_RedWhite_Trans.png',
+  LINK: 'https://coin-images.coingecko.com/coins/images/877/large/chainlink-new-logo.png',
+  DOT:  'https://coin-images.coingecko.com/coins/images/12171/large/polkadot.png',
+  MATIC:'https://coin-images.coingecko.com/coins/images/4713/large/matic-token-icon.png',
+  UNI:  'https://coin-images.coingecko.com/coins/images/12504/large/uniswap-logo.png',
+  ATOM: 'https://coin-images.coingecko.com/coins/images/1481/large/cosmos_hub.png',
+  LTC:  'https://coin-images.coingecko.com/coins/images/2/large/litecoin.png',
+  BCH:  'https://coin-images.coingecko.com/coins/images/780/large/bitcoin-cash-circle.png',
+  NEAR: 'https://coin-images.coingecko.com/coins/images/10365/large/near.jpg',
+  APT:  'https://coin-images.coingecko.com/coins/images/26455/large/aptos_round.png',
+  ARB:  'https://coin-images.coingecko.com/coins/images/16547/large/photo_2023-03-29_21.47.00.jpeg',
+  OP:   'https://coin-images.coingecko.com/coins/images/25244/large/Optimism.png',
+  SUI:  'https://coin-images.coingecko.com/coins/images/26375/large/sui-ocean-square.png',
+  HYPE: 'https://coin-images.coingecko.com/coins/images/50882/large/hyperliquid.jpg',
+  INJ:  'https://coin-images.coingecko.com/coins/images/12882/large/Secondary_Symbol.png',
+  TIA:  'https://coin-images.coingecko.com/coins/images/31967/large/tia.jpg',
+  WIF:  'https://coin-images.coingecko.com/coins/images/33566/large/dogwifhat.jpg',
+  PEPE: 'https://coin-images.coingecko.com/coins/images/29850/large/pepe-token.jpeg',
+  SHIB: 'https://coin-images.coingecko.com/coins/images/11939/large/shiba.png',
+  BONK: 'https://coin-images.coingecko.com/coins/images/28600/large/bonk.jpg',
+  WLD:  'https://coin-images.coingecko.com/coins/images/31069/large/worldcoin.jpeg',
+  TAO:  'https://coin-images.coingecko.com/coins/images/28452/large/ARUsPeNQ_400x400.jpeg',
+  RNDR: 'https://coin-images.coingecko.com/coins/images/11636/large/rndr.png',
+  FET:  'https://coin-images.coingecko.com/coins/images/5681/large/Fetch.jpg',
+  ENA:  'https://coin-images.coingecko.com/coins/images/36530/large/ethena.png',
+  PENDLE:'https://coin-images.coingecko.com/coins/images/15069/large/Pendle_Logo_Normal.png',
+  JTO:  'https://coin-images.coingecko.com/coins/images/33413/large/jto.png',
+  PYTH: 'https://coin-images.coingecko.com/coins/images/31924/large/pyth.png',
+  JUP:  'https://coin-images.coingecko.com/coins/images/34188/large/jup.png',
+  ONDO: 'https://coin-images.coingecko.com/coins/images/26580/large/ONDO.png',
+  ETHFI:'https://coin-images.coingecko.com/coins/images/35958/large/ether.fi_eETH.png',
+  RUNE: 'https://coin-images.coingecko.com/coins/images/6595/large/Rune200x200.png',
+  FTM:  'https://coin-images.coingecko.com/coins/images/4001/large/Fantom_round.png',
+  ICP:  'https://coin-images.coingecko.com/coins/images/14495/large/Internet_Computer_logo.png',
+  FIL:  'https://coin-images.coingecko.com/coins/images/12817/large/filecoin.png',
+  GRT:  'https://coin-images.coingecko.com/coins/images/13397/large/Graph_Token.png',
+  SAND: 'https://coin-images.coingecko.com/coins/images/12129/large/sandbox_logo.jpg',
+  MANA: 'https://coin-images.coingecko.com/coins/images/878/large/decentraland-mana.png',
+  AXS:  'https://coin-images.coingecko.com/coins/images/13029/large/axie_infinity_logo.png',
+  LDO:  'https://coin-images.coingecko.com/coins/images/13573/large/Lido_DAO.png',
+  AAVE: 'https://coin-images.coingecko.com/coins/images/12645/large/AAVE.png',
+  CRV:  'https://coin-images.coingecko.com/coins/images/12124/large/Curve.png',
+  MKR:  'https://coin-images.coingecko.com/coins/images/1364/large/Mark_Maker.png',
+  SNX:  'https://coin-images.coingecko.com/coins/images/3406/large/SNX.png',
+  GMX:  'https://coin-images.coingecko.com/coins/images/18323/large/arbit.png',
+  DYDX: 'https://coin-images.coingecko.com/coins/images/17500/large/hjnIm9bV.jpg',
+  STX:  'https://coin-images.coingecko.com/coins/images/2069/large/Stacks_logo_full.png',
+  IMX:  'https://coin-images.coingecko.com/coins/images/17233/large/immutableX-symbol-BLK-RGB.png',
+  ZEC:  'https://coin-images.coingecko.com/coins/images/486/large/circle-zcash-color.png',
+  XMR:  'https://coin-images.coingecko.com/coins/images/69/large/monero_logo.png',
+  XLM:  'https://coin-images.coingecko.com/coins/images/100/large/Stellar_symbol_black_RGB.png',
+  TRX:  'https://coin-images.coingecko.com/coins/images/1094/large/tron-logo.png',
+  HBAR: 'https://coin-images.coingecko.com/coins/images/3688/large/hbar.png',
+  VET:  'https://coin-images.coingecko.com/coins/images/1167/large/VeChain-Logo-768x725.png',
+  ALGO: 'https://coin-images.coingecko.com/coins/images/4380/large/download.png',
+  XTZ:  'https://coin-images.coingecko.com/coins/images/976/large/Tezos-logo.png',
+  KAVA: 'https://coin-images.coingecko.com/coins/images/9761/large/kava.png',
+  FLOW: 'https://coin-images.coingecko.com/coins/images/13446/large/5f6294c0c7a8cda55cb1c936_Flow_Wordmark.png',
+  EGLD: 'https://coin-images.coingecko.com/coins/images/12335/large/egld-token-logo.png',
+  BLUR: 'https://coin-images.coingecko.com/coins/images/28453/large/blur.png',
+  ENS:  'https://coin-images.coingecko.com/coins/images/19785/large/acatxTm8_400x400.jpg',
+  CFX:  'https://coin-images.coingecko.com/coins/images/13079/large/3vuYMbjN.png',
+  MINA: 'https://coin-images.coingecko.com/coins/images/15628/large/JM4_vQ34_400x400.png',
+  OSMO: 'https://coin-images.coingecko.com/coins/images/16724/large/osmo.png',
+  SEI:  'https://coin-images.coingecko.com/coins/images/28205/large/Sei_Logo_-_Transparent.png',
+  PAXG: 'https://coin-images.coingecko.com/coins/images/9519/large/paxg.PNG',
+  KAS:  'https://coin-images.coingecko.com/coins/images/25751/large/kaspa-icon-exchanges.png',
 };
 const logoHtml = (sym, size=26) => {
-  const url = logoUrl(sym);
+  const url = LOGO_URL[sym];
   return url
-    ? `<img src="${url}" width="${size}" height="${size}" style="border-radius:50%" onerror="this.outerHTML='<div class=av>${sym.slice(0,3)}</div>'">`
+    ? `<img src="${url}" width="${size}" height="${size}" style="border-radius:50%;flex:none" onerror="this.outerHTML='<div class=av style=width:${size}px;height:${size}px>${sym.slice(0,3)}</div>'">`
     : `<div class="av" style="width:${size}px;height:${size}px">${sym.slice(0,3)}</div>`;
 };
 
@@ -478,12 +525,14 @@ function updateKPI() {
 function renderBubble() {
   const d = currentData();
   if (!d.length) return;
-  const maxOI = Math.max(...d.map(r => r.oi));
+  // OI 상위 15개만 표시
+  const top15 = [...d].sort((a,b) => b.oi - a.oi).slice(0, 15);
+  const maxOI = Math.max(...top15.map(r => r.oi));
 
   // X축 범위: -5% ~ +5% (아웃라이어는 경계에 클리핑)
   const X_MIN = -5, X_MAX = 5;
 
-  const bubbleData = d.map(r => {
+  const bubbleData = top15.map(r => {
     const clippedFr = Math.max(X_MIN, Math.min(X_MAX, r.fr));
     const isClipped = r.fr < X_MIN || r.fr > X_MAX;
     return {
@@ -502,7 +551,7 @@ function renderBubble() {
   if (bubbleChart) bubbleChart.destroy();
 
   // 아웃라이어 개수 표시
-  const outliers = d.filter(r => r.fr < X_MIN || r.fr > X_MAX);
+  const outliers = top15.filter(r => r.fr < X_MIN || r.fr > X_MAX);
   const noteEl = document.getElementById('bubble-note');
   if (noteEl) {
     noteEl.textContent = outliers.length > 0
@@ -657,7 +706,7 @@ function renderTable() {
       ? `<td><span class="cat-tag" style="background:${CAT_META[r.cat]?.bg};color:${CAT_META[r.cat]?.color}">${CAT_META[r.cat]?.label}</span></td>` : '';
     return `<tr>
       <td class="rank">${rank}</td>
-      <td><div class="asset">${logoHtml(r.coin)}<div><div class="nm">${fullName || r.coin}</div><div class="tk">${r.coin}</div></div></div></td>
+      <td><div class="asset"><div><div class="nm">${fullName || r.coin}</div><div class="tk">${r.coin}</div></div></div></td>
       ${catCell}
       <td>${fmtPrice(r.price)}</td>
       <td><span class="pill ${r.chg>=0?'up':'dn'}">${sign(r.chg)}</span></td>
