@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BTC 세계 거래량 | 블록미디어 데이터</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+  <style>
+    :root {
+      --bg:     #ffffff;
+      --bg2:    #fbfbfb;
+      --bg3:    #f7f7f7;
+      --border: #e2e2e2;
+      --text:   #161616;
+      --text2:  #64748b;
+      --green:  #16a34a;
+      --red:    #dc2626;
+      --blue:   #2563eb;
+      --orange: #ea580c;
+      --purple: #337abd;
+      --yellow: #d97706;
+      --up:     #e0565b;
+      --down:   #2f6ad0;
+      --shadow: 0 4px 16px rgba(50,50,93,.08), 0 1px 3px rgba(0,0,0,.04);
+      --radius: 10px;
+
+      /* 통화 컬러 */
+      --c-usd: #2563eb;
+      --c-krw: #e0565b;
+      --c-jpy: #f97316;
+      --c-eur: #16a34a;
+      --c-cny: #a855f7;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .ml-wrap { max-width: 1100px; margin: 0 auto; padding: 24px 16px 60px; }
+
+    /* ── Page Title ── */
+    .page-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 12px; font-weight: 700; color: var(--purple);
+      background: rgba(51,122,189,.08);
+      padding: 6px 14px; border-radius: 99px;
+      margin-bottom: 12px; letter-spacing: .04em;
+    }
+    .page-eyebrow .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--purple); display: inline-block;
+    }
+    .page-title { font-size: 26px; font-weight: 800; letter-spacing: -.03em; margin-bottom: 6px; }
+    .page-title .accent { color: var(--purple); }
+    .page-desc { font-size: 13px; color: var(--text2); margin-bottom: 24px; }
+
+    /* ── KPI grid ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+    .kpi-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      box-shadow: var(--shadow);
+    }
+    .kpi-label {
+      font-size: 11px; color: var(--text2); font-weight: 600;
+      display: flex; align-items: center; gap: 5px; margin-bottom: 6px;
+    }
+    .kpi-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .kpi-value { font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -.02em; }
+    .kpi-sub { font-size: 11px; color: var(--text2); margin-top: 3px; font-weight: 500; }
+
+    /* ── Section ── */
+    .section { margin-bottom: 36px; }
+    .section-title {
+      font-size: 15px; font-weight: 700;
+      margin-bottom: 12px; padding-bottom: 10px;
+      border-bottom: 2px solid rgba(51,122,189,0.15);
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      letter-spacing: -0.03em; color: var(--text);
+    }
+    .section-title .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--purple); flex-shrink: 0;
+    }
+    .section-title .sub { font-size: 12px; font-weight: 400; color: var(--text2); }
+    .section-title .toolbar { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+
+    /* ── Panel ── */
+    .panel {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    /* ── Chart ── */
+    .chart    { width: 100%; height: 300px; }
+    .chart-lg { width: 100%; height: 380px; }
+
+    /* ── Buttons ── */
+    .btn {
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      color: var(--text2);
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: all .15s;
+      font-family: inherit;
+    }
+    .btn:hover { border-color: var(--purple); color: var(--purple); }
+    .btn.active { border-color: var(--purple); color: var(--purple); background: rgba(51,122,189,0.08); }
+
+    /* ── Currency legend chips ── */
+    .cur-legend {
+      display: flex; gap: 12px; flex-wrap: wrap;
+      padding: 10px 14px 14px;
+      font-size: 12px;
+    }
+    .cur-chip {
+      display: flex; align-items: center; gap: 5px;
+      color: var(--text2); font-weight: 600;
+    }
+    .cur-chip-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+    /* ── Annotation box ── */
+    .anno {
+      background: rgba(51,122,189,.06);
+      border: 1px solid rgba(51,122,189,.2);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: var(--text2);
+      margin-bottom: 12px;
+      line-height: 1.7;
+    }
+    .anno b { color: var(--text); }
+
+    @media (max-width: 680px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .kpi-value { font-size: 18px; }
+      .chart { height: 240px; }
+      .chart-lg { height: 300px; }
+    }
+  </style>
+</head>
+<body>
+<div class="ml-wrap">
+
+  <!-- ── Page Title ── -->
+  <div style="margin-bottom:28px;">
+    <div class="page-eyebrow"><span class="dot"></span>블록미디어 데이터 · Global</div>
+    <h2 class="page-title">BTC <span class="accent">세계 거래량</span></h2>
+    <p class="page-desc">통화별 비트코인 거래량 추이 · 2011년 이후 월별 데이터 · 출처: Bitcoinity</p>
+  </div>
+
+  <!-- ── KPI ── -->
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <!-- ── 1. 통화별 점유율 (Stacked Area) ── -->
+  <div class="section">
+    <div class="section-title">
+      <span class="dot"></span>
+      통화별 점유율 추이
+      <span class="sub">100% 기준 · 월별</span>
+      <div class="toolbar">
+        <button class="btn" data-range="60">5년</button>
+        <button class="btn" data-range="120">10년</button>
+        <button class="btn active" data-range="0">전체</button>
+      </div>
+    </div>
+    <div class="anno">
+      <b>주요 이벤트:</b> 2017년 중국(CNY) 규제 이후 급락 → KRW·JPY 부상 / 2017~2018년 한국 김치프리미엄 급등 시기 KRW 비중 최고치
+    </div>
+    <div class="panel">
+      <div id="shareChart" class="chart-lg"></div>
+      <div class="cur-legend">
+        <span class="cur-chip"><span class="cur-chip-dot" style="background:var(--c-usd)"></span>USD</span>
+        <span class="cur-chip"><span class="cur-chip-dot" style="background:var(--c-krw)"></span>KRW</span>
+        <span class="cur-chip"><span class="cur-chip-dot" style="background:var(--c-jpy)"></span>JPY</span>
+        <span class="cur-chip"><span class="cur-chip-dot" style="background:var(--c-eur)"></span>EUR</span>
+        <span class="cur-chip"><span class="cur-chip-dot" style="background:var(--c-cny)"></span>CNY</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 2. 절대 거래량 (Stacked Bar) ── -->
+  <div class="section">
+    <div class="section-title">
+      <span class="dot" style="background:var(--c-usd)"></span>
+      통화별 절대 거래량
+      <span class="sub">BTC 단위 · 월별</span>
+      <div class="toolbar">
+        <button class="btn" data-vol="60">5년</button>
+        <button class="btn" data-vol="120">10년</button>
+        <button class="btn active" data-vol="0">전체</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div id="absChart" class="chart-lg"></div>
+      <div class="cur-legend">
+        <span class="cur-chip"><span class="cur-chip-dot" style="background:var(--c-usd)"></span>USD</span>
+        <span class="cur-chip"><span class="cur-chip-dot" style="background:var(--c-krw)"></span>KRW</span>
+        <span class="cur-chip"><span class="cur-chip-dot" style="background:var(--c-jpy)"></span>JPY</span>
+        <span class="cur-chip"><span class="cur-chip-dot" style="background:var(--c-eur)"></span>EUR</span>
+        <span class="cur-chip"><span class="cur-chip-dot" style="background:var(--c-cny)"></span>CNY</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 3. BTC 가격 + KRW 거래량 오버레이 ── -->
+  <div class="section">
+    <div class="section-title">
+      <span class="dot" style="background:var(--c-krw)"></span>
+      BTC 가격 × KRW 거래량
+      <span class="sub">가격(원) · KRW 거래량(BTC) 오버레이</span>
+      <div class="toolbar">
+        <button class="btn" data-px="60">5년</button>
+        <button class="btn" data-px="120">10년</button>
+        <button class="btn active" data-px="0">전체</button>
+      </div>
+    </div>
+    <div class="anno">
+      KRW 거래량 급증 구간이 BTC 가격 고점과 얼마나 일치하는지 확인할 수 있습니다. <b>2017년 12월, 2021년 4월</b> 고점에서 KRW 비중이 함께 정점을 찍었습니다.
+    </div>
+    <div class="panel">
+      <div id="pxVolChart" class="chart-lg"></div>
+    </div>
+  </div>
+
+  <div style="font-size:11px;color:var(--text2);text-align:right;margin-top:-20px;">
+    출처: Bitcoinity · 2011/02 ~ 2026/05
+  </div>
+
+</div>
+
+<script>
+// ── 데이터 로드 (GitHub fetch) ────────────────────────
+let RAW_ABS = [];
+let RAW_PCT = [];
+
+async function loadData() {
+  const bust = Date.now();
+  try {
+    const [absRes, pctRes] = await Promise.all([
+      fetch(`/out/history/btc_volume_by_currency.json?${bust}`),
+      fetch(`/out/history/btc_share_by_currency.json?${bust}`)
+    ]);
+    if (!absRes.ok || !pctRes.ok) throw new Error('데이터 로드 실패');
+    RAW_ABS = await absRes.json();
+    RAW_PCT = await pctRes.json();
+    renderKPI();
+    renderShare(0);
+    renderAbs(0);
+    renderPxVol(0);
+  } catch(e) {
+    document.body.insertAdjacentHTML('afterbegin',
+      `<div style="background:#fef2f2;border:1px solid #fca5a5;color:#dc2626;padding:12px 16px;margin:16px;border-radius:8px;font-size:13px;">
+        ⚠️ 데이터 로드 실패: ${e.message}
+      </div>`);
+  }
+}
+
+const f = v => parseFloat(v) || 0;
+const COLORS = { USD:'#2563eb', KRW:'#e0565b', JPY:'#f97316', EUR:'#16a34a', CNY:'#a855f7' };
+const CURS = ['USD','KRW','JPY','EUR','CNY'];
+
+const TOOLTIP = {
+  trigger: 'axis',
+  backgroundColor: '#161616',
+  borderColor: '#2d2d2d',
+  textStyle: { color: '#f1f5f9', fontSize: 12 },
+  axisPointer: { lineStyle: { color: '#e2e2e2' } }
+};
+
+function fmtBtc(v) {
+  if (v >= 1e6) return (v/1e6).toFixed(1)+'M BTC';
+  if (v >= 1e3) return (v/1e3).toFixed(0)+'K BTC';
+  return v.toFixed(0)+' BTC';
+}
+function fmtKrw(v) {
+  if (v >= 1e8) return (v/1e8).toFixed(0)+'억';
+  if (v >= 1e4) return (v/1e4).toFixed(0)+'만';
+  return v.toLocaleString();
+}
+
+// ── KPI ──────────────────────────────────────────────
+function renderKPI() {
+  const last = RAW_ABS[RAW_ABS.length - 1];
+  const lastPct = RAW_PCT[RAW_PCT.length - 1];
+  const total = CURS.reduce((s,c) => s + f(last[c]), 0);
+  const krwShare = total > 0 ? (f(last.KRW)/total*100).toFixed(1) : '-';
+  const usdShare = total > 0 ? (f(last.USD)/total*100).toFixed(1) : '-';
+  const jpyShare = total > 0 ? (f(last.JPY)/total*100).toFixed(1) : '-';
+  const price = parseInt(lastPct.price).toLocaleString();
+
+  const kpis = [
+    { label:'BTC 가격', dot:'#f7931a', val:'₩'+price, sub: last.date },
+    { label:'총 거래량', dot:'#337abd', val: fmtBtc(total), sub: last.date+' 기준' },
+    { label:'USD 점유율', dot: COLORS.USD, val: usdShare+'%', sub:'달러 기준' },
+    { label:'KRW 점유율', dot: COLORS.KRW, val: krwShare+'%', sub:'한국 원화' },
+    { label:'JPY 점유율', dot: COLORS.JPY, val: jpyShare+'%', sub:'일본 엔화' },
+  ];
+  document.getElementById('kpiGrid').innerHTML = kpis.map(k => `
+    <div class="kpi-card">
+      <div class="kpi-label"><span class="kpi-dot" style="background:${k.dot}"></span>${k.label}</div>
+      <div class="kpi-value">${k.val}</div>
+      <div class="kpi-sub">${k.sub}</div>
+    </div>`).join('');
+}
+
+// ── 데이터 슬라이스 ───────────────────────────────────
+function sliceAbs(n) { return n > 0 ? RAW_ABS.slice(-n) : RAW_ABS; }
+function slicePct(n) { return n > 0 ? RAW_PCT.slice(-n) : RAW_PCT; }
+
+// ── 차트 1: 점유율 Stacked Area ───────────────────────
+let shareChart, absChart, pxVolChart;
+
+function renderShare(n) {
+  const data = sliceAbs(n);
+  const dates = data.map(d => d.date);
+
+  // 비율 계산
+  const pctData = {};
+  CURS.forEach(c => pctData[c] = []);
+  data.forEach(d => {
+    const total = CURS.reduce((s,c) => s + f(d[c]), 0);
+    CURS.forEach(c => {
+      pctData[c].push(total > 0 ? Math.round(f(d[c])/total*1000)/10 : 0);
+    });
+  });
+
+  if (!shareChart) shareChart = echarts.init(document.getElementById('shareChart'));
+  shareChart.setOption({
+    backgroundColor: 'transparent',
+    tooltip: { ...TOOLTIP, formatter: params => {
+      const i = params[0].dataIndex;
+      const d = data[i];
+      const total = CURS.reduce((s,c) => s + f(d[c]), 0);
+      return `<b>${d.date}</b><br/>` +
+        CURS.map(c => {
+          const pct = total > 0 ? (f(d[c])/total*100).toFixed(1) : '0.0';
+          return `<span style="color:${COLORS[c]}">■</span> ${c} ${pct}%`;
+        }).join('<br/>');
+    }},
+    legend: { top: 4, left: 0, itemWidth: 12, itemHeight: 8,
+      data: CURS, textStyle: { color: '#64748b', fontSize: 11 } },
+    grid: { left: 44, right: 16, top: 36, bottom: 48 },
+    xAxis: { type:'category', data: dates,
+      axisLabel: { color:'#94a3b8', fontSize:10, rotate:30,
+        interval: Math.floor(dates.length / 12) },
+      axisLine: { lineStyle:{ color:'#e2e2e2' } }, axisTick:{ show:false } },
+    yAxis: { type:'value', max:100,
+      axisLabel: { color:'#94a3b8', fontSize:11, formatter: v => v+'%' },
+      splitLine: { lineStyle:{ color:'#f0f0f0' } },
+      axisLine:{ show:false }, axisTick:{ show:false } },
+    series: CURS.map(c => ({
+      name: c, type:'line', stack:'total',
+      smooth: false, symbolSize: 0,
+      data: pctData[c],
+      lineStyle: { width: 0 },
+      areaStyle: { color: COLORS[c], opacity: 0.85 },
+      itemStyle: { color: COLORS[c] },
+      emphasis: { focus: 'series' }
+    }))
+  }, true);
+}
+
+// ── 차트 2: 절대 거래량 Stacked Bar ─────────────────
+function renderAbs(n) {
+  const data = sliceAbs(n);
+  const dates = data.map(d => d.date);
+
+  if (!absChart) absChart = echarts.init(document.getElementById('absChart'));
+  absChart.setOption({
+    backgroundColor: 'transparent',
+    tooltip: { ...TOOLTIP, formatter: params => {
+      const i = params[0].dataIndex;
+      const d = data[i];
+      const total = CURS.reduce((s,c) => s + f(d[c]), 0);
+      return `<b>${d.date}</b><br/>합계 ${fmtBtc(total)}<br/>` +
+        CURS.map(c => `<span style="color:${COLORS[c]}">■</span> ${c} ${fmtBtc(f(d[c]))}`).join('<br/>');
+    }},
+    legend: { top: 4, left: 0, itemWidth: 12, itemHeight: 8,
+      data: CURS, textStyle: { color: '#64748b', fontSize: 11 } },
+    grid: { left: 60, right: 16, top: 36, bottom: 48 },
+    xAxis: { type:'category', data: dates,
+      axisLabel: { color:'#94a3b8', fontSize:10, rotate:30,
+        interval: Math.floor(dates.length / 12) },
+      axisLine: { lineStyle:{ color:'#e2e2e2' } }, axisTick:{ show:false } },
+    yAxis: { type:'value',
+      axisLabel: { color:'#94a3b8', fontSize:11, formatter: v => fmtBtc(v) },
+      splitLine: { lineStyle:{ color:'#f0f0f0' } },
+      axisLine:{ show:false }, axisTick:{ show:false } },
+    series: CURS.map(c => ({
+      name: c, type:'bar', stack:'total',
+      data: data.map(d => f(d[c])),
+      itemStyle: { color: COLORS[c] },
+      barMaxWidth: 16,
+      emphasis: { focus: 'series' }
+    }))
+  }, true);
+}
+
+// ── 차트 3: BTC 가격 × KRW 거래량 ──────────────────
+function renderPxVol(n) {
+  const data = slicePct(n);
+  const dates = data.map(d => d.date);
+  const prices = data.map(d => parseInt(d.price));
+  const krwVols = data.map(d => f(d.KRW));
+
+  if (!pxVolChart) pxVolChart = echarts.init(document.getElementById('pxVolChart'));
+  pxVolChart.setOption({
+    backgroundColor: 'transparent',
+    tooltip: { ...TOOLTIP, trigger:'axis', formatter: params => {
+      const i = params[0].dataIndex;
+      const d = data[i];
+      return `<b>${d.date}</b><br/>` +
+        `<span style="color:#f7931a">■</span> BTC ₩${parseInt(d.price).toLocaleString()}<br/>` +
+        `<span style="color:${COLORS.KRW}">■</span> KRW ${fmtBtc(f(d.KRW))}`;
+    }},
+    legend: { top:4, left:0, itemWidth:12, itemHeight:8,
+      data:['BTC 가격(₩)','KRW 거래량'],
+      textStyle:{ color:'#64748b', fontSize:11 } },
+    grid: { left:64, right:64, top:36, bottom:48 },
+    xAxis: { type:'category', data:dates,
+      axisLabel:{ color:'#94a3b8', fontSize:10, rotate:30,
+        interval: Math.floor(dates.length / 12) },
+      axisLine:{ lineStyle:{ color:'#e2e2e2' } }, axisTick:{ show:false } },
+    yAxis: [
+      { type:'value', name:'BTC 가격(₩)',
+        nameTextStyle:{ color:'#94a3b8', fontSize:10 },
+        axisLabel:{ color:'#94a3b8', fontSize:10,
+          formatter: v => v>=1e8?(v/1e8).toFixed(0)+'억':v>=1e4?(v/1e4).toFixed(0)+'만':v },
+        splitLine:{ lineStyle:{ color:'#f0f0f0' } },
+        axisLine:{ show:false }, axisTick:{ show:false } },
+      { type:'value', name:'KRW 거래량(BTC)',
+        nameTextStyle:{ color:'#94a3b8', fontSize:10 },
+        axisLabel:{ color:'#94a3b8', fontSize:10, formatter: v => fmtBtc(v) },
+        splitLine:{ show:false },
+        axisLine:{ show:false }, axisTick:{ show:false } }
+    ],
+    series: [
+      { name:'BTC 가격(₩)', type:'line', yAxisIndex:0,
+        data: prices, smooth:false, symbolSize:0,
+        lineStyle:{ color:'#f7931a', width:2 },
+        itemStyle:{ color:'#f7931a' } },
+      { name:'KRW 거래량', type:'bar', yAxisIndex:1,
+        data: krwVols, barMaxWidth:12,
+        itemStyle:{ color: COLORS.KRW, opacity:0.7 } }
+    ]
+  }, true);
+}
+
+// ── 버튼 이벤트 ──────────────────────────────────────
+document.querySelectorAll('.btn[data-range]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.btn[data-range]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderShare(parseInt(btn.dataset.range) || 0);
+  });
+});
+document.querySelectorAll('.btn[data-vol]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.btn[data-vol]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderAbs(parseInt(btn.dataset.vol) || 0);
+  });
+});
+document.querySelectorAll('.btn[data-px]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.btn[data-px]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderPxVol(parseInt(btn.dataset.px) || 0);
+  });
+});
+
+window.addEventListener('resize', () => {
+  [shareChart, absChart, pxVolChart].forEach(c => c && c.resize());
+});
+
+// ── 초기 렌더 ─────────────────────────────────────────
+// ── 초기 로드 ─────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>
