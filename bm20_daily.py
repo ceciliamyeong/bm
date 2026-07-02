@@ -10,7 +10,7 @@
 # 의존: pandas, numpy, requests, matplotlib, reportlab, jinja2, yfinance
 # 환경: OUT_DIR(옵션), TZ=Asia/Seoul(권장)
 
-import os, json, time
+import os, json, time, csv
 import datetime as dt
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -230,11 +230,34 @@ CMC_SYMBOL_MAP = {
     "zcash": "ZEC", "canton": "CC",
 }
 
+def load_yesterday_prices() -> dict:
+    """components_history.csv에 저장된 가장 최근(어제) 날짜의 심볼별 실제 가격을 반환.
+    (이전 버그: previous_price를 CMC의 chg24로 역산해서 썼는데, 이러면 components_history.csv가
+     매일 독립된 스냅샷이 되어 여러 날을 이어붙인 누적 수익률이 실제 저장된 가격과 어긋날 수 있었음.
+     이제는 어제 실제로 저장했던 가격을 그대로 갖다 써서, price/weight/contribution/지수 계산이
+     항상 같은 가격 기준으로 정합되게 한다.)"""
+    path = OUT_DIR / "history" / "components_history.csv"
+    if not path.exists():
+        return {}
+    try:
+        with open(path, encoding="utf-8") as f:
+            rows = list(csv.DictReader(f))
+        if not rows:
+            return {}
+        last_date = max(r["date"] for r in rows)
+        return {r["symbol"]: float(r["price"]) for r in rows if r["date"] == last_date and r.get("price")}
+    except Exception as e:
+        print(f"[WARN] load_yesterday_prices failed: {e}")
+        return {}
+
+
 def fetch_yf_prices(ids):
     """CMC API로 20개 코인 가격 + 24h 등락률 가져오기 (yfinance 대체)"""
     api_key = os.getenv("CMC_API_KEY", "")
     if not api_key:
         raise RuntimeError("CMC_API_KEY 환경변수 없음")
+
+    yesterday_prices = load_yesterday_prices()  # 심볼 → 어제 실제 저장 가격
 
     # CMC는 심볼로 조회
     symbols = [CMC_SYMBOL_MAP.get(cid, cid.upper()) for cid in ids]
@@ -255,6 +278,8 @@ def fetch_yf_prices(ids):
 
     rows = []
     got = set()
+    n_real_prev = 0
+    n_fallback_prev = 0
     for sym, entries in data.items():
         # CMC는 같은 심볼이 여러 개일 때 리스트로 반환
         entry = entries[0] if isinstance(entries, list) else entries
@@ -268,8 +293,15 @@ def fetch_yf_prices(ids):
             continue
         price = float(price)
         chg24 = float(chg24) if chg24 is not None else 0.0
-        # previous_price 역산 (chg24 기반)
-        prev_price = price / (1.0 + chg24 / 100.0) if chg24 != -100 else price
+        sym_key = SYMBOL_MAP.get(cid, cid.upper())
+        if sym_key in yesterday_prices:
+            # 어제 실제 저장된 가격을 그대로 사용 (CMC의 자체 24h 윈도우에 의존하지 않음)
+            prev_price = yesterday_prices[sym_key]
+            n_real_prev += 1
+        else:
+            # 첫 실행/신규 상장 등 어제 기록이 없을 때만 chg24로 역산 (fallback)
+            prev_price = price / (1.0 + chg24 / 100.0) if chg24 != -100 else price
+            n_fallback_prev += 1
         rows.append({
             "id": cid, "name": cid, "sym": SYMBOL_MAP.get(cid, cid.upper()),
             "current_price": price,
@@ -287,7 +319,7 @@ def fetch_yf_prices(ids):
             "current_price": float("nan"), "previous_price": float("nan"), "price_change_pct": float("nan")
         })
 
-    print(f"[INFO] 가격 조회 성공: {len(got)}/{len(ids)}개")
+    print(f"[INFO] 가격 조회 성공: {len(got)}/{len(ids)}개 (전일가 실측 {n_real_prev} / chg24 역산 fallback {n_fallback_prev})")
     return pd.DataFrame(rows)
 
 # ================== Kimchi premium ==================
@@ -569,21 +601,17 @@ def _level_on_or_before(rows, target_ymd: str):
     return None
 
 # 오늘 1D 포트폴리오 수익률(%) 계산: yesterday -> now (weights_map 기준)
-# NOTE: backfill의 실제 드리프트/리밸런싱과 100% 동일하지는 않지만, '400대'로 붕괴하는 문제를 막고
-# 대시보드/뉴스/루트 JSON이 같은 체계(연속지수)로 움직이게 만든다.
-# price_change_pct 기반으로 직접 계산 (CMC에서 이미 정확한 24h 변동률 제공)
-port_ret_1d = 0.0
-denom_ok = True
-for _, row in df.iterrows():
-    cid = row["id"]
-    w = float(weights_map.get(cid, 0.0))
-    pct = row.get("price_change_pct")
-    if w == 0:
-        continue
-    if pct is None or (isinstance(pct, float) and np.isnan(pct)):
-        denom_ok = False
-        continue
-    port_ret_1d += w * (float(pct) / 100.0)
+# NOTE: 과거엔 CMC의 percent_change_24h(그 API 호출 시점 기준 자체 롤링 윈도우)를 그대로 합산했는데,
+# 이 값은 GitHub Actions 실행 시각이 매일 조금씩 어긋나거나 실행이 하루 이상 밀리면 실제
+# "어제 저장 가격 → 오늘 가격" 변화와 다른 값을 가리킬 수 있었다. (components_history.csv에
+# 저장된 price로 재구성한 누적 수익률과 공식 bm20_level이 몇 주 만에 20%p 넘게 벌어지는 원인이었음.)
+# 이제는 previous_price가 실제 어제 저장 가격(load_yesterday_prices)이므로, today_value/prev_value
+# 비율(=weight_ratio로 가중한 실제 가격 변화)을 그대로 쓴다. 이러면 bm20_level과
+# components_history.csv가 항상 같은 가격 기준으로 계산되어 구조적으로 정합된다.
+port_ret_1d = (today_value / prev_value - 1.0) if prev_value else 0.0
+denom_ok = not (np.isnan(port_ret_1d) if isinstance(port_ret_1d, float) else False)
+if not denom_ok:
+    port_ret_1d = 0.0
 
 # SSOT series에서 전일 레벨 가져와서 오늘 레벨 계산
 today_ymd = YMD
