@@ -456,6 +456,7 @@ jobs:
           # 1) 중요 파일 먼저 백업
           cp out/backfill_current_basket.csv /tmp/backfill_backup.csv 2>/dev/null || true
           cp out/history/market_history.csv /tmp/market_history_backup.csv 2>/dev/null || true
+          cp out/state/weights_map.json /tmp/weights_map_backup.json 2>/dev/null || true
 
           # 2) 생성된 변경사항을 먼저 스태시(추적안된 파일 포함)
           git stash push -u -m "bm20-autostash" || true
@@ -469,7 +470,8 @@ jobs:
           # 5) 백업에서 중요 파일 복원 (원격에 덮어써지는 것 방지)
           cp /tmp/backfill_backup.csv out/backfill_current_basket.csv 2>/dev/null || true
           cp /tmp/market_history_backup.csv out/history/market_history.csv 2>/dev/null || true
-          git add out/backfill_current_basket.csv out/history/market_history.csv 2>/dev/null || true
+          cp /tmp/weights_map_backup.json out/state/weights_map.json 2>/dev/null || true
+          git add out/backfill_current_basket.csv out/history/market_history.csv out/state/weights_map.json 2>/dev/null || true
 
           # 4) 커밋/푸시 (커밋 메시지는 실행 시각 기준 날짜로 유지)
           DATE=$(TZ=Asia/Seoul date +%F)
