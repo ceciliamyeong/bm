@@ -413,10 +413,36 @@ def is_quarter_rebalance_day(dt_ymd: str) -> bool:
     y, m, d = map(int, dt_ymd.split("-"))
     return (m in (1,4,7,10)) and (d == 1)
 
-weights_map = compute_equal_rest_weights(df["id"].tolist())
-# (필요 시) if is_quarter_rebalance_day(YMD): weights_map = compute_equal_rest_weights(...)
+# ── 비중 캐시: 리밸런싱일에만 weights_map을 재계산하고, 그 외에는 캐시된 고정 비중을 사용 ──
+# (과거 버그: 이 캐시 없이 매일 compute_equal_rest_weights()를 다시 돌려서, 코인 fetch 실패로
+#  ids_all 개수가 14개가 아닌 날에는 T3 비중이 0.02가 아닌 값(예: 0.023333)으로 조용히 흔들렸음.
+#  그 결과 components_history.csv의 weight가 실제 분기 고정비중과 어긋나는 문제가 있었음.)
+WEIGHTS_CACHE = OUT_DIR / "state" / "weights_map.json"
+WEIGHTS_CACHE.parent.mkdir(parents=True, exist_ok=True)
+
+_today_ids = df["id"].tolist()
+_cached = read_json(WEIGHTS_CACHE)
+
+if is_quarter_rebalance_day(YMD) or not _cached:
+    weights_map = compute_equal_rest_weights(_today_ids)
+    write_json(WEIGHTS_CACHE, {
+        "as_of": YMD,
+        "weights": weights_map,
+        "n_ids": len(_today_ids),
+    })
+    if not is_quarter_rebalance_day(YMD):
+        print(f"[WARN] {YMD}: weights cache missing, recomputed off-schedule (should only happen on first run).")
+else:
+    weights_map = _cached["weights"]
+    # 오늘 fetch된 종목이 캐시된 비중 종목과 다르면 (fetch 실패 등) 경고만 하고, 캐시된 고정비중은 그대로 유지
+    missing = [cid for cid in weights_map if cid not in _today_ids]
+    extra = [cid for cid in _today_ids if cid not in weights_map]
+    if missing or extra:
+        print(f"[WARN] {YMD}: today's id list differs from cached weights (missing={missing}, extra={extra}). "
+              f"Using cached fixed weights regardless — check data fetch for the day.")
 
 df["weight_ratio"] = df["id"].map(weights_map).astype(float)
+df["weight_ratio"] = df["weight_ratio"].fillna(0.0)  # 캐시에 없는 종목(fetch 이슈 등)은 0비중 처리, NaN 전파 방지
 
 # 3) Return & contribution
 df["contribution"] = (df["current_price"] - df["previous_price"]) * df["weight_ratio"]
