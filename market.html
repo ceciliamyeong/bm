@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>KR 마켓 | 블록미디어 마켓랩</title>
+<title>블록미디어 마켓랩 | Digital Asset Data Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -37,7 +37,8 @@ header{background:rgba(255,255,255,.92);border-bottom:1px solid var(--line);posi
 .logo .sq{width:10px;height:10px;background:var(--main);border-radius:2px;transform:rotate(45deg)}
 .logo .sub{font-size:11px;font-weight:600;color:var(--ink3);background:var(--line2);padding:2px 7px;border-radius:99px}
 
-main{max-width:1200px;margin:0 auto;padding:0 16px 80px;position:relative;z-index:1}
+main{max-width:1200px;margin:0 auto;padding:0 16px 80px;position:relative;z-index:1;margin-left:calc(30px + max(0px, (100vw - 1200px)/2))}
+@media(max-width:1240px){ main{margin-left:30px;margin-right:0} }
 @media(min-width:600px){main{padding:0 32px 80px}}
 .hero{padding:52px 0 36px;border-bottom:1px solid var(--line);margin-bottom:36px}
 .hero-tag{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--main);background:rgba(var(--main-rgb),.08);padding:6px 14px;border-radius:99px;margin-bottom:18px;letter-spacing:.04em}
@@ -172,10 +173,195 @@ footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);font-si
 @media(max-width:1060px){.ex-grid.four{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:960px){.kpi-grid{grid-template-columns:1fr 1fr}.row2{grid-template-columns:1fr}.ex-grid{grid-template-columns:1fr}.kimchi-grid{grid-template-columns:1fr}.heatmap{grid-template-columns:repeat(4,1fr)}nav.nav-links{display:none}}
 @media(max-width:560px){.kpi-grid{grid-template-columns:1fr 1fr}.heatmap{grid-template-columns:repeat(2,1fr)}.ex-grid.four{grid-template-columns:1fr}}
+
+/* ══════════════ Sidebar Navigation (The Block style) ══════════════ */
+:root{ --sb-w:272px; }
+
+/* 토글 — 왼쪽 가장자리 얇은 세로 커튼 탭 (눈에 띄게) */
+.sb-toggle{
+  position:fixed; top:0; left:0; height:100vh; width:30px; z-index:260;
+  background:linear-gradient(180deg, var(--main) 0%, var(--main-dark) 100%);
+  border:none;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;
+  cursor:pointer; padding:0;
+  box-shadow:2px 0 10px rgba(var(--main-rgb),.18);
+  transition:left .28s cubic-bezier(.4,0,.2,1), filter .15s;
+}
+.sb-toggle:hover{ filter:brightness(1.08); }
+.sb-toggle .chevron{
+  width:8px; height:8px; flex:0 0 auto;
+  border-right:2px solid #fff; border-bottom:2px solid #fff;
+  transform:rotate(135deg); transition:transform .25s;
+}
+body.sb-open .sb-toggle .chevron{ transform:rotate(-45deg); }
+.sb-toggle .curtain-label{
+  writing-mode:vertical-rl; text-orientation:mixed;
+  font-size:11px; font-weight:800; letter-spacing:.14em; color:#fff;
+}
+body.sb-open .sb-toggle{ left:var(--sb-w); }
+@media(max-width:640px){ body.sb-open .sb-toggle{ left:var(--sb-w); } }
+
+/* 오버레이 백드롭 */
+.sb-backdrop{
+  position:fixed; inset:0; background:rgba(255,255,255,.4); backdrop-filter:blur(2px);
+  opacity:0; pointer-events:none; transition:opacity .25s ease; z-index:190;
+}
+body.sb-open .sb-backdrop{ opacity:1; pointer-events:auto; }
+
+/* 사이드바 패널 */
+.sidebar{
+  position:fixed; top:0; left:0; height:100vh; width:var(--sb-w);
+  background:#ffffff; border-right:1px solid var(--line);
+  box-shadow:6px 0 28px rgba(20,25,40,.10);
+  transform:translateX(-100%); transition:transform .28s cubic-bezier(.4,0,.2,1);
+  z-index:250; display:flex; flex-direction:column; overflow:hidden;
+}
+body.sb-open .sidebar{ transform:translateX(0); }
+
+.sb-head{
+  padding:18px 20px 16px; border-bottom:1px solid var(--line);
+  display:flex; align-items:center; gap:9px; flex:0 0 auto;
+}
+.sb-head .sq{width:11px;height:11px;background:var(--main);border-radius:2px;transform:rotate(45deg);flex:0 0 auto}
+.sb-head b{font-size:15px;font-weight:800;color:#161616;letter-spacing:-.01em}
+.sb-head .tag{font-size:10.5px;font-weight:600;color:var(--ink3);background:var(--line2);padding:2px 7px;border-radius:99px;margin-left:auto}
+
+.sb-body{ flex:1 1 auto; overflow-y:auto; padding:10px 10px 20px; }
+.sb-body::-webkit-scrollbar{ width:5px; }
+.sb-body::-webkit-scrollbar-thumb{ background:var(--line); border-radius:99px; }
+
+.sb-group{ margin-bottom:2px; }
+.sb-group-hd{
+  display:flex; align-items:center; gap:9px; width:100%;
+  padding:10px 10px; border:none; background:transparent; cursor:pointer;
+  font-family:inherit; font-size:13px; font-weight:700; color:var(--ink);
+  border-radius:8px; transition:background .12s;
+}
+.sb-group-hd:hover{ background:var(--line2); }
+.sb-group-hd .ic{ width:15px; height:15px; flex:0 0 auto; color:var(--main); }
+.sb-group-hd .chev{ margin-left:auto; width:9px; height:9px; flex:0 0 auto; transition:transform .2s; color:var(--ink3); }
+.sb-group.open .sb-group-hd .chev{ transform:rotate(180deg); }
+
+.sb-group-body{
+  max-height:0; overflow:hidden; transition:max-height .25s ease;
+  padding-left:8px;
+}
+.sb-group.open .sb-group-body{ max-height:400px; }
+
+.sb-link{
+  display:flex; align-items:center; gap:8px;
+  padding:8px 10px 8px 26px; margin:1px 0;
+  font-size:12.5px; font-weight:600; color:var(--ink2);
+  border-radius:7px; position:relative; transition:background .12s,color .12s;
+}
+.sb-link:hover{ background:rgba(var(--main-rgb),.06); color:var(--main); }
+.sb-link.active{ background:rgba(var(--main-rgb),.09); color:var(--main); font-weight:700; }
+.sb-link.active::before{
+  content:''; position:absolute; left:10px; top:50%; transform:translateY(-50%);
+  width:4px; height:4px; border-radius:50%; background:var(--main);
+}
+.sb-link .ext{ margin-left:auto; font-size:9px; color:var(--ink3); opacity:.7; }
+.sb-link.disabled{ color:var(--ink3); cursor:default; opacity:.55; }
+.sb-link.disabled:hover{ background:transparent; color:var(--ink3); }
+
+.sb-foot{
+  flex:0 0 auto; padding:12px 20px 16px; border-top:1px solid var(--line);
+  font-size:10.5px; color:var(--ink3); line-height:1.6;
+}
+@media(max-width:640px){
+  :root{ --sb-w:88vw; }
+}
 </style>
 </head>
 <body>
 <div class="aurora"></div>
+
+<button class="sb-toggle" id="sbToggle" aria-label="메뉴 열기/닫기">
+  <span class="curtain-label">MENU</span>
+  <span class="chevron"></span>
+</button>
+
+<div class="sb-backdrop" id="sbBackdrop"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sb-head">
+    <span class="sq"></span>
+    <b>블록미디어 마켓랩</b>
+    <span class="tag">MarketLab</span>
+  </div>
+
+  <div class="sb-body">
+
+    <div class="sb-group open" data-group="market">
+      <button class="sb-group-hd">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.1-2.8-2.8L7 14"/></svg>
+        Market
+        <svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4l4 4 4-4"/></svg>
+      </button>
+      <div class="sb-group-body">
+        <a class="sb-link" data-page="market.html" href="/market.html">KRW Market</a>
+        <a class="sb-link" data-page="hl-overview.html" href="/hl-overview.html">Hyperliquid</a>
+      </div>
+    </div>
+
+    <div class="sb-group open" data-group="indices">
+      <button class="sb-group-hd">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>
+        Indices
+        <svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4l4 4 4-4"/></svg>
+      </button>
+      <div class="sb-group-body">
+        <a class="sb-link" data-page="bm20_index.html" href="/bm20_index.html">BM20 Index</a>
+        <a class="sb-link" data-page="performance.html" href="/performance.html">Performance</a>
+        <a class="sb-link" data-page="clm.html" href="https://blockmedia-datateam.github.io/CLM-brief/clm.html">코생지 (CLM)</a>
+      </div>
+    </div>
+
+    <div class="sb-group" data-group="etfs">
+      <button class="sb-group-hd">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg>
+        ETFs
+        <svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4l4 4 4-4"/></svg>
+      </button>
+      <div class="sb-group-body">
+        <a class="sb-link" data-page="etf.html" href="/etf.html#bitcoin">Bitcoin ETFs</a>
+        <a class="sb-link" data-page="etf.html" href="/etf.html#ethereum">Ethereum ETFs</a>
+        <a class="sb-link" data-page="etf.html" href="/etf.html#solana">Solana ETFs</a>
+        <a class="sb-link" data-page="etf.html" href="/etf.html#xrp">XRP ETFs</a>
+        <a class="sb-link" data-page="etf.html" href="/etf.html#etc">기타</a>
+      </div>
+    </div>
+
+    <div class="sb-group" data-group="global">
+      <button class="sb-group-hd">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18 15 15 0 010-18z"/></svg>
+        Global
+        <svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4l4 4 4-4"/></svg>
+      </button>
+      <div class="sb-group-body">
+        <a class="sb-link" data-page="history.html" href="/history.html">BTC 역사</a>
+        <a class="sb-link" data-page="btc-volume.html" href="/btc-volume.html">BTC 세계 거래량</a>
+      </div>
+    </div>
+
+    <div class="sb-group" data-group="premium">
+      <button class="sb-group-hd">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.9 6.5L22 9.3l-5 5 1.2 7.2L12 18l-6.2 3.5L7 14.3l-5-5 7.1-.8z"/></svg>
+        Premium
+        <svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4l4 4 4-4"/></svg>
+      </button>
+      <div class="sb-group-body">
+        <span class="sb-link disabled">Research <span class="ext">준비중</span></span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="sb-foot">
+    데이터 30분 주기 자동 갱신<br>
+    © 블록미디어 데이터본부
+  </div>
+</aside>
 
 <main>
   <div class="hero">
@@ -780,6 +966,42 @@ async function loadSectorHeatmap(){
 load();
 loadSectorHeatmap();
 setInterval(load, 30*60*1000);
+
+// ── 사이드바 토글 ─────────────────────────────────────
+const sbToggle = document.getElementById('sbToggle');
+const sbBackdrop = document.getElementById('sbBackdrop');
+function toggleSidebar(force){
+  const open = force !== undefined ? force : !document.body.classList.contains('sb-open');
+  document.body.classList.toggle('sb-open', open);
+  try{ localStorage.setItem('ml_sidebar_open', open ? '1' : '0'); }catch(e){}
+}
+sbToggle.addEventListener('click', () => toggleSidebar());
+sbBackdrop.addEventListener('click', () => toggleSidebar(false));
+document.addEventListener('keydown', e => { if(e.key === 'Escape') toggleSidebar(false); });
+
+// 데스크톱은 기본 펼침, 모바일은 기본 접힘 (localStorage 있으면 우선)
+(function initSidebar(){
+  let saved = null;
+  try{ saved = localStorage.getItem('ml_sidebar_open'); }catch(e){}
+  const shouldOpen = saved !== null ? saved === '1' : window.innerWidth > 960;
+  toggleSidebar(shouldOpen);
+})();
+
+// ── 아코디언 그룹 ─────────────────────────────────────
+document.querySelectorAll('.sb-group-hd').forEach(btn => {
+  btn.addEventListener('click', () => {
+    btn.closest('.sb-group').classList.toggle('open');
+  });
+});
+
+// ── 현재 페이지 active 표시 ───────────────────────────
+(function markActive(){
+  const path = location.pathname.split('/').pop() || 'index.html';
+  const current = (path === 'index.html' || path === '') ? 'market.html' : path;
+  document.querySelectorAll('.sb-link[data-page]').forEach(a => {
+    if(a.dataset.page === current) a.classList.add('active');
+  });
+})();
 </script>
 </body>
 </html>
