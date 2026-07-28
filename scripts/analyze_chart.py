@@ -30,7 +30,7 @@ def analyze_chart(image_path: str) -> str:
     )
 
     body = {
-        "model": "claude-sonnet-4-6",
+        "model": "claude-sonnet-5",
         "max_tokens": 800,
         "messages": [
             {
@@ -59,8 +59,12 @@ def analyze_chart(image_path: str) -> str:
         method="POST",
     )
 
-    with urllib.request.urlopen(req) as resp:
-        data = json.loads(resp.read().decode("utf-8"))
+    try:
+        with urllib.request.urlopen(req) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode("utf-8")
+        raise RuntimeError(f"API 오류 ({e.code}): {error_body}") from None
 
     text_blocks = [b["text"] for b in data.get("content", []) if b.get("type") == "text"]
     return "\n".join(text_blocks)
