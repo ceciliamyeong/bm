@@ -41,7 +41,7 @@ def analyze_chart(image_path: str) -> str:
 
     body = {
         "model": MODEL,
-        "max_tokens": 800,
+        "max_completion_tokens": 800,
         "messages": [
             {
                 "role": "user",
