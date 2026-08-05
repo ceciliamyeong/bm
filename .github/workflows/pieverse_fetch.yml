@@ -1,0 +1,32 @@
+name: PIEVERSE Hourly Data Fetch
+
+on:
+  workflow_dispatch:  # Actions 탭에서 수동 Run workflow
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests pandas
+
+      - name: Run fetch script
+        run: python scripts/pieverse_hourly_fetch.py
+
+      - name: Upload results as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pieverse-hourly-data
+          path: |
+            pieverse_upbit_hourly.csv
+            pieverse_bithumb_hourly.csv
+            pieverse_merged_hourly.csv
+          if-no-files-found: warn
