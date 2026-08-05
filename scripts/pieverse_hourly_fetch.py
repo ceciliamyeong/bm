@@ -31,7 +31,12 @@ def fetch_upbit_hourly(market="KRW-PIEVERSE", to_dt=None, count=200):
     params = {"market": market, "count": count}
     if to_dt:
         params["to"] = to_dt
-    r = requests.get(url, params=params, headers=HEADERS, timeout=10)
+    try:
+        r = requests.get(url, params=params, headers=HEADERS, timeout=(5, 15))
+    except requests.exceptions.RequestException as e:
+        print(f"    [업비트] 요청 실패: {type(e).__name__}: {e}", flush=True)
+        raise
+    print(f"    [업비트] 응답: status={r.status_code}, {len(r.content):,} bytes", flush=True)
     r.raise_for_status()
     return r.json()
 
@@ -41,13 +46,18 @@ def fetch_upbit_range(market, start_str, end_str):
     end = datetime.strptime(end_str, "%Y-%m-%d %H:%M")
     all_rows = []
     cursor = end
+    page = 0
     while cursor > start:
+        page += 1
         to_str = cursor.strftime("%Y-%m-%d %H:%M:%S")
+        print(f"  [업비트] page {page} 요청 - to={to_str}", flush=True)
         data = fetch_upbit_hourly(market=market, to_dt=to_str, count=200)
         if not data:
+            print(f"  [업비트] page {page} - 빈 응답, 중단", flush=True)
             break
         all_rows.extend(data)
         oldest = datetime.strptime(data[-1]["candle_date_time_kst"], "%Y-%m-%dT%H:%M:%S")
+        print(f"  [업비트] page {page} 완료 - {len(data)}건, oldest={oldest}", flush=True)
         if oldest <= start:
             break
         cursor = oldest
@@ -75,9 +85,12 @@ def fetch_bithumb_hourly(symbol="PIEVERSE", to_ts=None, count=200):
     # 빗썸은 kline 형태로 특정 interval의 전체 히스토리를 반환하는 방식이라
     # 1h 데이터를 통째로 받고 이후 구간을 잘라서 씀
     url = f"https://api.bithumb.com/public/candlestick/{symbol}_KRW/1h"
-    r = requests.get(url, headers=HEADERS, timeout=10)
+    print(f"  [빗썸] 요청 시작: {url}", flush=True)
+    r = requests.get(url, headers=HEADERS, timeout=30)
+    print(f"  [빗썸] 응답 수신: status={r.status_code}, size={len(r.content):,} bytes", flush=True)
     r.raise_for_status()
     data = r.json()
+    print(f"  [빗썸] JSON 파싱 완료: {len(data.get('data', []))}행", flush=True)
     if data.get("status") != "0000":
         raise RuntimeError(f"빗썸 API 오류: {data}")
     rows = data["data"]
@@ -93,9 +106,17 @@ def fetch_bithumb_hourly(symbol="PIEVERSE", to_ts=None, count=200):
 
 
 def main():
-    print(f"수집 범위: {OVERALL_START} ~ {OVERALL_END}")
+    print(f"수집 범위: {OVERALL_START} ~ {OVERALL_END}", flush=True)
 
-    print("업비트 KRW-PIEVERSE 수집 중...")
+    print("연결 테스트 중 (최근 캔들 1개만 요청)...", flush=True)
+    try:
+        test = fetch_upbit_hourly(market="KRW-PIEVERSE", count=1)
+        print(f"연결 테스트 성공: {test}", flush=True)
+    except Exception as e:
+        print(f"연결 테스트 실패 - 업비트 API 접근 자체가 막혀있을 수 있음: {e}", flush=True)
+        raise
+
+    print("업비트 KRW-PIEVERSE 전체 구간 수집 중...", flush=True)
     upbit_df = fetch_upbit_range("KRW-PIEVERSE", OVERALL_START, OVERALL_END)
     upbit_df.to_csv("pieverse_upbit_hourly.csv", index=False, encoding="utf-8-sig")
     print(f"  -> {len(upbit_df)}행 저장 (pieverse_upbit_hourly.csv)")
