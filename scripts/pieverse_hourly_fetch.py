@@ -49,6 +49,9 @@ def fetch_upbit_range(market, start_str, end_str):
     page = 0
     while cursor > start:
         page += 1
+        if page > 50:  # 안전장치 - 이 범위면 원래 20페이지 안팎이면 충분
+            print(f"  [업비트] 페이지 50개 초과 - 이상 감지, 강제 종료", flush=True)
+            break
         to_str = cursor.strftime("%Y-%m-%d %H:%M:%S")
         print(f"  [업비트] page {page} 요청 - to={to_str}", flush=True)
         data = fetch_upbit_hourly(market=market, to_dt=to_str, count=200)
@@ -59,6 +62,9 @@ def fetch_upbit_range(market, start_str, end_str):
         oldest = datetime.strptime(data[-1]["candle_date_time_kst"], "%Y-%m-%dT%H:%M:%S")
         print(f"  [업비트] page {page} 완료 - {len(data)}건, oldest={oldest}", flush=True)
         if oldest <= start:
+            break
+        if oldest >= cursor:
+            print(f"  [업비트] 더 이상 과거 데이터 없음 (상장 이전 구간) - 수집 종료", flush=True)
             break
         cursor = oldest
         time.sleep(0.15)  # rate limit 여유
