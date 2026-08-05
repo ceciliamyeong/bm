@@ -19,7 +19,8 @@ jobs:
         run: pip install requests pandas
 
       - name: Run fetch script
-        run: python scripts/pieverse_hourly_fetch.py
+        timeout-minutes: 5
+        run: python -u scripts/pieverse_hourly_fetch.py
 
       - name: Upload results as artifact
         uses: actions/upload-artifact@v4
