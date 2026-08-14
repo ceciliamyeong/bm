@@ -1,57 +1,6 @@
 [
   {
     "schema": "smart_kimchi_v2",
-    "timestamp_kst": "2026-08-01T23:56:52+0900",
-    "timestamp_label": "08/01 23:56 KST",
-    "prices": {
-      "upbit": {
-        "KRW-BTC": 90714000.0,
-        "KRW-ETH": 2691000.0,
-        "KRW-XRP": 1531.0,
-        "KRW-USDT": 1438.0
-      },
-      "binance": {
-        "BTCUSDT": 63089.99,
-        "ETHUSDT": 1872.93,
-        "XRPUSDT": 1.0657
-      },
-      "fx": {
-        "USDKRW": 1436.6,
-        "source": "yahoo_finance_direct"
-      }
-    },
-    "kimchi_premium_pct": {
-      "BTC": 0.087,
-      "ETH": 0.013,
-      "XRP": 0.001
-    },
-    "cb_premium_pct": -0.086,
-    "kimchi_delta_pp": {
-      "BTC": -0.06,
-      "ETH": -0.06,
-      "XRP": -0.094
-    },
-    "driver_share_pct": {
-      "BTC": 28.0,
-      "ETH": 28.1,
-      "XRP": 43.9
-    },
-    "diagnostics": {
-      "local_usdt_premium_hint_pct": 0.097
-    },
-    "smart_kimchi": {
-      "type": "Neutral",
-      "rationale": "뚜렷한 과열/제약 신호가 약함",
-      "score_v1": 45.2,
-      "inputs": {
-        "total_krw_24h": 1073304872448.2571,
-        "top10_share_pct": 56.24898934492241,
-        "stable_dominance_pct": 19.843934929150688
-      }
-    }
-  },
-  {
-    "schema": "smart_kimchi_v2",
     "timestamp_kst": "2026-08-02T00:59:51+0900",
     "timestamp_label": "08/02 00:59 KST",
     "prices": {
@@ -13766,6 +13715,57 @@
         "total_krw_24h": 1191636879819.1377,
         "top10_share_pct": 57.248929807439616,
         "stable_dominance_pct": 21.7131668800541
+      }
+    }
+  },
+  {
+    "schema": "smart_kimchi_v2",
+    "timestamp_kst": "2026-08-15T02:27:09+0900",
+    "timestamp_label": "08/15 02:27 KST",
+    "prices": {
+      "upbit": {
+        "KRW-BTC": 89171000.0,
+        "KRW-ETH": 2658000.0,
+        "KRW-XRP": 1416.0,
+        "KRW-USDT": 1411.0
+      },
+      "binance": {
+        "BTCUSDT": 63200.54,
+        "ETHUSDT": 1885.68,
+        "XRPUSDT": 1.0037
+      },
+      "fx": {
+        "USDKRW": 1416.0,
+        "source": "yahoo_finance_direct"
+      }
+    },
+    "kimchi_premium_pct": {
+      "BTC": -0.359,
+      "ETH": -0.454,
+      "XRP": -0.369
+    },
+    "cb_premium_pct": -0.101,
+    "kimchi_delta_pp": {
+      "BTC": -0.087,
+      "ETH": -0.293,
+      "XRP": -0.175
+    },
+    "driver_share_pct": {
+      "BTC": 15.6,
+      "ETH": 52.9,
+      "XRP": 31.5
+    },
+    "diagnostics": {
+      "local_usdt_premium_hint_pct": -0.353
+    },
+    "smart_kimchi": {
+      "type": "Neutral",
+      "rationale": "뚜렷한 과열/제약 신호가 약함",
+      "score_v1": 43.0,
+      "inputs": {
+        "total_krw_24h": 1194143935578.4011,
+        "top10_share_pct": 56.622886729679635,
+        "stable_dominance_pct": 20.880217727506277
       }
     }
   }
