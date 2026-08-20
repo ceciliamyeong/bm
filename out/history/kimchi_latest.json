@@ -1,51 +1,51 @@
 {
   "schema": "smart_kimchi_v2",
-  "timestamp_kst": "2026-08-21T02:55:25+0900",
-  "timestamp_label": "08/21 02:55 KST",
+  "timestamp_kst": "2026-08-21T03:32:46+0900",
+  "timestamp_label": "08/21 03:32 KST",
   "prices": {
     "upbit": {
-      "KRW-BTC": 99968000.0,
-      "KRW-ETH": 3217000.0,
-      "KRW-XRP": 1816.0,
-      "KRW-USDT": 1372.0
+      "KRW-BTC": 99954000.0,
+      "KRW-ETH": 3193000.0,
+      "KRW-XRP": 1727.0,
+      "KRW-USDT": 1376.0
     },
     "binance": {
-      "BTCUSDT": 72831.99,
-      "ETHUSDT": 2344.17,
-      "XRPUSDT": 1.3229
+      "BTCUSDT": 72614.01,
+      "ETHUSDT": 2321.98,
+      "XRPUSDT": 1.2551
     },
     "fx": {
-      "USDKRW": 1394.96,
+      "USDKRW": 1395.53,
       "source": "yahoo_finance_direct"
     }
   },
   "kimchi_premium_pct": {
-    "BTC": -1.604,
-    "ETH": -1.621,
-    "XRP": -1.593
+    "BTC": -1.363,
+    "ETH": -1.463,
+    "XRP": -1.4
   },
-  "cb_premium_pct": -0.009,
+  "cb_premium_pct": -0.031,
   "kimchi_delta_pp": {
-    "BTC": -0.005,
-    "ETH": 0.018,
-    "XRP": 0.071
+    "BTC": 0.241,
+    "ETH": 0.158,
+    "XRP": 0.193
   },
   "driver_share_pct": {
-    "BTC": 5.4,
-    "ETH": 18.7,
-    "XRP": 75.9
+    "BTC": 40.7,
+    "ETH": 26.8,
+    "XRP": 32.5
   },
   "diagnostics": {
-    "local_usdt_premium_hint_pct": -1.646
+    "local_usdt_premium_hint_pct": -1.399
   },
   "smart_kimchi": {
     "type": "Reverse/Outflow",
     "rationale": "역김프 구간 → 해외가 더 비싸거나 국내 매수 약함/해외 이동 가능성",
-    "score_v1": 67.0,
+    "score_v1": 68.0,
     "inputs": {
-      "total_krw_24h": 3122455015260.0913,
-      "top10_share_pct": 71.80460507514984,
-      "stable_dominance_pct": 19.01325847214129
+      "total_krw_24h": 3198679468217.7544,
+      "top10_share_pct": 72.32326326812492,
+      "stable_dominance_pct": 18.732004339945252
     }
   }
 }
