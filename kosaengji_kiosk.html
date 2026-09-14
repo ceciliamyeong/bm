@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>코생지 — 부스 키오스크</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{--ink:#f2f5f9;--ink-2:#a9b4c3;--ink-3:#5e6b7d;--line:#243043;--bg:#0e1626;--bg-2:#172236;--accent:#3ddc84;--accent-soft:#163526;--up:#ff6b5e;--down:#6ea8ff;--on:#3ddc84;--so:#b48cff;--mo:#ffb454;--dur:15000ms}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:radial-gradient(120vw 80vh at 70% -10%,#16243a 0%,var(--bg) 60%);color:var(--ink);font-family:"Pretendard Variable",Pretendard,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+.n{font-variant-numeric:tabular-nums;letter-spacing:-.045em}
+.up{color:var(--up)}.down{color:var(--down)}.flat{color:var(--ink-2)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.bar{position:fixed;left:0;top:0;height:.55vh;width:100vw;background:#1c2738;z-index:5}
+.bar i{display:block;height:100%;width:0;background:var(--accent)}
+.bar i.run{animation:fill var(--dur) linear forwards}
+@keyframes fill{to{width:100%}}
+.stage{position:relative;width:100vw;height:100vh;padding:5.5vh 6vw 4vh;display:flex;flex-direction:column}
+.head{display:flex;justify-content:space-between;align-items:baseline}
+.head .brand{font-size:1.7vw;font-weight:700;letter-spacing:-.02em}
+.head .brand span{color:var(--accent)}
+.head .brand{color:#fff}
+.head .meta{font-size:1.25vw;color:var(--ink-2)}
+.slides{position:relative;flex:1}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center}
+.slide.on{display:flex;animation:in .45s ease both}
+@keyframes in{from{opacity:0;transform:translateY(1.2vh)}to{opacity:1;transform:none}}
+.kicker{font-size:2.1vw;color:var(--ink-2);margin-bottom:1vh}
+.big{font-size:14.5vw;line-height:.92;font-weight:800}
+.big.md{font-size:10vw}
+.big small{font-size:4.6vw;font-weight:500;color:var(--ink-2);letter-spacing:0;margin-left:.5vw}
+.so{font-size:2.7vw;line-height:1.35;margin-top:2.6vh;max-width:64vw;letter-spacing:-.015em}
+.so b{font-weight:700;color:var(--accent);background:var(--accent-soft);padding:.06em .28em;border-radius:.28em}
+.aside{position:absolute;right:0;top:50%;transform:translateY(-50%);width:27vw}
+.mini{display:flex;justify-content:space-between;align-items:baseline;padding:1.5vh 0;border-top:1px solid var(--line);font-size:1.85vw}
+.mini:last-child{border-bottom:1px solid var(--line)}
+.mini span{color:var(--ink-2)}.mini b{font-weight:600}
+.tag{display:inline-block;font-size:1.3vw;font-weight:700;padding:.3vh 1vw;border-radius:2vh;color:#0e1626;vertical-align:middle}
+.tag.on{background:var(--on)}.tag.so{background:var(--so)}.tag.mo{background:var(--mo)}
+.hero{display:flex;align-items:center;gap:3vw}
+.hero img{width:16vh;height:16vh;border-radius:50%;background:#fff;padding:.6vh;box-shadow:0 0 0 .5vh rgba(61,220,132,.35),0 0 6vh rgba(61,220,132,.25)}
+.top{display:grid;grid-template-columns:1fr 1fr;gap:0 5vw;margin-top:2vh;max-width:84vw}
+.top .r{display:grid;grid-template-columns:2.6vw 4.2vh 1fr auto auto auto;align-items:center;gap:1.2vw;padding:1.1vh 0;border-bottom:1px solid var(--line);font-size:2vw}
+.top .r i{font-style:normal;color:var(--ink-3);font-weight:700;font-size:1.6vw}
+.top .r img{width:4.2vh;height:4.2vh;border-radius:50%;background:#fff;padding:.3vh}
+.top .r em{font-style:normal;font-weight:600}
+.top .r .c{font-weight:600;color:var(--accent);min-width:5.5vw;text-align:right}
+.top .r b{font-weight:600;min-width:6.5vw;text-align:right}
+.top .r.t1 em,.top .r.t1 .c{font-size:2.4vw}
+.top .r.t1{background:linear-gradient(90deg,rgba(61,220,132,.12),transparent);border-radius:1vh;padding-left:.6vw;margin-left:-.6vw}
+.blur em,.blur img,.blur .c,.blur b,.blur .tag{filter:blur(1vh);opacity:.7}
+.contrib{margin-top:3vh;max-width:80vw}
+.contrib .row{display:grid;grid-template-columns:8vw 1fr;align-items:center;gap:2vw;margin:1.4vh 0;font-size:2vw;font-weight:600}
+.contrib .bar2{display:flex;height:4.5vh;border-radius:1vh;overflow:hidden;background:var(--bg-2)}
+.contrib .bar2 i{display:block;height:100%;transition:width .8s ease}
+.contrib .on{background:var(--on)}.contrib .so{background:var(--so)}.contrib .mo{background:var(--mo)}
+.leg{display:flex;gap:3vw;font-size:1.6vw;color:var(--ink-2);margin-top:1.5vh}
+.leg i{display:inline-block;width:1.4vw;height:1.4vw;border-radius:.3vw;vertical-align:middle;margin-right:.6vw}
+.mx{width:80vw;height:52vh;margin-top:2vh}
+.mx svg{width:100%;height:100%;overflow:visible}
+.mx text{font-size:1.5vw;fill:var(--ink-2)}
+.mx .dot{fill:var(--accent);stroke:#0e1626;stroke-width:.25vw}
+.mx .lab{font-size:1.7vw;font-weight:600;fill:#fff}
+.mx .q{font-size:1.4vw;fill:var(--ink-3)}
+.mx .ax{stroke:var(--line);stroke-width:2}
+.ts{width:80vw;height:34vh;margin-top:2.5vh}
+.ts svg{width:100%;height:100%;overflow:visible}
+.ts path{fill:none;stroke:var(--accent);stroke-width:.35vw;stroke-linejoin:round}
+.ts .area{fill:rgba(61,220,132,.18);stroke:none}
+.ts text{font-size:1.4vw;fill:var(--ink-2)}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:2vw;margin-top:3vh;max-width:80vw}
+.card{background:var(--bg-2);border:1px solid var(--line);border-radius:1.5vh;padding:3vh 2vw}
+.card .t{font-size:2vw;font-weight:600;margin-bottom:1vh}
+.card .d{font-size:1.6vw;color:var(--ink-2);line-height:1.45}
+.card .sw{display:inline-block;width:1.2vw;height:1.2vw;border-radius:50%;margin-right:.6vw;vertical-align:middle}
+.foot{display:flex;justify-content:space-between;align-items:flex-end}
+.foot .idx{font-size:1.3vw;color:var(--ink-3)}
+.foot .url{display:flex;align-items:center;gap:1.2vw;font-size:1.35vw;color:var(--ink-2);line-height:1.35}
+.foot .url b{display:block;color:var(--ink);font-weight:600;font-size:1.5vw}
+.foot .qr{width:9vh;height:9vh;background:#fff;padding:.5vh;border-radius:.8vh}
+.foot .qr img,.foot .qr canvas{width:100%!important;height:100%!important;display:block}
+</style>
+</head>
+<body>
+<div class="bar"><i id="bar"></i></div>
+<div class="stage">
+  <div class="head">
+    <div class="brand">블록미디어 <span>코생지</span> — 코인 생명력 지표</div>
+    <div class="meta" id="asof">—</div>
+  </div>
+  <div class="slides">
+    <!-- 1 오늘의 1위 -->
+    <section class="slide">
+      <div class="kicker">오늘의 코생지 1위</div>
+      <div class="hero" id="hero1"><img alt=""><div><div class="big md n" id="h1sym">—</div><div style="font-size:2vw;color:var(--ink-2);margin-top:1vh">코생지 <b class="n" id="h1clm">—</b> · 24h <b class="n" id="h1h24">—</b> · <span id="h1tag"></span></div></div></div>
+      <p class="so" id="h1so">—</p>
+    </section>
+    <!-- 2 Top10 -->
+    <section class="slide">
+      <div class="kicker">코생지 TOP 10 — 온체인·소셜·모멘텀을 합산한 오늘의 생명력 순위</div>
+      <div class="top" id="top10"></div>
+    </section>
+    <!-- 3 퍼포먼스 -->
+    <section class="slide">
+      <div class="kicker">코생지 TOP 10, 지난 24시간 평균 수익률</div>
+      <div class="big n" id="p_avg">—</div>
+      <p class="so" id="p_so">—</p>
+      <div class="aside">
+        <div class="mini"><span>비트코인 24h</span><b class="n" id="p_btc">—</b></div>
+        <div class="mini"><span>BTC 대비</span><b class="n" id="p_alpha">—</b></div>
+        <div class="mini"><span>최고</span><b class="n" id="p_best">—</b></div>
+        <div class="mini"><span>최저</span><b class="n" id="p_worst">—</b></div>
+      </div>
+    </section>
+    <!-- 4 기여도 -->
+    <section class="slide">
+      <div class="kicker">무엇이 순위를 만들었나 — TOP 5 점수 기여도</div>
+      <div class="contrib" id="contrib"></div>
+      <div class="leg"><span><i style="background:var(--on)"></i>온체인</span><span><i style="background:var(--so)"></i>소셜</span><span><i style="background:var(--mo)"></i>모멘텀</span></div>
+      <p class="so" id="c_so" style="margin-top:2.5vh">—</p>
+    </section>
+    <!-- 5 매트릭스 -->
+    <section class="slide">
+      <div class="kicker">인기와 과열은 다르다 — 코생지(세로) × RSI(가로) 매트릭스</div>
+      <div class="mx"><svg id="mx" viewBox="0 0 1000 520"></svg></div>
+      <p class="so" id="m_so" style="margin-top:1vh">—</p>
+    </section>
+    <!-- 6 메이저 -->
+    <section class="slide">
+      <div class="kicker">메이저 코인은 오늘 몇 등?</div>
+      <div class="three" id="majors"></div>
+      <p class="so" style="margin-top:3vh">코생지는 시가총액이 아니라 <b>지금 얼마나 살아 움직이는지</b>를 봐요. 메이저도 밀릴 수 있어요.</p>
+    </section>
+    <!-- 7 추이 -->
+    <section class="slide">
+      <div class="kicker">최근 90일 — 코생지 TOP 10 평균 점수 추이</div>
+      <div class="big n" id="t_now">—</div>
+      <div class="ts"><svg id="ts" viewBox="0 0 1000 300" preserveAspectRatio="none"></svg></div>
+      <p class="so" id="t_so" style="margin-top:1vh">—</p>
+    </section>
+    <!-- 8 설명 -->
+    <section class="slide">
+      <div class="kicker">코생지(CLM)는 이렇게 계산해요</div>
+      <div class="big md">코인 생명력 지표</div>
+      <div class="three">
+        <div class="card"><div class="t"><span class="sw" style="background:var(--on)"></span>온체인</div><div class="d">활성 지갑, 거래 건수, 거래소 유출입 — 실제로 쓰이고 있나</div></div>
+        <div class="card"><div class="t"><span class="sw" style="background:var(--so)"></span>소셜</div><div class="d">커뮤니티 언급량과 감성 — 사람들이 이야기하고 있나</div></div>
+        <div class="card"><div class="t"><span class="sw" style="background:var(--mo)"></span>모멘텀</div><div class="d">가격 추세, RSI, 거래대금 변화 — 돈이 움직이고 있나</div></div>
+      </div>
+      <p class="so" style="margin-top:3vh">세 점수를 AI가 합산해 <b>매일 아침 6시</b> 순위를 발표해요. 시가총액 순위와는 다른 그림이 나와요.</p>
+    </section>
+  </div>
+  <div class="foot">
+    <div class="idx"><span id="idx">1</span> / 8 &nbsp;·&nbsp; 기준 <span id="upd">—</span></div>
+    <div class="url"><div><b id="qr_label">data.blockmedia.co.kr/clm</b><span>폰으로 스캔하면 오늘 브리프 전체를 볼 수 있어요</span></div><div class="qr" id="qr"></div></div>
+  </div>
+</div>
+<script>
+var DUR=15000, BASE="https://data.blockmedia.co.kr", SRC=BASE+"/out/clm/brief_context.json", PAGE=BASE+"/clm.html";
+var QUIZ=new URLSearchParams(location.search).get("quiz")==="1";   // ?quiz=1 → 1~3위 블러 (퀴즈 정답 가리기)
+var DEMO={"as_of_date": "2026-09-12", "publish_str": "2026-09-14 (월) 06:34 KST", "summary": {"market": "코생지 TOP 10의 24시간 평균 변동은 +2.18%로, 비트코인 대비 +1.34%p 높았다.", "pattern": "TOP 10 중 1개 종목이 과매도 구간(RSI 35 이하)에 분포하며, 소셜 관심도가 우세한 종목이 다수다.", "focus": "코생지가 높으면서 과매도 구간에 함께 해당하는 종목은 TRUMP이다."}, "dashboard": {"top10_avg": 2.18, "median": 2.08, "ex_top1_avg": 2.99, "best": {"symbol": "JUP", "pct": 9.2}, "worst": {"symbol": "DOT", "pct": -5.07}, "btc": 0.85, "alpha": 1.34}, "majors": [{"rank": 2, "symbol": "ETH", "clm": 1.7424, "h24": 3.17, "rsi": 56.4, "driver": "SOCIAL", "driver_kr": "소셜", "comment": "소셜 관심도가 높음"}, {"rank": 3, "symbol": "SOL", "clm": 1.7335, "h24": 3.82, "rsi": 47.3, "driver": "SOCIAL", "driver_kr": "소셜", "comment": "소셜 관심도가 높음"}, {"rank": 9, "symbol": "XRP", "clm": 1.0173, "h24": 1.63, "rsi": 46.8, "driver": "SOCIAL", "driver_kr": "소셜", "comment": "소셜 관심도가 높음"}], "top10": [{"rank": 1, "symbol": "DOT", "clm": 2.3025, "h24": -5.07, "rsi": 64.2, "driver": "SOCIAL", "driver_kr": "소셜", "comment": "소셜 관심도가 높음", "contrib": {"onchain": 0, "social": 81, "momentum": 19}}, {"rank": 2, "symbol": "ETH", "clm": 1.7424, "h24": 3.17, "rsi": 56.4, "driver": "SOCIAL", "driver_kr": "소셜", "comment": "소셜 관심도가 높음", "contrib": {"onchain": 35, "social": 65, "momentum": 0}}, {"rank": 3, "symbol": "SOL", "clm": 1.7335, "h24": 3.82, "rsi": 47.3, "driver": "SOCIAL", "driver_kr": "소셜", "comment": "소셜 관심도가 높음", "contrib": {"onchain": 39, "social": 61, "momentum": 0}}, {"rank": 4, "symbol": "TRUMP", "clm": 1.4777, "h24": 2.08, "rsi": 24.5, "driver": "SOCIAL", "driver_kr": "소셜", "comment": "소셜 관심도가 높으나 가격은 과매도 구간", "contrib": {"onchain": 14, "social": 76, "momentum": 10}}, {"rank": 5, "symbol": "PIEVERSE", "clm": 1.2668, "h24": 3.55, "rsi": 62.8, "driver": "MOMENTUM", "driver_kr": "모멘텀", "comment": "가격 모멘텀이 유지되는 상태", "contrib": {"onchain": 0, "social": 0, "momentum": 100}}, {"rank": 6, "symbol": "CC", "clm": 1.1967, "h24": -0.32, "rsi": 36.8, "driver": "SOCIAL", "driver_kr": "소셜", "comment": "소셜 관심도가 높음", "contrib": {"onchain": 0, "social": 100, "momentum": 0}}, {"rank": 7, "symbol": "PEPE", "clm": 1.1726, "h24": 2.08, "rsi": 38.5, "driver": "ONCHAIN", "driver_kr": "온체인", "comment": "온체인 활동이 활발함", "contrib": {"onchain": 90, "social": 0, "momentum": 10}}, {"rank": 8, "symbol": "JUP", "clm": 1.1368, "h24": 9.2, "rsi": 55.9, "driver": "SOCIAL", "driver_kr": "소셜", "comment": "소셜 관심도가 높음", "contrib": {"onchain": 26, "social": 48, "momentum": 26}}, {"rank": 9, "symbol": "XRP", "clm": 1.0173, "h24": 1.63, "rsi": 46.8, "driver": "SOCIAL", "driver_kr": "소셜", "comment": "소셜 관심도가 높음", "contrib": {"onchain": 29, "social": 71, "momentum": 0}}, {"rank": 10, "symbol": "DOGE", "clm": 1.0014, "h24": 1.7, "rsi": 48.4, "driver": "SOCIAL", "driver_kr": "소셜", "comment": "소셜 관심도가 높음", "contrib": {"onchain": 34, "social": 66, "momentum": 0}}], "matrix": [{"rank": 1, "symbol": "DOT", "x": 64.2, "y": 2.3025, "h24": -5.07, "quadrant": "관심", "label": "1위 DOT -5.1%"}, {"rank": 2, "symbol": "ETH", "x": 56.4, "y": 1.7424, "h24": 3.17, "quadrant": "관심", "label": "2위 ETH +3.2%"}, {"rank": 3, "symbol": "SOL", "x": 47.3, "y": 1.7335, "h24": 3.82, "quadrant": "관심", "label": "3위 SOL +3.8%"}, {"rank": 4, "symbol": "TRUMP", "x": 24.5, "y": 1.4777, "h24": 2.08, "quadrant": "관망", "label": "4위 TRUMP +2.1%"}, {"rank": 5, "symbol": "PIEVERSE", "x": 62.8, "y": 1.2668, "h24": 3.55, "quadrant": "관망", "label": "5위 PIEVERSE +3.5%"}, {"rank": 6, "symbol": "CC", "x": 36.8, "y": 1.1967, "h24": -0.32, "quadrant": "관망", "label": "6위 CC -0.3%"}, {"rank": 7, "symbol": "PEPE", "x": 38.5, "y": 1.1726, "h24": 2.08, "quadrant": "관망", "label": "7위 PEPE +2.1%"}, {"rank": 8, "symbol": "JUP", "x": 55.9, "y": 1.1368, "h24": 9.2, "quadrant": "관망", "label": "8위 JUP +9.2%"}, {"rank": 9, "symbol": "XRP", "x": 46.8, "y": 1.0173, "h24": 1.63, "quadrant": "관망", "label": "9위 XRP +1.6%"}, {"rank": 10, "symbol": "DOGE", "x": 48.4, "y": 1.0014, "h24": 1.7, "quadrant": "관망", "label": "10위 DOGE +1.7%"}], "matrix_axis": {"x": [10, 100], "y": [0.5, 2.5]}, "timeseries": {"series": [{"date": "2026-06-15", "cohort_strength": 1.3931, "alpha": 0.0014}, {"date": "2026-06-16", "cohort_strength": 1.3248, "alpha": -0.0001}, {"date": "2026-06-17", "cohort_strength": 1.2912, "alpha": 0.0022}, {"date": "2026-06-18", "cohort_strength": 1.2244, "alpha": 0.0118}, {"date": "2026-06-19", "cohort_strength": 1.2876, "alpha": 0.0047}, {"date": "2026-06-20", "cohort_strength": 1.3212, "alpha": -0.0163}, {"date": "2026-06-21", "cohort_strength": 1.3319, "alpha": -0.0061}, {"date": "2026-06-22", "cohort_strength": 1.3202, "alpha": 0.0018}, {"date": "2026-06-23", "cohort_strength": 1.3185, "alpha": -0.0058}, {"date": "2026-06-24", "cohort_strength": 1.4154, "alpha": -0.0084}, {"date": "2026-06-25", "cohort_strength": 1.3339, "alpha": -0.0012}, {"date": "2026-06-26", "cohort_strength": 1.4507, "alpha": 0.0019}, {"date": "2026-06-27", "cohort_strength": 1.3921, "alpha": 0.013}, {"date": "2026-06-28", "cohort_strength": 1.7222, "alpha": 0.0115}, {"date": "2026-06-29", "cohort_strength": 1.6058, "alpha": 0.0058}, {"date": "2026-06-30", "cohort_strength": 1.4938, "alpha": 0.0054}, {"date": "2026-07-01", "cohort_strength": 1.3453, "alpha": 0.0138}, {"date": "2026-07-02", "cohort_strength": 1.3931, "alpha": -0.0035}, {"date": "2026-07-03", "cohort_strength": 1.6141, "alpha": 0.0132}, {"date": "2026-07-04", "cohort_strength": 1.6245, "alpha": 0.0378}, {"date": "2026-07-05", "cohort_strength": 1.451, "alpha": -0.0028}, {"date": "2026-07-06", "cohort_strength": 1.5155, "alpha": -0.0053}, {"date": "2026-07-07", "cohort_strength": 1.588, "alpha": 0.0058}, {"date": "2026-07-08", "cohort_strength": 1.5716, "alpha": -0.0128}, {"date": "2026-07-09", "cohort_strength": 1.4562, "alpha": -0.0091}, {"date": "2026-07-10", "cohort_strength": 1.425, "alpha": -0.0003}, {"date": "2026-07-11", "cohort_strength": 1.4362, "alpha": 0.0055}, {"date": "2026-07-12", "cohort_strength": 1.4219, "alpha": -0.0112}, {"date": "2026-07-13", "cohort_strength": 1.4504, "alpha": 0.0005}, {"date": "2026-07-14", "cohort_strength": 1.4049, "alpha": 0.0109}, {"date": "2026-07-15", "cohort_strength": 1.3363, "alpha": -0.0177}, {"date": "2026-07-16", "cohort_strength": 1.4113, "alpha": 0.0317}, {"date": "2026-07-17", "cohort_strength": 1.5034, "alpha": -0.0044}, {"date": "2026-07-18", "cohort_strength": 1.4682, "alpha": -0.0055}, {"date": "2026-07-19", "cohort_strength": 1.5496, "alpha": -0.0059}, {"date": "2026-07-20", "cohort_strength": 1.5752, "alpha": 0.0196}, {"date": "2026-07-21", "cohort_strength": 1.5844, "alpha": 0.0057}, {"date": "2026-07-22", "cohort_strength": 1.5527, "alpha": -0.0131}, {"date": "2026-07-23", "cohort_strength": 1.5453, "alpha": 0.0066}, {"date": "2026-07-24", "cohort_strength": 1.4424, "alpha": -0.0125}, {"date": "2026-07-25", "cohort_strength": 1.6064, "alpha": 0.0023}, {"date": "2026-07-26", "cohort_strength": 1.5635, "alpha": 0.0198}, {"date": "2026-07-27", "cohort_strength": 1.6625, "alpha": 0.0308}, {"date": "2026-07-28", "cohort_strength": 1.53, "alpha": -0.0118}, {"date": "2026-07-29", "cohort_strength": 1.4221, "alpha": -0.0115}, {"date": "2026-07-30", "cohort_strength": 1.3752, "alpha": -0.0031}, {"date": "2026-07-31", "cohort_strength": 1.4863, "alpha": 0.0135}, {"date": "2026-08-01", "cohort_strength": 1.6495, "alpha": 0.0155}, {"date": "2026-08-02", "cohort_strength": 1.6919, "alpha": 0.0148}, {"date": "2026-08-03", "cohort_strength": 1.6731, "alpha": 0.0195}, {"date": "2026-08-04", "cohort_strength": 1.4248, "alpha": 0.0052}, {"date": "2026-08-05", "cohort_strength": 1.6672, "alpha": 0.0094}, {"date": "2026-08-06", "cohort_strength": 1.6161, "alpha": -0.012}, {"date": "2026-08-07", "cohort_strength": 1.6578, "alpha": 0.0008}, {"date": "2026-08-08", "cohort_strength": 1.5593, "alpha": -0.0147}, {"date": "2026-08-09", "cohort_strength": 1.6899, "alpha": 0.0208}, {"date": "2026-08-10", "cohort_strength": 1.6096, "alpha": 0.0104}, {"date": "2026-08-11", "cohort_strength": 1.5423, "alpha": 0.0201}, {"date": "2026-08-12", "cohort_strength": 1.5269, "alpha": 0.0154}, {"date": "2026-08-13", "cohort_strength": 1.521, "alpha": -0.0139}, {"date": "2026-08-14", "cohort_strength": 1.4678, "alpha": 0.0145}, {"date": "2026-08-15", "cohort_strength": 1.4926, "alpha": 0.0078}, {"date": "2026-08-16", "cohort_strength": 1.4439, "alpha": -0.0031}, {"date": "2026-08-17", "cohort_strength": 1.3268, "alpha": -0.0036}, {"date": "2026-08-18", "cohort_strength": 1.6066, "alpha": -0.0057}, {"date": "2026-08-19", "cohort_strength": 1.674, "alpha": 0.0041}, {"date": "2026-08-20", "cohort_strength": 1.5586, "alpha": 0.0238}, {"date": "2026-08-21", "cohort_strength": 1.7592, "alpha": 0.0328}, {"date": "2026-08-22", "cohort_strength": 1.5547, "alpha": 0.0509}, {"date": "2026-08-23", "cohort_strength": 1.6403, "alpha": 0.0577}, {"date": "2026-08-24", "cohort_strength": 1.6092, "alpha": 0.0268}, {"date": "2026-08-25", "cohort_strength": 1.5494, "alpha": -0.0371}, {"date": "2026-08-26", "cohort_strength": 1.5021, "alpha": -0.0373}, {"date": "2026-08-27", "cohort_strength": 1.5321, "alpha": 0.0258}, {"date": "2026-08-28", "cohort_strength": 1.5258, "alpha": 0.0092}, {"date": "2026-08-29", "cohort_strength": 1.5728, "alpha": 0.005}, {"date": "2026-08-30", "cohort_strength": 1.4819, "alpha": 0.0164}, {"date": "2026-08-31", "cohort_strength": 1.3137, "alpha": -0.0206}, {"date": "2026-09-01", "cohort_strength": 1.3451, "alpha": 0.0353}, {"date": "2026-09-02", "cohort_strength": 1.3616, "alpha": 0.0102}, {"date": "2026-09-03", "cohort_strength": 1.298, "alpha": 0.01}, {"date": "2026-09-04", "cohort_strength": 1.302, "alpha": 0.0086}, {"date": "2026-09-05", "cohort_strength": 1.3426, "alpha": -0.0082}, {"date": "2026-09-06", "cohort_strength": 1.3892, "alpha": 0.0584}, {"date": "2026-09-07", "cohort_strength": 1.307, "alpha": 0.0511}, {"date": "2026-09-08", "cohort_strength": 1.292, "alpha": 0.0072}, {"date": "2026-09-09", "cohort_strength": 1.3687, "alpha": 0.0764}, {"date": "2026-09-10", "cohort_strength": 1.3236, "alpha": -0.0407}, {"date": "2026-09-11", "cohort_strength": 1.3663, "alpha": -0.0181}, {"date": "2026-09-12", "cohort_strength": 1.4048, "alpha": 0.0134}]}};
+function $(id){return document.getElementById(id)}
+function cls(v){return v>0?"up":v<0?"down":"flat"}
+function sign(v,d){return (v>0?"+":v<0?"−":"")+Math.abs(v).toFixed(d==null?1:d)}
+function setBig(id,v,unit,d){$(id).className="big n "+cls(v);$(id).innerHTML=sign(v,d)+"<small>"+unit+"</small>"}
+function tag(k){var m={"온체인":"on","소셜":"so","모멘텀":"mo"};return '<span class="tag '+(m[k]||"so")+'">'+k+'</span>'}
+function logo(t){return t.logo_url||("https://static.upbit.com/logos/"+t.symbol+".png")}
+function render(d){
+  $("asof").textContent="기준 "+d.as_of_date+" · 발표 "+(d.publish_str||d.updated_date); $("upd").textContent=d.as_of_date;
+  var t1=d.top10[0];
+  $("hero1").querySelector("img").src=logo(t1); $("h1sym").textContent=t1.symbol; $("h1clm").textContent=t1.clm.toFixed(2);
+  $("h1h24").textContent=sign(t1.h24)+"%"; $("h1h24").className="n "+cls(t1.h24); $("h1tag").innerHTML=tag(t1.driver_kr);
+  $("h1so").innerHTML=t1.symbol+"은(는) <b>"+t1.driver_kr+" 점수 "+t1.contrib[t1.driver==="ONCHAIN"?"onchain":t1.driver==="MOMENTUM"?"momentum":"social"]+"%</b>로 오늘 1위. "+t1.comment+(t1.rsi>=70?" — 다만 RSI "+t1.rsi+"로 과열 구간.":t1.rsi<=35?" — RSI "+t1.rsi+", 과매도 구간이에요.":"");
+  if(QUIZ){$("hero1").classList.add("blur"); $("h1so").textContent="정답은 정시에 공개돼요 — 아이패드에서 맞혀보세요!"}
+  $("top10").innerHTML=d.top10.map(function(t){return '<div class="r'+(t.rank===1?" t1":"")+(QUIZ&&t.rank<=3?" blur":"")+'"><i>'+t.rank+'</i><img src="'+logo(t)+'" alt=""><em>'+t.symbol+'</em>'+tag(t.driver_kr)+'<span class="c n">'+t.clm.toFixed(2)+'</span><b class="n '+cls(t.h24)+'">'+sign(t.h24)+'%</b></div>'}).join("");
+  var db=d.dashboard; setBig("p_avg",db.top10_avg,"%");
+  $("p_so").innerHTML=db.alpha>=0?"비트코인("+sign(db.btc)+"%)보다 <b>"+db.alpha.toFixed(1)+"%p 더</b> 움직였어요. 생명력 높은 코인이 먼저 반응해요.":"오늘은 비트코인("+sign(db.btc)+"%)이 <b>"+Math.abs(db.alpha).toFixed(1)+"%p 앞섰어요.</b> 지수는 있는 그대로 보여드려요.";
+  $("p_btc").textContent=sign(db.btc)+"%";$("p_btc").className="n "+cls(db.btc);$("p_alpha").textContent=sign(db.alpha)+"%p";$("p_alpha").className="n "+cls(db.alpha);
+  $("p_best").innerHTML=db.best.symbol+' <span class="up">'+sign(db.best.pct)+'%</span>';$("p_worst").innerHTML=db.worst.symbol+' <span class="down">'+sign(db.worst.pct)+'%</span>';
+  $("contrib").innerHTML=d.top10.slice(0,5).map(function(t){var c=t.contrib;return '<div class="row"><span>'+t.symbol+'</span><div class="bar2"><i class="on" style="width:'+c.onchain+'%"></i><i class="so" style="width:'+c.social+'%"></i><i class="mo" style="width:'+c.momentum+'%"></i></div></div>'}).join("");
+  $("c_so").innerHTML=d.summary.pattern;
+  drawMatrix(d); $("m_so").innerHTML=d.summary.focus;
+  $("majors").innerHTML=d.majors.map(function(m){return '<div class="card"><div class="t">'+m.symbol+'</div><div class="big md n" style="font-size:7vw">'+m.rank+'<small style="font-size:2.5vw">위</small></div><div class="d">코생지 '+m.clm.toFixed(2)+' · 24h <span class="'+cls(m.h24)+'">'+sign(m.h24)+'%</span></div></div>'}).join("");
+  drawTS(d);
+}
+function drawMatrix(d){
+  var ax=d.matrix_axis, X=function(v){return (v-ax.x[0])/(ax.x[1]-ax.x[0])*960+20}, Y=function(v){return 500-(v-ax.y[0])/(ax.y[1]-ax.y[0])*480};
+  var xs=70,ys=1.5, h='';
+  h+='<rect x="0" y="0" width="1000" height="520" fill="#121d30" rx="12"/>';
+  h+='<line class="ax" x1="'+X(xs)+'" y1="0" x2="'+X(xs)+'" y2="520"/><line class="ax" x1="0" y1="'+Y(ys)+'" x2="1000" y2="'+Y(ys)+'"/>';
+  h+='<text class="q" x="14" y="24">생명력 높음 · 저평가</text><text class="q" x="'+(X(xs)+14)+'" y="24">생명력 높음 · 과열 주의</text><text class="q" x="14" y="508">조용함</text><text class="q" x="'+(X(xs)+14)+'" y="508">과열</text>';
+  h+='<text x="500" y="518" text-anchor="middle">RSI →</text><text x="0" y="270" transform="rotate(-90 12 270)">코생지 →</text>';
+  d.matrix.forEach(function(p){var q=QUIZ&&p.rank<=3;h+='<circle class="dot" cx="'+X(p.x)+'" cy="'+Y(p.y)+'" r="'+(p.rank===1?16:11)+'"'+(q?' opacity=".25"':'')+'/>'+(q?'':'<text class="lab" x="'+(X(p.x)+18)+'" y="'+(Y(p.y)+6)+'">'+p.symbol+'</text>')});
+  $("mx").innerHTML=h;
+}
+function drawTS(d){
+  var s=d.timeseries.series.slice(-90), v=s.map(function(x){return x.cohort_strength}), n=v.length, mn=Math.min.apply(null,v), mx=Math.max.apply(null,v);
+  var pts=v.map(function(y,i){return (i/(n-1)*1000).toFixed(1)+","+(290-(y-mn)/(mx-mn||1)*270).toFixed(1)});
+  $("ts").innerHTML='<path class="area" d="M0,300 L'+pts.join(" L")+' L1000,300 Z"/><path d="M'+pts.join(" L")+'"/>';
+  var now=v[n-1], prev=v[Math.max(0,n-31)]; $("t_now").innerHTML=now.toFixed(2)+'<small>점</small>';
+  $("t_so").innerHTML="TOP 10 평균 생명력이 한 달 전("+prev.toFixed(2)+")보다 <b>"+(now>=prev?"올랐어요":"내렸어요")+"</b>. 시장 전체의 활력 온도계라고 보면 돼요.";
+}
+render(DEMO);
+fetch(SRC+"?t="+Date.now(),{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(render).catch(function(){console.warn("brief_context fetch 실패 → 내장 데이터")});
+setInterval(function(){fetch(SRC+"?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(render).catch(function(){})},30*60000);
+new QRCode($("qr"),{text:PAGE,width:256,height:256,correctLevel:QRCode.CorrectLevel.M}); $("qr_label").textContent=PAGE.replace("https://","");
+var slides=document.querySelectorAll(".slide"),cur=0;
+document.documentElement.style.setProperty("--dur",DUR+"ms");
+function show(i){slides[cur].classList.remove("on");cur=i;slides[cur].classList.add("on");$("idx").textContent=cur+1;var b=$("bar");b.classList.remove("run");void b.offsetWidth;b.classList.add("run")}
+show(0);setInterval(function(){show((cur+1)%slides.length)},DUR);
+document.addEventListener("keydown",function(e){if(e.key==="ArrowRight")show((cur+1)%slides.length);if(e.key==="ArrowLeft")show((cur-1+slides.length)%slides.length)});
+</script>
+</body>
+</html>
