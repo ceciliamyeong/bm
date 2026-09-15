@@ -120,7 +120,7 @@ h1{font-size:34px;line-height:1.2;font-weight:700;letter-spacing:-.02em;margin-b
 
 <script>
 /* ===== 설정 ===== */
-var BRIEF_URL="https://data.blockmedia.co.kr/out/clm/brief_context.json";  // 코생지 데이터
+var BRIEF_URL="https://raw.githubusercontent.com/Blockmedia-DataTeam/CLM-brief/main/brief_context.json";  // 코생지 데이터
 var PRIZE_MIN=2;              // 몇 개 이상 맞히면 굿즈
 var IDLE_SEC=60;              // 결과 화면에서 이 시간 지나면 자동 초기화
 var SUPABASE={url:"",key:"",table:"booth_answers"};   // 채우면 결과가 저장됨 (대형화면 예측 분포용)
@@ -178,7 +178,7 @@ function next(n){
   $("score").textContent=s;$("code").textContent=code;$("codebox").className="code"+(win?" win":"");
   $("codelbl").textContent=win?"굿즈 인증코드":"참여 코드";$("codesub").textContent=win?"스태프에게 이 화면을 보여주세요":"아쉽지만 다음 기회에! 한 번 더 도전해도 돼요";
   $("answers").innerHTML=r.map(function(x){return '<div class="ans"><div class="h"><div class="m '+(x.ok?"ok":"no")+'">'+(x.ok?"✓":"✕")+'</div><div class="q">'+x.q+'</div><div class="a">'+x.a+'</div></div><div class="why">'+x.why+'</div></div>'}).join("");
-  $("ai").textContent=(brief.summary&&(brief.summary.focus||brief.summary.market))||"";$("asof").textContent=brief.as_of_date||"";
+  $("ai").textContent=(brief.summary&&(brief.summary.focus||brief.summary.market))||"";$("asof").textContent=brief.updated_date||brief.as_of_date||"";
   go(4); save({code:code,score:s,live_kind:live.kind,live_answer:String(ans[1]),q2:qs[0].id,q3:qs[1].id,win:win}); startIdle();
 }
 function reset(){clearTimeout(idleT);$("idle").style.transition="none";$("idle").style.width="0";go(0);document.querySelectorAll(".sel").forEach(function(x){x.classList.remove("sel")})}
