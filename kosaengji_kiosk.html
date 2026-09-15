@@ -22,7 +22,7 @@ html,body{word-break:keep-all;overflow-wrap:anywhere;height:100%;background:var(
 .head .brand{font-size:1.7vw;font-weight:700;letter-spacing:-.02em}
 .head .brand span{color:var(--accent)}
 .head .meta{font-size:1.25vw;color:var(--ink-2)}
-.slides{position:relative;flex:1}
+.slides{position:relative;flex:1;min-height:0;overflow:hidden;margin:1.5vh 0}
 .slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center}
 .slide.on{display:flex;animation:in .45s ease both}
 @keyframes in{from{opacity:0;transform:translateY(1.2vh)}to{opacity:1;transform:none}}
@@ -30,6 +30,7 @@ html,body{word-break:keep-all;overflow-wrap:anywhere;height:100%;background:var(
 .kicker small{display:block;font-size:1.3vw;color:var(--ink-3);font-weight:400;margin-top:.4vh}
 .big{font-size:min(14.5vw,26vh);line-height:.92;font-weight:800;white-space:nowrap}
 .big.md{font-size:10vw}
+.big.sm{font-size:8.5vw;line-height:1}
 .big small{font-size:4.6vw;font-weight:500;color:var(--ink-2);letter-spacing:0;margin-left:.5vw}
 .so{font-size:2.6vw;line-height:1.4;margin-top:2.6vh;max-width:60vw;letter-spacing:-.015em}
 .so b{font-weight:700;color:var(--accent);background:var(--accent-soft);padding:.06em .28em;border-radius:.28em}
@@ -60,14 +61,14 @@ html,body{word-break:keep-all;overflow-wrap:anywhere;height:100%;background:var(
 .contrib .c-on{background:var(--on)}.contrib .c-so{background:var(--so)}.contrib .c-mo{background:var(--mo)}
 .leg{display:flex;gap:3vw;font-size:1.6vw;color:var(--ink-2);margin-top:1.5vh}
 .leg i{display:inline-block;width:1.4vw;height:1.4vw;border-radius:.3vw;vertical-align:middle;margin-right:.6vw}
-.mx{width:80vw;height:52vh;margin-top:2vh}
+.mx{width:80vw;height:44vh;margin-top:1vh}
 .mx svg{width:100%;height:100%;overflow:visible}
 .mx text{font-size:1.3vw;fill:var(--ink-2)}
 .mx .dot{fill:var(--accent);stroke:#fff;stroke-width:.25vw}
 .mx .lab{font-size:2vw;font-weight:600;paint-order:stroke;stroke:#fff;stroke-width:.6vw;stroke-linejoin:round}
 .mx .q{font-size:1.25vw;fill:var(--ink-3)}
 .mx .ax{stroke:var(--line);stroke-width:2}
-.ts{width:80vw;height:34vh;margin-top:2.5vh}
+.ts{width:80vw;height:24vh;margin-top:2vh}
 .ts svg{width:100%;height:100%;overflow:visible}
 .ts path{fill:none;stroke:var(--accent);stroke-width:.35vw;stroke-linejoin:round}
 .ts .area{fill:rgba(31,157,90,.14);stroke:none}
@@ -127,7 +128,7 @@ html,body{word-break:keep-all;overflow-wrap:anywhere;height:100%;background:var(
     <section class="slide">
       <div class="kicker">인기와 과열은 달라요 — 코생지(세로) × RSI(가로) 매트릭스<small>Popularity is not overheating — CLM (y) × RSI (x)</small></div>
       <div class="mx"><svg id="mx" viewBox="0 0 1000 520"></svg></div>
-      <p class="so" id="m_so" style="margin-top:1vh">—</p>
+      <p class="so" id="m_so" style="margin-top:1vh;font-size:2.1vw">—</p>
     </section>
     <!-- 6 메이저 -->
     <section class="slide">
@@ -138,7 +139,7 @@ html,body{word-break:keep-all;overflow-wrap:anywhere;height:100%;background:var(
     <!-- 7 추이 -->
     <section class="slide">
       <div class="kicker">최근 90일 — 코생지 TOP 10 평균 점수 추이<small>Last 90 days — Top 10 average CLM score</small></div>
-      <div class="big n" id="t_now">—</div>
+      <div class="big sm n" id="t_now">—</div>
       <div class="ts"><svg id="ts" viewBox="0 0 1000 300" preserveAspectRatio="none"></svg></div>
       <p class="so" id="t_so" style="margin-top:1vh">—</p>
     </section>
@@ -166,7 +167,7 @@ var DEMO={"as_of_date": "2026-09-12", "publish_str": "2026-09-14 (월) 06:34 KST
 function $(id){return document.getElementById(id)}
 function cls(v){return v>0?"up":v<0?"down":"flat"}
 function sign(v,d){return (v>0?"+":v<0?"−":"")+Math.abs(v).toFixed(d==null?1:d)}
-function setBig(id,v,unit,d){$(id).className="big n "+cls(v);$(id).innerHTML=sign(v,d)+"<small>"+unit+"</small>"}
+function setBig(id,v,unit,d){var e=$(id),sm=e.classList.contains("sm");e.className="big n "+cls(v)+(sm?" sm":"");e.innerHTML=sign(v,d)+"<small>"+unit+"</small>"}
 function tag(k){var m={"온체인":"t-on","소셜":"t-so","모멘텀":"t-mo"};return '<span class="tag '+(m[k]||"t-so")+'">'+k+'</span>'}
 function logo(t){return t.logo_url||("https://static.upbit.com/logos/"+t.symbol+".png")}
 function soft(t){return String(t||"").replace(/분포하며/g,"분포하고").replace(/다수다\.?/g,"많아요.").replace(/([가-힣])다\.\s*/g,"$1어요. ").replace(/([가-힣])다$/,"$1어요.").replace(/이다\.?/g,"예요.").replace(/있어요\./g,"있어요.").replace(/([^.])$/,"$1.")}
