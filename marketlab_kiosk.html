@@ -25,7 +25,7 @@ html,body{word-break:keep-all;overflow-wrap:anywhere;height:100%;background:var(
 .head .meta .dot{display:inline-block;width:.6vw;height:.6vw;border-radius:50%;background:var(--up);margin-right:.5vw;vertical-align:middle;animation:pulse 1.8s infinite}
 .head .meta .stale .dot{background:var(--ink-3);animation:none}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
-.slides{position:relative;flex:1}
+.slides{position:relative;flex:1;min-height:0;overflow:hidden;margin:1.5vh 0}
 .slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center}
 .slide.on{display:flex;animation:in .45s ease both}
 @keyframes in{from{opacity:0;transform:translateY(1.2vh)}to{opacity:1;transform:none}}
@@ -33,6 +33,7 @@ html,body{word-break:keep-all;overflow-wrap:anywhere;height:100%;background:var(
 .kicker small{display:block;font-size:1.3vw;color:var(--ink-3);font-weight:400;margin-top:.4vh;letter-spacing:0}
 .big{font-size:min(14.5vw,26vh);line-height:.92;font-weight:800;white-space:nowrap}
 .big.md{font-size:11vw}
+.big.sm{font-size:8.5vw;line-height:1}
 .big small{font-size:4.6vw;font-weight:500;color:var(--ink-2);letter-spacing:0;margin-left:.5vw}
 .so{font-size:2.6vw;line-height:1.4;margin-top:2.6vh;max-width:60vw;letter-spacing:-.015em}
 .so b{font-weight:700;background:var(--accent-soft);padding:.06em .28em;border-radius:.28em}
@@ -45,7 +46,7 @@ html,body{word-break:keep-all;overflow-wrap:anywhere;height:100%;background:var(
 .share div{display:flex;align-items:center;padding-left:1.1vw;color:#fff;font-size:1.7vw;font-weight:600;white-space:nowrap;overflow:hidden;transition:width 1s ease}
 .share .a{background:#1f5f9c}.share .b{background:var(--accent)}.share .c{background:#7fb0dd}.share .d{background:#c9dcef;color:var(--ink)}
 .rank{display:grid;grid-template-columns:1fr 1fr;gap:0 5vw;margin-top:2.5vh;max-width:80vw}
-.rank .r{display:grid;grid-template-columns:2.4vw 1fr auto auto;align-items:baseline;gap:1.2vw;padding:1.35vh 0;border-bottom:1px solid var(--line);font-size:2.1vw}
+.rank .r{display:grid;grid-template-columns:2.4vw 1fr auto auto;align-items:baseline;gap:1.2vw;padding:1vh 0;border-bottom:1px solid var(--line);font-size:1.9vw}
 .rank .r i{font-style:normal;color:var(--ink-3);font-weight:700;font-size:1.6vw}
 .rank .r em{font-style:normal;font-weight:600}
 .rank .r span{color:var(--ink-2);font-size:1.5vw}
@@ -53,15 +54,23 @@ html,body{word-break:keep-all;overflow-wrap:anywhere;height:100%;background:var(
 .two{display:grid;grid-template-columns:1fr 1fr;gap:6vw;margin-top:2vh;max-width:84vw}
 .two h4{font-size:1.8vw;font-weight:600;color:var(--ink-2);margin-bottom:.5vh}
 .two .rank{grid-template-columns:1fr;gap:0;max-width:none;margin-top:0}
-.spark{width:80vw;height:30vh;margin-top:2.5vh}
+.exgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.6vw;margin-top:2.5vh;max-width:88vw}
+.ex{background:var(--bg-2);border-radius:1.4vh;padding:2.2vh 1.5vw}
+.ex .h{display:flex;align-items:center;gap:.8vw;font-size:1.9vw;font-weight:700;margin-bottom:1.2vh}
+.ex .h i{width:2.6vw;height:2.6vw;border-radius:50%;color:#fff;font-style:normal;font-size:1.3vw;display:flex;align-items:center;justify-content:center}
+.ex .r{display:grid;grid-template-columns:1.6vw 1fr 6vw;align-items:center;gap:.8vw;padding:1vh 0;border-top:1px solid var(--line);font-size:1.7vw}
+.ex .r em{font-style:normal;font-weight:600}
+.ex .r span{color:var(--ink-3);font-size:1.3vw;font-weight:700}
+.ex .r b{font-weight:500;text-align:right;color:var(--ink-2)}
+.spark{width:80vw;height:22vh;margin-top:2vh}
 .spark svg{width:100%;height:100%;overflow:visible}
 .spark path{fill:none;stroke-width:.35vw;stroke-linejoin:round;stroke-linecap:round}
 .spark .bm{stroke:var(--accent)}.spark .btc{stroke:var(--ink-3);stroke-dasharray:.6vw .6vw}
 .legend{display:flex;gap:2.5vw;font-size:1.5vw;color:var(--ink-2);margin-top:1vh}
 .legend i{display:inline-block;width:2vw;height:.35vw;vertical-align:middle;margin-right:.6vw;border-radius:.2vw}
 .legend .l1{background:var(--accent)}.legend .l2{background:var(--ink-3)}
-.tiles{display:grid;grid-template-columns:repeat(10,1fr);gap:.7vw;margin-top:2.5vh;max-width:88vw}
-.tile{border-radius:.9vh;padding:1.3vh 1vw;background:var(--bg-2);display:flex;flex-direction:column;justify-content:space-between;min-height:9.5vh}
+.tiles{display:grid;grid-template-columns:repeat(10,1fr);gap:.6vw;margin-top:2vh;max-width:88vw}
+.tile{border-radius:.9vh;padding:1vh 1vw;background:var(--bg-2);display:flex;flex-direction:column;justify-content:space-between;min-height:7.5vh}
 .tile .s{font-size:1.45vw;font-weight:600;display:flex;justify-content:space-between}
 .tile .s small{font-size:1.05vw;font-weight:500;opacity:.65}
 .tile .v{font-size:1.5vw;font-weight:500}
@@ -113,11 +122,11 @@ html,body{word-break:keep-all;overflow-wrap:anywhere;height:100%;background:var(
       <div class="kicker">국내 4개 거래소, 지난 24시간 거래대금<small>24h trading value, 4 Korean exchanges</small></div>
       <div class="big n"><span id="vol">—</span><small>조원</small></div>
       <div class="share" id="share"></div>
-      <p class="so">업비트·빗썸·코인원·코빗을 한 화면에.<br><b>한국 시장 전체가 이 숫자예요.</b></p>
+      <p class="so">업비트·빗썸·코인원·디지털X를 한 화면에.<br><b>한국 시장 전체가 이 숫자예요.</b></p>
     </section>
     <section data-url="marketlab" class="slide">
       <div class="kicker">한국인은 지금 무엇을 거래하나 — 국내 거래대금 상위<small>What Koreans are trading — top by value</small></div>
-      <div class="big md n"><span id="t1sym">—</span></div>
+      <div class="big sm n"><span id="t1sym">—</span></div>
       <p class="so" id="t1so">오늘 국내 거래대금 1위.</p>
       <div class="rank" id="top10"></div>
     </section>
@@ -137,16 +146,13 @@ html,body{word-break:keep-all;overflow-wrap:anywhere;height:100%;background:var(
     </section>
     <section data-url="bm20" class="slide">
       <div class="kicker">BM20 지수 — 오늘<small>BM20 Index — today</small></div>
-      <div class="big n" id="bm_today">—</div>
-      <p class="so">한국인이 가장 많이 거래하는 코인 20개를<br>한 숫자로. 지수 레벨 <b><span id="bm_level">—</span></b><br><span style="font-size:1.8vw;color:var(--ink-3)">종목 옆 작은 숫자는 지수 비중</span></p>
+      <div class="big sm n" id="bm_today">—</div>
+      <p class="so">디지털자산 시가총액 상위 20개 코인으로 만든<br>블록미디어 대표지수 <b>BM20</b>. 지수 레벨 <span id="bm_level">—</span><br><span style="font-size:1.8vw;color:var(--ink-3)">종목 옆 작은 숫자는 지수 비중</span></p>
       <div class="tiles" id="tiles"></div>
     </section>
-    <section data-url="bm20" class="slide">
-      <div class="kicker">BM20 vs 비트코인 — 최근 리밸런싱(7/6) 이후<small>BM20 vs Bitcoin since last rebalance (Jul 6)</small></div>
-      <div class="big n" id="alpha">—</div>
-      <p class="so" id="alpha_so">—</p>
-      <div class="spark"><svg id="spark" viewBox="0 0 1000 300" preserveAspectRatio="none"></svg></div>
-      <div class="legend"><span><i class="l1"></i>BM20 <b class="n" id="lg_bm">—</b></span><span><i class="l2"></i>BTC <b class="n" id="lg_btc">—</b></span></div>
+    <section data-url="marketlab" class="slide">
+      <div class="kicker">거래소별 거래대금 Top 5 — 같은 시장, 다른 취향<small>Top 5 by trading value, per exchange</small></div>
+      <div class="exgrid" id="exgrid"></div>
     </section>
     <section data-url="marketlab" class="slide">
       <div class="kicker">오늘 어느 섹터가 움직였나 — BM20 섹터별 수익률<small>Which sector moved today — BM20 sector returns</small></div>
@@ -184,14 +190,13 @@ html,body{word-break:keep-all;overflow-wrap:anywhere;height:100%;background:var(
 var DUR=15000, REB_DATE="2026-07-06";
 var BASE="https://data.blockmedia.co.kr";
 var SITE="https://www.blockmedia.co.kr";
-var SKIP_ALPHA_IF_NEGATIVE=false;   // true면 BM20 vs BTC가 마이너스일 때 그 화면 건너뜀
 var SRC={krw:BASE+"/out/history/krw_24h_latest.json",kimchi:BASE+"/out/history/kimchi_latest.json",comp:BASE+"/out/history/components_history.csv",latest:BASE+"/bm20_latest.json",series:BASE+"/bm20_series.json",btc:BASE+"/btc_usd_series.json",kxrp:BASE+"/out/global/k_xrp_share_24h_latest.json",hist:BASE+"/data/bm20_history.json"};
 var SECTORS={BTC:"가치저장",ETH:"스마트컨트랙트",XRP:"결제·인프라",BNB:"거래소 토큰",SOL:"스마트컨트랙트",USDT:"스테이블",USDC:"스테이블",DOGE:"밈",ADA:"스마트컨트랙트",TRX:"스마트컨트랙트",AVAX:"스마트컨트랙트",LINK:"오라클·AI",SHIB:"밈",LTC:"결제·인프라",BCH:"결제·인프라",XLM:"결제·인프라",HBAR:"엔터프라이즈",SUI:"스마트컨트랙트",HYPE:"DeFi·DEX",ZEC:"프라이버시",TON:"스마트컨트랙트",CC:"기타"};
 var LISTING={avg:-31,rows:[["코인 A","9/22",-44],["코인 B","9/18",-27],["코인 C","9/11",12],["코인 D","9/04",-38]]};
 function $(id){return document.getElementById(id)}
 function cls(v){return v>0?"up":v<0?"down":"flat"}
 function sign(v,d){return (v>0?"+":v<0?"−":"")+Math.abs(v).toFixed(d==null?1:d)}
-function setBig(id,v,unit,d){$(id).className="big n "+cls(v);$(id).innerHTML=sign(v,d)+"<small>"+unit+"</small>"}
+function setBig(id,v,unit,d){var e=$(id),sm=e.classList.contains("sm");e.className="big n "+cls(v)+(sm?" sm":"");e.innerHTML=sign(v,d)+"<small>"+unit+"</small>"}
 function j(u){return fetch(u+"?t="+Date.now(),{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.json()})}
 function t(u){return fetch(u+"?t="+Date.now(),{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.text()})}
 function tri(v){return (v/1e12).toFixed(2)+"조"}
@@ -205,15 +210,18 @@ function rKimchi(k){
 }
 function rVol(d){
   var tt=d.totals,tot=tt.combined_24h; $("vol").textContent=(tot/1e12).toFixed(1);
-  var parts=[["a","업비트",tt.upbit_24h],["b","빗썸",tt.bithumb_24h],["c","코인원",tt.coinone_24h],["d","코빗",tt.korbit_24h||0]];
+  var parts=[["a","업비트",tt.upbit_24h],["b","빗썸",tt.bithumb_24h],["c","코인원",tt.coinone_24h],["d","디지털X",tt.korbit_24h||0]];
   $("share").innerHTML=parts.map(function(p){var pct=p[2]/tot*100;return '<div class="'+p[0]+'" style="width:'+pct+'%">'+(pct>8?p[1]+" "+pct.toFixed(0)+"%":"")+'</div>'}).join("");
-  var c=d.top10.coins.slice(0,8),s1=c[0].symbol.replace("KRW-","");
+  var c=d.top10.coins.slice(0,6),s1=c[0].symbol.replace("KRW-","");
   $("t1sym").textContent=s1;
   $("t1so").innerHTML='오늘 국내 거래대금 1위. <b>전체의 '+c[0].share_pct.toFixed(1)+'%</b>가 이 한 종목이에요.';
   $("top10").innerHTML=c.map(function(x,i){var cr=x.change_rate_24h;return '<div class="r"><i>'+(i+1)+'</i><em>'+x.symbol.replace("KRW-","")+'</em><span>'+tri(x.value)+'</span><b class="n '+cls(cr)+'">'+(cr!=null?sign(cr*100,1)+"%":"")+'</b></div>'}).join("");
   var wl=d.winner_loser||{};
   function list(items,id){$(id).innerHTML=(items||[]).slice(0,5).map(function(x,i){var v=x.change_rate_24h*100;return '<div class="r"><i>'+(i+1)+'</i><em>'+x.symbol.replace("KRW-","")+'</em><span></span><b class="n '+cls(v)+'">'+sign(v,1)+'%</b></div>'}).join("")}
   list(wl.winners||wl.top||wl.gainers,"win"); list(wl.losers||wl.bottom,"lose");
+  var EX=[["upbit","업비트","#1f5f9c"],["bithumb","빗썸","#e0902a"],["coinone","코인원","#1a7a4a"],["korbit","디지털X","#7c3aed"]], be=d.by_exchange_top||{};
+  $("exgrid").innerHTML=EX.filter(function(e){return (be[e[0]+"_top5"]||[]).length}).map(function(e){var rows=be[e[0]+"_top5"].slice(0,5),tot=rows.reduce(function(a,r){return a+r.value},0);
+    return '<div class="ex"><div class="h"><i style="background:'+e[2]+'">'+e[1][0]+'</i>'+e[1]+'</div>'+rows.map(function(r,i){return '<div class="r"><span>'+(i+1)+'</span><em>'+r.symbol.replace("KRW-","")+'</em><b class="n">'+(r.value/tot*100).toFixed(0)+'%</b></div>'}).join("")+'</div>'}).join("");
   var st=d.stablecoins.stable_dominance_pct; $("stb").textContent=st.toFixed(1); $("stb_g").style.width=Math.min(st/15*100,100)+"%";
   $("stb_so").innerHTML=st>10?'거래의 <b>'+st.toFixed(0)+'%가 스테이블코인</b> — 투자자들이 현금성 자산으로 피해 있어요.':st>5?'거래의 '+st.toFixed(0)+'%가 스테이블코인 — <b>관망 구간</b>이에요.':'스테이블코인 거래는 '+st.toFixed(0)+'%뿐 — <b>위험자산 선호(리스크온)</b> 상태예요.';
 }
@@ -227,22 +235,7 @@ function rComp(csv){
   $("heat").innerHTML=secs.map(function(s){var tt=Math.max(-1,Math.min(1,s.r/6));var bg=tt>=0?"rgb("+Math.round(217-(1-tt)*120)+","+Math.round(48+(1-tt)*120)+","+Math.round(37+(1-tt)*130)+")":"rgb("+Math.round(26+(1+tt)*140)+","+Math.round(95+(1+tt)*110)+","+Math.round(200+(1+tt)*40)+")";
     return '<div class="c" style="background:'+bg+'"><div class="nm">'+s.n+'</div><div><div class="rt n">'+sign(s.r,2)+'%</div><div class="w">지수 비중 '+Math.round(s.w*100)+'%</div></div></div>'}).join("");
 }
-function rLatest(d){setBig("bm_today",d.bm20ChangePct*100,"%");$("bm_level").textContent=(+d.bm20Level).toFixed(1)}
-function rAlpha(bm,btc){
-  bm=bm.filter(function(x){return x.date>=REB_DATE});btc=btc.filter(function(x){return x.date>=REB_DATE});
-  var key=btc[0].price!=null?"price":(btc[0].close!=null?"close":"level"),m={};btc.forEach(function(x){m[x.date]=+x[key]});
-  var S={bm:[],btc:[]},b0=+bm[0].level,c0=m[bm[0].date]||+btc[0][key];
-  bm.forEach(function(x){if(m[x.date]){S.bm.push((x.level/b0-1)*100);S.btc.push((m[x.date]/c0-1)*100)}});
-  var a=S.bm[S.bm.length-1],c=S.btc[S.btc.length-1],d=a-c;
-  skipIdx=d<0?6:-1;
-  setBig("alpha",d,"%p");
-  $("alpha_so").innerHTML=d>=0?'비트코인만 들고 있었을 때보다<br><b>'+Math.abs(d).toFixed(1)+'%p 더</b> 벌었어요.':'이 구간은 비트코인이 <b>'+Math.abs(d).toFixed(1)+'%p 앞섰어요.</b><br>지수는 있는 그대로 보여드려요.';
-  $("lg_bm").textContent=sign(a)+"%";$("lg_bm").className="n "+cls(a);$("lg_btc").textContent=sign(c)+"%";$("lg_btc").className="n "+cls(c);
-  var all=S.bm.concat(S.btc),mn=Math.min.apply(null,all),mx=Math.max.apply(null,all),n=S.bm.length;
-  function path(arr){return arr.map(function(v,i){return (i?"L":"M")+(i/(n-1)*1000).toFixed(1)+" "+(300-(v-mn)/(mx-mn||1)*280-10).toFixed(1)}).join(" ")}
-  var z=300-(0-mn)/(mx-mn||1)*280-10;
-  $("spark").innerHTML='<line x1="0" y1="'+z+'" x2="1000" y2="'+z+'" stroke="#e4e8ec" stroke-width="2"/><path class="btc" d="'+path(S.btc)+'"/><path class="bm" d="'+path(S.bm)+'"/>';
-}
+function rLatest(d){setBig("bm_today",d.bm20ChangePct*100,"%");$("bm_today").classList.add("sm");$("bm_level").textContent=(+d.bm20Level).toFixed(1)}
 function rXrp(d,hist){
   var s=d.k_xrp_share_pct_24h;$("kshare").textContent=Math.round(s);
   $("ks_so").innerHTML='전 세계 XRP 거래 <b>'+(s>=20?Math.round(100/s)+'건 중 1건':s.toFixed(0)+'%')+'</b>이<br>한국에서 일어나요. 그래서 \'한국 코인\'이라고 불러요.';
@@ -255,7 +248,6 @@ function refresh(){
   j(SRC.krw).then(function(d){rVol(d);mark()}).catch(function(e){console.warn("krw",e)});
   t(SRC.comp).then(function(c){rComp(c);mark()}).catch(function(e){console.warn("comp",e)});
   j(SRC.latest).then(function(d){rLatest(d);mark()}).catch(function(e){console.warn("latest",e)});
-  Promise.all([j(SRC.series),j(SRC.btc)]).then(function(r){rAlpha(r[0],r[1]);mark()}).catch(function(e){console.warn("alpha",e)});
   Promise.all([j(SRC.kxrp),j(SRC.hist).catch(function(){return null})]).then(function(r){rXrp(r[0],r[1]);mark()}).catch(function(e){console.warn("xrp",e)});
   setTimeout(function(){
     var now=new Date(),mins=okAt?Math.round((now-okAt)/60000):null;
@@ -269,8 +261,7 @@ var slides=document.querySelectorAll(".slide"),cur=0;
 document.documentElement.style.setProperty("--dur",DUR+"ms");
 var qrObj=null,qrLast=null;
 function setQR(path){var u=SITE+"/"+(path||"marketlab");if(u===qrLast)return;qrLast=u;$("qr").innerHTML="";qrObj=new QRCode($("qr"),{text:u,width:256,height:256,correctLevel:QRCode.CorrectLevel.M});$("qr_label").textContent=u.replace("https://","")}
-var skipIdx=-1;
-function show(i){if(i===skipIdx&&SKIP_ALPHA_IF_NEGATIVE){i=(i+1)%slides.length}slides[cur].classList.remove("on");cur=i;slides[cur].classList.add("on");$("idx").textContent=cur+1;setQR(slides[cur].getAttribute("data-url"));var b=$("bar");b.classList.remove("run");void b.offsetWidth;b.classList.add("run")}
+function show(i){slides[cur].classList.remove("on");cur=i;slides[cur].classList.add("on");$("idx").textContent=cur+1;setQR(slides[cur].getAttribute("data-url"));var b=$("bar");b.classList.remove("run");void b.offsetWidth;b.classList.add("run")}
 show(0);setInterval(function(){show((cur+1)%slides.length)},DUR);
 setInterval(function(){var d=new Date();$("clock").textContent=(d.getMonth()+1)+"월 "+d.getDate()+"일 "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")},1000);
 document.addEventListener("keydown",function(e){if(e.key==="ArrowRight")show((cur+1)%slides.length);if(e.key==="ArrowLeft")show((cur-1+slides.length)%slides.length)});
