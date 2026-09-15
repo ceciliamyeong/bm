@@ -47,6 +47,9 @@ h1{font-size:34px;line-height:1.2;font-weight:700;letter-spacing:-.02em;margin-b
 .btn:active{opacity:.85}.btn.ghost{background:var(--bg-2);color:var(--ink);flex:0 0 auto;padding:0 28px}.btn.accent{background:var(--accent)}
 .res{display:grid;grid-template-columns:1fr 1.2fr;gap:22px;align-items:start}
 @media (max-width:640px){.res{grid-template-columns:1fr}}
+.retry{text-align:center;padding:26px 20px;border-radius:var(--r);background:var(--bg-2)}
+.retry b{display:block;font-size:30px;font-weight:800;letter-spacing:-.02em}
+.retry span{display:block;font-size:15px;color:var(--ink-2);margin-top:8px;line-height:1.5}
 .stamp{text-align:center;padding:10px 0 6px}
 .stamp .ring{width:190px;height:190px;margin:0 auto;border:6px solid #0b6b3a;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#0b6b3a;transform:rotate(-8deg);animation:stamp .45s cubic-bezier(.2,1.4,.4,1) both;box-shadow:inset 0 0 0 3px #fff,inset 0 0 0 5px #0b6b3a}
 .stamp .chk{font-size:34px;font-weight:800;line-height:1}
@@ -79,7 +82,7 @@ h1{font-size:34px;line-height:1.2;font-weight:700;letter-spacing:-.02em;margin-b
 </head>
 <body>
 <div class="app">
-  <div class="top"><div class="brand">블록미디어 <b>코생지</b> 퀴즈</div><div class="stepnum" id="stepnum"></div></div>
+  <div class="top"><div class="brand">블록미디어 <b>코생지</b> 퀴즈</div><div style="display:flex;gap:16px;align-items:center"><div class="stepnum" id="stepnum"></div><button id="quit" onclick="reset()" style="display:none;font-size:13px;color:var(--ink-3);padding:6px 10px;border:1px solid var(--line);border-radius:999px">그만하기</button></div></div>
   <div class="progress"><i id="prog"></i></div>
 
   <section class="screen on" id="s0">
@@ -117,7 +120,8 @@ h1{font-size:34px;line-height:1.2;font-weight:700;letter-spacing:-.02em;margin-b
   <section class="screen" id="s4">
     <div class="res">
       <div>
-        <div class="stamp" id="stamp"><div class="ring"><div class="chk">✓</div><div class="t1">완료</div><div class="t2">굿즈 받으세요</div></div><em id="stampsub">스태프에게 이 화면을 보여주세요</em></div>
+        <div class="stamp" id="stamp"><div class="ring"><div class="chk">✓</div><div class="t1">통과</div><div class="t2">굿즈 받으세요</div></div><em id="stampsub">스태프에게 이 화면을 보여주세요</em></div>
+        <div class="retry" id="retry"><b id="retry_t">아깝다!</b><span id="retry_s"></span></div>
         <div class="code" id="codebox" style="display:none"><small id="codelbl">인증코드</small><b id="code">0000</b><em id="codesub">스태프에게 이 화면을 보여주세요</em></div>
         <div class="score"><b id="score">0</b><span>/ 3 정답</span></div>
         <div class="type" id="type"></div>
@@ -125,7 +129,7 @@ h1{font-size:34px;line-height:1.2;font-weight:700;letter-spacing:-.02em;margin-b
       </div>
       <div class="answers" id="answers"></div>
     </div>
-    <div class="cta"><button class="btn ghost" onclick="reset()">처음으로</button><button class="btn" onclick="reset()">다음 사람 도전</button></div>
+    <div class="cta"><button class="btn ghost" onclick="reset()">처음으로</button><button class="btn accent" id="btn_retry" onclick="start()">한 번 더 도전 (마지막 기회)</button><button class="btn" id="btn_next" onclick="reset()">다음 사람 도전</button></div>
     <p class="foot">데이터 기준: <span id="asof"></span> 코생지 데일리 브리프 · data.blockmedia.co.kr/clm</p>
   </section>
 </div>
@@ -134,8 +138,10 @@ h1{font-size:34px;line-height:1.2;font-weight:700;letter-spacing:-.02em;margin-b
 <script>
 /* ===== 설정 ===== */
 var BRIEF_URL="https://raw.githubusercontent.com/Blockmedia-DataTeam/CLM-brief/main/brief_context.json";  // 코생지 데이터
-var PRIZE_MIN=0;              // 몇 개 이상 맞히면 굿즈 (0 = 참여만 해도 지급)
+var PRIZE_MIN=2;              // 몇 개 이상 맞히면 굿즈
+var RETRY=1;                  // 기준 미달 시 재도전 횟수
 var IDLE_SEC=60;              // 결과 화면에서 이 시간 지나면 자동 초기화
+var IDLE_MID_SEC=90;          // 문제 풀다 방치하면 이 시간 뒤 자동 초기화
 var SUPABASE={url:"",key:"",table:"booth_answers"};   // 채우면 결과가 저장됨 (대형화면 예측 분포용)
 var SHOW_CODE=false;          // true면 인증코드 4자리 표시 (폰/QR 참여 열 때)
 var PRO=new URLSearchParams(location.search).get("mode")==="pro";   // ?mode=pro → 업계용(normal+hard)
@@ -172,13 +178,13 @@ function makeLive(){
 function poolQ(n,exclude){var c=POOL.filter(function(q){return exclude.indexOf(q.cat)<0||exclude.length>=3});return shuffle(c).slice(0,n)}
 
 /* ===== 진행 ===== */
-var ans={},step=0,live=null,qs=[],rank=5,idleT=null,t0=0;
+var ans={},step=0,live=null,qs=[],rank=5,idleT=null,t0=0,attempt=0;
 function pick(wrap,el){wrap.querySelectorAll(".sel").forEach(function(x){x.classList.remove("sel")});el.classList.add("sel");$("e"+step).textContent=""}
 function bump(d){rank=Math.min(10,Math.max(1,rank+d));$("rk").textContent=rank;ans[1]=rank}
 function setProgress(n){step=n;$("prog").style.width=(n/4*100)+"%";$("stepnum").textContent=n>=1&&n<=3?n+" / 3":(n===4?"완료":"")}
-function go(n){$("s"+step).classList.remove("on");$("s"+n).classList.add("on");setProgress(n);window.scrollTo(0,0);touch()}
+function go(n){$("s"+step).classList.remove("on");$("s"+n).classList.add("on");setProgress(n);window.scrollTo(0,0);$("quit").style.display=(n>0&&n<4)?"":"none";touch()}
 function start(){
-  ans={};rank=5;live=makeLive();t0=Date.now();
+  ans={};rank=5;live=makeLive();t0=Date.now();attempt++;
   var lv=PRO?["normal","hard"]:["easy","normal"];qs=lv.map(function(l){var c=POOL.filter(function(q){return (q.level||"normal")===l});return shuffle(c.length?c:POOL)[0]});
   $("q1t").innerHTML=live.t;$("q1l").textContent=live.l;$("q1body").innerHTML="";$("q1body").appendChild(live.render());
   [2,3].forEach(function(n,i){var q=qs[i];$("q"+n+"c").textContent=CATS[q.cat]||"퀴즈";$("q"+n+"t").textContent=q.q;var o=$("q"+n+"o");o.innerHTML="";q.options.forEach(function(opt,k){var b=document.createElement("button");b.className="opt";b.innerHTML="<i>"+"ABCD"[k]+"</i><span>"+opt+"</span>";b.onclick=function(){pick(o,b);ans[n]=k};o.appendChild(b)})});
@@ -194,17 +200,21 @@ function next(n){
   var sec=(Date.now()-t0)/1000, ty=investorType(s,sec,r);
   $("type").innerHTML='<small>당신의 코인 유형</small><b>'+ty.n+'</b><span>'+ty.d+'</span>';
   $("score").textContent=s;$("code").textContent=code;$("codebox").className="code"+(win?" win":"");
-  $("stamp").style.display=SHOW_CODE?"none":"";$("codebox").style.display=SHOW_CODE?"":"none";
+  var canRetry=!win&&attempt<=RETRY;
+  $("stamp").style.display=(win&&!SHOW_CODE)?"":"none";$("codebox").style.display=(win&&SHOW_CODE)?"":"none";$("retry").style.display=win?"none":"";
   $("stampsub").textContent=s===3?"올 클리어! 스태프에게 이 화면을 보여주세요":"스태프에게 이 화면을 보여주세요";
+  $("retry_t").textContent=canRetry?"아깝다!":"다음 기회에!";
+  $("retry_s").textContent=canRetry?PRIZE_MIN+"개 이상 맞혀야 굿즈예요. 새 문제로 한 번 더 기회를 드릴게요.":"아쉽지만 굿즈는 다음에. 그래도 오늘 코생지는 알고 가세요!";
+  $("btn_retry").style.display=canRetry?"":"none";$("btn_next").style.display=canRetry?"none":"";
   $("codelbl").textContent=win?"굿즈 인증코드":"참여 코드";$("codesub").textContent=win?"스태프에게 이 화면을 보여주세요":"아쉽지만 다음 기회에! 한 번 더 도전해도 돼요";
   if(PRIZE_MIN===0)$("codesub").textContent=s===3?"올 클리어! 스태프에게 보여주세요":"참여 감사해요! 스태프에게 보여주세요";
   $("answers").innerHTML=r.map(function(x){return '<div class="ans"><div class="h"><div class="m '+(x.ok?"ok":"no")+'">'+(x.ok?"✓":"✕")+'</div><div class="q">'+x.q+'</div><div class="a">'+x.a+'</div></div><div class="why">'+x.why+'</div></div>'}).join("");
   $("ai").textContent=(brief.summary&&(brief.summary.focus||brief.summary.market))||"";$("asof").textContent=brief.updated_date||brief.as_of_date||"";
   go(4); save({code:code,score:s,live_kind:live.kind,live_answer:String(ans[1]),q2:qs[0].id,q3:qs[1].id,win:win}); startIdle();
 }
-function reset(){clearTimeout(idleT);$("idle").style.transition="none";$("idle").style.width="0";go(0);document.querySelectorAll(".sel").forEach(function(x){x.classList.remove("sel")})}
-function startIdle(){clearTimeout(idleT);var b=$("idle");b.style.transition="none";b.style.width="0";void b.offsetWidth;b.style.transition="width "+IDLE_SEC+"s linear";b.style.width="100%";idleT=setTimeout(reset,IDLE_SEC*1000)}
-function touch(){if(step===4)startIdle()}
+function reset(){attempt=0;clearTimeout(idleT);$("idle").style.transition="none";$("idle").style.width="0";go(0);document.querySelectorAll(".sel").forEach(function(x){x.classList.remove("sel")})}
+function startIdle(sec){sec=sec||IDLE_SEC;clearTimeout(idleT);var b=$("idle");b.style.transition="none";b.style.width="0";void b.offsetWidth;b.style.transition="width "+sec+"s linear";b.style.width="100%";idleT=setTimeout(reset,sec*1000)}
+function touch(){if(step===4)startIdle(IDLE_SEC);else if(step>0)startIdle(IDLE_MID_SEC)}
 document.addEventListener("pointerdown",touch);
 
 /* ===== 코인 유형 ===== */
@@ -224,7 +234,7 @@ function save(row){
   if(!SUPABASE.url||!SUPABASE.key)return;
   fetch(SUPABASE.url+"/rest/v1/"+SUPABASE.table,{method:"POST",headers:{"Content-Type":"application/json",apikey:SUPABASE.key,Authorization:"Bearer "+SUPABASE.key,Prefer:"return=minimal"},body:JSON.stringify(row)}).catch(function(){});
 }
-$("rule").textContent=PRIZE_MIN>0?"3문제 중 "+PRIZE_MIN+"개 이상 맞히면 굿즈를 드려요.":"끝까지 풀면 누구나 굿즈를 드려요.";
+$("rule").textContent="3문제 중 "+PRIZE_MIN+"개 이상 맞히면 굿즈! 못 넘기면 한 번 더 기회를 드려요.";
 setProgress(0);
 </script>
 </body>
