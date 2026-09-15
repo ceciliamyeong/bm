@@ -9,7 +9,7 @@
 <style>
 :root{--ink:#111418;--ink-2:#4a5460;--ink-3:#9aa3ad;--line:#e4e8ec;--bg:#fff;--bg-2:#f3f5f8;--accent:#337abd;--accent-soft:#e6f0fa;--up:#d93025;--down:#1a5fc8;--dur:15000ms}
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;background:var(--bg);color:var(--ink);font-family:"Pretendard Variable",Pretendard,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+html,body{word-break:keep-all;overflow-wrap:anywhere;height:100%;background:var(--bg);color:var(--ink);font-family:"Pretendard Variable",Pretendard,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
 .n{font-variant-numeric:tabular-nums;letter-spacing:-.045em}
 .up{color:var(--up)}.down{color:var(--down)}.flat{color:var(--ink-2)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -30,12 +30,14 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:"Pretend
 .slide.on{display:flex;animation:in .45s ease both}
 @keyframes in{from{opacity:0;transform:translateY(1.2vh)}to{opacity:1;transform:none}}
 .kicker{font-size:2.1vw;color:var(--ink-2);margin-bottom:1vh;letter-spacing:-.01em}
-.big{font-size:14.5vw;line-height:.92;font-weight:800}
+.kicker small{display:block;font-size:1.3vw;color:var(--ink-3);font-weight:400;margin-top:.4vh;letter-spacing:0}
+.big{font-size:min(14.5vw,26vh);line-height:.92;font-weight:800;white-space:nowrap}
 .big.md{font-size:11vw}
 .big small{font-size:4.6vw;font-weight:500;color:var(--ink-2);letter-spacing:0;margin-left:.5vw}
-.so{font-size:2.7vw;line-height:1.35;margin-top:2.6vh;max-width:62vw;letter-spacing:-.015em}
+.so{font-size:2.6vw;line-height:1.4;margin-top:2.6vh;max-width:60vw;letter-spacing:-.015em}
 .so b{font-weight:700;background:var(--accent-soft);padding:.06em .28em;border-radius:.28em}
-.aside{position:absolute;right:0;top:50%;transform:translateY(-50%);width:27vw}
+.aside{position:absolute;right:0;top:50%;transform:translateY(-50%);width:26vw}
+.slide:has(.aside) .big,.slide:has(.aside) .so,.slide:has(.aside) .kicker{max-width:56vw}
 .mini{display:flex;justify-content:space-between;align-items:baseline;padding:1.5vh 0;border-top:1px solid var(--line);font-size:1.85vw}
 .mini:last-child{border-bottom:1px solid var(--line)}
 .mini span{color:var(--ink-2)}.mini b{font-weight:600}
@@ -96,8 +98,8 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:"Pretend
     <div class="meta"><span id="live"><i class="dot"></i>실시간</span><span id="clock"></span></div>
   </div>
   <div class="slides">
-    <section data-url="market.html#kimchi" class="slide">
-      <div class="kicker">지금 김치프리미엄</div>
+    <section data-url="marketlab" class="slide">
+      <div class="kicker">지금 김치프리미엄<small>Kimchi premium right now</small></div>
       <div class="big n"><span id="kp">—</span><small>%</small></div>
       <p class="so" id="kp_so">국내 투자자는 지금 비트코인을 해외보다 <b>비싸게</b> 사고 있어요.</p>
       <div class="aside">
@@ -107,51 +109,51 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:"Pretend
         <div class="mini"><span>스마트 김프 판독</span><b id="kp_type">—</b></div>
       </div>
     </section>
-    <section data-url="market.html" class="slide">
-      <div class="kicker">국내 4개 거래소, 지난 24시간 거래대금</div>
+    <section data-url="marketlab" class="slide">
+      <div class="kicker">국내 4개 거래소, 지난 24시간 거래대금<small>24h trading value, 4 Korean exchanges</small></div>
       <div class="big n"><span id="vol">—</span><small>조원</small></div>
       <div class="share" id="share"></div>
-      <p class="so">업비트·빗썸·코인원·코빗을 한 화면에 — <b>한국 시장 전체가 이 숫자예요.</b></p>
+      <p class="so">업비트·빗썸·코인원·코빗을 한 화면에.<br><b>한국 시장 전체가 이 숫자예요.</b></p>
     </section>
-    <section data-url="market.html#top10" class="slide">
-      <div class="kicker">한국인은 지금 무엇을 거래하나 — 국내 거래대금 상위</div>
+    <section data-url="marketlab" class="slide">
+      <div class="kicker">한국인은 지금 무엇을 거래하나 — 국내 거래대금 상위<small>What Koreans are trading — top by value</small></div>
       <div class="big md n"><span id="t1sym">—</span></div>
       <p class="so" id="t1so">오늘 국내 거래대금 1위.</p>
       <div class="rank" id="top10"></div>
     </section>
-    <section data-url="market.html#winner" class="slide">
-      <div class="kicker">업비트 24시간 — 가장 오른 코인, 가장 내린 코인</div>
+    <section data-url="marketlab" class="slide">
+      <div class="kicker">업비트 24시간 — 가장 오른 코인, 가장 내린 코인<small>Upbit 24h — top gainers and losers</small></div>
       <div class="two">
         <div><h4>상승 Top 5</h4><div class="rank" id="win"></div></div>
         <div><h4>하락 Top 5</h4><div class="rank" id="lose"></div></div>
       </div>
     </section>
-    <section data-url="market.html#stable" class="slide">
-      <div class="kicker">국내 거래대금 중 스테이블코인 비중 — 위험회피 신호</div>
+    <section data-url="marketlab" class="slide">
+      <div class="kicker">국내 거래대금 중 스테이블코인 비중 — 위험회피 신호<small>Stablecoin share of Korean volume — risk-off signal</small></div>
       <div class="big n"><span id="stb">—</span><small>%</small></div>
       <p class="so" id="stb_so">—</p>
       <div class="gauge"><i id="stb_g" style="width:0"></i></div>
       <div class="gauge-l"><span>0% 리스크온</span><span>5% 중립</span><span>10%+ 위험회피</span></div>
     </section>
-    <section data-url="bm20_index.html" class="slide">
-      <div class="kicker">BM20 지수 — 오늘</div>
+    <section data-url="bm20" class="slide">
+      <div class="kicker">BM20 지수 — 오늘<small>BM20 Index — today</small></div>
       <div class="big n" id="bm_today">—</div>
-      <p class="so">한국인이 가장 많이 거래하는 코인 20개를 한 숫자로. 레벨 <b><span id="bm_level">—</span></b> · 종목 옆 숫자는 지수 비중</p>
+      <p class="so">한국인이 가장 많이 거래하는 코인 20개를<br>한 숫자로. 지수 레벨 <b><span id="bm_level">—</span></b><br><span style="font-size:1.8vw;color:var(--ink-3)">종목 옆 작은 숫자는 지수 비중</span></p>
       <div class="tiles" id="tiles"></div>
     </section>
-    <section data-url="performance.html" class="slide">
-      <div class="kicker">BM20 vs 비트코인 — 최근 리밸런싱(7/6) 이후</div>
+    <section data-url="bm20" class="slide">
+      <div class="kicker">BM20 vs 비트코인 — 최근 리밸런싱(7/6) 이후<small>BM20 vs Bitcoin since last rebalance (Jul 6)</small></div>
       <div class="big n" id="alpha">—</div>
       <p class="so" id="alpha_so">—</p>
       <div class="spark"><svg id="spark" viewBox="0 0 1000 300" preserveAspectRatio="none"></svg></div>
       <div class="legend"><span><i class="l1"></i>BM20 <b class="n" id="lg_bm">—</b></span><span><i class="l2"></i>BTC <b class="n" id="lg_btc">—</b></span></div>
     </section>
-    <section data-url="market.html#sector" class="slide">
-      <div class="kicker">오늘 어느 섹터가 움직였나 — BM20 섹터별 수익률</div>
+    <section data-url="marketlab" class="slide">
+      <div class="kicker">오늘 어느 섹터가 움직였나 — BM20 섹터별 수익률<small>Which sector moved today — BM20 sector returns</small></div>
       <div class="heat" id="heat"></div>
     </section>
-    <section data-url="global_volume.html" class="slide">
-      <div class="kicker">전 세계 XRP 거래량 중 한국 거래소 비중</div>
+    <section data-url="marketlab" class="slide">
+      <div class="kicker">전 세계 XRP 거래량 중 한국 거래소 비중<small>Korea's share of global XRP volume</small></div>
       <div class="big n"><span id="kshare">—</span><small>%</small></div>
       <p class="so" id="ks_so">—</p>
       <div class="aside">
@@ -160,27 +162,29 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:"Pretend
         <div class="mini"><span>전체 코인 기준 한국 비중</span><b class="n" id="ks_all">—</b></div>
       </div>
     </section>
-    <section data-url="research.html" class="slide">
-      <div class="kicker">최근 30일 신규상장 코인, 상장 7일 뒤 평균 수익률</div>
+    <section data-url="marketlab" class="slide">
+      <div class="kicker">최근 30일 신규상장 코인, 상장 7일 뒤 평균 수익률<small>New listings (30d): avg return 7 days after listing</small></div>
       <div class="big n" id="lb_avg">—</div>
       <div class="rows" id="lb_rows"></div>
-      <p class="so">상장 첫날 산 사람 대부분이 일주일 뒤 손실 — <b>상장빔 리서치</b>가 매주 추적해요.</p>
+      <p class="so">상장 첫날 산 사람 대부분이 일주일 뒤 손실.<br><b>상장빔 리서치</b>가 매주 추적해요.</p>
     </section>
-    <section data-url="" class="slide brandslide">
+    <section data-url="marketlab" class="slide brandslide">
       <h1>한국 크립토 시장을<br><span>숫자로 읽는 곳</span></h1>
       <p>김치프리미엄부터 BM20 지수, 상장빔 리서치까지 — 매일 아침 데이터레터로 받아보세요.</p>
       <div class="qrbig" id="qr_big"></div>
-      <p style="font-size:1.8vw;margin-top:1.5vh">data.blockmedia.co.kr</p>
+      <p style="font-size:1.8vw;margin-top:1.5vh">blockmedia.co.kr/marketlab</p>
     </section>
   </div>
   <div class="foot">
     <div class="idx"><span id="idx">1</span> / 11 &nbsp;·&nbsp; 업데이트 <span id="upd">--:--</span></div>
-    <div class="url"><div><b id="qr_label">data.blockmedia.co.kr</b><span>폰으로 스캔하면 이 화면을 이어 봐요</span></div><div class="qr" id="qr"></div></div>
+    <div class="url"><div><b id="qr_label">www.blockmedia.co.kr/marketlab</b><span>스캔하면 실시간 마켓랩 전체를 볼 수 있어요<br><em style="font-style:normal;color:var(--ink-3)">Scan to open the live MarketLab dashboard</em></span></div><div class="qr" id="qr"></div></div>
   </div>
 </div>
 <script>
 var DUR=15000, REB_DATE="2026-07-06";
 var BASE="https://data.blockmedia.co.kr";
+var SITE="https://www.blockmedia.co.kr";
+var SKIP_ALPHA_IF_NEGATIVE=false;   // true면 BM20 vs BTC가 마이너스일 때 그 화면 건너뜀
 var SRC={krw:BASE+"/out/history/krw_24h_latest.json",kimchi:BASE+"/out/history/kimchi_latest.json",comp:BASE+"/out/history/components_history.csv",latest:BASE+"/bm20_latest.json",series:BASE+"/bm20_series.json",btc:BASE+"/btc_usd_series.json",kxrp:BASE+"/out/global/k_xrp_share_24h_latest.json",hist:BASE+"/data/bm20_history.json"};
 var SECTORS={BTC:"가치저장",ETH:"스마트컨트랙트",XRP:"결제·인프라",BNB:"거래소 토큰",SOL:"스마트컨트랙트",USDT:"스테이블",USDC:"스테이블",DOGE:"밈",ADA:"스마트컨트랙트",TRX:"스마트컨트랙트",AVAX:"스마트컨트랙트",LINK:"오라클·AI",SHIB:"밈",LTC:"결제·인프라",BCH:"결제·인프라",XLM:"결제·인프라",HBAR:"엔터프라이즈",SUI:"스마트컨트랙트",HYPE:"DeFi·DEX",ZEC:"프라이버시",TON:"스마트컨트랙트",CC:"기타"};
 var LISTING={avg:-31,rows:[["코인 A","9/22",-44],["코인 B","9/18",-27],["코인 C","9/11",12],["코인 D","9/04",-38]]};
@@ -195,7 +199,7 @@ var okAt=null; function mark(){okAt=new Date()}
 function rKimchi(k){
   var p=k.kimchi_premium_pct,b=p.BTC;
   $("kp").textContent=Math.abs(b).toFixed(2); $("kp").className=cls(b); if(b<0)$("kp").textContent="−"+Math.abs(b).toFixed(2);
-  $("kp_so").innerHTML=b>=0?'국내 투자자는 지금 비트코인을 해외보다 <b>'+Math.abs(b).toFixed(1)+'% 비싸게</b> 사고 있어요.':'지금은 역프리미엄 — 국내가 해외보다 <b>'+Math.abs(b).toFixed(1)+'% 싸요.</b> 국내 투자심리가 식었다는 뜻이에요.';
+  $("kp_so").innerHTML=b>=0?'국내 투자자는 지금 비트코인을<br>해외보다 <b>'+Math.abs(b).toFixed(1)+'% 비싸게</b> 사고 있어요.':'지금은 역프리미엄 — 국내가 해외보다 <b>'+Math.abs(b).toFixed(1)+'% 싸요.</b> 국내 투자심리가 식었다는 뜻이에요.';
   ["BTC","ETH","XRP"].forEach(function(s){var e=$("kp_"+s.toLowerCase());e.textContent=sign(p[s],2)+"%";e.className="n "+cls(p[s])});
   if(k.smart_kimchi)$("kp_type").textContent=k.smart_kimchi.type;
 }
@@ -230,8 +234,9 @@ function rAlpha(bm,btc){
   var S={bm:[],btc:[]},b0=+bm[0].level,c0=m[bm[0].date]||+btc[0][key];
   bm.forEach(function(x){if(m[x.date]){S.bm.push((x.level/b0-1)*100);S.btc.push((m[x.date]/c0-1)*100)}});
   var a=S.bm[S.bm.length-1],c=S.btc[S.btc.length-1],d=a-c;
+  skipIdx=d<0?6:-1;
   setBig("alpha",d,"%p");
-  $("alpha_so").innerHTML=d>=0?'비트코인만 들고 있었을 때보다 <b>'+Math.abs(d).toFixed(1)+'%p 더</b> 벌었어요.':'이 구간은 비트코인이 <b>'+Math.abs(d).toFixed(1)+'%p 앞섰어요.</b> 지수는 있는 그대로 보여드려요.';
+  $("alpha_so").innerHTML=d>=0?'비트코인만 들고 있었을 때보다<br><b>'+Math.abs(d).toFixed(1)+'%p 더</b> 벌었어요.':'이 구간은 비트코인이 <b>'+Math.abs(d).toFixed(1)+'%p 앞섰어요.</b><br>지수는 있는 그대로 보여드려요.';
   $("lg_bm").textContent=sign(a)+"%";$("lg_bm").className="n "+cls(a);$("lg_btc").textContent=sign(c)+"%";$("lg_btc").className="n "+cls(c);
   var all=S.bm.concat(S.btc),mn=Math.min.apply(null,all),mx=Math.max.apply(null,all),n=S.bm.length;
   function path(arr){return arr.map(function(v,i){return (i?"L":"M")+(i/(n-1)*1000).toFixed(1)+" "+(300-(v-mn)/(mx-mn||1)*280-10).toFixed(1)}).join(" ")}
@@ -240,7 +245,7 @@ function rAlpha(bm,btc){
 }
 function rXrp(d,hist){
   var s=d.k_xrp_share_pct_24h;$("kshare").textContent=Math.round(s);
-  $("ks_so").innerHTML='전 세계 XRP 거래 <b>'+(s>=20?Math.round(100/s)+'건 중 1건':s.toFixed(0)+'%')+'</b>이 한국에서 일어나요. 그래서 \'한국 코인\'이라고 불러요.';
+  $("ks_so").innerHTML='전 세계 XRP 거래 <b>'+(s>=20?Math.round(100/s)+'건 중 1건':s.toFixed(0)+'%')+'</b>이<br>한국에서 일어나요. 그래서 \'한국 코인\'이라고 불러요.';
   $("ks_kr").textContent="$"+(d.korea.total_usd_24h/1e9).toFixed(2)+"B";$("ks_gl").textContent="$"+(d.global.cmc_xrp_volume_usd_24h/1e9).toFixed(2)+"B";
   if(hist&&hist.length){var h=hist[hist.length-1];if(h.k_market)$("ks_all").textContent=h.k_market.k_share_percent.toFixed(1)+"%"}
 }
@@ -258,13 +263,14 @@ function refresh(){
     var live=mins!=null&&mins<45;$("live").className=live?"":"stale";$("live").innerHTML='<i class="dot"></i>'+(live?"실시간":(mins==null?"데이터 연결 안 됨":mins+"분 전"));
   },5000);
 }
-new QRCode($("qr_big"),{text:BASE+"/",width:512,height:512,correctLevel:QRCode.CorrectLevel.M});
+new QRCode($("qr_big"),{text:SITE+"/marketlab",width:512,height:512,correctLevel:QRCode.CorrectLevel.M});
 rListing(LISTING);refresh();setInterval(refresh,60000);
 var slides=document.querySelectorAll(".slide"),cur=0;
 document.documentElement.style.setProperty("--dur",DUR+"ms");
 var qrObj=null,qrLast=null;
-function setQR(path){var u=BASE+"/"+(path||"");if(u===qrLast)return;qrLast=u;$("qr").innerHTML="";qrObj=new QRCode($("qr"),{text:u,width:256,height:256,correctLevel:QRCode.CorrectLevel.M});$("qr_label").textContent=u.replace("https://","")}
-function show(i){slides[cur].classList.remove("on");cur=i;slides[cur].classList.add("on");$("idx").textContent=cur+1;setQR(slides[cur].getAttribute("data-url"));var b=$("bar");b.classList.remove("run");void b.offsetWidth;b.classList.add("run")}
+function setQR(path){var u=SITE+"/"+(path||"marketlab");if(u===qrLast)return;qrLast=u;$("qr").innerHTML="";qrObj=new QRCode($("qr"),{text:u,width:256,height:256,correctLevel:QRCode.CorrectLevel.M});$("qr_label").textContent=u.replace("https://","")}
+var skipIdx=-1;
+function show(i){if(i===skipIdx&&SKIP_ALPHA_IF_NEGATIVE){i=(i+1)%slides.length}slides[cur].classList.remove("on");cur=i;slides[cur].classList.add("on");$("idx").textContent=cur+1;setQR(slides[cur].getAttribute("data-url"));var b=$("bar");b.classList.remove("run");void b.offsetWidth;b.classList.add("run")}
 show(0);setInterval(function(){show((cur+1)%slides.length)},DUR);
 setInterval(function(){var d=new Date();$("clock").textContent=(d.getMonth()+1)+"월 "+d.getDate()+"일 "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")},1000);
 document.addEventListener("keydown",function(e){if(e.key==="ArrowRight")show((cur+1)%slides.length);if(e.key==="ArrowLeft")show((cur-1+slides.length)%slides.length)});
