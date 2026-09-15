@@ -47,6 +47,13 @@ h1{font-size:34px;line-height:1.2;font-weight:700;letter-spacing:-.02em;margin-b
 .btn:active{opacity:.85}.btn.ghost{background:var(--bg-2);color:var(--ink);flex:0 0 auto;padding:0 28px}.btn.accent{background:var(--accent)}
 .res{display:grid;grid-template-columns:1fr 1.2fr;gap:22px;align-items:start}
 @media (max-width:640px){.res{grid-template-columns:1fr}}
+.stamp{text-align:center;padding:10px 0 6px}
+.stamp .ring{width:190px;height:190px;margin:0 auto;border:6px solid #0b6b3a;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#0b6b3a;transform:rotate(-8deg);animation:stamp .45s cubic-bezier(.2,1.4,.4,1) both;box-shadow:inset 0 0 0 3px #fff,inset 0 0 0 5px #0b6b3a}
+.stamp .chk{font-size:34px;font-weight:800;line-height:1}
+.stamp .t1{font-size:30px;font-weight:800;letter-spacing:.1em;margin-top:2px}
+.stamp .t2{font-size:16px;font-weight:600;letter-spacing:.05em}
+.stamp em{display:block;font-style:normal;font-size:14px;color:var(--ink-2);margin-top:12px}
+@keyframes stamp{from{transform:rotate(-8deg) scale(1.6);opacity:0}to{transform:rotate(-8deg) scale(1);opacity:1}}
 .code{padding:26px 22px;border-radius:var(--r);background:var(--ink);color:#fff;text-align:center}
 .code.win{background:#0b6b3a}
 .code small{display:block;font-size:14px;color:#c4ccd6;margin-bottom:6px}
@@ -60,6 +67,10 @@ h1{font-size:34px;line-height:1.2;font-weight:700;letter-spacing:-.02em;margin-b
 .ans .m.ok{background:var(--up)}.ans .m.no{background:var(--ink-3)}
 .ans .q{color:var(--ink-2);flex:1}.ans .a{font-weight:600}
 .ans .why{font-size:14px;color:var(--ink-2);line-height:1.5;margin:6px 0 0 32px}
+.type{padding:16px 18px;border-radius:var(--r);background:var(--accent-soft);margin-bottom:14px}
+.type small{display:block;font-size:12px;color:var(--accent);font-weight:600;margin-bottom:4px}
+.type b{display:block;font-size:26px;font-weight:700;letter-spacing:-.02em}
+.type span{display:block;font-size:14px;color:var(--ink-2);margin-top:4px;line-height:1.5}
 .ai{padding:14px 16px;border-left:3px solid var(--green);background:#f0fbf5;border-radius:0 10px 10px 0;font-size:15px;line-height:1.55;margin-top:14px}
 .ai small{display:block;font-size:12px;color:#0b6b3a;font-weight:600;margin-bottom:4px}
 .foot{font-size:12px;color:var(--ink-3);text-align:center;padding:16px 0 0}
@@ -73,7 +84,7 @@ h1{font-size:34px;line-height:1.2;font-weight:700;letter-spacing:-.02em;margin-b
 
   <section class="screen on" id="s0">
     <h1>오늘의 코생지,<br>맞히면 선물!</h1>
-    <p class="lead"><strong>코생지</strong>는 온체인·소셜·모멘텀 데이터를 AI가 합산해 매일 아침 발표하는 블록미디어 코인 생명력 순위예요. 오늘의 순위 1문제 + 코인 상식 2문제, 30초면 끝나요.</p>
+    <p class="lead"><strong>코생지</strong>는 온체인·소셜·모멘텀 데이터를 AI가 합산해 매일 아침 발표하는 블록미디어 코인 생명력 순위예요. 오늘의 순위 1문제 + 코인 상식·밈 2문제, 30초면 끝나요. 끝나면 당신의 코인 유형도 알려드려요.</p>
     <p class="lead" style="margin-top:-10px"><strong id="rule"></strong></p>
     <div class="cta"><button class="btn accent" onclick="start()">시작하기</button></div>
   </section>
@@ -106,8 +117,10 @@ h1{font-size:34px;line-height:1.2;font-weight:700;letter-spacing:-.02em;margin-b
   <section class="screen" id="s4">
     <div class="res">
       <div>
-        <div class="code" id="codebox"><small id="codelbl">인증코드</small><b id="code">0000</b><em id="codesub">스태프에게 이 화면을 보여주세요</em></div>
+        <div class="stamp" id="stamp"><div class="ring"><div class="chk">✓</div><div class="t1">완료</div><div class="t2">굿즈 받으세요</div></div><em id="stampsub">스태프에게 이 화면을 보여주세요</em></div>
+        <div class="code" id="codebox" style="display:none"><small id="codelbl">인증코드</small><b id="code">0000</b><em id="codesub">스태프에게 이 화면을 보여주세요</em></div>
         <div class="score"><b id="score">0</b><span>/ 3 정답</span></div>
+        <div class="type" id="type"></div>
         <div class="ai"><small>오늘의 코생지 한 줄</small><span id="ai"></span></div>
       </div>
       <div class="answers" id="answers"></div>
@@ -121,9 +134,11 @@ h1{font-size:34px;line-height:1.2;font-weight:700;letter-spacing:-.02em;margin-b
 <script>
 /* ===== 설정 ===== */
 var BRIEF_URL="https://raw.githubusercontent.com/Blockmedia-DataTeam/CLM-brief/main/brief_context.json";  // 코생지 데이터
-var PRIZE_MIN=2;              // 몇 개 이상 맞히면 굿즈
+var PRIZE_MIN=0;              // 몇 개 이상 맞히면 굿즈 (0 = 참여만 해도 지급)
 var IDLE_SEC=60;              // 결과 화면에서 이 시간 지나면 자동 초기화
 var SUPABASE={url:"",key:"",table:"booth_answers"};   // 채우면 결과가 저장됨 (대형화면 예측 분포용)
+var SHOW_CODE=false;          // true면 인증코드 4자리 표시 (폰/QR 참여 열 때)
+var PRO=new URLSearchParams(location.search).get("mode")==="pro";   // ?mode=pro → 업계용(normal+hard)
 var DEMO={"as_of_date": "2026-09-12", "summary": {"market": "코생지 TOP 10의 24시간 평균 변동은 +2.18%로, 비트코인 대비 +1.34%p 높았다.", "pattern": "TOP 10 중 1개 종목이 과매도 구간(RSI 35 이하)에 분포하며, 소셜 관심도가 우세한 종목이 다수다.", "focus": "코생지가 높으면서 과매도 구간에 함께 해당하는 종목은 TRUMP이다."}, "top10": [{"rank": 1, "symbol": "DOT", "clm": 2.3025, "h24": -5.07, "rsi": 64.2, "driver_kr": "소셜", "comment": "소셜 관심도가 높음", "contrib": {"onchain": 0, "social": 81, "momentum": 19}}, {"rank": 2, "symbol": "ETH", "clm": 1.7424, "h24": 3.17, "rsi": 56.4, "driver_kr": "소셜", "comment": "소셜 관심도가 높음", "contrib": {"onchain": 35, "social": 65, "momentum": 0}}, {"rank": 3, "symbol": "SOL", "clm": 1.7335, "h24": 3.82, "rsi": 47.3, "driver_kr": "소셜", "comment": "소셜 관심도가 높음", "contrib": {"onchain": 39, "social": 61, "momentum": 0}}, {"rank": 4, "symbol": "TRUMP", "clm": 1.4777, "h24": 2.08, "rsi": 24.5, "driver_kr": "소셜", "comment": "소셜 관심도가 높으나 가격은 과매도 구간", "contrib": {"onchain": 14, "social": 76, "momentum": 10}}, {"rank": 5, "symbol": "PIEVERSE", "clm": 1.2668, "h24": 3.55, "rsi": 62.8, "driver_kr": "모멘텀", "comment": "가격 모멘텀이 유지되는 상태", "contrib": {"onchain": 0, "social": 0, "momentum": 100}}, {"rank": 6, "symbol": "CC", "clm": 1.1967, "h24": -0.32, "rsi": 36.8, "driver_kr": "소셜", "comment": "소셜 관심도가 높음", "contrib": {"onchain": 0, "social": 100, "momentum": 0}}, {"rank": 7, "symbol": "PEPE", "clm": 1.1726, "h24": 2.08, "rsi": 38.5, "driver_kr": "온체인", "comment": "온체인 활동이 활발함", "contrib": {"onchain": 90, "social": 0, "momentum": 10}}, {"rank": 8, "symbol": "JUP", "clm": 1.1368, "h24": 9.2, "rsi": 55.9, "driver_kr": "소셜", "comment": "소셜 관심도가 높음", "contrib": {"onchain": 26, "social": 48, "momentum": 26}}, {"rank": 9, "symbol": "XRP", "clm": 1.0173, "h24": 1.63, "rsi": 46.8, "driver_kr": "소셜", "comment": "소셜 관심도가 높음", "contrib": {"onchain": 29, "social": 71, "momentum": 0}}, {"rank": 10, "symbol": "DOGE", "clm": 1.0014, "h24": 1.7, "rsi": 48.4, "driver_kr": "소셜", "comment": "소셜 관심도가 높음", "contrib": {"onchain": 34, "social": 66, "momentum": 0}}], "majors": [{"rank": 2, "symbol": "ETH"}, {"rank": 3, "symbol": "SOL"}, {"rank": 9, "symbol": "XRP"}]};
 
 /* ===== 데이터 ===== */
@@ -134,7 +149,7 @@ function $(id){return document.getElementById(id)}
 function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
 function logo(sym){return "https://static.upbit.com/logos/"+sym+".png"}
 function drv(t){return t.driver_kr||({ONCHAIN:"온체인",SOCIAL:"소셜",MOMENTUM:"모멘텀"})[t.driver]||"소셜"}
-var CATS={kr:"한국 시장",bm:"블록미디어 데이터",basic:"블록체인 기초",range:"숫자 감 잡기",ai:"AI·데이터"};
+var CATS={kr:"한국 시장",bm:"블록미디어 데이터",basic:"블록체인 기초",range:"숫자 감 잡기",ai:"AI·데이터",fun:"코인 밈·유머"};
 
 /* ===== 라이브 문제 (매 판 3종 중 하나) ===== */
 function makeLive(){
@@ -157,13 +172,14 @@ function makeLive(){
 function poolQ(n,exclude){var c=POOL.filter(function(q){return exclude.indexOf(q.cat)<0||exclude.length>=3});return shuffle(c).slice(0,n)}
 
 /* ===== 진행 ===== */
-var ans={},step=0,live=null,qs=[],rank=5,idleT=null;
+var ans={},step=0,live=null,qs=[],rank=5,idleT=null,t0=0;
 function pick(wrap,el){wrap.querySelectorAll(".sel").forEach(function(x){x.classList.remove("sel")});el.classList.add("sel");$("e"+step).textContent=""}
 function bump(d){rank=Math.min(10,Math.max(1,rank+d));$("rk").textContent=rank;ans[1]=rank}
 function setProgress(n){step=n;$("prog").style.width=(n/4*100)+"%";$("stepnum").textContent=n>=1&&n<=3?n+" / 3":(n===4?"완료":"")}
 function go(n){$("s"+step).classList.remove("on");$("s"+n).classList.add("on");setProgress(n);window.scrollTo(0,0);touch()}
 function start(){
-  ans={};rank=5;live=makeLive();var used=[];qs=shuffle(POOL).slice(0,2);
+  ans={};rank=5;live=makeLive();t0=Date.now();
+  var lv=PRO?["normal","hard"]:["easy","normal"];qs=lv.map(function(l){var c=POOL.filter(function(q){return (q.level||"normal")===l});return shuffle(c.length?c:POOL)[0]});
   $("q1t").innerHTML=live.t;$("q1l").textContent=live.l;$("q1body").innerHTML="";$("q1body").appendChild(live.render());
   [2,3].forEach(function(n,i){var q=qs[i];$("q"+n+"c").textContent=CATS[q.cat]||"퀴즈";$("q"+n+"t").textContent=q.q;var o=$("q"+n+"o");o.innerHTML="";q.options.forEach(function(opt,k){var b=document.createElement("button");b.className="opt";b.innerHTML="<i>"+"ABCD"[k]+"</i><span>"+opt+"</span>";b.onclick=function(){pick(o,b);ans[n]=k};o.appendChild(b)})});
   go(1);
@@ -175,8 +191,13 @@ function next(n){
          {q:qs[0].q,a:qs[0].options[qs[0].answer],ok:ans[2]===qs[0].answer,why:qs[0].why},
          {q:qs[1].q,a:qs[1].options[qs[1].answer],ok:ans[3]===qs[1].answer,why:qs[1].why}];
   var s=r.filter(function(x){return x.ok}).length, code=String(Math.floor(1000+Math.random()*9000)), win=s>=PRIZE_MIN;
+  var sec=(Date.now()-t0)/1000, ty=investorType(s,sec,r);
+  $("type").innerHTML='<small>당신의 코인 유형</small><b>'+ty.n+'</b><span>'+ty.d+'</span>';
   $("score").textContent=s;$("code").textContent=code;$("codebox").className="code"+(win?" win":"");
+  $("stamp").style.display=SHOW_CODE?"none":"";$("codebox").style.display=SHOW_CODE?"":"none";
+  $("stampsub").textContent=s===3?"올 클리어! 스태프에게 이 화면을 보여주세요":"스태프에게 이 화면을 보여주세요";
   $("codelbl").textContent=win?"굿즈 인증코드":"참여 코드";$("codesub").textContent=win?"스태프에게 이 화면을 보여주세요":"아쉽지만 다음 기회에! 한 번 더 도전해도 돼요";
+  if(PRIZE_MIN===0)$("codesub").textContent=s===3?"올 클리어! 스태프에게 보여주세요":"참여 감사해요! 스태프에게 보여주세요";
   $("answers").innerHTML=r.map(function(x){return '<div class="ans"><div class="h"><div class="m '+(x.ok?"ok":"no")+'">'+(x.ok?"✓":"✕")+'</div><div class="q">'+x.q+'</div><div class="a">'+x.a+'</div></div><div class="why">'+x.why+'</div></div>'}).join("");
   $("ai").textContent=(brief.summary&&(brief.summary.focus||brief.summary.market))||"";$("asof").textContent=brief.updated_date||brief.as_of_date||"";
   go(4); save({code:code,score:s,live_kind:live.kind,live_answer:String(ans[1]),q2:qs[0].id,q3:qs[1].id,win:win}); startIdle();
@@ -186,12 +207,24 @@ function startIdle(){clearTimeout(idleT);var b=$("idle");b.style.transition="non
 function touch(){if(step===4)startIdle()}
 document.addEventListener("pointerdown",touch);
 
+/* ===== 코인 유형 ===== */
+function investorType(s,sec,r){
+  var xrp=String(ans[1]).indexOf("XRP")>=0, fast=sec<25;
+  if(s===3) return {n:"🐋 고래형",d:"시장이 당신을 따라갑니다. 데이터본부 채용 문의는 부스로."};
+  if(s===2&&fast) return {n:"✂️ 익절 장인형",d:"적당히 알고, 적당히 빠진다. 부럽습니다."};
+  if(s===2) return {n:"🪨 존버형",d:"확신은 없지만 버틴다. 결국 맞히는 타입."};
+  if(s===1&&xrp) return {n:"💧 리또속형",d:"리플에 또 속았다… 그래도 또 삽니다. 한국인의 숙명."};
+  if(s===1&&fast) return {n:"🚀 가즈아형",d:"일단 지르고 본다. 틀려도 즐겁다."};
+  if(s===1) return {n:"🌊 물타기형",d:"오늘은 물렸지만 내일 줍줍하면 됩니다."};
+  return {n:"🐮 흑우 탈출 준비형",d:"괜찮아요, 그래서 이 부스가 있는 거예요. 한 번 더!"};
+}
+
 /* ===== 저장 (Supabase 설정 시) ===== */
 function save(row){
   if(!SUPABASE.url||!SUPABASE.key)return;
   fetch(SUPABASE.url+"/rest/v1/"+SUPABASE.table,{method:"POST",headers:{"Content-Type":"application/json",apikey:SUPABASE.key,Authorization:"Bearer "+SUPABASE.key,Prefer:"return=minimal"},body:JSON.stringify(row)}).catch(function(){});
 }
-$("rule").textContent="3문제 중 "+PRIZE_MIN+"개 이상 맞히면 굿즈를 드려요.";
+$("rule").textContent=PRIZE_MIN>0?"3문제 중 "+PRIZE_MIN+"개 이상 맞히면 굿즈를 드려요.":"끝까지 풀면 누구나 굿즈를 드려요.";
 setProgress(0);
 </script>
 </body>
