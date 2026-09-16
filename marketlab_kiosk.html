@@ -97,6 +97,19 @@ html,body{word-break:keep-all;overflow-wrap:anywhere;height:100%;background:var(
 .foot .url b{display:block;color:var(--ink);font-weight:600;font-size:1.5vw}
 .foot .qr{width:9vh;height:9vh;background:#fff;padding:.5vh;border:1px solid var(--line);border-radius:.8vh}
 .foot .qr img,.foot .qr canvas{width:100%!important;height:100%!important;display:block}
+
+/* ===== 다크 테마 (?theme=dark) ===== */
+html[data-theme=dark]{--ink:#f2f5f9;--ink-2:#aab4c2;--ink-3:#6b7a8c;--line:#26313f;--bg:#0f1622;--bg-2:#182233;--accent-soft:#1b3550;--up:#ff6b5e;--down:#6ea8ff}
+html[data-theme=dark] body{background:var(--bg)}
+html[data-theme=dark] .bar{background:#1e2836}
+html[data-theme=dark] .tile.up{background:#4a1f1c;color:#ff8a80}
+html[data-theme=dark] .tile.down{background:#1a2c4d;color:#8fbcff}
+html[data-theme=dark] .foot .qr{border-color:transparent}
+html[data-theme=dark] .share .d{color:var(--ink)}
+html[data-theme=dark] .spark line{stroke:#26313f}
+html[data-theme=dark] .head .brand{color:#fff}
+html[data-theme=dark]{--accent:#5aa3e6}
+html[data-theme=dark] .so b{color:#8ec5ff}
 </style>
 </head>
 <body>
@@ -187,6 +200,9 @@ html,body{word-break:keep-all;overflow-wrap:anywhere;height:100%;background:var(
   </div>
 </div>
 <script>
+/* 테마 스위치 */
+if(new URLSearchParams(location.search).get("theme")==="dark")document.documentElement.setAttribute("data-theme","dark");
+
 var DUR=15000, REB_DATE="2026-07-06";
 var BASE="https://data.blockmedia.co.kr";
 var SITE="https://www.blockmedia.co.kr";
