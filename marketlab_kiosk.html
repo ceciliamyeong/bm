@@ -202,6 +202,7 @@ html[data-theme=dark] .so b{color:#8ec5ff}
 <script>
 /* 테마 스위치 */
 if(new URLSearchParams(location.search).get("theme")==="dark")document.documentElement.setAttribute("data-theme","dark");
+document.addEventListener("keydown",function(e){if(e.key==="d"||e.key==="D"){var h=document.documentElement;h.dataset.theme=h.dataset.theme==="dark"?"":"dark"}});
 
 var DUR=15000, REB_DATE="2026-07-06";
 var BASE="https://data.blockmedia.co.kr";
@@ -278,7 +279,7 @@ document.documentElement.style.setProperty("--dur",DUR+"ms");
 var qrObj=null,qrLast=null;
 function setQR(path){var u=SITE+"/"+(path||"marketlab");if(u===qrLast)return;qrLast=u;$("qr").innerHTML="";qrObj=new QRCode($("qr"),{text:u,width:256,height:256,correctLevel:QRCode.CorrectLevel.M});$("qr_label").textContent=u.replace("https://","")}
 function show(i){slides[cur].classList.remove("on");cur=i;slides[cur].classList.add("on");$("idx").textContent=cur+1;setQR(slides[cur].getAttribute("data-url"));var b=$("bar");b.classList.remove("run");void b.offsetWidth;b.classList.add("run")}
-show(0);setInterval(function(){show((cur+1)%slides.length)},DUR);
+show(0);if(window===window.top)setInterval(function(){show((cur+1)%slides.length)},DUR);
 setInterval(function(){var d=new Date();$("clock").textContent=(d.getMonth()+1)+"월 "+d.getDate()+"일 "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")},1000);
 document.addEventListener("keydown",function(e){if(e.key==="ArrowRight")show((cur+1)%slides.length);if(e.key==="ArrowLeft")show((cur-1+slides.length)%slides.length)});
 </script>
