@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>코생지 · 부스 키오스크</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+/* ===== 기준 단위: 16:9 FHD에서 1u = 19.2px. 세로가 짧은 화면에서는 세로 기준으로 줄어듦 ===== */
+:root{
+  --u:min(1vw,1.7778vh);
+  --ink:#111418;--ink-2:#4a5460;--ink-3:#9aa3ad;--line:#e4e8ec;--bg:#fff;--bg-2:#f3f5f8;
+  --accent:#1f9d5a;--accent-soft:#e3f5ea;--up:#d93025;--down:#1a5fc8;--on:#1f9d5a;--so:#7c5cd6;--mo:#e0902a;
+  --q1:rgba(31,157,90,.10);--q2:rgba(224,144,42,.12);--q3:rgba(0,0,0,.025);--q4:rgba(217,48,37,.08);
+  --halo:#fff;--logo-bg:#fff;--dur:15000ms
+}
+html[data-theme=dark]{
+  --ink:#f2f5f9;--ink-2:#aab4c2;--ink-3:#6b7a8c;--line:#26313f;--bg:#0f1622;--bg-2:#182233;
+  --accent:#3ddc84;--accent-soft:#163526;--up:#ff6b5e;--down:#6ea8ff;--so:#b48cff;--mo:#ffb454;
+  --q1:rgba(61,220,132,.12);--q2:rgba(255,180,84,.14);--q3:rgba(255,255,255,.04);--q4:rgba(255,107,94,.12);
+  --halo:#0f1622;--logo-bg:#fff
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--ink);font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden;word-break:keep-all;overflow-wrap:break-word}
+.n{font-variant-numeric:tabular-nums;letter-spacing:-.045em;overflow-wrap:anywhere}
+.up{color:var(--up)}.down{color:var(--down)}.flat{color:var(--ink-2)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* 진행바 */
+.bar{position:fixed;left:0;top:0;height:.55vh;width:100vw;background:var(--line);z-index:5}
+.bar i{display:block;height:100%;width:0;background:var(--accent)}
+.bar i.run{animation:fill var(--dur) linear forwards}
+@keyframes fill{to{width:100%}}
+
+/* ===== 3단 골격: 헤더 / 슬라이드 / 푸터. 슬라이드는 가운데 칸을 절대 벗어나지 못함 ===== */
+.stage{display:grid;grid-template-rows:auto minmax(0,1fr) auto;width:100vw;height:100vh;padding:5vh 6vw 4vh;row-gap:2vh}
+.head{display:flex;justify-content:space-between;align-items:baseline;gap:2vw;line-height:1.3}
+.head .brand{font-size:calc(var(--u)*1.7);font-weight:700;letter-spacing:-.02em;white-space:nowrap}
+.head .brand span{color:var(--accent)}
+.head .meta{font-size:calc(var(--u)*1.25);color:var(--ink-2);white-space:nowrap}
+.slides{position:relative;min-height:0;overflow:hidden}
+.slide{position:absolute;inset:0;display:none;grid-template-rows:auto minmax(0,1fr) auto;row-gap:1.5vh;align-content:center}
+.slide.on{display:grid;animation:in .45s ease both}
+@keyframes in{from{opacity:0;transform:translateY(1.2vh)}to{opacity:1;transform:none}}
+.body{min-height:0;display:flex;flex-direction:column;justify-content:center;gap:2vh}
+.body.center{justify-content:center}
+
+/* 제목 */
+.kicker{font-size:calc(var(--u)*2.1);color:var(--ink-2);line-height:1.25;text-wrap:balance}
+.kicker small{display:block;font-size:calc(var(--u)*1.3);color:var(--ink-3);font-weight:400;margin-top:.5vh}
+
+/* 큰 숫자 */
+.big{font-size:calc(var(--u)*13);line-height:.95;font-weight:800;white-space:nowrap}
+.big.md{font-size:calc(var(--u)*8.5)}
+.big.sm{font-size:calc(var(--u)*7);line-height:1}
+.big small{font-size:.35em;font-weight:500;color:var(--ink-2);letter-spacing:0;margin-left:.15em}
+
+/* 설명 문장. 3줄을 넘으면 JS가 글자를 줄임 */
+.so{font-size:calc(var(--u)*2.4);line-height:1.4;max-width:72vw;letter-spacing:-.015em;text-wrap:pretty}
+.so b{font-weight:700;color:var(--accent);background:var(--accent-soft);padding:.04em .2em;border-radius:.28em;margin:0 .05em;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+
+/* 1장 */
+.hero{display:flex;align-items:center;gap:3vw}
+.hero .logo{width:17vh;height:17vh;border-radius:50%;background:var(--logo-bg);padding:1.2vh;box-shadow:inset 0 0 0 .5vh rgba(31,157,90,.35);flex:none;display:grid;place-items:center;font-weight:800;font-size:6vh;color:#111418;overflow:hidden}
+.hero .logo img{width:100%;height:100%;object-fit:contain;display:block}
+.hero .sub{font-size:calc(var(--u)*2);color:var(--ink-2);margin-top:1vh}
+.tag{display:inline-block;font-size:calc(var(--u)*1.3);font-weight:600;padding:.3vh 1vw;border-radius:2vh;color:#fff;vertical-align:middle}
+html[data-theme=dark] .tag{color:#0f1622}
+html[data-theme=dark] .hero .logo{box-shadow:inset 0 0 0 .5vh rgba(61,220,132,.6)}
+.tag.t-on{background:var(--on)}.tag.t-so{background:var(--so)}.tag.t-mo{background:var(--mo)}
+
+/* 2장 TOP 10 */
+.top{display:grid;grid-template-columns:1fr 1fr;gap:0 5vw;max-width:84vw}
+.top .r{display:grid;grid-template-columns:calc(var(--u)*2.6) 4.6vh 1fr auto auto auto;align-items:center;gap:1.2vw;padding:1.5vh 0;border-bottom:1px solid var(--line);font-size:calc(var(--u)*2.2)}
+.top .r i{font-style:normal;color:var(--ink-3);font-weight:700;font-size:calc(var(--u)*1.6)}
+.top .r .logo{width:4.6vh;height:4.6vh;border-radius:50%;background:var(--logo-bg);display:grid;place-items:center;font-size:2vh;font-weight:700;color:#111418;overflow:hidden}
+.top .r .logo img{width:100%;height:100%;object-fit:contain;display:block}
+.top .r em{font-style:normal;font-weight:600;overflow-wrap:anywhere}
+.top .r .c{font-weight:600;color:var(--accent);min-width:5.5vw;text-align:right}
+.top .r b{font-weight:600;min-width:6.5vw;text-align:right}
+.top .r.t1 em,.top .r.t1 .c{font-size:calc(var(--u)*2.4)}
+.top .r.t1{background:linear-gradient(90deg,var(--accent-soft),transparent);border-radius:1vh;padding-left:.6vw;margin-left:-.6vw}
+.blur em,.blur img,.blur .c,.blur b,.blur .tag,.blur .logo{filter:blur(1vh)}
+
+/* 3장 수익률: 좌우 2단, 절대 위치 없음 */
+.two{display:grid;grid-template-columns:minmax(0,1fr) 26vw;gap:4vw;align-items:center}
+.mini{display:flex;justify-content:space-between;align-items:baseline;padding:1.5vh 0;border-top:1px solid var(--line);font-size:calc(var(--u)*1.85)}
+.mini:last-child{border-bottom:1px solid var(--line)}
+.mini span{color:var(--ink-2)}.mini b{font-weight:600}
+
+/* 4장 기여도 */
+.contrib{max-width:80vw}
+.contrib .row{display:grid;grid-template-columns:11vw 1fr;align-items:center;gap:2vw;margin:1.2vh 0;font-size:calc(var(--u)*2);font-weight:600}
+.contrib .row>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.contrib .bar2{display:grid;height:4.6vh;border-radius:1vh;overflow:hidden;background:var(--bg-2);column-gap:.2vw}
+.contrib .bar2 i{display:flex;align-items:center;justify-content:center;height:100%;min-width:0;overflow:hidden;padding:0 .2vw;font-style:normal;font-size:calc(var(--u)*1.5);font-weight:600;color:#fff;font-variant-numeric:tabular-nums;white-space:nowrap}
+.contrib .bar2 i.tiny{font-size:0}
+html[data-theme=dark] .contrib .bar2 i{color:#0f1622}
+.contrib .c-on{background:var(--on)}.contrib .c-so{background:var(--so)}.contrib .c-mo{background:var(--mo)}
+.leg{display:flex;gap:3vw;font-size:calc(var(--u)*1.6);color:var(--ink-2)}
+.leg i{display:inline-block;width:1.4vw;height:1.4vw;border-radius:.3vw;vertical-align:middle;margin-right:.6vw}
+
+/* 5장 매트릭스: 컨테이너가 남는 높이를 전부 받고, SVG는 실제 픽셀 크기로 그려짐 */
+.mx{flex:1;min-height:0;width:84vw}
+.mx svg{width:100%;height:100%;display:block;overflow:visible}
+.mx text{fill:var(--ink-2);font-family:inherit}
+.mx .qn{fill:var(--ink-2);font-weight:700}
+.mx .qs{fill:var(--ink-3)}
+.mx .ax{stroke:var(--ink-3);stroke-width:1.5;stroke-dasharray:6 6;opacity:.7}
+.mx .tk{fill:var(--ink-3)}
+.mx .sym{fill:#fff;font-weight:800;text-anchor:middle;dominant-baseline:central}
+.mx .lab{font-weight:700;text-anchor:middle;paint-order:stroke;stroke:var(--bg);stroke-width:6;stroke-linejoin:round}
+.mx .lead{stroke:var(--ink-3);stroke-width:1.5;opacity:.8}
+
+/* 6장 메이저 */
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:2vw;max-width:84vw}
+.card{background:var(--bg-2);border-radius:1.5vh;padding:2.6vh 2vw;min-width:0}
+html[data-theme=dark] .card{border:1px solid var(--line)}
+.card .t{font-size:calc(var(--u)*2);font-weight:600;margin-bottom:1vh}
+.card .rank{font-size:calc(var(--u)*6.5);font-weight:800;line-height:1;letter-spacing:-.04em}
+.card .rank small{font-size:.38em;font-weight:500;color:var(--ink-2);margin-left:.1em}
+.card .d{font-size:calc(var(--u)*1.6);color:var(--ink-2);line-height:1.45;margin-top:1vh}
+.card .sw{display:inline-block;width:1.2vw;height:1.2vw;border-radius:50%;margin-right:.6vw;vertical-align:middle}
+
+/* 7장 추이 */
+.ts{flex:1;min-height:14vh;width:84vw}
+.ts svg{width:100%;height:100%;display:block;overflow:visible}
+.ts .line{fill:none;stroke:var(--accent);stroke-width:5;stroke-linejoin:round;stroke-linecap:round}
+.ts .area{fill:var(--accent);opacity:.14;stroke:none}
+.ts .grid{stroke:var(--line);stroke-width:1}
+.ts text{fill:var(--ink-3);font-family:inherit}
+
+/* 푸터 */
+.foot{display:flex;justify-content:space-between;align-items:flex-end}
+.foot .idx{font-size:calc(var(--u)*1.3);color:var(--ink-3)}
+.foot .url{display:flex;align-items:center;gap:1.2vw;font-size:calc(var(--u)*1.35);color:var(--ink-2);line-height:1.35;text-align:right}
+.foot .url b{display:block;color:var(--ink);font-weight:600;font-size:calc(var(--u)*1.5)}
+.foot .url em{font-style:normal;color:var(--ink-3)}
+.foot .qr{width:9vh;height:9vh;background:#fff;padding:.5vh;border:1px solid var(--line);border-radius:.8vh;flex:none}
+html[data-theme=dark] .foot .qr{border-color:transparent}
+.foot .qr img,.foot .qr canvas{width:100%!important;height:100%!important;display:block}
+
+/* 오프라인 배지: 저장된 데이터로 표시 중일 때만 */
+.stale{display:none;font-size:calc(var(--u)*1.1);color:var(--mo);margin-left:1vw}
+.stale.on{display:inline}
+</style>
+</head>
+<body>
+<div class="bar"><i id="bar"></i></div>
+<div class="stage">
+  <div class="head">
+    <div class="brand" id="brand"></div>
+    <div class="meta"><span id="asof">—</span><span class="stale" id="stale"></span></div>
+  </div>
+  <div class="slides" id="slides">
+    <!-- 1 오늘의 1위 -->
+    <section class="slide" data-k="s1">
+      <div class="kicker" id="k1"></div>
+      <div class="body">
+        <div class="hero" id="hero1"><div class="logo" id="h1logo"></div><div><div class="big md n" id="h1sym">—</div><div class="sub"><span id="l_clm"></span> <b class="n" id="h1clm">—</b> · 24h <b class="n" id="h1h24">—</b> · <span id="h1tag"></span></div></div></div>
+      </div>
+      <p class="so" id="h1so">—</p>
+    </section>
+    <!-- 2 Top10 -->
+    <section class="slide">
+      <div class="kicker" id="k2"></div>
+      <div class="body"><div class="top" id="top10"></div></div>
+      <div></div>
+    </section>
+    <!-- 3 퍼포먼스 -->
+    <section class="slide">
+      <div class="kicker" id="k3"></div>
+      <div class="body">
+        <div class="two">
+          <div><div class="big n" id="p_avg">—</div><p class="so" id="p_so" style="margin-top:2.5vh">—</p></div>
+          <div>
+            <div class="mini"><span id="l_btc"></span><b class="n" id="p_btc">—</b></div>
+            <div class="mini"><span id="l_alpha"></span><b class="n" id="p_alpha">—</b></div>
+            <div class="mini"><span id="l_best"></span><b class="n" id="p_best">—</b></div>
+            <div class="mini"><span id="l_worst"></span><b class="n" id="p_worst">—</b></div>
+          </div>
+        </div>
+      </div>
+      <div></div>
+    </section>
+    <!-- 4 기여도 -->
+    <section class="slide">
+      <div class="kicker" id="k4"></div>
+      <div class="body">
+        <div class="contrib" id="contrib"></div>
+        <div class="leg" id="leg"></div>
+      </div>
+      <p class="so" id="c_so">—</p>
+    </section>
+    <!-- 5 매트릭스 -->
+    <section class="slide" data-chart="mx">
+      <div class="kicker" id="k5"></div>
+      <div class="body"><div class="mx"><svg id="mx"></svg></div></div>
+      <p class="so" id="m_so">—</p>
+    </section>
+    <!-- 6 메이저 -->
+    <section class="slide">
+      <div class="kicker" id="k6"></div>
+      <div class="body"><div class="three" id="majors"></div></div>
+      <p class="so" id="mj_so"></p>
+    </section>
+    <!-- 7 추이 -->
+    <section class="slide" data-chart="ts">
+      <div class="kicker" id="k7"></div>
+      <div class="body"><div class="big sm n" id="t_now">—</div><div class="ts"><svg id="ts"></svg></div></div>
+      <p class="so" id="t_so">—</p>
+    </section>
+    <!-- 8 설명 -->
+    <section class="slide">
+      <div class="kicker" id="k8"></div>
+      <div class="body">
+        <div class="big md" id="x_title" style="margin-bottom:4vh"></div>
+        <div class="three" id="x_cards"></div>
+      </div>
+      <p class="so" id="x_so"></p>
+    </section>
+  </div>
+  <div class="foot">
+    <div class="idx"><span id="idx">1</span> / 8 &nbsp;·&nbsp; <span id="l_asof"></span> <span id="upd">—</span></div>
+    <div class="url"><div><b id="qr_label">www.blockmedia.co.kr/clm</b><span id="qr_text"></span></div><div class="qr" id="qr"></div></div>
+  </div>
+</div>
+
+<script>
+/* ===== 실행 옵션: ?lang=en  ?theme=light (기본 다크)  ?quiz=1   키보드: ← → 슬라이드, D 다크/라이트 전환, L 언어 전환 ===== */
+var P=new URLSearchParams(location.search);
+var LANG=P.get("lang")==="en"?"en":"ko", QUIZ=P.get("quiz")==="1";
+if(P.get("theme")!=="light")document.documentElement.dataset.theme="dark";
+document.documentElement.lang=LANG;
+var DUR=15000, SRC="https://raw.githubusercontent.com/Blockmedia-DataTeam/CLM-brief/main/brief_context.json", PAGE="https://www.blockmedia.co.kr/clm";
+var LOGO_BASE="https://static.upbit.com/logos/";
+
+/* ===== 문구 사전. 국문이 기본, 영문은 ?lang=en ===== */
+var T={
+ko:{
+  brand:'블록미디어 <span>코생지</span> · 코인 생명력 지표',
+  asof:function(day,time){return day.replace(/-/g,".")+" 발표"+(time?" · "+time:"")},
+  foot_asof:"기준", qr:"스캔하면 오늘 브리핑 전체를 볼 수 있어요<br><em>Scan to view today’s full briefing</em>",
+  k:["오늘의 코생지 1위",
+     "코생지 TOP 10, 온체인·소셜·모멘텀을 합산한 오늘의 순위",
+     "코생지 TOP 10, 지난 24시간 평균 수익률",
+     "무엇이 순위를 만들었을까요? TOP 5 점수 기여도",
+     "코생지 TOP 10 종목을 매트릭스 위에서 한눈에 파악해요",
+     "메이저 디지털자산은 오늘 몇 등?",
+     "최근 90일 코생지 TOP 10 평균 점수 추이",
+     "코생지는 이렇게 만들어져요"],
+  clm:"코생지", driver:{ONCHAIN:"온체인",SOCIAL:"소셜",MOMENTUM:"모멘텀"},
+  h1:function(t){return "오늘 1위는 <b>"+t.symbol+"</b>예요."},
+  h1mix:function(drv,pct){return "온체인·소셜·모멘텀 중 "+T.ko.driver[drv]+" 기여도가 "+pct+"%로 가장 컸어요."},
+  h1full:function(drv){return T.ko.driver[drv]+" 기여도가 100%예요. 점수 전부를 "+T.ko.driver[drv]+"이 만들었어요."},
+  rsi_hot:function(r){return "다만 RSI "+r+"로 과열 구간이에요."}, rsi_cold:function(r){return "RSI "+r+", 과매도 구간이에요."},
+  quiz:"정답은 정시에 공개돼요. 아이패드에서 맞혀보세요!",
+  btc:"비트코인 24h", alpha:"BTC 대비", best:"최고", worst:"최저",
+  p_up:function(btc,a){return "비트코인("+btc+"%)보다 <b>"+a+"%p 더</b> 움직였어요.<br>생명력 높은 코인이 먼저 반응해요."},
+  p_dn:function(btc,a){return "오늘은 비트코인("+btc+"%)이 <b>"+a+"%p 앞섰어요.</b><br>지수는 있는 그대로 보여요."},
+  leg:["온체인","소셜","모멘텀"],
+  c_so:function(name,n,os){return "TOP 5 중 <b>"+n+"개 종목</b>은 "+name+" 기여도가 가장 컸어요."+(os>0?"<br>그중 "+os+"개는 과매도 구간(RSI 35 이하)에 있어요.":"")},
+  q:[["관심","생명력 높고 과열 낮음"],["강세 관찰","생명력 높지만 가격 부담"],["관망","참여도·모멘텀 약함"],["과열 주의","변동성 확대 구간"]],
+  ax_x:"RSI", ax_y:"CLM", rank:function(r){return r+"위"}, legend:["24h 상승","24h 하락"],
+  m_so:function(os){return os.length?"코생지는 높지만 가격은 과매도 구간(RSI 35 이하)인 종목은 <b>"+os.join(", ")+"</b>예요.":"오늘은 과매도 구간(RSI 35 이하)에 있는 종목이 없어요."},
+  mj_unit:"위", mj_so:"코생지는 디지털자산이 <b>얼마나 살아 움직이는지</b>를 봐요.",
+  pts:"점", t_so:function(prev,up,now){return "TOP 10 평균 생명력이 한 달 전("+prev+")보다 <b>"+(up?"올랐어요":"내렸어요")+"</b>.<br>"+T.ko.band(now)},
+  band:function(v){return v<0.75?"시장 참여가 전반적으로 위축된 구간이에요.":v<1.25?"내부 활동이 서서히 회복되는 초기 단계예요.":v<1.5?"회복이 이어지며 1.5 구간에 가까워지고 있어요.":"거래와 네트워크 활동이 함께 강해지는 구간이에요. 하락이 컸던 뒤라면 과매도 이후 반응을 살펴볼 신호로 봐요."},
+  x_title:"코인 생명력 지표",
+  x_cards:[["온체인","블록체인 네트워크 상 활동"],["소셜","해당 가상자산에 대한 커뮤니티 관심"],["모멘텀","가상자산의 가격 움직임"]],
+  x_so:"이 세 가지 데이터를 머신러닝으로 분석해 <b>코생지 점수</b>를 계산해요.<br>매일 아침 블록미디어 뉴스레터로 발표해요.",
+  stale:"저장된 데이터 표시 중"
+},
+en:{
+  brand:'Blockmedia <span>CLM</span> · Coin Liveliness Metric',
+  asof:function(day,time){return "published "+day.replace(/-/g,".")+(time?" · "+time:"")},
+  foot_asof:"as of", qr:"Scan to view today’s full briefing<br><em>스캔하면 오늘 브리핑 전체를 볼 수 있어요</em>",
+  k:["Today's No.1 by CLM",
+     "CLM Top 10: today's ranking from on-chain, social and momentum",
+     "CLM Top 10, average 24h return",
+     "What drove the ranking? Top 5 score breakdown",
+     "CLM Top 10 at a glance on the matrix",
+     "Where do the major digital assets rank today?",
+     "Last 90 days: Top 10 average CLM score",
+     "How CLM is built"],
+  clm:"CLM", driver:{ONCHAIN:"On-chain",SOCIAL:"Social",MOMENTUM:"Momentum"},
+  h1:function(t){return "Today's No.1 is <b>"+t.symbol+"</b>."},
+  h1mix:function(drv,pct){return T.en.driver[drv]+" contributed the most at "+pct+"%, ahead of the other two factors."},
+  h1full:function(drv){return T.en.driver[drv]+" made up 100% of the score."},
+  rsi_hot:function(r){return "Note: RSI "+r+", overheated territory."}, rsi_cold:function(r){return "RSI "+r+", oversold territory."},
+  quiz:"Revealed on the hour. Take a guess on the iPad!",
+  btc:"Bitcoin 24h", alpha:"vs BTC", best:"Best", worst:"Worst",
+  p_up:function(btc,a){return "<b>"+a+"pp more</b> than Bitcoin ("+btc+"%).<br>Lively assets move first."},
+  p_dn:function(btc,a){return "Bitcoin ("+btc+"%) led by <b>"+a+"pp</b> today.<br>We show it as it is."},
+  leg:["On-chain","Social","Momentum"],
+  c_so:function(name,n,os){return name+" is the main driver for <b>"+n+" of today's Top 5</b>."+(os>0?"<br>"+os+" of them sit in oversold territory (RSI ≤ 35).":"")},
+  q:[["Watch","lively, not overheated"],["Strong but pricey","lively, price stretched"],["Quiet","low activity & momentum"],["Overheated","high volatility zone"]],
+  ax_x:"RSI", ax_y:"CLM", rank:function(r){return "#"+r}, legend:["up 24h","down 24h"],
+  m_so:function(os){return os.length?"High CLM but oversold on price (RSI ≤ 35): <b>"+os.join(", ")+"</b>.":"No Top 10 asset is in oversold territory today."},
+  mj_unit:"th", mj_so:"CLM measures <b>how alive a digital asset is</b>, not its size.",
+  pts:"pts", t_so:function(prev,up,now){return "Average Top 10 liveliness is <b>"+(up?"up":"down")+"</b> from a month ago ("+prev+").<br>"+T.en.band(now)},
+  band:function(v){return v<0.75?"Market participation is broadly subdued.":v<1.25?"Early stage: internal activity is slowly recovering.":v<1.5?"Recovery continues, approaching the 1.5 zone.":"Trading and network activity are strengthening together. After a sharp drop, a signal to check for a post-oversold reaction."},
+  x_title:"Coin Liveliness",
+  x_cards:[["On-chain","Activity on the blockchain network"],["Social","Community interest in the asset"],["Momentum","Price movement of the asset"]],
+  x_so:"Machine learning turns these three data sets into the <b>CLM score</b>.<br>Published every morning in the Blockmedia newsletter.",
+  stale:"showing saved data"
+}};
+var L=T[LANG];
+
+/* ===== 내장 데모 데이터: 첫 화면과 네트워크 실패 시 최후 대체용 ===== */
+var DEMO={"as_of_date": "2026-09-12", "publish_str": "2026-09-14 (월) 06:34 KST", "summary": {"market": "코생지 TOP 10의 24시간 평균 변동은 +2.18%로, 비트코인 대비 +1.34%p 높았다.", "pattern": "TOP 10 중 1개 종목이 과매도 구간(RSI 35 이하)에 분포하며, 소셜 관심도가 우세한 종목이 다수다.", "focus": "코생지가 높으면서 과매도 구간에 함께 해당하는 종목은 TRUMP이다."}, "dashboard": {"top10_avg": 2.18, "median": 2.08, "ex_top1_avg": 2.99, "best": {"symbol": "JUP", "pct": 9.2}, "worst": {"symbol": "DOT", "pct": -5.07}, "btc": 0.85, "alpha": 1.34}, "majors": [{"rank": 2, "symbol": "ETH", "clm": 1.7424, "h24": 3.17, "rsi": 56.4, "driver": "SOCIAL", "driver_kr": "소셜", "comment": "소셜 관심도가 높음"}, {"rank": 3, "symbol": "SOL", "clm": 1.7335, "h24": 3.82, "rsi": 47.3, "driver": "SOCIAL", "driver_kr": "소셜", "comment": "소셜 관심도가 높음"}, {"rank": 9, "symbol": "XRP", "clm": 1.0173, "h24": 1.63, "rsi": 46.8, "driver": "SOCIAL", "driver_kr": "소셜", "comment": "소셜 관심도가 높음"}], "top10": [{"rank": 1, "symbol": "DOT", "clm": 2.3025, "h24": -5.07, "rsi": 64.2, "driver": "SOCIAL", "driver_kr": "소셜", "comment": "소셜 관심도가 높음", "contrib": {"onchain": 0, "social": 81, "momentum": 19}}, {"rank": 2, "symbol": "ETH", "clm": 1.7424, "h24": 3.17, "rsi": 56.4, "driver": "SOCIAL", "driver_kr": "소셜", "comment": "소셜 관심도가 높음", "contrib": {"onchain": 35, "social": 65, "momentum": 0}}, {"rank": 3, "symbol": "SOL", "clm": 1.7335, "h24": 3.82, "rsi": 47.3, "driver": "SOCIAL", "driver_kr": "소셜", "comment": "소셜 관심도가 높음", "contrib": {"onchain": 39, "social": 61, "momentum": 0}}, {"rank": 4, "symbol": "TRUMP", "clm": 1.4777, "h24": 2.08, "rsi": 24.5, "driver": "SOCIAL", "driver_kr": "소셜", "comment": "소셜 관심도가 높으나 가격은 과매도 구간", "contrib": {"onchain": 14, "social": 76, "momentum": 10}}, {"rank": 5, "symbol": "PIEVERSE", "clm": 1.2668, "h24": 3.55, "rsi": 62.8, "driver": "MOMENTUM", "driver_kr": "모멘텀", "comment": "가격 모멘텀이 유지되는 상태", "contrib": {"onchain": 0, "social": 0, "momentum": 100}}, {"rank": 6, "symbol": "CC", "clm": 1.1967, "h24": -0.32, "rsi": 36.8, "driver": "SOCIAL", "driver_kr": "소셜", "comment": "소셜 관심도가 높음", "contrib": {"onchain": 0, "social": 100, "momentum": 0}}, {"rank": 7, "symbol": "PEPE", "clm": 1.1726, "h24": 2.08, "rsi": 38.5, "driver": "ONCHAIN", "driver_kr": "온체인", "comment": "온체인 활동이 활발함", "contrib": {"onchain": 90, "social": 0, "momentum": 10}}, {"rank": 8, "symbol": "JUP", "clm": 1.1368, "h24": 9.2, "rsi": 55.9, "driver": "SOCIAL", "driver_kr": "소셜", "comment": "소셜 관심도가 높음", "contrib": {"onchain": 26, "social": 48, "momentum": 26}}, {"rank": 9, "symbol": "XRP", "clm": 1.0173, "h24": 1.63, "rsi": 46.8, "driver": "SOCIAL", "driver_kr": "소셜", "comment": "소셜 관심도가 높음", "contrib": {"onchain": 29, "social": 71, "momentum": 0}}, {"rank": 10, "symbol": "DOGE", "clm": 1.0014, "h24": 1.7, "rsi": 48.4, "driver": "SOCIAL", "driver_kr": "소셜", "comment": "소셜 관심도가 높음", "contrib": {"onchain": 34, "social": 66, "momentum": 0}}], "matrix": [{"rank": 1, "symbol": "DOT", "x": 64.2, "y": 2.3025, "h24": -5.07, "quadrant": "관심", "label": "1위 DOT -5.1%"}, {"rank": 2, "symbol": "ETH", "x": 56.4, "y": 1.7424, "h24": 3.17, "quadrant": "관심", "label": "2위 ETH +3.2%"}, {"rank": 3, "symbol": "SOL", "x": 47.3, "y": 1.7335, "h24": 3.82, "quadrant": "관심", "label": "3위 SOL +3.8%"}, {"rank": 4, "symbol": "TRUMP", "x": 24.5, "y": 1.4777, "h24": 2.08, "quadrant": "관망", "label": "4위 TRUMP +2.1%"}, {"rank": 5, "symbol": "PIEVERSE", "x": 62.8, "y": 1.2668, "h24": 3.55, "quadrant": "관망", "label": "5위 PIEVERSE +3.5%"}, {"rank": 6, "symbol": "CC", "x": 36.8, "y": 1.1967, "h24": -0.32, "quadrant": "관망", "label": "6위 CC -0.3%"}, {"rank": 7, "symbol": "PEPE", "x": 38.5, "y": 1.1726, "h24": 2.08, "quadrant": "관망", "label": "7위 PEPE +2.1%"}, {"rank": 8, "symbol": "JUP", "x": 55.9, "y": 1.1368, "h24": 9.2, "quadrant": "관망", "label": "8위 JUP +9.2%"}, {"rank": 9, "symbol": "XRP", "x": 46.8, "y": 1.0173, "h24": 1.63, "quadrant": "관망", "label": "9위 XRP +1.6%"}, {"rank": 10, "symbol": "DOGE", "x": 48.4, "y": 1.0014, "h24": 1.7, "quadrant": "관망", "label": "10위 DOGE +1.7%"}], "matrix_axis": {"x": [10, 100], "y": [0.5, 2.5]}, "timeseries": {"series": [{"date": "2026-06-15", "cohort_strength": 1.3931, "alpha": 0.0014}, {"date": "2026-06-16", "cohort_strength": 1.3248, "alpha": -0.0001}, {"date": "2026-06-17", "cohort_strength": 1.2912, "alpha": 0.0022}, {"date": "2026-06-18", "cohort_strength": 1.2244, "alpha": 0.0118}, {"date": "2026-06-19", "cohort_strength": 1.2876, "alpha": 0.0047}, {"date": "2026-06-20", "cohort_strength": 1.3212, "alpha": -0.0163}, {"date": "2026-06-21", "cohort_strength": 1.3319, "alpha": -0.0061}, {"date": "2026-06-22", "cohort_strength": 1.3202, "alpha": 0.0018}, {"date": "2026-06-23", "cohort_strength": 1.3185, "alpha": -0.0058}, {"date": "2026-06-24", "cohort_strength": 1.4154, "alpha": -0.0084}, {"date": "2026-06-25", "cohort_strength": 1.3339, "alpha": -0.0012}, {"date": "2026-06-26", "cohort_strength": 1.4507, "alpha": 0.0019}, {"date": "2026-06-27", "cohort_strength": 1.3921, "alpha": 0.013}, {"date": "2026-06-28", "cohort_strength": 1.7222, "alpha": 0.0115}, {"date": "2026-06-29", "cohort_strength": 1.6058, "alpha": 0.0058}, {"date": "2026-06-30", "cohort_strength": 1.4938, "alpha": 0.0054}, {"date": "2026-07-01", "cohort_strength": 1.3453, "alpha": 0.0138}, {"date": "2026-07-02", "cohort_strength": 1.3931, "alpha": -0.0035}, {"date": "2026-07-03", "cohort_strength": 1.6141, "alpha": 0.0132}, {"date": "2026-07-04", "cohort_strength": 1.6245, "alpha": 0.0378}, {"date": "2026-07-05", "cohort_strength": 1.451, "alpha": -0.0028}, {"date": "2026-07-06", "cohort_strength": 1.5155, "alpha": -0.0053}, {"date": "2026-07-07", "cohort_strength": 1.588, "alpha": 0.0058}, {"date": "2026-07-08", "cohort_strength": 1.5716, "alpha": -0.0128}, {"date": "2026-07-09", "cohort_strength": 1.4562, "alpha": -0.0091}, {"date": "2026-07-10", "cohort_strength": 1.425, "alpha": -0.0003}, {"date": "2026-07-11", "cohort_strength": 1.4362, "alpha": 0.0055}, {"date": "2026-07-12", "cohort_strength": 1.4219, "alpha": -0.0112}, {"date": "2026-07-13", "cohort_strength": 1.4504, "alpha": 0.0005}, {"date": "2026-07-14", "cohort_strength": 1.4049, "alpha": 0.0109}, {"date": "2026-07-15", "cohort_strength": 1.3363, "alpha": -0.0177}, {"date": "2026-07-16", "cohort_strength": 1.4113, "alpha": 0.0317}, {"date": "2026-07-17", "cohort_strength": 1.5034, "alpha": -0.0044}, {"date": "2026-07-18", "cohort_strength": 1.4682, "alpha": -0.0055}, {"date": "2026-07-19", "cohort_strength": 1.5496, "alpha": -0.0059}, {"date": "2026-07-20", "cohort_strength": 1.5752, "alpha": 0.0196}, {"date": "2026-07-21", "cohort_strength": 1.5844, "alpha": 0.0057}, {"date": "2026-07-22", "cohort_strength": 1.5527, "alpha": -0.0131}, {"date": "2026-07-23", "cohort_strength": 1.5453, "alpha": 0.0066}, {"date": "2026-07-24", "cohort_strength": 1.4424, "alpha": -0.0125}, {"date": "2026-07-25", "cohort_strength": 1.6064, "alpha": 0.0023}, {"date": "2026-07-26", "cohort_strength": 1.5635, "alpha": 0.0198}, {"date": "2026-07-27", "cohort_strength": 1.6625, "alpha": 0.0308}, {"date": "2026-07-28", "cohort_strength": 1.53, "alpha": -0.0118}, {"date": "2026-07-29", "cohort_strength": 1.4221, "alpha": -0.0115}, {"date": "2026-07-30", "cohort_strength": 1.3752, "alpha": -0.0031}, {"date": "2026-07-31", "cohort_strength": 1.4863, "alpha": 0.0135}, {"date": "2026-08-01", "cohort_strength": 1.6495, "alpha": 0.0155}, {"date": "2026-08-02", "cohort_strength": 1.6919, "alpha": 0.0148}, {"date": "2026-08-03", "cohort_strength": 1.6731, "alpha": 0.0195}, {"date": "2026-08-04", "cohort_strength": 1.4248, "alpha": 0.0052}, {"date": "2026-08-05", "cohort_strength": 1.6672, "alpha": 0.0094}, {"date": "2026-08-06", "cohort_strength": 1.6161, "alpha": -0.012}, {"date": "2026-08-07", "cohort_strength": 1.6578, "alpha": 0.0008}, {"date": "2026-08-08", "cohort_strength": 1.5593, "alpha": -0.0147}, {"date": "2026-08-09", "cohort_strength": 1.6899, "alpha": 0.0208}, {"date": "2026-08-10", "cohort_strength": 1.6096, "alpha": 0.0104}, {"date": "2026-08-11", "cohort_strength": 1.5423, "alpha": 0.0201}, {"date": "2026-08-12", "cohort_strength": 1.5269, "alpha": 0.0154}, {"date": "2026-08-13", "cohort_strength": 1.521, "alpha": -0.0139}, {"date": "2026-08-14", "cohort_strength": 1.4678, "alpha": 0.0145}, {"date": "2026-08-15", "cohort_strength": 1.4926, "alpha": 0.0078}, {"date": "2026-08-16", "cohort_strength": 1.4439, "alpha": -0.0031}, {"date": "2026-08-17", "cohort_strength": 1.3268, "alpha": -0.0036}, {"date": "2026-08-18", "cohort_strength": 1.6066, "alpha": -0.0057}, {"date": "2026-08-19", "cohort_strength": 1.674, "alpha": 0.0041}, {"date": "2026-08-20", "cohort_strength": 1.5586, "alpha": 0.0238}, {"date": "2026-08-21", "cohort_strength": 1.7592, "alpha": 0.0328}, {"date": "2026-08-22", "cohort_strength": 1.5547, "alpha": 0.0509}, {"date": "2026-08-23", "cohort_strength": 1.6403, "alpha": 0.0577}, {"date": "2026-08-24", "cohort_strength": 1.6092, "alpha": 0.0268}, {"date": "2026-08-25", "cohort_strength": 1.5494, "alpha": -0.0371}, {"date": "2026-08-26", "cohort_strength": 1.5021, "alpha": -0.0373}, {"date": "2026-08-27", "cohort_strength": 1.5321, "alpha": 0.0258}, {"date": "2026-08-28", "cohort_strength": 1.5258, "alpha": 0.0092}, {"date": "2026-08-29", "cohort_strength": 1.5728, "alpha": 0.005}, {"date": "2026-08-30", "cohort_strength": 1.4819, "alpha": 0.0164}, {"date": "2026-08-31", "cohort_strength": 1.3137, "alpha": -0.0206}, {"date": "2026-09-01", "cohort_strength": 1.3451, "alpha": 0.0353}, {"date": "2026-09-02", "cohort_strength": 1.3616, "alpha": 0.0102}, {"date": "2026-09-03", "cohort_strength": 1.298, "alpha": 0.01}, {"date": "2026-09-04", "cohort_strength": 1.302, "alpha": 0.0086}, {"date": "2026-09-05", "cohort_strength": 1.3426, "alpha": -0.0082}, {"date": "2026-09-06", "cohort_strength": 1.3892, "alpha": 0.0584}, {"date": "2026-09-07", "cohort_strength": 1.307, "alpha": 0.0511}, {"date": "2026-09-08", "cohort_strength": 1.292, "alpha": 0.0072}, {"date": "2026-09-09", "cohort_strength": 1.3687, "alpha": 0.0764}, {"date": "2026-09-10", "cohort_strength": 1.3236, "alpha": -0.0407}, {"date": "2026-09-11", "cohort_strength": 1.3663, "alpha": -0.0181}, {"date": "2026-09-12", "cohort_strength": 1.4048, "alpha": 0.0134}]}};
+
+function $(id){return document.getElementById(id)}
+function cls(v){return v>0?"up":v<0?"down":"flat"}
+function sign(v,d){return (v>0?"+":v<0?"−":"")+Math.abs(v).toFixed(d==null?1:d)}
+function setBig(id,v,unit){var e=$(id);e.className=e.className.replace(/\b(up|down|flat)\b/g,"").trim()+" "+cls(v);e.innerHTML=sign(v)+"<small>"+unit+"</small>"}
+function tag(drv){var m={ONCHAIN:"t-on",SOCIAL:"t-so",MOMENTUM:"t-mo"};return '<span class="tag '+(m[drv]||"t-so")+'">'+(L.driver[drv]||drv)+'</span>'}
+function ordinal(n){var s=["th","st","nd","rd"],v=n%100;return s[(v-20)%10]||s[v]||s[0]}
+function mjUnit(n){return LANG==="en"?ordinal(n):L.mj_unit}
+/* 로고: 업비트 정적 이미지, 없으면 티커 첫 글자 */
+function logoBox(t){var u=t.logo_url||(LOGO_BASE+t.symbol+".png");return '<div class="logo"><img src="'+u+'" alt="" onerror="this.parentNode.textContent=\''+t.symbol.charAt(0)+'\'"></div>'}
+function driverKey(t){return t.driver==="ONCHAIN"?"onchain":t.driver==="MOMENTUM"?"momentum":"social"}
+
+/* ===== 정적 문구 채우기 ===== */
+function fillStatic(){
+  $("brand").innerHTML=L.brand; $("qr_text").innerHTML=L.qr; $("l_asof").textContent=L.foot_asof; $("stale").textContent=L.stale;
+  for(var i=0;i<8;i++)$("k"+(i+1)).innerHTML=L.k[i];
+  $("l_clm").textContent=L.clm; $("l_btc").textContent=L.btc; $("l_alpha").textContent=L.alpha; $("l_best").textContent=L.best; $("l_worst").textContent=L.worst;
+  $("leg").innerHTML=[["on",0],["so",1],["mo",2]].map(function(x){return '<span><i style="background:var(--'+x[0]+')"></i>'+L.leg[x[1]]+'</span>'}).join("");
+  $("mj_so").innerHTML=L.mj_so; $("x_title").textContent=L.x_title; $("x_so").innerHTML=L.x_so;
+  $("x_cards").innerHTML=[["on",0],["so",1],["mo",2]].map(function(x){return '<div class="card"><div class="t"><span class="sw" style="background:var(--'+x[0]+')"></span>'+L.x_cards[x[1]][0]+'</div><div class="d">'+L.x_cards[x[1]][1]+'</div></div>'}).join("");
+}
+
+/* ===== 데이터 렌더 ===== */
+var DATA=null;
+function render(d){
+  DATA=d;
+  var day=d.updated_date||d.as_of_date, time=d.publish_str&&d.publish_str.indexOf(":")>0?d.publish_str.slice(-9):"";
+  $("asof").textContent=L.asof(day,time); $("upd").textContent=day;
+
+  // 1장
+  var t1=d.top10[0], pct=t1.contrib[driverKey(t1)];
+  $("h1logo").outerHTML=logoBox(t1).replace('class="logo"','class="logo" id="h1logo"');
+  $("h1sym").textContent=t1.symbol; $("h1clm").textContent=t1.clm.toFixed(2);
+  $("h1h24").textContent=sign(t1.h24)+"%"; $("h1h24").className="n "+cls(t1.h24); $("h1tag").innerHTML=tag(t1.driver);
+  var rs=t1.rsi>=70?L.rsi_hot(t1.rsi):t1.rsi<=35?L.rsi_cold(t1.rsi):"";
+  $("h1so").innerHTML=L.h1(t1)+"<br>"+(pct>=100?L.h1full(t1.driver):L.h1mix(t1.driver,pct))+(rs?" "+rs:"");
+  $("hero1").classList.toggle("blur",QUIZ); if(QUIZ)$("h1so").textContent=L.quiz;
+
+  // 2장
+  $("top10").innerHTML=d.top10.map(function(t){return '<div class="r'+(t.rank===1?" t1":"")+(QUIZ&&t.rank<=3?" blur":"")+'"><i>'+t.rank+'</i>'+logoBox(t)+'<em>'+t.symbol+'</em>'+tag(t.driver)+'<span class="c n">'+t.clm.toFixed(2)+'</span><b class="n '+cls(t.h24)+'">'+sign(t.h24)+'%</b></div>'}).join("");
+
+  // 3장
+  var db=d.dashboard; setBig("p_avg",db.top10_avg,"%");
+  $("p_so").innerHTML=db.alpha>=0?L.p_up(sign(db.btc),db.alpha.toFixed(1)):L.p_dn(sign(db.btc),Math.abs(db.alpha).toFixed(1));
+  $("p_btc").textContent=sign(db.btc)+"%";$("p_btc").className="n "+cls(db.btc);$("p_alpha").textContent=sign(db.alpha)+"%p";$("p_alpha").className="n "+cls(db.alpha);
+  $("p_best").innerHTML=db.best.symbol+' <span class="up">'+sign(db.best.pct)+'%</span>';$("p_worst").innerHTML=db.worst.symbol+' <span class="down">'+sign(db.worst.pct)+'%</span>';
+
+  // 4장
+  $("contrib").innerHTML=d.top10.slice(0,5).map(function(t){var c=t.contrib;var parts=[["c-on",c.onchain],["c-so",c.social],["c-mo",c.momentum]].filter(function(x){return x[1]>0});return '<div class="row"><span>'+t.symbol+'</span><div class="bar2" style="grid-template-columns:'+parts.map(function(x){return x[1]+"fr"}).join(" ")+'">'+parts.map(function(x){return '<i class="'+x[0]+(x[1]<7?' tiny':'')+'">'+x[1]+'%</i>'}).join("")+'</div></div>'}).join("");
+  var t5=d.top10.slice(0,5),dc={};t5.forEach(function(t){dc[t.driver]=(dc[t.driver]||0)+1});var topD=Object.keys(dc).sort(function(a,b){return dc[b]-dc[a]})[0];
+  var osN=t5.filter(function(t){return t.rsi<=35}).length;
+  $("c_so").innerHTML=L.c_so(L.driver[topD],dc[topD],osN);
+
+  // 5장
+  var os=d.top10.filter(function(t){return t.rsi<=35}).map(function(t){return t.symbol});
+  $("m_so").innerHTML=L.m_so(os);
+
+  // 6장
+  $("majors").innerHTML=d.majors.map(function(m){return '<div class="card"><div class="t">'+m.symbol+'</div><div class="rank n">'+m.rank+'<small>'+mjUnit(m.rank)+'</small></div><div class="d">'+L.clm+' '+m.clm.toFixed(2)+' · 24h <span class="'+cls(m.h24)+'">'+sign(m.h24)+'%</span></div></div>'}).join("");
+
+  // 7장 문장
+  var s=d.timeseries.series.slice(-90), v=s.map(function(x){return x.cohort_strength}), now=v[v.length-1], prev=v[Math.max(0,v.length-31)];
+  $("t_now").innerHTML=now.toFixed(2)+'<small>'+L.pts+'</small>'; $("t_so").innerHTML=L.t_so(prev.toFixed(2),now>=prev,now);
+
+  drawCharts(); fitAll();
+}
+
+/* ===== 매트릭스: 실제 픽셀 크기로 그림. 버블 안 티커, 위아래에 순위·등락 태그, 겹치면 밀어냄 ===== */
+function drawMatrix(d){
+  var svg=$("mx"), W=svg.clientWidth, H=svg.clientHeight; if(!W||!H||!d)return;
+  var u=Math.min(W/100,H/56);                                     // 크기 단위. 16:9 영역이면 W/100
+  var pts=d.top10.filter(function(t){return t.rsi!=null&&t.clm!=null}).map(function(t){return {r:t,x:0,y:0}});
+  var xs=pts.map(function(p){return p.r.rsi}), ys=pts.map(function(p){return p.r.clm});
+  var x0=Math.min(10,Math.floor((Math.min.apply(null,xs)-5)/5)*5), x1=Math.max(100,Math.ceil((Math.max.apply(null,xs)+5)/5)*5);
+  var y0=Math.max(0,Math.floor((Math.min.apply(null,ys)-.25)*2)/2), y1=Math.ceil((Math.max.apply(null,ys)+.25)*2)/2; if(y1-y0<1)y1=y0+1;
+  var m={t:4.2*u,r:2*u,b:8*u,l:8*u}, pw=W-m.l-m.r, ph=H-m.t-m.b;
+  var X=function(v){return m.l+(v-x0)/(x1-x0)*pw}, Y=function(v){return m.t+ph-(v-y0)/(y1-y0)*ph};
+  var R=4.4*u, fs=2.6*u, tf=2.1*u, xm=X(70), ym=Y(1.5);
+  var h='';
+  // 사분면
+  var Qs=[[m.l,m.t,xm-m.l,ym-m.t,"--q1",0,true,false],[xm,m.t,m.l+pw-xm,ym-m.t,"--q2",1,true,true],[m.l,ym,xm-m.l,m.t+ph-ym,"--q3",2,false,false],[xm,ym,m.l+pw-xm,m.t+ph-ym,"--q4",3,false,true]];
+  Qs.forEach(function(q){
+    h+='<rect x="'+q[0]+'" y="'+q[1]+'" width="'+q[2]+'" height="'+q[3]+'" fill="var('+q[4]+')"/>';
+    var right=q[7],top=q[6],tx=right?q[0]+q[2]-1.4*u:q[0]+1.4*u,ta=right?"end":"start",ty=top?q[1]+3.4*u:q[1]+q[3]-3.6*u;
+    h+='<text class="qn" x="'+tx+'" y="'+ty+'" text-anchor="'+ta+'" font-size="'+(2.5*u)+'">'+L.q[q[5]][0]+'</text>';
+    h+='<text class="qs" x="'+tx+'" y="'+(ty+(top?2.6*u:-2.7*u))+'" text-anchor="'+ta+'" font-size="'+(1.9*u)+'">'+L.q[q[5]][1]+'</text>';
+  });
+  h+='<line class="ax" x1="'+xm+'" x2="'+xm+'" y1="'+m.t+'" y2="'+(m.t+ph)+'"/><line class="ax" x1="'+m.l+'" x2="'+(m.l+pw)+'" y1="'+ym+'" y2="'+ym+'"/>';
+  // 눈금과 축 이름
+  [10,35,50,70,100].forEach(function(v){if(v>=x0&&v<=x1)h+='<text class="tk" x="'+X(v)+'" y="'+(m.t+ph+2.8*u)+'" text-anchor="middle" font-size="'+(1.9*u)+'">'+v+'</text>'});
+  for(var v=y0;v<=y1+1e-9;v+=.5)h+='<text class="tk" x="'+(m.l-1.2*u)+'" y="'+(Y(v)+.7*u)+'" text-anchor="end" font-size="'+(1.9*u)+'">'+v.toFixed(1)+'</text>';
+  h+='<text class="tk" x="'+(m.l+pw/2)+'" y="'+(H-1.2*u)+'" text-anchor="middle" font-size="'+(2*u)+'">'+L.ax_x+'</text>';
+  h+='<text class="tk" x="'+(2.2*u)+'" y="'+(m.t+ph/2)+'" transform="rotate(-90 '+(2.2*u)+' '+(m.t+ph/2)+')" text-anchor="middle" font-size="'+(2*u)+'">'+L.ax_y+'</text>';
+  // 범례: 오른쪽 끝에서부터 역순 배치
+  var lw1=L.legend[0].length*1.9*u*(LANG==="ko"?.78:.52), lw0=L.legend[1].length*1.9*u*(LANG==="ko"?.78:.52), lx=m.l+pw, ly=1.6*u;
+  h+='<text class="tk" x="'+lx+'" y="'+(ly+.7*u)+'" text-anchor="end" font-size="'+(1.9*u)+'">'+L.legend[1]+'</text><circle cx="'+(lx-lw0-1.5*u)+'" cy="'+ly+'" r="'+(.9*u)+'" fill="var(--down)"/>';
+  lx=lx-lw0-4.2*u;
+  h+='<text class="tk" x="'+lx+'" y="'+(ly+.7*u)+'" text-anchor="end" font-size="'+(1.9*u)+'">'+L.legend[0]+'</text><circle cx="'+(lx-lw1-1.5*u)+'" cy="'+ly+'" r="'+(.9*u)+'" fill="var(--up)"/>';
+  // 버블 위치: 원래 좌표에서 시작해 겹치는 것만 밀어냄
+  pts.forEach(function(p){p.x0=p.x=X(p.r.rsi);p.y0=p.y=Y(p.r.clm)});
+  for(var it=0;it<100;it++){var moved=false;
+    for(var i=0;i<pts.length;i++)for(var j=i+1;j<pts.length;j++){var a=pts[i],b=pts[j],dx=b.x-a.x,dy=b.y-a.y,dd=Math.hypot(dx,dy)||.01,min=R*2.3;
+      if(dd<min){var pu=(min-dd)/2;dx/=dd;dy/=dd;a.x-=dx*pu;a.y-=dy*pu;b.x+=dx*pu;b.y+=dy*pu;moved=true}}
+    pts.forEach(function(p){p.x=Math.min(Math.max(p.x,m.l+R),m.l+pw-R);p.y=Math.min(Math.max(p.y,m.t+R+tf*1.5),m.t+ph-R-tf*1.5)});
+    if(!moved)break}
+  // 태그 위치: 기본 위, 겹치면 아래
+  var tags=[];
+  pts.forEach(function(p){var lab=L.rank(p.r.rank)+" "+sign(p.r.h24)+"%", tw=lab.length*tf*.6, th=tf*1.2;
+    var cands=[{x:p.x,y:p.y-R-tf*.7},{x:p.x,y:p.y+R+tf*1.25},{x:p.x+R+tw/2+.6*u,y:p.y+tf*.35},{x:p.x-R-tw/2-.6*u,y:p.y+tf*.35}], best=cands[0];
+    for(var k=0;k<cands.length;k++){var c=cands[k];
+      var cx0=c.x-tw/2,cx1=c.x+tw/2,cy0=c.y-th*.8,cy1=c.y+th*.2;if(cx0<m.l||cx1>m.l+pw)continue;var hit=tags.some(function(t){return Math.abs(t.x-c.x)<(t.w+tw)/2&&Math.abs(t.y-c.y)<th})||pts.some(function(q){if(q===p)return false;var nx=Math.max(cx0,Math.min(q.x,cx1)),ny=Math.max(cy0,Math.min(q.y,cy1));return Math.hypot(q.x-nx,q.y-ny)<R});
+      if(!hit){best=c;break}}
+    tags.push({x:best.x,y:best.y,w:tw}); p.tag={lab:lab,x:best.x,y:best.y}});
+  // 그리기: 이동한 버블은 원래 위치와 선으로 연결
+  pts.forEach(function(p){if(Math.hypot(p.x-p.x0,p.y-p.y0)>1.2*u)h+='<line class="lead" x1="'+p.x0+'" y1="'+p.y0+'" x2="'+p.x+'" y2="'+p.y+'"/><circle cx="'+p.x0+'" cy="'+p.y0+'" r="'+(.7*u)+'" fill="var(--ink-3)"/>'});
+  pts.forEach(function(p){var q=QUIZ&&p.r.rank<=3, col=p.r.h24>=0?"var(--up)":"var(--down)", n=p.r.symbol.length, sz=n<=4?fs:fs*4/n*1.08;
+    h+='<g'+(q?' opacity=".25"':'')+'><circle cx="'+p.x+'" cy="'+p.y+'" r="'+R+'" fill="'+col+'" stroke="var(--halo)" stroke-width="'+(.5*u)+'"/>';
+    if(!q)h+='<text class="sym" x="'+p.x+'" y="'+p.y+'" font-size="'+sz+'">'+p.r.symbol+'</text><text class="lab" x="'+p.tag.x+'" y="'+p.tag.y+'" font-size="'+tf+'" fill="'+col+'">'+p.tag.lab+'</text>';
+    h+='</g>'});
+  svg.setAttribute("viewBox","0 0 "+W+" "+H); svg.innerHTML=h;
+}
+
+/* ===== 90일 추이: 실제 픽셀 크기, 선 굵기 왜곡 없음 ===== */
+function drawTS(d){
+  var svg=$("ts"), W=svg.clientWidth, H=svg.clientHeight; if(!W||!H||!d)return;
+  var s=d.timeseries.series.slice(-90), v=s.map(function(x){return x.cohort_strength}), n=v.length;
+  var mn=Math.min.apply(null,v), mx=Math.max.apply(null,v), pad=(mx-mn||1)*.12; mn-=pad; mx+=pad;
+  var fs=Math.max(16,H*.09), L2=0, R2=0, T2=6, B2=fs*1.6, pw=W-L2-R2, ph=H-T2-B2;
+  var X=function(i){return L2+i/(n-1)*pw}, Y=function(y){return T2+ph-(y-mn)/(mx-mn)*ph};
+  var pts=v.map(function(y,i){return X(i).toFixed(1)+","+Y(y).toFixed(1)});
+  var h='';
+  [0.25,0.5,0.75].forEach(function(f){var y=T2+ph*f;h+='<line class="grid" x1="0" x2="'+W+'" y1="'+y+'" y2="'+y+'"/>'});
+  h+='<path class="area" d="M'+X(0)+','+(T2+ph)+' L'+pts.join(" L")+' L'+X(n-1)+','+(T2+ph)+' Z"/><path class="line" d="M'+pts.join(" L")+'"/>';
+  h+='<circle cx="'+X(n-1)+'" cy="'+Y(v[n-1])+'" r="7" fill="var(--accent)" stroke="var(--bg)" stroke-width="3"/>';
+  h+='<text x="0" y="'+(H-2)+'" font-size="'+fs+'">'+s[0].date.slice(5).replace("-","/")+'</text><text x="'+W+'" y="'+(H-2)+'" text-anchor="end" font-size="'+fs+'">'+s[n-1].date.slice(5).replace("-","/")+'</text>';
+  svg.setAttribute("viewBox","0 0 "+W+" "+H); svg.innerHTML=h;
+}
+function drawCharts(){drawMatrix(DATA);drawTS(DATA)}
+
+/* ===== 설명 문장이 3줄을 넘으면 글자를 줄임 ===== */
+function fitText(el,maxLines){
+  if(!el||el.offsetParent===null)return; el.style.fontSize="";
+  var fs=parseFloat(getComputedStyle(el).fontSize), lh=parseFloat(getComputedStyle(el).lineHeight)/fs, guard=0;
+  while(el.scrollHeight>fs*lh*maxLines+2&&fs>18&&guard++<20){fs*=.94;el.style.fontSize=fs+"px"}
+}
+function fitAll(){var on=document.querySelector(".slide.on");if(!on)return;Array.prototype.forEach.call(on.querySelectorAll(".so"),function(e){fitText(e,3)});fitText(on.querySelector(".kicker"),2)}
+
+/* ===== 데이터 로드: 성공 시 로컬 저장, 실패 시 저장본, 그것도 없으면 내장 데모 ===== */
+var KEY="kosaengji_kiosk_last";
+function load(first){
+  return fetch(SRC+"?t="+Date.now(),{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(d){
+    try{localStorage.setItem(KEY,JSON.stringify(d))}catch(e){}
+    $("stale").classList.remove("on"); render(d);
+  }).catch(function(){
+    if(!first)return;
+    var c=null; try{c=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+    $("stale").classList.add("on"); render(c||DEMO);
+  });
+}
+
+/* ===== 슬라이드 전환 ===== */
+var slides=document.querySelectorAll(".slide"),cur=0,timer=null;
+document.documentElement.style.setProperty("--dur",DUR+"ms");
+function show(i){
+  slides[cur].classList.remove("on");cur=(i+slides.length)%slides.length;slides[cur].classList.add("on");$("idx").textContent=cur+1;
+  if(slides[cur].dataset.chart)drawCharts(); fitAll(); setTimeout(fitAll,480);
+  var b=$("bar");b.classList.remove("run");void b.offsetWidth;b.classList.add("run");
+}
+function autoplay(){clearInterval(timer);if(window===window.top)timer=setInterval(function(){show(cur+1)},DUR)}
+window.addEventListener("resize",function(){drawCharts();fitAll()});
+document.addEventListener("keydown",function(e){
+  if(e.key==="ArrowRight"){show(cur+1);autoplay()} if(e.key==="ArrowLeft"){show(cur-1);autoplay()}
+  if(e.key==="d"||e.key==="D"){var h=document.documentElement;h.dataset.theme=h.dataset.theme==="dark"?"":"dark";drawCharts()}
+  if(e.key==="l"||e.key==="L"){P.set("lang",LANG==="en"?"ko":"en");location.search=P.toString()}
+});
+document.addEventListener("click",function(){show(cur+1);autoplay()});
+
+/* ===== 시작 ===== */
+fillStatic();
+new QRCode($("qr"),{text:PAGE,width:256,height:256,correctLevel:QRCode.CorrectLevel.M}); $("qr_label").textContent=PAGE.replace("https://","");
+render(DEMO); show(0); autoplay();
+load(true);
+setInterval(function(){load(false)},30*60000);
+/* 매일 06:10에 새 데이터를 받도록 페이지 새로고침. 데이터 발표가 06:00 전후라서 */
+setInterval(function(){var t=new Date();if(t.getHours()===6&&t.getMinutes()===10&&t.getSeconds()<30)location.reload()},20000);
+</script>
+</body>
+</html>
