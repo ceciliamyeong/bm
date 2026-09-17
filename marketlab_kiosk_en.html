@@ -59,6 +59,8 @@ html,body{word-break:keep-all;overflow-wrap:anywhere;height:100%;background:var(
 .two{display:grid;grid-template-columns:1fr 1fr;gap:6vw;margin-top:2vh;max-width:84vw}
 .two h4{font-size:1.8vw;font-weight:600;color:var(--ink-2);margin-bottom:.5vh}
 .two .rank{grid-template-columns:1fr;gap:0;max-width:none;margin-top:0}
+.two .rank .r{height:6.4vh;padding:0;align-items:center;box-sizing:border-box}
+.two{align-items:start}
 .exgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.6vw;margin-top:2.5vh;max-width:88vw}
 .ex{background:var(--bg-2);border-radius:1.4vh;padding:2.2vh 1.5vw}
 .ex .h{display:flex;align-items:center;gap:.8vw;font-size:1.9vw;font-weight:700;margin-bottom:1.2vh}
@@ -87,8 +89,8 @@ html,body{word-break:keep-all;overflow-wrap:anywhere;height:100%;background:var(
 .gauge{width:70vw;height:5vh;background:var(--bg-2);border-radius:2.5vh;position:relative;margin-top:3vh;overflow:hidden}
 .gauge i{position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:2.5vh;transition:width 1s ease}
 .gauge-l{display:flex;justify-content:space-between;width:70vw;font-size:1.5vw;color:var(--ink-2);margin-top:1vh}
-.rows{display:grid;grid-template-columns:1fr 1fr;gap:0 5vw;margin-top:2.5vh;max-width:74vw}
-.row{display:grid;grid-template-columns:1fr auto;align-items:baseline;padding:1.3vh 0;border-bottom:1px solid var(--line);font-size:2vw}
+.rows{display:grid;grid-template-columns:1fr 1fr;gap:0 5vw;margin-top:2vh;max-width:74vw}
+.row{display:grid;grid-template-columns:1fr auto;align-items:baseline;padding:1vh 0;border-bottom:1px solid var(--line);font-size:1.9vw}
 .row span{color:var(--ink-2);font-size:1.4vw;margin-left:.8vw}.row b{font-weight:600}
 .brandslide{align-items:center;text-align:center}
 .brandslide h1{font-size:5.6vw;font-weight:800;letter-spacing:-.04em;line-height:1.08}
@@ -166,7 +168,7 @@ html[data-theme=dark] .so b{color:#8ec5ff}
     <section data-url="bm20" class="slide">
       <div class="kicker">BM20 Index — today<small>BM20 지수 — 오늘</small></div>
       <div class="big sm n" id="bm_today">—</div>
-      <p class="so"><b>BM20</b> — Blockmedia's flagship index of the top 20 digital assets<br>by market cap. Index level <span id="bm_level">—</span><br><span style="font-size:1.8vw;color:var(--ink-3)">small number next to each coin = index weight</span></p>
+      <p class="so"><b>BM20</b> — Blockmedia's index of the top 20 digital assets by market cap.<br>Index level <span id="bm_level">—</span> <span style="font-size:1.8vw;color:var(--ink-3)">· small number = index weight</span></p>
       <div class="tiles" id="tiles"></div>
     </section>
     <section data-url="marketlab" class="slide">
@@ -189,7 +191,7 @@ html[data-theme=dark] .so b{color:#8ec5ff}
     </section>
     <section data-url="marketlab" class="slide">
       <div class="kicker">New listings (30d): avg return 7 days after listing<small>최근 30일 신규상장 코인, 상장 7일 뒤 평균 수익률</small></div>
-      <div class="big n" id="lb_avg">—</div>
+      <div class="big sm n" id="lb_avg">—</div>
       <div class="rows" id="lb_rows"></div>
       <p class="so">Most day-one buyers are underwater a week later.<br>Blockmedia's <b>Listing Beam research</b> tracks it weekly.</p>
     </section>
@@ -290,6 +292,8 @@ function show(i){slides[cur].classList.remove("on");cur=i;slides[cur].classList.
 show(0);if(window===window.top)setInterval(function(){show((cur+1)%slides.length)},DUR);
 setInterval(function(){var d=new Date();$("clock").textContent=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()]+" "+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")},1000);
 window.addEventListener("resize",function(){fit(slides[cur])});
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){fit(slides[cur])});
+setInterval(function(){fit(slides[cur])},1000);
 document.addEventListener("keydown",function(e){if(e.key==="ArrowRight")show((cur+1)%slides.length);if(e.key==="ArrowLeft")show((cur-1+slides.length)%slides.length)});
 </script>
 </body>
