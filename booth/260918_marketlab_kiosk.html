@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>블록미디어 마켓랩 · 부스 키오스크</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{--u:min(1vw,1.7778vh);--ink:#111418;--ink-2:#4a5460;--ink-3:#9aa3ad;--line:#e4e8ec;--bg:#fff;--bg-2:#f3f5f8;--accent:#337abd;--accent-soft:#e6f0fa;--up:#d93025;--down:#1a5fc8;--dur:15000ms}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{word-break:keep-all;overflow-wrap:anywhere;height:100%;background:var(--bg);color:var(--ink);font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+.n{font-variant-numeric:tabular-nums;letter-spacing:-.045em}
+.up{color:var(--up)}.down{color:var(--down)}.flat{color:var(--ink-2)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.bar{position:fixed;left:0;top:0;height:.55vh;width:100vw;background:var(--line);z-index:5}
+.bar i{display:block;height:100%;width:0;background:var(--accent)}
+.bar i.run{animation:fill var(--dur) linear forwards}
+@keyframes fill{to{width:100%}}
+.stage{display:grid;grid-template-rows:auto minmax(0,1fr) auto;width:100vw;height:100vh;padding:5vh 6vw 4vh;row-gap:2vh}
+.head{display:flex;justify-content:space-between;align-items:baseline}
+.head .brand{font-size:calc(var(--u)*1.7);font-weight:700;letter-spacing:-.02em;white-space:nowrap}
+.head .brand span{color:var(--accent)}
+.head .meta{display:flex;gap:2vw;font-size:calc(var(--u)*1.25);color:var(--ink-2)}
+.head .meta .dot{display:inline-block;width:.6vw;height:.6vw;border-radius:50%;background:var(--up);margin-right:.5vw;vertical-align:middle;animation:pulse 1.8s infinite}
+.head .meta .stale .dot{background:var(--ink-3);animation:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.slides{position:relative;min-height:0;overflow:hidden}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;min-height:0}
+.slide.on{display:flex;animation:in .45s ease both}
+.slide{transform-origin:50% 50%}
+@keyframes in{from{opacity:0;transform:translateY(1.2vh)}to{opacity:1;transform:none}}
+.kicker{font-size:calc(var(--u)*2.1);color:var(--ink-2);margin-bottom:1vh;letter-spacing:-.01em;line-height:1.25;text-wrap:balance}
+.kicker small{display:block;font-size:calc(var(--u)*1.3);color:var(--ink-3);font-weight:400;margin-top:.4vh;letter-spacing:0}
+.big{font-size:calc(var(--u)*13);line-height:.95;font-weight:800;white-space:nowrap}
+.big.md{font-size:calc(var(--u)*11)}
+.big.sm{font-size:calc(var(--u)*8.5);line-height:1}
+.big small{font-size:.35em;font-weight:500;color:var(--ink-2);letter-spacing:0;margin-left:.15em}
+.so{font-size:calc(var(--u)*2.4);line-height:1.4;margin-top:2.2vh;max-width:64vw;letter-spacing:-.015em;text-wrap:pretty}
+.so b{font-weight:700;background:var(--accent-soft);padding:.06em .28em;border-radius:.28em}
+.aside{position:absolute;right:0;top:50%;transform:translateY(-50%);width:26vw}
+.slide:has(.aside) .big,.slide:has(.aside) .so,.slide:has(.aside) .kicker{max-width:56vw}
+.mini{display:flex;justify-content:space-between;align-items:baseline;padding:1.5vh 0;border-top:1px solid var(--line);font-size:calc(var(--u)*1.85)}
+.mini:last-child{border-bottom:1px solid var(--line)}
+.mini span{color:var(--ink-2)}.mini b{font-weight:600}
+.share{display:flex;height:6.5vh;margin:2.5vh 0 0;border-radius:1vh;overflow:hidden;max-width:80vw}
+.share div{display:flex;align-items:center;padding-left:1.1vw;color:#fff;font-size:calc(var(--u)*1.7);font-weight:600;white-space:nowrap;overflow:hidden;transition:width 1s ease}
+.share_l{display:flex;gap:3vw;font-size:calc(var(--u)*1.6);color:var(--ink-2);margin-top:1.4vh}
+.share_l i{display:inline-block;width:1.2vw;height:1.2vw;border-radius:.25vw;vertical-align:middle;margin-right:.5vw}
+.share_l b{color:var(--ink);font-weight:600}
+.share_l .a{background:#1f5f9c}.share_l .b{background:var(--accent)}.share_l .c{background:#7fb0dd}.share_l .d{background:#c9dcef}
+.share .a{background:#1f5f9c}.share .b{background:var(--accent)}.share .c{background:#7fb0dd}.share .d{background:#c9dcef;color:var(--ink)}
+.rank{display:grid;grid-template-columns:1fr 1fr;gap:0 5vw;margin-top:2.5vh;max-width:80vw}
+.rank .r{display:grid;grid-template-columns:2.4vw 1fr auto auto;align-items:baseline;gap:1.2vw;padding:1vh 0;border-bottom:1px solid var(--line);font-size:calc(var(--u)*1.9)}
+.rank .r i{font-style:normal;color:var(--ink-3);font-weight:700;font-size:calc(var(--u)*1.6)}
+.rank .r em{font-style:normal;font-weight:600}
+.rank .r span{color:var(--ink-2);font-size:calc(var(--u)*1.5)}
+.rank .r b{font-weight:600;min-width:7vw;text-align:right}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:6vw;margin-top:2vh;max-width:84vw}
+.two h4{font-size:calc(var(--u)*1.8);font-weight:600;color:var(--ink-2);margin-bottom:.5vh}
+.two .rank{grid-template-columns:1fr;gap:0;max-width:none;margin-top:0}
+.two .rank .r{height:6.4vh;padding:0;align-items:center;box-sizing:border-box}
+.two{align-items:start}
+.exgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.6vw;margin-top:2.5vh;max-width:88vw}
+.ex{background:var(--bg-2);border-radius:1.4vh;padding:2.2vh 1.5vw}
+.ex .h{display:flex;align-items:center;gap:.8vw;font-size:calc(var(--u)*1.9);font-weight:700;margin-bottom:1.2vh}
+.ex .h i{width:2.6vw;height:2.6vw;border-radius:50%;color:#fff;font-style:normal;font-size:calc(var(--u)*1.3);display:flex;align-items:center;justify-content:center}
+.ex .r{display:grid;grid-template-columns:1.6vw 1fr 6vw;align-items:center;gap:.8vw;padding:1vh 0;border-top:1px solid var(--line);font-size:calc(var(--u)*1.7)}
+.ex .r em{font-style:normal;font-weight:600}
+.ex .r span{color:var(--ink-3);font-size:calc(var(--u)*1.3);font-weight:700}
+.ex .r b{font-weight:500;text-align:right;color:var(--ink-2)}
+.spark{width:80vw;height:22vh;margin-top:2vh}
+.spark svg{width:100%;height:100%;overflow:visible}
+.spark path{fill:none;stroke-width:.35vw;stroke-linejoin:round;stroke-linecap:round}
+.spark .bm{stroke:var(--accent)}.spark .btc{stroke:var(--ink-3);stroke-dasharray:.6vw .6vw}
+.legend{display:flex;gap:2.5vw;font-size:calc(var(--u)*1.5);color:var(--ink-2);margin-top:1vh}
+.legend i{display:inline-block;width:2vw;height:.35vw;vertical-align:middle;margin-right:.6vw;border-radius:.2vw}
+.legend .l1{background:var(--accent)}.legend .l2{background:var(--ink-3)}
+.tiles{display:grid;grid-template-columns:repeat(10,1fr);gap:.6vw;margin-top:2vh;max-width:88vw}
+.tile{border-radius:.9vh;padding:1vh 1vw;background:var(--bg-2);display:flex;flex-direction:column;justify-content:space-between;min-height:7.5vh}
+.tile .s{font-size:calc(var(--u)*1.45);font-weight:600;display:flex;justify-content:space-between}
+.tile .s small{font-size:calc(var(--u)*1.05);font-weight:500;opacity:.65}
+.tile .v{font-size:calc(var(--u)*1.5);font-weight:500}
+.tile.up{background:#fbe9e7;color:var(--up)}.tile.down{background:#e4edfa;color:var(--down)}
+.heat{display:grid;grid-template-columns:repeat(4,1fr);gap:.8vw;margin-top:2.5vh;max-width:84vw}
+.heat div.c{border-radius:1vh;padding:2vh 1.4vw;min-height:13vh;display:flex;flex-direction:column;justify-content:space-between;color:#fff}
+.heat div.c:nth-child(1),.heat div.c:nth-child(2){grid-row:span 2;min-height:27vh}
+.heat .nm{font-size:calc(var(--u)*1.7);font-weight:600}.heat .rt{font-size:calc(var(--u)*3);font-weight:800}.heat .w{font-size:calc(var(--u)*1.2);opacity:.8}
+.gauge{width:70vw;height:5vh;background:var(--bg-2);border-radius:2.5vh;position:relative;margin-top:3vh;overflow:hidden}
+.gauge i{position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:2.5vh;transition:width 1s ease}
+.gauge-l{display:flex;justify-content:space-between;width:70vw;font-size:calc(var(--u)*1.5);color:var(--ink-2);margin-top:1vh}
+.rows{display:grid;grid-template-columns:1fr 1fr;gap:0 5vw;margin-top:2vh;max-width:74vw}
+.row{display:grid;grid-template-columns:1fr auto;align-items:baseline;padding:1vh 0;border-bottom:1px solid var(--line);font-size:calc(var(--u)*1.9)}
+.row span{color:var(--ink-2);font-size:calc(var(--u)*1.4);margin-left:.8vw}.row b{font-weight:600}
+.brandslide{align-items:center;text-align:center}
+.brandslide h1{font-size:calc(var(--u)*5.6);font-weight:800;letter-spacing:-.04em;line-height:1.08}
+.brandslide h1 span{color:var(--accent)}
+.brandslide p{font-size:calc(var(--u)*2.1);color:var(--ink-2);margin-top:2vh;max-width:70vw;line-height:1.4}
+.brandslide .qrbig{width:20vh;height:20vh;margin-top:3vh;padding:1vh;border:1px solid var(--line);border-radius:1vh}
+.brandslide .qrbig img,.brandslide .qrbig canvas{width:100%!important;height:100%!important}
+.foot{display:flex;justify-content:space-between;align-items:flex-end}
+.foot .idx{font-size:calc(var(--u)*1.3);color:var(--ink-3)}
+.foot .url{display:flex;align-items:center;gap:1.2vw;font-size:calc(var(--u)*1.35);color:var(--ink-2);line-height:1.35}
+.foot .url b{display:block;color:var(--ink);font-weight:600;font-size:calc(var(--u)*1.5)}
+.foot .qr{width:9vh;height:9vh;background:#fff;padding:.5vh;border:1px solid var(--line);border-radius:.8vh}
+.foot .qr img,.foot .qr canvas{width:100%!important;height:100%!important;display:block}
+
+/* ===== 다크 테마 (?theme=dark) ===== */
+html[data-theme=dark]{--ink:#f2f5f9;--ink-2:#aab4c2;--ink-3:#6b7a8c;--line:#26313f;--bg:#0f1622;--bg-2:#182233;--accent-soft:#1b3550;--up:#ff6b5e;--down:#6ea8ff}
+html[data-theme=dark] body{background:var(--bg)}
+html[data-theme=dark] .bar{background:#1e2836}
+html[data-theme=dark] .tile.up{background:#4a1f1c;color:#ff8a80}
+html[data-theme=dark] .tile.down{background:#1a2c4d;color:#8fbcff}
+html[data-theme=dark] .foot .qr{border-color:transparent}
+html[data-theme=dark] .share .d{color:var(--ink)}
+html[data-theme=dark] .spark line{stroke:#26313f}
+html[data-theme=dark] .head .brand{color:#fff}
+html[data-theme=dark]{--accent:#5aa3e6}
+html[data-theme=dark] .so b{color:#8ec5ff}
+</style>
+</head>
+<body>
+<div class="bar"><i id="bar"></i></div>
+<div class="stage">
+  <div class="head">
+    <div class="brand">블록미디어 <span>마켓랩</span></div>
+    <div class="meta"><span id="live"><i class="dot"></i>실시간</span><span id="clock"></span></div>
+  </div>
+  <div class="slides" id="slides"></div>
+  <div class="foot">
+    <div class="idx"><span id="idx">1</span> / 11 &nbsp;·&nbsp; 업데이트 <span id="upd">--:--</span></div>
+    <div class="url"><div><b id="qr_label">www.blockmedia.co.kr/marketlab</b><span>QR을 스캔하면 마켓랩 실시간 데이터를 볼 수 있어요<br><em style="font-style:normal;color:var(--ink-3)">Scan to open MarketLab live data</em></span></div><div class="qr" id="qr"></div></div>
+  </div>
+</div>
+<script>
+/* 테마 스위치 */
+if(new URLSearchParams(location.search).get("theme")!=="light")document.documentElement.setAttribute("data-theme","dark");   // 기본 다크, ?theme=light 로 라이트
+document.addEventListener("keydown",function(e){if(e.key==="d"||e.key==="D"){var h=document.documentElement;h.dataset.theme=h.dataset.theme==="dark"?"":"dark"}if(e.key==="l"||e.key==="L"){setLang(LANG==="ko"?"en":"ko")}});
+
+var DUR=15000, REB_DATE="2026-07-06";
+var BASE="https://data.blockmedia.co.kr";
+var SITE="https://www.blockmedia.co.kr";
+var SRC={krw:BASE+"/out/history/krw_24h_latest.json",kimchi:BASE+"/out/history/kimchi_latest.json",comp:BASE+"/out/history/components_history.csv",latest:BASE+"/bm20_latest.json",series:BASE+"/bm20_series.json",btc:BASE+"/btc_usd_series.json",kxrp:BASE+"/out/global/k_xrp_share_24h_latest.json",hist:BASE+"/data/bm20_history.json"};
+function LISTING(){return {avg:-31,rows:L().listing}}
+var SLIDES_HTML={ko:"<div class=\"slides\" id=\"slides\">\n    <section data-url=\"marketlab\" class=\"slide\">\n      <div class=\"kicker\">지금 김치프리미엄</div>\n      <div class=\"big n\"><span id=\"kp\">—</span><small>%</small></div>\n      <p class=\"so\" id=\"kp_so\">국내 투자자는 지금 비트코인을 해외보다 <b>비싸게</b> 사고 있어요.</p>\n      <div class=\"aside\">\n        <div class=\"mini\"><span>BTC</span><b class=\"n\" id=\"kp_btc\">—</b></div>\n        <div class=\"mini\"><span>ETH</span><b class=\"n\" id=\"kp_eth\">—</b></div>\n        <div class=\"mini\"><span>XRP</span><b class=\"n\" id=\"kp_xrp\">—</b></div>\n        <div class=\"mini\"><span>김프 유형</span><b id=\"kp_type\">—</b></div>\n      </div>\n    </section>\n    <section data-url=\"marketlab\" class=\"slide\">\n      <div class=\"kicker\">국내 4개 거래소에서 24시간 동안 거래된 금액이에요</div>\n      <div class=\"big n\"><span id=\"vol\">—</span><small>조원</small></div>\n      <div class=\"share\" id=\"share\"></div>\n      <div class=\"share_l\" id=\"share_l\"></div>\n      <p class=\"so\">업비트, 빗썸, 코인원, 디지털X를 합쳤어요.<br><b>이 숫자가 한국 시장 전체 거래대금이에요.</b></p>\n    </section>\n    <section data-url=\"marketlab\" class=\"slide\">\n      <div class=\"kicker\">한국 투자자는 지금 이 코인을 가장 많이 거래해요</div>\n      <div class=\"big sm n\"><span id=\"t1sym\">—</span></div>\n      <p class=\"so\" id=\"t1so\">오늘 국내 거래대금 1위예요.</p>\n      <div class=\"rank\" id=\"top10\"></div>\n    </section>\n    <section data-url=\"marketlab\" class=\"slide\">\n      <div class=\"kicker\">업비트에서 24시간 동안 가장 많이 오른 코인과 가장 많이 내린 코인이에요</div>\n      <div class=\"two\">\n        <div><h4>상승 Top 5</h4><div class=\"rank\" id=\"win\"></div></div>\n        <div><h4>하락 Top 5</h4><div class=\"rank\" id=\"lose\"></div></div>\n      </div>\n    </section>\n    <section data-url=\"marketlab\" class=\"slide\">\n      <div class=\"kicker\">국내 거래량 중 스테이블코인 비중이에요.<br>비중이 높을수록 투자자가 위험을 피하고 있다는 뜻이에요</div>\n      <div class=\"big n\"><span id=\"stb\">—</span><small>%</small></div>\n      <p class=\"so\" id=\"stb_so\">—</p>\n      <div class=\"gauge\"><i id=\"stb_g\" style=\"width:0\"></i></div>\n      <div class=\"gauge-l\"><span>0% 위험 감수</span><span>5% 중립</span><span>10% 이상 위험 회피</span></div>\n    </section>\n    <section data-url=\"bm20\" class=\"slide\">\n      <div class=\"kicker\">오늘의 BM20 지수</div>\n      <div class=\"big sm n\" id=\"bm_today\">—</div>\n      <p class=\"so\"><b>BM20</b>은 시가총액 상위 20개 디지털자산으로 만든 블록미디어 지수예요.<br>지수 <span id=\"bm_level\">—</span> <span style=\"font-size:calc(var(--u)*1.8);color:var(--ink-3)\">· 종목 옆 작은 숫자는 지수 안 비중이에요</span></p>\n      <div class=\"tiles\" id=\"tiles\"></div>\n    </section>\n    <section data-url=\"marketlab\" class=\"slide\">\n      <div class=\"kicker\">거래소마다 많이 거래되는 코인이 달라요</div>\n      <div class=\"exgrid\" id=\"exgrid\"></div>\n    </section>\n    <section data-url=\"marketlab\" class=\"slide\">\n      <div class=\"kicker\">오늘은 어느 섹터가 움직였을까요? BM20 섹터별 수익률이에요</div>\n      <div class=\"heat\" id=\"heat\"></div>\n    </section>\n    <section data-url=\"marketlab\" class=\"slide\">\n      <div class=\"kicker\">전 세계 XRP 거래 중 한국에서 일어나는 비중이에요</div>\n      <div class=\"big n\"><span id=\"kshare\">—</span><small>%</small></div>\n      <p class=\"so\" id=\"ks_so\">—</p>\n      <div class=\"aside\">\n        <div class=\"mini\"><span>한국 거래소 24h</span><b class=\"n\" id=\"ks_kr\">—</b></div>\n        <div class=\"mini\"><span>글로벌 24h</span><b class=\"n\" id=\"ks_gl\">—</b></div>\n        <div class=\"mini\"><span>전체 시장 기준 한국 비중</span><b class=\"n\" id=\"ks_all\">—</b></div>\n      </div>\n    </section>\n    <section data-url=\"marketlab\" class=\"slide\">\n      <div class=\"kicker\">최근 30일 새로 상장한 코인은 일주일 뒤 이만큼 움직였어요</div>\n      <div class=\"big sm n\" id=\"lb_avg\">—</div>\n      <div class=\"rows\" id=\"lb_rows\"></div>\n      <p class=\"so\">새로 상장한 코인은 일주일 뒤 대부분 상장 첫날보다 낮았어요.<br><b>상장빔 리서치</b>가 상장 전후 흐름을 추적해요.</p>\n    </section>\n    <section data-url=\"newsletter\" class=\"slide brandslide\">\n      <h1>한국 크립토 시장을<br><span>숫자로 읽는 곳</span></h1>\n      <p>디지털자산 시장을 이해하는 거시 뉴스부터 BM20 지수, 김치프리미엄 같은 데이터까지<br>매일 아침 블록미디어 뉴스레터로 받아보세요.</p>\n      <div class=\"qrbig\" id=\"qr_big\"></div>\n      \n    </section>\n  </div>\n",en:"<div class=\"slides\" id=\"slides\">\n    <section data-url=\"marketlab\" class=\"slide\">\n      <div class=\"kicker\">Kimchi premium right now</div>\n      <div class=\"big n\"><span id=\"kp\">—</span><small>%</small></div>\n      <p class=\"so\" id=\"kp_so\">Korean investors are paying <b>more</b> for Bitcoin than the rest of the world.</p>\n      <div class=\"aside\">\n        <div class=\"mini\"><span>BTC</span><b class=\"n\" id=\"kp_btc\">—</b></div>\n        <div class=\"mini\"><span>ETH</span><b class=\"n\" id=\"kp_eth\">—</b></div>\n        <div class=\"mini\"><span>XRP</span><b class=\"n\" id=\"kp_xrp\">—</b></div>\n        <div class=\"mini\"><span>Premium type</span><b id=\"kp_type\">—</b></div>\n      </div>\n    </section>\n    <section data-url=\"marketlab\" class=\"slide\">\n      <div class=\"kicker\">Traded on 4 Korean exchanges in the last 24 hours</div>\n      <div class=\"big n\"><span id=\"vol\">—</span><small>tn KRW</small></div>\n      <div class=\"share\" id=\"share\"></div>\n      <div class=\"share_l\" id=\"share_l\"></div>\n      <p class=\"so\">Upbit, Bithumb, Coinone and DigitalX combined.<br><b>This is the entire Korean market's trading value.</b></p>\n    </section>\n    <section data-url=\"marketlab\" class=\"slide\">\n      <div class=\"kicker\">The coin Korean investors trade the most right now</div>\n      <div class=\"big sm n\"><span id=\"t1sym\">—</span></div>\n      <p class=\"so\" id=\"t1so\">Korea's most-traded coin today.</p>\n      <div class=\"rank\" id=\"top10\"></div>\n    </section>\n    <section data-url=\"marketlab\" class=\"slide\">\n      <div class=\"kicker\">Biggest gainers and losers on Upbit in the last 24 hours</div>\n      <div class=\"two\">\n        <div><h4>Top gainers</h4><div class=\"rank\" id=\"win\"></div></div>\n        <div><h4>Top losers</h4><div class=\"rank\" id=\"lose\"></div></div>\n      </div>\n    </section>\n    <section data-url=\"marketlab\" class=\"slide\">\n      <div class=\"kicker\">Stablecoin share of Korean trading volume.<br>The higher the share, the more investors are avoiding risk</div>\n      <div class=\"big n\"><span id=\"stb\">—</span><small>%</small></div>\n      <p class=\"so\" id=\"stb_so\">—</p>\n      <div class=\"gauge\"><i id=\"stb_g\" style=\"width:0\"></i></div>\n      <div class=\"gauge-l\"><span>0% risk-taking</span><span>5% neutral</span><span>10%+ risk-averse</span></div>\n    </section>\n    <section data-url=\"bm20\" class=\"slide\">\n      <div class=\"kicker\">BM20 Index today</div>\n      <div class=\"big sm n\" id=\"bm_today\">—</div>\n      <p class=\"so\"><b>BM20</b> is Blockmedia's index of the 20 largest digital assets by market cap.<br>Index <span id=\"bm_level\">—</span> <span style=\"font-size:calc(var(--u)*1.8);color:var(--ink-3)\">· the small number is each coin's weight</span></p>\n      <div class=\"tiles\" id=\"tiles\"></div>\n    </section>\n    <section data-url=\"marketlab\" class=\"slide\">\n      <div class=\"kicker\">Each exchange trades different coins</div>\n      <div class=\"exgrid\" id=\"exgrid\"></div>\n    </section>\n    <section data-url=\"marketlab\" class=\"slide\">\n      <div class=\"kicker\">Which sector moved today? BM20 returns by sector</div>\n      <div class=\"heat\" id=\"heat\"></div>\n    </section>\n    <section data-url=\"marketlab\" class=\"slide\">\n      <div class=\"kicker\">Share of global XRP trading that happens in Korea</div>\n      <div class=\"big n\"><span id=\"kshare\">—</span><small>%</small></div>\n      <p class=\"so\" id=\"ks_so\">—</p>\n      <div class=\"aside\">\n        <div class=\"mini\"><span>Korean exchanges 24h</span><b class=\"n\" id=\"ks_kr\">—</b></div>\n        <div class=\"mini\"><span>Global 24h</span><b class=\"n\" id=\"ks_gl\">—</b></div>\n        <div class=\"mini\"><span>Korea's share, whole market</span><b class=\"n\" id=\"ks_all\">—</b></div>\n      </div>\n    </section>\n    <section data-url=\"marketlab\" class=\"slide\">\n      <div class=\"kicker\">How new listings from the last 30 days moved a week later</div>\n      <div class=\"big sm n\" id=\"lb_avg\">—</div>\n      <div class=\"rows\" id=\"lb_rows\"></div>\n      <p class=\"so\">Most newly listed coins were below their day-one price a week later.<br><b>Listing Beam Research</b> tracks the moves around each listing.</p>\n    </section>\n    <section data-url=\"newsletter\" class=\"slide brandslide\">\n      <h1>Korea's crypto market,<br><span>read in numbers</span></h1>\n      <p>Financial news that makes sense of the digital-asset market,<br>plus data like the BM20 index and kimchi premium.<br>Delivered every morning in the Blockmedia newsletter.</p>\n      <div class=\"qrbig\" id=\"qr_big\"></div>\n      \n    </section>\n  </div>\n"};
+
+/* ===== 언어 (?lang=en / L키) ===== */
+var LANG=new URLSearchParams(location.search).get("lang")==="en"?"en":"ko";
+var T={
+ ko:{brand:"블록미디어 <span>마켓랩</span>",live:"실시간",nodata:"데이터 연결 안 됨",ago:"분 전",wait:"연결 대기",upd:"업데이트",
+     kp_pos:function(b){return '국내 투자자는 지금 비트코인을<br>해외보다 <b>'+b+'% 비싸게</b> 사고 있어요.'},kp_neg:function(b){return '지금은 국내가 해외보다 <b>'+b+'% 싸요.</b><br>국내 투자 심리가 식었다는 신호예요.'},
+     ex:{upbit:"업비트",bithumb:"빗썸",coinone:"코인원",korbit:"디지털X"},tri:function(v){return (v/1e12).toFixed(2)+"조"},
+     t1so:function(p){return '오늘 국내 거래대금 1위예요. <b>전체의 '+p+'%</b>가 이 한 종목이에요.'},
+     st_hi:function(p){return '거래의 <b>'+p+'%가 스테이블코인</b>이에요.<br>투자자들이 현금에 가까운 자산으로 옮겨 가 있어요.'},st_mid:function(p){return '거래의 '+p+'%가 스테이블코인이에요.<br><b>지켜보는 구간</b>이에요.'},st_lo:function(p){return '스테이블코인 거래는 '+p+'%뿐이에요.<br><b>위험을 감수하는 분위기</b>예요.'},
+     sectors:{BTC:"가치저장",ETH:"스마트컨트랙트",XRP:"결제·인프라",BNB:"거래소 토큰",SOL:"스마트컨트랙트",USDT:"스테이블",USDC:"스테이블",DOGE:"밈",ADA:"스마트컨트랙트",TRX:"스마트컨트랙트",AVAX:"스마트컨트랙트",LINK:"오라클·AI",SHIB:"밈",LTC:"결제·인프라",BCH:"결제·인프라",XLM:"결제·인프라",HBAR:"엔터프라이즈",SUI:"스마트컨트랙트",HYPE:"DeFi·DEX",ZEC:"프라이버시",TON:"스마트컨트랙트",CC:"기타"},stable:"스테이블",other:"기타",weight:"지수 비중 ",
+     xrp:function(s){return '전 세계 <b>XRP</b> 거래 <b>'+(s>=20?Math.round(100/s)+'건 중 1건':s.toFixed(0)+'%')+'</b>'+(s>=20?'이':'가')+'<br>한국에서 일어나요. 그래서 \'김치 코인\'이라고도 불러요.'},
+     listing:[["코인 A","9/22",-44],["코인 B","9/18",-27],["코인 C","9/11",12],["코인 D","9/04",-38]],listed:function(d){return d+' 상장'},
+     month:function(d){return (d.getMonth()+1)+"월 "+d.getDate()+"일 "},qr_ko:"QR을 스캔하면 마켓랩 실시간 데이터를 볼 수 있어요",qr_en:"Scan to open MarketLab live data"},
+ en:{brand:"Blockmedia <span>MarketLab</span>",live:"live",nodata:"no data connection",ago:" min ago",wait:"connecting",upd:"updated",
+     kp_pos:function(b){return 'Korean investors are paying <b>'+b+'% more</b> for Bitcoin<br>than the rest of the world right now.'},kp_neg:function(b){return 'Right now Bitcoin is <b>'+b+'% cheaper</b> in Korea than abroad.<br>A sign that Korean sentiment has cooled.'},
+     ex:{upbit:"Upbit",bithumb:"Bithumb",coinone:"Coinone",korbit:"DigitalX"},tri:function(v){return "₩"+(v/1e12).toFixed(2)+"tn"},
+     t1so:function(p){return 'Korea\'s most-traded coin today. <b>'+p+'% of all volume</b> is this one coin.'},
+     st_hi:function(p){return '<b>'+p+'% of trading is in stablecoins.</b><br>Investors have moved into cash-like assets.'},st_mid:function(p){return ''+p+'% of trading is in stablecoins.<br><b>A wait-and-see phase.</b>'},st_lo:function(p){return 'Only '+p+'% of trading is in stablecoins.<br><b>Investors are taking on risk.</b>'},
+     sectors:{BTC:"Store of value",ETH:"Smart contracts",XRP:"Payments",BNB:"Exchange token",SOL:"Smart contracts",USDT:"Stablecoin",USDC:"Stablecoin",DOGE:"Meme",ADA:"Smart contracts",TRX:"Smart contracts",AVAX:"Smart contracts",LINK:"Oracle/AI",SHIB:"Meme",LTC:"Payments",BCH:"Payments",XLM:"Payments",HBAR:"Enterprise",SUI:"Smart contracts",HYPE:"DeFi/DEX",ZEC:"Privacy",TON:"Smart contracts",CC:"Other"},stable:"Stablecoin",other:"Other",weight:"index weight ",
+     xrp:function(s){return '<b>'+(s>=20?'1 in every '+Math.round(100/s):s.toFixed(0)+'%')+'</b> <b>XRP</b> trades worldwide<br>happen in Korea. That\'s why it\'s also called the \'Kimchi Coin\'.'},
+     listing:[["Coin A","Sep 22",-44],["Coin B","Sep 18",-27],["Coin C","Sep 11",12],["Coin D","Sep 4",-38]],listed:function(d){return 'listed '+d},
+     month:function(d){return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()]+" "+d.getDate()+" "},qr_ko:"QR을 스캔하면 마켓랩 실시간 데이터를 볼 수 있어요",qr_en:"Scan to open MarketLab live data"}
+};
+function L(){return T[LANG]}
+var CACHE={};
+function $(id){return document.getElementById(id)}
+function cls(v){return v>0?"up":v<0?"down":"flat"}
+function sign(v,d){return (v>0?"+":v<0?"−":"")+Math.abs(v).toFixed(d==null?1:d)}
+function setBig(id,v,unit,d){var e=$(id),sm=e.classList.contains("sm");e.className="big n "+cls(v)+(sm?" sm":"");e.innerHTML=sign(v,d)+"<small>"+unit+"</small>"}
+function j(u){return fetch(u+"?t="+Date.now(),{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.json()})}
+function t(u){return fetch(u+"?t="+Date.now(),{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.text()})}
+function tri(v){return L().tri(v)}
+var okAt=null; function mark(){okAt=new Date()}
+function rKimchi(k){
+  var p=k.kimchi_premium_pct,b=p.BTC;
+  $("kp").textContent=Math.abs(b).toFixed(2); $("kp").className=cls(b); if(b<0)$("kp").textContent="−"+Math.abs(b).toFixed(2);
+  $("kp_so").innerHTML=b>=0?L().kp_pos(Math.abs(b).toFixed(1)):L().kp_neg(Math.abs(b).toFixed(1));
+  ["BTC","ETH","XRP"].forEach(function(s){var e=$("kp_"+s.toLowerCase());e.textContent=sign(p[s],2)+"%";e.className="n "+cls(p[s])});
+  if(k.smart_kimchi)$("kp_type").textContent=k.smart_kimchi.type;
+}
+function rVol(d){
+  var tt=d.totals,tot=tt.combined_24h; $("vol").textContent=(tot/1e12).toFixed(1);
+  var parts=[["a",L().ex.upbit,tt.upbit_24h],["b",L().ex.bithumb,tt.bithumb_24h],["c",L().ex.coinone,tt.coinone_24h],["d",L().ex.korbit,tt.korbit_24h||0]];
+  $("share").innerHTML=parts.map(function(p){var pct=p[2]/tot*100;return '<div class="'+p[0]+'" style="width:'+pct+'%">'+(pct>=12?p[1]+" "+pct.toFixed(0)+"%":"")+'</div>'}).join("");
+  $("share_l").innerHTML=parts.map(function(p){return '<span><i class="'+p[0]+'"></i>'+p[1]+' <b class="n">'+(p[2]/tot*100).toFixed(1)+'%</b></span>'}).join("");
+  var c=d.top10.coins.slice(0,6),s1=c[0].symbol.replace("KRW-","");
+  $("t1sym").textContent=s1;
+  $("t1so").innerHTML=L().t1so(c[0].share_pct.toFixed(1));
+  $("top10").innerHTML=c.map(function(x,i){var cr=x.change_rate_24h;return '<div class="r"><i>'+(i+1)+'</i><em>'+x.symbol.replace("KRW-","")+'</em><span>'+tri(x.value)+'</span><b class="n '+cls(cr)+'">'+(cr!=null?sign(cr*100,1)+"%":"")+'</b></div>'}).join("");
+  var wl=d.winner_loser||{};
+  function list(items,id){$(id).innerHTML=(items||[]).slice(0,5).map(function(x,i){var v=x.change_rate_24h*100;return '<div class="r"><i>'+(i+1)+'</i><em>'+x.symbol.replace("KRW-","")+'</em><span></span><b class="n '+cls(v)+'">'+sign(v,1)+'%</b></div>'}).join("")}
+  list(wl.winners||wl.top||wl.gainers,"win"); list(wl.losers||wl.bottom,"lose");
+  var EX=[["upbit",L().ex.upbit,"#1f5f9c"],["bithumb",L().ex.bithumb,"#e0902a"],["coinone",L().ex.coinone,"#1a7a4a"],["korbit",L().ex.korbit,"#7c3aed"]], be=d.by_exchange_top||{};
+  $("exgrid").innerHTML=EX.filter(function(e){return (be[e[0]+"_top5"]||[]).length}).map(function(e){var rows=be[e[0]+"_top5"].slice(0,5),tot=rows.reduce(function(a,r){return a+r.value},0);
+    return '<div class="ex"><div class="h"><i style="background:'+e[2]+'">'+e[1][0]+'</i>'+e[1]+'</div>'+rows.map(function(r,i){return '<div class="r"><span>'+(i+1)+'</span><em>'+r.symbol.replace("KRW-","")+'</em><b class="n">'+(r.value/tot*100).toFixed(0)+'%</b></div>'}).join("")+'</div>'}).join("");
+  var st=d.stablecoins.stable_dominance_pct; $("stb").textContent=st.toFixed(1); $("stb_g").style.width=Math.min(st/15*100,100)+"%";
+  $("stb_so").innerHTML=st>10?L().st_hi(st.toFixed(0)):st>5?L().st_mid(st.toFixed(0)):L().st_lo(st.toFixed(0));
+}
+function rComp(csv){
+  var LN=csv.trim().split("\n"),H=LN[0].split(","),rows=LN.slice(1).map(function(l){var v=l.split(",");var o={};H.forEach(function(h,i){o[h]=v[i]});return o});
+  var last=rows[rows.length-1].date,today=rows.filter(function(r){return r.date===last});
+  today.sort(function(a,b){return b.weight-a.weight});
+  $("tiles").innerHTML=today.map(function(r){var v=+r.return_1d;return '<div class="tile '+cls(v)+'"><div class="s">'+r.symbol+'<small>'+Math.round(r.weight*100)+'%</small></div><div class="v n">'+sign(v,1)+'%</div></div>'}).join("");
+  var W={},R={};today.forEach(function(r){var s=L().sectors[r.symbol]||L().other,w=+r.weight,v=+r.return_1d;if(isNaN(w)||isNaN(v))return;W[s]=(W[s]||0)+w;R[s]=(R[s]||0)+w*v});
+  var secs=Object.keys(W).filter(function(s){return s!==L().stable}).map(function(s){return{n:s,r:R[s]/W[s],w:W[s]}}).sort(function(a,b){return b.w-a.w});
+  $("heat").innerHTML=secs.map(function(s){var tt=Math.max(-1,Math.min(1,s.r/6));var bg=tt>=0?"rgb("+Math.round(217-(1-tt)*120)+","+Math.round(48+(1-tt)*120)+","+Math.round(37+(1-tt)*130)+")":"rgb("+Math.round(26+(1+tt)*140)+","+Math.round(95+(1+tt)*110)+","+Math.round(200+(1+tt)*40)+")";
+    return '<div class="c" style="background:'+bg+'"><div class="nm">'+s.n+'</div><div><div class="rt n">'+sign(s.r,2)+'%</div><div class="w">'+L().weight+Math.round(s.w*100)+'%</div></div></div>'}).join("");
+}
+function rLatest(d){setBig("bm_today",d.bm20ChangePct*100,"%");$("bm_today").classList.add("sm");$("bm_level").textContent=(+d.bm20Level).toFixed(1)}
+function rXrp(d,hist){
+  var s=d.k_xrp_share_pct_24h;$("kshare").textContent=Math.round(s);
+  $("ks_so").innerHTML=L().xrp(s);
+  $("ks_kr").textContent="$"+(d.korea.total_usd_24h/1e9).toFixed(2)+"B";$("ks_gl").textContent="$"+(d.global.cmc_xrp_volume_usd_24h/1e9).toFixed(2)+"B";
+  if(hist&&hist.length){var h=hist[hist.length-1];if(h.k_market)$("ks_all").textContent=h.k_market.k_share_percent.toFixed(1)+"%"}
+}
+function rListing(l){setBig("lb_avg",l.avg,"%",0);$("lb_rows").innerHTML=l.rows.map(function(r){return '<div class="row"><div>'+r[0]+'<span>'+L().listed(r[1])+'</span></div><b class="n '+cls(r[2])+'">'+sign(r[2],0)+'%</b></div>'}).join("")}
+function refresh(){
+  j(SRC.kimchi).then(function(k){CACHE.kimchi=k;rKimchi(k);mark()}).catch(function(e){console.warn("kimchi",e)});
+  j(SRC.krw).then(function(d){CACHE.krw=d;rVol(d);mark()}).catch(function(e){console.warn("krw",e)});
+  t(SRC.comp).then(function(c){CACHE.comp=c;rComp(c);mark()}).catch(function(e){console.warn("comp",e)});
+  j(SRC.latest).then(function(d){CACHE.latest=d;rLatest(d);mark()}).catch(function(e){console.warn("latest",e)});
+  Promise.all([j(SRC.kxrp),j(SRC.hist).catch(function(){return null})]).then(function(r){CACHE.kxrp=r[0];CACHE.hist=r[1];rXrp(r[0],r[1]);mark()}).catch(function(e){console.warn("xrp",e)});
+  setTimeout(function(){
+    var now=new Date(),mins=okAt?Math.round((now-okAt)/60000):null;
+    $("upd").textContent=okAt?String(okAt.getHours()).padStart(2,"0")+":"+String(okAt.getMinutes()).padStart(2,"0"):L().wait;
+    var live=mins!=null&&mins<45;$("live").className=live?"":"stale";$("live").innerHTML='<i class="dot"></i>'+(live?L().live:(mins==null?L().nodata:mins+L().ago));
+  fit(slides[cur]);},5000);
+}
+setInterval(refresh,60000);
+var slides,cur=0;
+function renderAll(){rListing(LISTING());if(CACHE.kimchi)rKimchi(CACHE.kimchi);if(CACHE.krw)rVol(CACHE.krw);if(CACHE.comp)rComp(CACHE.comp);if(CACHE.latest)rLatest(CACHE.latest);if(CACHE.kxrp)rXrp(CACHE.kxrp,CACHE.hist)}
+function setLang(l){LANG=l;document.documentElement.lang=l;
+  var host=$("slides");host.outerHTML=SLIDES_HTML[l];
+  document.querySelector(".head .brand").innerHTML=L().brand;
+  document.querySelector(".foot .idx").innerHTML='<span id="idx">1</span> / 11 &nbsp;·&nbsp; '+L().upd+' <span id="upd">--:--</span>';
+  var u=document.querySelector(".foot .url span");if(u)u.innerHTML=(l==="en"?L().qr_en+'<br><em style="font-style:normal;color:var(--ink-3)">'+L().qr_ko+'</em>':L().qr_ko+'<br><em style="font-style:normal;color:var(--ink-3)">'+L().qr_en+'</em>');
+  slides=document.querySelectorAll(".slide");new QRCode($("qr_big"),{text:SITE+"/marketlab",width:512,height:512,correctLevel:QRCode.CorrectLevel.M});renderAll();show(Math.min(cur,slides.length-1));qrLast=null;setQR(slides[cur].getAttribute("data-url"));
+}
+
+document.documentElement.style.setProperty("--dur",DUR+"ms");
+var qrObj=null,qrLast=null;
+function setQR(path){var u=SITE+"/"+(path||"marketlab");if(u===qrLast)return;qrLast=u;$("qr").innerHTML="";qrObj=new QRCode($("qr"),{text:u,width:256,height:256,correctLevel:QRCode.CorrectLevel.M});$("qr_label").textContent=u.replace("https://","")}
+function fit(el){el.style.transform="";var pb=el.parentNode.getBoundingClientRect(),box=pb.height,lo=1e9,hi=-1e9;Array.prototype.forEach.call(el.children,function(c){var r=c.getBoundingClientRect();if(r.height===0)return;lo=Math.min(lo,r.top);hi=Math.max(hi,r.bottom)});var used=Math.max(hi-lo,hi-pb.top,pb.bottom-lo);if(used>box){var k=Math.max(.5,box/used*0.96);el.style.transform="scale("+k+")"}}
+function show(i){slides[cur].classList.remove("on");cur=i;slides[cur].classList.add("on");$("idx").textContent=cur+1;fit(slides[cur]);setTimeout(function(){fit(slides[cur])},500);setQR(slides[cur].getAttribute("data-url"));var b=$("bar");b.classList.remove("run");void b.offsetWidth;b.classList.add("run")}
+setLang(LANG);refresh();if(window===window.top)setInterval(function(){show((cur+1)%slides.length)},DUR);
+setInterval(function(){var d=new Date();$("clock").textContent=L().month(d)+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")},1000);
+window.addEventListener("resize",function(){fit(slides[cur])});
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){fit(slides[cur])});
+setInterval(function(){fit(slides[cur])},1000);
+document.addEventListener("keydown",function(e){if(e.key==="ArrowRight")show((cur+1)%slides.length);if(e.key==="ArrowLeft")show((cur-1+slides.length)%slides.length)});
+</script>
+</body>
+</html>
