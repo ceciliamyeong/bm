@@ -83,8 +83,10 @@ h1{font-size:34px;line-height:1.2;font-weight:700;letter-spacing:-.02em;margin-b
 .ai{padding:14px 16px;border-left:3px solid var(--green);background:var(--ai-bg);border-radius:0 10px 10px 0;font-size:15px;line-height:1.55;margin-top:14px}
 .ai small{display:block;font-size:12px;color:var(--live-fg);font-weight:600;margin-bottom:4px}
 .foot{font-size:12px;color:var(--ink-3);text-align:center;padding:16px 0 0}
-.lang{padding:8px 16px;border:1.5px solid var(--line);border-radius:999px;font-size:14px;color:var(--ink-2)}
-.lang.on{border-color:var(--ink);color:var(--ink);font-weight:600}
+.lang{padding:10px 20px;border:2px solid var(--ink-3);border-radius:999px;font-size:16px;font-weight:600;color:var(--ink);background:transparent}
+.lang.on{border-color:var(--accent);background:var(--accent);color:#fff}
+html[data-theme=dark] .lang{border-color:#8a96a8;color:#fff}
+html[data-theme=dark] .lang.on{border-color:#5aa3e6;background:#5aa3e6;color:#fff}
 .lang.theme{margin-left:auto;display:flex;align-items:center;gap:6px}
 .lang.theme i{font-style:normal;font-size:15px;line-height:1}
 .idle{position:fixed;left:0;right:0;bottom:0;height:3px;background:var(--line)}.idle i{display:block;height:100%;width:0;background:var(--ink-3)}
@@ -96,7 +98,7 @@ h1{font-size:34px;line-height:1.2;font-weight:700;letter-spacing:-.02em;margin-b
   <div class="progress"><i id="prog"></i></div>
 
   <section class="screen on" id="s0">
-    <div style="display:flex;gap:8px;margin-bottom:22px"><button class="lang on" id="lk" onclick="setLang('ko')">한국어</button><button class="lang" id="le" onclick="setLang('en')">English</button><button class="lang theme" id="lt" onclick="toggleTheme()"><i id="lt_i">☾</i><span id="lt_t">다크</span></button></div>
+    <div style="display:flex;gap:8px;margin-bottom:22px"><button class="lang on" id="lk" onclick="setLang('ko')">한국어</button><button class="lang" id="le" onclick="setLang('en')">🌐 English</button><button class="lang theme" id="lt" onclick="toggleTheme()"><i id="lt_i">☾</i><span id="lt_t">다크</span></button></div>
     <h1 id="i_h1"></h1>
     <p class="lead" id="i_lead"></p>
     <p class="lead" style="margin-top:-10px"><strong id="rule"></strong></p>
