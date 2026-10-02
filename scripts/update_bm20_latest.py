@@ -13,6 +13,8 @@ import requests
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from bm20_level_utils import select_realtime_reference
+
 KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parent.parent  # scripts/ 기준 상위
 
@@ -72,17 +74,17 @@ def fetch_cmc_prices(api_key: str) -> dict:
     return prices
 
 # ── bm20_series.json 마지막 레벨 읽기 ──────────────────────────────
-def load_last_level() -> float | None:
+def load_reference_level(today: str) -> tuple[float | None, float | None]:
     for p in [ROOT / "bm20_series.json", ROOT / "data" / "bm20_series.json"]:
         try:
             if not p.exists():
                 continue
             series = json.loads(p.read_text(encoding="utf-8"))
             if isinstance(series, list) and series:
-                return float(series[-1]["level"])
+                return select_realtime_reference(series, today)
         except Exception as e:
             print(f"[WARN] {p} 읽기 실패: {e}")
-    return None
+    return None, None
 
 # ── 메인 ───────────────────────────────────────────────────────────
 def main():
@@ -104,12 +106,17 @@ def main():
         print("[ERROR] bm20_latest.json 읽기 실패. 종료.")
         return
 
-    # 시리즈 마지막 레벨
-    last_level = load_last_level() or existing.get("bm20Level")
-    if not last_level:
+    # 뉴스레터 실시간값은 전일 확정 레벨을 기준으로 계산한다.
+    # 오늘 확정값이 이미 series에 있으면 이를 다시 base로 사용하지 않는다.
+    today = now_kst.strftime("%Y-%m-%d")
+    base_level, official_today = load_reference_level(today)
+    base_level = base_level or existing.get("bm20PrevLevel") or existing.get("bm20Level")
+    if not base_level:
         print("[ERROR] 기준 레벨을 가져올 수 없습니다. 종료.")
         return
-    print(f"[INFO] 기준 레벨: {last_level}")
+    print(f"[INFO] realtime 기준 레벨: {base_level}")
+    if official_today is not None:
+        print(f"[INFO] 오늘 확정 레벨: {official_today}")
 
     # CMC 현재가 조회
     try:
@@ -130,15 +137,19 @@ def main():
             port_ret_1d += w * ((p1 / p0) - 1.0)
 
     # 레벨 & 1D 갱신
-    bm20_now  = round(last_level * (1.0 + port_ret_1d), 6)
-    ret_1d    = round((bm20_now / last_level) - 1.0, 8)
-    point_chg = round(bm20_now - last_level, 6)
+    bm20_now  = round(base_level * (1.0 + port_ret_1d), 6)
+    ret_1d    = round((bm20_now / base_level) - 1.0, 8)
+    point_chg = round(bm20_now - base_level, 6)
 
     existing["bm20Level"]       = bm20_now
-    existing["bm20PrevLevel"]   = round(last_level, 6)
+    existing["bm20PrevLevel"]   = round(base_level, 6)
     existing["bm20PointChange"] = point_chg
     existing["bm20ChangePct"]   = ret_1d
     existing["returns"]["1D"]   = ret_1d
+    existing["bm20Mode"]        = "realtime_24h_proxy"
+    if official_today is not None:
+        existing["bm20OfficialLevel"] = round(official_today, 6)
+        existing["bm20OfficialDate"] = today
     existing["updatedAt"]       = now_kst.strftime("%Y-%m-%dT%H:%M:%S+09:00")
 
     latest_path.write_text(
