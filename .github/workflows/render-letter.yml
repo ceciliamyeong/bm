@@ -43,6 +43,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install pandas requests plotly kaleido yfinance
 
+      - name: Test BM20 date boundaries
+        run: python -m unittest discover -s tests -p "test_bm20*.py" -v
+
       - name: Update BM20 full data
         shell: bash
         run: |
@@ -135,7 +138,7 @@ jobs:
             data/etf_summary.json \
             nasdaq_series.json kospi_series.json \
             assets/topcoins_treemap_latest.png \
-            bm20_latest.json bm20_daily_data_latest.csv || true
+            bm20_realtime_latest.json bm20_daily_data_latest.csv || true
 
           if ! git diff --cached --quiet; then
             DATE=$(TZ=Asia/Seoul date +%F)

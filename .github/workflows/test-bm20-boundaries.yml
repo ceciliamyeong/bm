@@ -1,0 +1,30 @@
+name: Test BM20 date boundaries
+on:
+  push:
+    paths:
+      - 'scripts/bm20_level_utils.py'
+      - 'scripts/update_bm20_latest.py'
+      - 'scripts/render_letter*.py'
+      - 'tests/test_bm20*.py'
+      - '.github/workflows/test-bm20-boundaries.yml'
+      - '.github/workflows/render-letter.yml'
+  pull_request:
+    paths:
+      - 'scripts/bm20_level_utils.py'
+      - 'scripts/update_bm20_latest.py'
+      - 'scripts/render_letter*.py'
+      - 'tests/test_bm20*.py'
+      - '.github/workflows/test-bm20-boundaries.yml'
+      - '.github/workflows/render-letter.yml'
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install requests pandas
+      - run: python -m unittest discover -s tests -p 'test_bm20*.py' -v

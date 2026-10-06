@@ -30,6 +30,8 @@ import json
 import os
 import re
 from pathlib import Path
+
+from bm20_level_utils import newsletter_snapshot
 from typing import Any
 from datetime import datetime, timezone, timedelta
 
@@ -126,7 +128,10 @@ def translate(text: str) -> str:
 # ─────────────────────────────────────────────────────────
 
 def load_bm20() -> dict:
-    bm20 = load_json(BM20_JSON)
+    proxy_path = ROOT / "bm20_realtime_latest.json"
+    proxy = load_json(proxy_path) if proxy_path.exists() else None
+    bm20 = newsletter_snapshot(load_json(BM20_JSON), proxy,
+        datetime.now(timezone(timedelta(hours=9))).date().isoformat())
     r1d  = (bm20.get("returns", {}) or {}).get("1D", None)
     level = bm20.get("bm20Level", None)
     usdkrw = (bm20.get("kimchi_meta", {}) or {}).get("usdkrw", None)

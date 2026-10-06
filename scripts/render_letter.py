@@ -27,6 +27,8 @@ import json
 import os
 import re
 from pathlib import Path
+
+from bm20_level_utils import newsletter_snapshot
 from typing import Any, Tuple
 
 import pandas as pd
@@ -516,7 +518,10 @@ def fetch_aas_data() -> dict[str, str]:
 # ─────────────────────────────────────────────────────────
 
 def build_placeholders() -> dict[str, str]:
-    bm20 = load_json(BM20_JSON)
+    proxy_path = ROOT / "bm20_realtime_latest.json"
+    proxy = load_json(proxy_path) if proxy_path.exists() else None
+    bm20 = newsletter_snapshot(load_json(BM20_JSON), proxy,
+        datetime.now(timezone(timedelta(hours=9))).date().isoformat())
     krw  = load_json(KRW_JSON)
 
     # BTC

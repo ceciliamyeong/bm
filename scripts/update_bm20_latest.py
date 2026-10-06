@@ -3,15 +3,20 @@
 """
 update_bm20_latest.py
 뉴스레터 렌더 직전 실행 — CMC API로 20개 코인 현재가를 가져와
-bm20_daily.py와 동일한 방식으로 BM20 레벨과 1D를 실시간 갱신합니다.
+전일 KST 확정 레벨에 CMC rolling 24h 수익률을 적용한 추정치를
+bm20_realtime_latest.json에 저장합니다. 일별 확정 bm20_latest.json은 변경하지 않습니다.
+이는 전일 확정 시점부터의 정확한 가격 수익률이 아닌 24h proxy입니다.
 의존: requests (pip install requests)
 """
 
 import json
 import os
+import math
 import requests
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+from bm20_level_utils import select_realtime_reference
 
 KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parent.parent  # scripts/ 기준 상위
@@ -60,29 +65,46 @@ def fetch_cmc_prices(api_key: str) -> dict:
         quote = entry.get("quote", {}).get("USD", {})
         price = quote.get("price")
         chg24 = quote.get("percent_change_24h")
-        if price is None:
-            continue
-        price = float(price)
-        chg24 = float(chg24) if chg24 is not None else 0.0
-        prev_price = price / (1.0 + chg24 / 100.0) if chg24 != -100 else price
+        if price is None or chg24 is None:
+            raise ValueError(f"Incomplete CMC quote: {sym}")
+        price, chg24 = float(price), float(chg24)
+        if not math.isfinite(chg24) or chg24 <= -100:
+            raise ValueError(f"Invalid CMC 24h return: {sym}")
+        prev_price = price / (1.0 + chg24 / 100.0)
         cid = sym_to_cid.get(sym.upper())
         if cid:
             prices[cid] = {"current": price, "prev": prev_price}
 
     return prices
 
-# ── bm20_series.json 마지막 레벨 읽기 ──────────────────────────────
-def load_last_level() -> float | None:
-    for p in [ROOT / "bm20_series.json", ROOT / "data" / "bm20_series.json"]:
-        try:
-            if not p.exists():
-                continue
-            series = json.loads(p.read_text(encoding="utf-8"))
-            if isinstance(series, list) and series:
-                return float(series[-1]["level"])
-        except Exception as e:
-            print(f"[WARN] {p} 읽기 실패: {e}")
-    return None
+def build_realtime_snapshot(series, prices, now_kst):
+    today = now_kst.astimezone(KST).date().isoformat()
+    base_level, official_today = select_realtime_reference(series, today)
+    weights = compute_weights(BM20_IDS)
+    port_ret = 0.0
+    for cid, weight in weights.items():
+        quote = prices[cid]  # Missing quotes must fail, not imply zero return.
+        p0, p1 = float(quote["prev"]), float(quote["current"])
+        if not all(math.isfinite(p) and p > 0 for p in (p0, p1)):
+            raise ValueError(f"Invalid quote: {cid}")
+        port_ret += weight * (p1 / p0 - 1.0)
+    level = round(base_level * (1.0 + port_ret), 6)
+    ret = round(level / base_level - 1.0, 8)
+    snapshot = {
+        "asOf": today,
+        "bm20Mode": "realtime_24h_proxy",
+        "bm20ReferenceDate": (now_kst.astimezone(KST).date() - timedelta(days=1)).isoformat(),
+        "bm20Level": level,
+        "bm20PrevLevel": round(base_level, 6),
+        "bm20PointChange": round(level - base_level, 6),
+        "bm20ChangePct": ret,
+        "returns": {"1D": ret},
+        "updatedAt": now_kst.astimezone(KST).isoformat(timespec="seconds"),
+    }
+    if official_today is not None:
+        snapshot["bm20OfficialDate"] = today
+        snapshot["bm20OfficialLevel"] = official_today
+    return snapshot
 
 # ── 메인 ───────────────────────────────────────────────────────────
 def main():
@@ -92,64 +114,21 @@ def main():
     api_key = os.getenv("CMC_API_KEY", "")
     if not api_key:
         print("[ERROR] CMC_API_KEY 없음. 종료.")
-        return
+        raise SystemExit(1)
 
-    # bm20_latest.json 읽기
-    for latest_path in [ROOT / "data" / "bm20_latest.json", ROOT / "bm20_latest.json"]:
-        if latest_path.exists():
-            break
     try:
-        existing = json.loads(latest_path.read_text(encoding="utf-8"))
-    except Exception:
-        print("[ERROR] bm20_latest.json 읽기 실패. 종료.")
-        return
-
-    # 시리즈 마지막 레벨
-    last_level = load_last_level() or existing.get("bm20Level")
-    if not last_level:
-        print("[ERROR] 기준 레벨을 가져올 수 없습니다. 종료.")
-        return
-    print(f"[INFO] 기준 레벨: {last_level}")
-
-    # CMC 현재가 조회
-    try:
+        series = json.loads((ROOT / "bm20_series.json").read_text(encoding="utf-8"))
+        select_realtime_reference(series, now_kst.date().isoformat())
         prices = fetch_cmc_prices(api_key)
+        snapshot = build_realtime_snapshot(series, prices, now_kst)
     except Exception as e:
-        print(f"[ERROR] CMC 가격 조회 실패: {e}. 종료.")
-        return
+        raise SystemExit(f"[ERROR] BM20 realtime snapshot failed: {e}") from e
 
-    # bm20_daily.py 동일 방식으로 1D 수익률 계산
-    weights = compute_weights(BM20_IDS)
-    port_ret_1d = 0.0
-    for cid, w in weights.items():
-        if cid not in prices:
-            continue
-        p0 = prices[cid]["prev"]
-        p1 = prices[cid]["current"]
-        if p0 > 0 and p1 > 0:
-            port_ret_1d += w * ((p1 / p0) - 1.0)
-
-    # 레벨 & 1D 갱신
-    bm20_now  = round(last_level * (1.0 + port_ret_1d), 6)
-    ret_1d    = round((bm20_now / last_level) - 1.0, 8)
-    point_chg = round(bm20_now - last_level, 6)
-
-    existing["bm20Level"]       = bm20_now
-    existing["bm20PrevLevel"]   = round(last_level, 6)
-    existing["bm20PointChange"] = point_chg
-    existing["bm20ChangePct"]   = ret_1d
-    existing["returns"]["1D"]   = ret_1d
-    existing["updatedAt"]       = now_kst.strftime("%Y-%m-%dT%H:%M:%S+09:00")
-
-    latest_path.write_text(
-        json.dumps(existing, ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
-    print(f"[OK] bm20_latest.json 갱신 — level={bm20_now}, 1D={ret_1d*100:+.4f}%")
-
-    missing = [cid for cid in BM20_IDS if cid not in prices]
-    if missing:
-        print(f"[WARN] 가격 없는 코인: {[SYMBOL_MAP[c] for c in missing]}")
+    realtime_path = ROOT / "bm20_realtime_latest.json"
+    temp_path = realtime_path.with_suffix(".json.tmp")
+    temp_path.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    temp_path.replace(realtime_path)
+    print(f"[OK] realtime proxy — asOf={snapshot['asOf']}, base={snapshot['bm20ReferenceDate']}, level={snapshot['bm20Level']}")
 
 if __name__ == "__main__":
     main()
