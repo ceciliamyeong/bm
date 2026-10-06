@@ -179,10 +179,10 @@ BEST_COUNT, WORST_COUNT = 3, 3
 BM20_IDS = [
     # 고정 가중 6종 (T1)
     "bitcoin","ethereum","ripple","tether","binancecoin","solana",
-    # 균등 14종 (2026 Q2 CMC 스냅샷 기반) — 총 20종
+    # 균등 14종 (2026 Q4 CMC 스냅샷 기반, 20위 기계 적용) — 총 20종
     "dogecoin","tron","hyperliquid","cardano","bitcoin-cash",
     "chainlink","stellar","litecoin","zcash","avalanche-2",
-    "hedera-hashgraph","shiba-inu","sui","canton",
+    "canton","monero","near","uniswap",
 ]
 
 YF_MAP = {
@@ -197,24 +197,25 @@ YF_MAP = {
     "cardano":"ADA-USD",
     "hyperliquid":"HYPE32196-USD",
     "chainlink":"LINK-USD",
-    "sui":"SUI20947-USD",
     "avalanche-2":"AVAX-USD",
     "stellar":"XLM-USD",
     "bitcoin-cash":"BCH-USD",
-    "hedera-hashgraph":"HBAR-USD",
     "litecoin":"LTC-USD",
-    "shiba-inu":"SHIB-USD",
     "zcash":"ZEC-USD",
     "canton":"CC37263-USD",
+    "monero":"XMR-USD",
+    "near":"NEAR-USD",
+    "uniswap":"UNI7083-USD",
 }
 
 SYMBOL_MAP = {
     "bitcoin":"BTC","ethereum":"ETH","ripple":"XRP","tether":"USDT","binancecoin":"BNB",
     "solana":"SOL","dogecoin":"DOGE","tron":"TRX","cardano":"ADA",
-    "hyperliquid":"HYPE","chainlink":"LINK","sui":"SUI","avalanche-2":"AVAX",
-    "stellar":"XLM","bitcoin-cash":"BCH","hedera-hashgraph":"HBAR",
-    "litecoin":"LTC","shiba-inu":"SHIB",
+    "hyperliquid":"HYPE","chainlink":"LINK","avalanche-2":"AVAX",
+    "stellar":"XLM","bitcoin-cash":"BCH",
+    "litecoin":"LTC",
     "zcash":"ZEC","canton":"CC",
+    "monero":"XMR","near":"NEAR","uniswap":"UNI",
 }
 
 # ================== Prices: CoinMarketCap ==================
@@ -224,10 +225,11 @@ CMC_SYMBOL_MAP = {
     "tether": "USDT", "binancecoin": "BNB", "solana": "SOL",
     "dogecoin": "DOGE", "tron": "TRX",
     "cardano": "ADA", "hyperliquid": "HYPE", "chainlink": "LINK",
-    "sui": "SUI", "avalanche-2": "AVAX", "stellar": "XLM",
-    "bitcoin-cash": "BCH", "hedera-hashgraph": "HBAR",
-    "litecoin": "LTC", "shiba-inu": "SHIB",
+    "avalanche-2": "AVAX", "stellar": "XLM",
+    "bitcoin-cash": "BCH",
+    "litecoin": "LTC",
     "zcash": "ZEC", "canton": "CC",
+    "monero": "XMR", "near": "NEAR", "uniswap": "UNI",
 }
 
 def load_yesterday_prices() -> dict:
