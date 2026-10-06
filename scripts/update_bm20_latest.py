@@ -24,19 +24,20 @@ ROOT = Path(__file__).resolve().parent.parent  # scripts/ 기준 상위
 # ── BM20 유니버스 & 가중치 (bm20_daily.py 동일) ────────────────────
 SYMBOL_MAP = {
     "bitcoin": "BTC", "ethereum": "ETH", "ripple": "XRP", "tether": "USDT",
-    "binancecoin": "BNB", "solana": "SOL", "usd-coin": "USDC", "dogecoin": "DOGE",
+    "binancecoin": "BNB", "solana": "SOL", "dogecoin": "DOGE",
     "tron": "TRX", "cardano": "ADA", "hyperliquid": "HYPE", "chainlink": "LINK",
-    "sui": "SUI", "avalanche-2": "AVAX", "stellar": "XLM", "bitcoin-cash": "BCH",
-    "hedera-hashgraph": "HBAR", "litecoin": "LTC", "shiba-inu": "SHIB", "toncoin": "TON",
+    "avalanche-2": "AVAX", "stellar": "XLM", "bitcoin-cash": "BCH",
+    "litecoin": "LTC", "zcash": "ZEC", "canton": "CC",
+    "monero": "XMR", "near": "NEAR", "uniswap": "UNI",
 }
 FIXED_WEIGHTS = {
-    "bitcoin": 0.30, "ethereum": 0.20, "ripple": 0.05,
-    "tether": 0.05, "binancecoin": 0.05,
+    "bitcoin": 0.32, "ethereum": 0.20, "ripple": 0.05,
+    "tether": 0.05, "binancecoin": 0.05, "solana": 0.05,
 }
 BM20_IDS = list(SYMBOL_MAP.keys())
 
 def compute_weights(ids: list) -> dict:
-    fixed_sum = sum(FIXED_WEIGHTS.values())  # 0.65
+    fixed_sum = sum(FIXED_WEIGHTS.values())  # 0.72
     ids_rest = [cid for cid in ids if cid not in FIXED_WEIGHTS]
     w_rest = (1.0 - fixed_sum) / max(1, len(ids_rest))
     w = {cid: FIXED_WEIGHTS.get(cid, w_rest) for cid in ids}
