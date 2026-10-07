@@ -1204,12 +1204,12 @@
       const KRW_LISTED = new Set(['BTC','ETH','XRP','USDT','SOL','ADA','DOGE','DOT','AVAX','MATIC','LINK','UNI','ATOM','LTC','ETC','TRX','BCH','NEAR','APT','OP','ARB','SUI','TON','FIL','HBAR','ICP','SHIB']);
 
       const CORE    = new Set(['BTC','ETH']);
-      const L1      = new Set(['SOL','BNB','ADA','AVAX','TON','SUI','HBAR']);
+      const L1      = new Set(['SOL','BNB','ADA','AVAX','TON','SUI','HBAR','NEAR']);
       const STABLE  = new Set(['USDT']);
-      const DEFI    = new Set(['LINK','HYPE','CC']);
+      const DEFI    = new Set(['LINK','HYPE','CC','UNI']);
       const PAY     = new Set(['XRP','LTC','TRX','XLM','BCH']);
       const MEME    = new Set(['DOGE','SHIB']);
-      const PRIVACY = new Set(['ZEC']);
+      const PRIVACY = new Set(['ZEC','XMR']);
 
       const sorted = [...universe.components].sort((a,b) => b.weight - a.weight);
       const maxW = sorted[0]?.weight || 1;
