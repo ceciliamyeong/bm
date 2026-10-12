@@ -3,7 +3,7 @@ SoSoValue ETF 데이터 수집 스크립트
 ====================================
 GitHub Actions에서 6시간마다 실행
 
-- BTC / ETH / SOL : 공식 API (api.sosovalue.xyz)
+- BTC / ETH / SOL : 공식 API v1 (openapi.sosovalue.com/openapi/v1/etfs/summary-history)
 - XRP / DOGE / HYPE / LINK / LTC / AVAX / HBAR / DOT :
   SoSoValue _next/data JSON (비공식 내부 API)
 
@@ -11,6 +11,10 @@ GitHub Actions에서 6시간마다 실행
   data/etf_{coin}_metrics.json
   data/etf_{coin}_history.json
   data/etf_summary.json
+
+변경 이력
+- 2026-10-13: 공식 API v2(api.sosovalue.xyz) 404 → v1(openapi.sosovalue.com)로 이전
+- 2026-10-13: 수집 실패 시 etf_summary.json 이전 값 유지 (뉴스레터 "—" 방지)
 """
 
 import requests
@@ -24,10 +28,10 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # ── 공식 API 설정 (BTC/ETH/SOL) ──────────────────────────────
 API_KEY  = os.environ.get("SOSOVALUE_API_KEY", "")
-BASE_URL = "https://api.sosovalue.xyz"
+BASE_URL = "https://openapi.sosovalue.com/openapi/v1"
 API_HEADERS = {
     "x-soso-api-key": API_KEY,
-    "Content-Type": "application/json"
+    "Accept": "application/json",
 }
 
 OFFICIAL_COINS = {
@@ -92,78 +96,78 @@ def get_build_id():
     return build_id
 
 # ────────────────────────────────────────────────────────────
-# 공식 API (BTC/ETH/SOL)
+# 공식 API v1 (BTC/ETH/SOL)
 # ────────────────────────────────────────────────────────────
-def fetch_current_metrics(etf_type):
-    r = requests.post(
-        f"{BASE_URL}/openapi/v2/etf/currentEtfDataMetrics",
+def fetch_summary_history(symbol, limit=300):
+    """GET /etfs/summary-history — 최신 날짜가 먼저 오는 리스트 반환"""
+    r = requests.get(
+        f"{BASE_URL}/etfs/summary-history",
         headers=API_HEADERS,
-        json={"type": etf_type},
+        params={"symbol": symbol.upper(), "country_code": "US", "limit": limit},
         timeout=15,
-        verify=False
     )
     r.raise_for_status()
-    data = r.json()
-    if data.get("code") != 0:
-        raise Exception(f"API error: {data.get('msg')}")
-    return data["data"]
-
-def fetch_historical_inflow(etf_type):
-    r = requests.post(
-        f"{BASE_URL}/openapi/v2/etf/historicalInflowChart",
-        headers=API_HEADERS,
-        json={"type": etf_type},
-        timeout=15,
-        verify=False
-    )
-    r.raise_for_status()
-    data = r.json()
-    if data.get("code") != 0:
-        raise Exception(f"API error: {data.get('msg')}")
-    return data["data"]
+    body = r.json()
+    if isinstance(body, dict):
+        if body.get("code") not in (0, None):
+            raise Exception(f"API error: code={body.get('code')} msg={body.get('message')}")
+        body = body.get("data", body)
+    return body
 
 def process_official_coin(coin, etf_type, updated_at, all_summary):
-    print(f"\n--- {coin.upper()} (공식 API) ---")
-    metrics = None
+    print(f"\n--- {coin.upper()} (공식 API v1) ---")
     try:
-        metrics = fetch_current_metrics(etf_type)
-        all_summary[coin] = {
-            "totalNetAssets":        metrics.get("totalNetAssets", {}).get("value"),
-            "dailyNetInflow":        metrics.get("dailyNetInflow", {}).get("value"),
-            "cumNetInflow":          None,
-            "dailyTotalValueTraded": metrics.get("dailyTotalValueTraded", {}).get("value"),
-            "totalTokenHoldings":    metrics.get("totalTokenHoldings", {}).get("value"),
-            "lastUpdateDate":        metrics.get("dailyNetInflow", {}).get("lastUpdateDate"),
-        }
-        print(f"  AUM: ${float(metrics['totalNetAssets']['value'])/1e9:.2f}B")
-        print(f"  일별 순유입: ${float(metrics['dailyNetInflow']['value'])/1e6:.1f}M")
-    except Exception as e:
-        print(f"  ❌ metrics 실패: {e}")
+        rows = fetch_summary_history(coin)
+        if not rows:
+            raise Exception("빈 응답")
 
-    try:
-        new_records   = fetch_historical_inflow(etf_type)
+        new_records = [{
+            "date":             r["date"],
+            "totalNetInflow":   float(r["total_net_inflow"]),
+            "cumNetInflow":     float(r["cum_net_inflow"]),
+            "totalValueTraded": float(r["total_value_traded"]),
+        } for r in rows]
+
         hist_path     = f"data/etf_{coin}_history.json"
         existing      = load_json(hist_path)
         existing_recs = existing.get("data", []) if existing else []
         prev_count    = len(existing_recs)
         merged_recs   = merge_history(existing_recs, new_records)
-
         save_json(hist_path, {"updatedAt": updated_at, "type": etf_type, "data": merged_recs})
 
-        cum = merged_recs[-1].get("cumNetInflow") if merged_recs else None
-        all_summary[coin]["cumNetInflow"] = cum
+        latest = max(rows, key=lambda x: x["date"])
+        aum    = float(latest["total_net_assets"])
+        daily  = float(latest["total_net_inflow"])
+        cum    = float(latest["cum_net_inflow"])
+        vol    = float(latest["total_value_traded"])
+        d      = latest["date"]
 
-        if metrics is not None and cum is not None:
-            metrics["cumNetInflow"]["value"] = str(cum)
-        if metrics is not None:
-            save_json(f"data/etf_{coin}_metrics.json", {
-                "updatedAt": updated_at, "type": etf_type, **metrics
-            })
-            print(f"  누적 순유입: ${cum/1e9:.2f}B (history 기준)")
+        # 기존 metrics 파일(개별 ETF list 등)은 보존하고 합계 필드만 갱신
+        metrics_path = f"data/etf_{coin}_metrics.json"
+        metrics = load_json(metrics_path) or {}
+        metrics.update({
+            "updatedAt": updated_at,
+            "type":      etf_type,
+            "totalNetAssets":        {"value": str(aum),   "lastUpdateDate": d},
+            "dailyNetInflow":        {"value": str(daily), "lastUpdateDate": d},
+            "cumNetInflow":          {"value": str(cum)},
+            "dailyTotalValueTraded": {"value": str(vol)},
+        })
+        save_json(metrics_path, metrics)
 
+        all_summary[coin] = {
+            "totalNetAssets":        str(aum),
+            "dailyNetInflow":        str(daily),
+            "cumNetInflow":          str(cum),
+            "dailyTotalValueTraded": str(vol),
+            "totalTokenHoldings":    None,
+            "lastUpdateDate":        d,
+        }
+        print(f"  AUM: ${aum/1e9:.2f}B / 일별 순유입: ${daily/1e6:.1f}M / 기준일 {d}")
+        print(f"  누적 순유입: ${cum/1e9:.2f}B")
         print(f"  히스토리: {prev_count}일 → {len(merged_recs)}일 (+ {len(merged_recs) - prev_count}일 추가)")
     except Exception as e:
-        print(f"  ❌ history 실패: {e}")
+        print(f"  ❌ 실패: {e}")
 
 # ────────────────────────────────────────────────────────────
 # _next/data (알트코인)
@@ -236,7 +240,7 @@ def process_next_coin(coin, slug, build_id, updated_at, all_summary):
     print(f"\n--- {coin.upper()} (_next/data) ---")
     try:
         props       = fetch_next_data(slug, build_id)
-      
+
         metrics_out = convert_next_metrics(props, coin, updated_at)
         new_records = convert_next_history(props)
 
@@ -275,6 +279,12 @@ def main():
     updated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     print(f"[{updated_at}] ETF 데이터 수집 시작")
 
+    if not API_KEY:
+        print("⚠️ SOSOVALUE_API_KEY 미설정 — BTC/ETH/SOL 공식 API 호출은 실패할 수 있음")
+
+    # 실패 시 이전 값을 유지하기 위해 기존 summary 로드
+    prev = load_json("data/etf_summary.json") or {}
+
     all_summary = {"updatedAt": updated_at}
     for coin in list(OFFICIAL_COINS) + list(NEXT_COINS):
         all_summary[coin] = {}
@@ -291,6 +301,12 @@ def main():
             process_next_coin(coin, slug, build_id, updated_at, all_summary)
     except Exception as e:
         print(f"❌ BUILD_ID 추출 실패: {e}")
+
+    # 3) 수집 실패한 코인은 이전 summary 값 유지 (뉴스레터 "—" 방지)
+    for coin in list(OFFICIAL_COINS) + list(NEXT_COINS):
+        if not all_summary[coin].get("totalNetAssets") and prev.get(coin):
+            all_summary[coin] = prev[coin]
+            print(f"⚠️ {coin.upper()} 수집 실패 → 이전 값 유지")
 
     save_json("data/etf_summary.json", all_summary)
     print(f"\n✅ 완료: {updated_at}")
