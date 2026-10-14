@@ -363,6 +363,16 @@ function colorClass(v) {
   return parseFloat(v) >= 0 ? 'pos' : 'neg';
 }
 
+// 기준일 표기 — 미국 거래일 (ETF 유입·유출 집계 단위. 상단 '업데이트'는 수집 시각이라 UTC 유지)
+function dateLabel(d) {
+  if (!d) return '';
+  const m = String(d).slice(0,10).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return d;
+  const wd = '일월화수목금토';
+  const t = new Date(Date.UTC(+m[1], +m[2]-1, +m[3]));
+  return `${m[1]}-${m[2]}-${m[3]}(${wd[t.getUTCDay()]}) 미국 거래일`;
+}
+
 // ── 데이터 로드 ──
 async function loadData(coin) {
   if (metricsData[coin] && historyData[coin]) return;
@@ -389,7 +399,7 @@ function renderKPI(coin) {
   // AUM
   const aum = d.totalNetAssets?.value;
   document.getElementById('k-aum').textContent = '$' + fmt$B(aum);
-  document.getElementById('k-aum-date').textContent = d.totalNetAssets?.lastUpdateDate || '';
+  document.getElementById('k-aum-date').textContent = dateLabel(d.totalNetAssets?.lastUpdateDate);
 
   // 일별 순유입
   const daily = d.dailyNetInflow?.value;
@@ -402,7 +412,7 @@ function renderKPI(coin) {
     dailyEl.textContent = '-';
     dailyEl.className = 'kpi-value';
   }
-  document.getElementById('k-daily-date').textContent = d.dailyNetInflow?.lastUpdateDate || '';
+  document.getElementById('k-daily-date').textContent = dateLabel(d.dailyNetInflow?.lastUpdateDate);
 
   document.getElementById('k-cum').textContent = '$' + fmt$B(d.cumNetInflow?.value);
   document.getElementById('k-vol').textContent = '$' + fmt$B(d.dailyTotalValueTraded?.value);
@@ -415,6 +425,7 @@ function renderKPI(coin) {
     if (pctCard)      pctCard.style.display = '';
     document.getElementById('k-holdings').textContent = fmtNum(d.totalTokenHoldings?.value, 0);
     document.getElementById('k-pct').textContent = fmtPct(d.totalNetAssetsPercentage?.value);
+    if (d.totalTokenHoldings?.estimated) document.getElementById('k-holdings-label').textContent = COIN_LABEL[coin] + ' · 추정(AUM÷종가)';
   } else {
     if (holdingsCard) holdingsCard.style.display = 'none';
     if (pctCard)      pctCard.style.display = 'none';
