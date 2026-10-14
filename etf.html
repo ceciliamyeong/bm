@@ -192,6 +192,72 @@
     </button>
   </div>
 
+<!-- ETF 일별 순유입 개요 (코인 탭 위에 붙여넣기) -->
+<style>
+#flowOv{--ink:var(--text);--mute:var(--text2);--line:#d5dae1;
+  background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin:0 0 24px;box-shadow:0 1px 3px rgba(15,23,42,.06)}
+#flowOv .hd{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+#flowOv .tt{font-size:14px;font-weight:800;color:var(--ink)}
+#flowOv .sub{font-size:12px;color:var(--mute)}
+#flowOv .sum{font-size:13px;font-weight:800}
+#flowOv .scroll{overflow-x:auto}
+#flowOv .chart{display:grid;grid-template-columns:repeat(var(--n),1fr);min-width:560px;position:relative}
+#flowOv .chart::before{content:"";position:absolute;left:0;right:0;top:100px;border-top:1px solid var(--line)}
+#flowOv .col{cursor:pointer;display:flex;flex-direction:column;align-items:center}
+#flowOv .half{height:100px;width:100%;display:flex;flex-direction:column;align-items:center}
+#flowOv .up{justify-content:flex-end}
+#flowOv .dn{justify-content:flex-start}
+#flowOv .bar{width:46%;max-width:34px;border-radius:3px}
+#flowOv .up .bar{background:var(--pos);border-radius:3px 3px 0 0}
+#flowOv .dn .bar{background:var(--neg);border-radius:0 0 3px 3px}
+#flowOv .val{font-size:11px;font-weight:800;line-height:16px;white-space:nowrap}
+#flowOv .nm{font-size:12px;font-weight:700;color:var(--ink);margin-top:6px}
+#flowOv .dt{font-size:10px;color:var(--mute)}
+#flowOv .pos{color:var(--pos)} #flowOv .neg{color:var(--neg)} #flowOv .zero{color:var(--mute)}
+</style>
+<div id="flowOv">
+  <div class="hd">
+    <div><span class="tt">ETF 일별 자금 흐름</span> <span class="sub" id="flowOvDate"></span></div>
+    <div class="sum" id="flowOvSum"></div>
+  </div>
+  <div class="scroll"><div class="chart" id="flowOvChart"></div></div>
+</div>
+<script>
+(function(){
+  var SUMMARY_URL='data/etf_summary.json';           // 대시보드 HTML 기준 상대경로
+  var COINS=['btc','eth','sol','xrp','doge','hype','link','ltc','avax','hbar','dot'];
+  var H=70;                                           // 막대 최대 높이(px)
+  function fmt(v){var a=Math.abs(v),s=v<0?'-':(v>0?'+':'');
+    if(a>=1e9)return s+'$'+(a/1e9).toFixed(2)+'B';
+    if(a>=1e6)return s+'$'+(a/1e6).toFixed(1)+'M';
+    if(a>=1e3)return s+'$'+(a/1e3).toFixed(0)+'K';
+    return a?s+'$'+a.toFixed(0):'$0';}
+  function cls(v){return v>0?'pos':(v<0?'neg':'zero');}
+  fetch(SUMMARY_URL+'?t='+Date.now()).then(function(r){return r.json();}).then(function(d){
+    var rows=COINS.filter(function(c){return d[c]&&d[c].dailyNetInflow!=null&&d[c].dailyNetInflow!=='';})
+      .map(function(c){return{c:c,v:parseFloat(d[c].dailyNetInflow)||0,d:(d[c].lastUpdateDate||'').slice(0,10)};});
+    if(!rows.length){document.getElementById('flowOv').style.display='none';return;}
+    var max=Math.max.apply(null,rows.map(function(r){return Math.abs(r.v);}))||1;
+    var cnt={};rows.forEach(function(r){cnt[r.d]=(cnt[r.d]||0)+1;});
+    var main=Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a]||(a<b?1:-1);})[0];
+    var ch=document.getElementById('flowOvChart');ch.style.setProperty('--n',rows.length);
+    ch.innerHTML=rows.map(function(r){
+      var h=r.v?Math.max(2,Math.round(Math.abs(r.v)/max*H)):0;
+      var bar=h?'<div class="bar" style="height:'+h+'px"></div>':'';
+      var lab='<div class="val '+cls(r.v)+'">'+fmt(r.v)+'</div>';
+      var up=r.v>=0?lab+bar:'', dn=r.v<0?bar+lab:'';
+      if(r.v===0)up=lab;
+      return '<div class="col" onclick="if(window.switchCoin)switchCoin(\''+r.c+'\')"><div class="half up">'+up+'</div><div class="half dn">'+dn+'</div>'+
+             '<div class="nm">'+r.c.toUpperCase()+'</div><div class="dt">'+(r.d&&r.d!==main?r.d.slice(5).replace('-','/'):'&nbsp;')+'</div></div>';
+    }).join('');
+    var tot=rows.reduce(function(s,r){return s+r.v;},0);
+    document.getElementById('flowOvSum').innerHTML='전체 합계 <span class="'+cls(tot)+'">'+fmt(tot)+'</span>';
+    var multi=Object.keys(cnt).length>1;document.getElementById('flowOvDate').textContent=main?(multi?'코인별 기준일이 달라 하단에 날짜 표기':main.slice(5).replace('-','/')+' 미국 거래일 기준')+' · 클릭하면 해당 코인으로 이동':'';
+  }).catch(function(){document.getElementById('flowOv').style.display='none';});
+})();
+</script>
+
+
   <!-- KPI -->
   <div class="section-title"><span class="dot"></span> <span id="kpi-title">BTC Spot ETF 현황</span></div>
   <div class="kpi-grid" id="kpi-grid">
