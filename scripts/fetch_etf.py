@@ -1,37 +1,49 @@
 """
 SoSoValue ETF 데이터 수집 스크립트
 ====================================
-GitHub Actions에서 6시간마다 실행
+실행 시점
+- etf_update.yml : 매일 KST 13/14/15시 (UTC 04/05/06시)
+- render-letter.yml : 뉴스레터 렌더 직전 (최신 가용 데이터로 갱신)
 
-- BTC / ETH / SOL : 공식 API v1 (openapi.sosovalue.com/openapi/v1/etfs/summary-history)
+- BTC / ETH / SOL : 공식 API
+    1순위) v2 (openapi.sosovalue.com/openapi/v2/etf/...)
+           → 합계 + 개별 ETF 표(list) + 총 보유량 + 시총 비중
+    2순위) v1 (openapi.sosovalue.com/openapi/v1/etfs/summary-history)
+           → 합계만 제공 (v2 실패 시 대체. 표·보유량은 이번 실행에서 갱신 안 됨)
 - XRP / DOGE / HYPE / LINK / LTC / AVAX / HBAR / DOT :
   SoSoValue _next/data JSON (비공식 내부 API)
 
 저장 포맷은 기존과 동일:
   data/etf_{coin}_metrics.json
   data/etf_{coin}_history.json
-  data/etf_summary.json
+  data/etf_summary.json   (코인별 lastUpdateDate = 기준일, source = v2|v1)
 
 변경 이력
-- 2026-10-13: 공식 API v2(api.sosovalue.xyz) 404 → v1(openapi.sosovalue.com)로 이전
+- 2026-10-13: api.sosovalue.xyz(v2) 404 → openapi.sosovalue.com 으로 도메인 이전
 - 2026-10-13: 수집 실패 시 etf_summary.json 이전 값 유지 (뉴스레터 "—" 방지)
+- 2026-10-14: v2 우선 + v1 대체, 403/429/5xx 재시도(3회), User-Agent, 키 공백 제거,
+              실패 시 응답 본문 [debug] 출력, summary 에 source 기록
 """
 
 import requests
 import json
 import os
 import re
+import time
 import urllib3
 from datetime import datetime, timezone
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # ── 공식 API 설정 (BTC/ETH/SOL) ──────────────────────────────
-API_KEY  = os.environ.get("SOSOVALUE_API_KEY", "")
-BASE_URL = "https://openapi.sosovalue.com/openapi/v1"
+API_KEY      = os.environ.get("SOSOVALUE_API_KEY", "").strip()   # Secret 앞뒤 공백/개행 방지
+BASE_URL_V2  = "https://openapi.sosovalue.com"                   # + /openapi/v2/etf/...
+BASE_URL_V1  = "https://openapi.sosovalue.com/openapi/v1"        # + /etfs/summary-history
 API_HEADERS = {
     "x-soso-api-key": API_KEY,
+    "Content-Type": "application/json",
     "Accept": "application/json",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
 }
 
 OFFICIAL_COINS = {
@@ -58,6 +70,10 @@ WEB_HEADERS = {
     "Accept": "application/json",
 }
 
+# 일시적 오류로 보고 재시도할 상태코드 (404 는 경로 소멸이므로 재시도 안 함)
+RETRY_STATUS  = {403, 429, 500, 502, 503, 504}
+RETRY_DELAYS  = [5, 15]          # 1차 실패 후 5초, 2차 실패 후 15초 대기 → 최대 3회 시도
+
 # ────────────────────────────────────────────────────────────
 # 유틸
 # ────────────────────────────────────────────────────────────
@@ -82,6 +98,29 @@ def merge_history(existing_records, new_records, date_key="date"):
         merged[row[date_key]] = row
     return sorted(merged.values(), key=lambda x: x[date_key])
 
+def _debug_http(r):
+    """실패 원인 파악용: 200이 아니면 상태코드와 응답 본문 앞부분 출력 (키는 출력 안 함)"""
+    if r.status_code != 200:
+        print(f"  [debug] HTTP {r.status_code}: {r.text[:300]}")
+
+def _request(method, url, **kwargs):
+    """공식 API 호출 — 일시적 오류(403/429/5xx/연결 오류)는 최대 3회 시도"""
+    last = len(RETRY_DELAYS)
+    for attempt in range(last + 1):
+        try:
+            r = requests.request(method, url, timeout=15, **kwargs)
+        except requests.RequestException as e:
+            if attempt == last:
+                raise
+            print(f"  [retry] {type(e).__name__} → {RETRY_DELAYS[attempt]}초 후 재시도 ({attempt + 1}/{last + 1})")
+            time.sleep(RETRY_DELAYS[attempt])
+            continue
+        if r.status_code in RETRY_STATUS and attempt < last:
+            print(f"  [retry] HTTP {r.status_code} → {RETRY_DELAYS[attempt]}초 후 재시도 ({attempt + 1}/{last + 1})")
+            time.sleep(RETRY_DELAYS[attempt])
+            continue
+        return r
+
 # ────────────────────────────────────────────────────────────
 # BUILD_ID 자동 추출
 # ────────────────────────────────────────────────────────────
@@ -96,16 +135,74 @@ def get_build_id():
     return build_id
 
 # ────────────────────────────────────────────────────────────
-# 공식 API v1 (BTC/ETH/SOL)
+# 공식 API v2 (BTC/ETH/SOL) — 합계 + 개별 ETF 표 + 보유량
+# ────────────────────────────────────────────────────────────
+def fetch_current_metrics(etf_type):
+    r = _request("POST", f"{BASE_URL_V2}/openapi/v2/etf/currentEtfDataMetrics",
+                 headers=API_HEADERS, json={"type": etf_type})
+    _debug_http(r)
+    r.raise_for_status()
+    data = r.json()
+    if data.get("code") != 0:
+        raise Exception(f"API error: {data.get('msg') or data.get('message')}")
+    return data["data"]
+
+def fetch_historical_inflow(etf_type):
+    r = _request("POST", f"{BASE_URL_V2}/openapi/v2/etf/historicalInflowChart",
+                 headers=API_HEADERS, json={"type": etf_type})
+    _debug_http(r)
+    r.raise_for_status()
+    data = r.json()
+    if data.get("code") != 0:
+        raise Exception(f"API error: {data.get('msg') or data.get('message')}")
+    return data["data"]
+
+def process_official_coin_v2(coin, etf_type, updated_at, all_summary):
+    """v2 전체 처리. 하나라도 실패하면 예외 → 호출부에서 v1 대체 경로로 (저장은 둘 다 성공한 뒤에만)."""
+    metrics     = fetch_current_metrics(etf_type)
+    new_records = fetch_historical_inflow(etf_type)
+
+    hist_path     = f"data/etf_{coin}_history.json"
+    existing      = load_json(hist_path)
+    existing_recs = existing.get("data", []) if existing else []
+    prev_count    = len(existing_recs)
+    merged_recs   = merge_history(existing_recs, new_records)
+
+    cum = merged_recs[-1].get("cumNetInflow") if merged_recs else None
+    if cum is not None:
+        metrics.setdefault("cumNetInflow", {})["value"] = str(cum)
+
+    save_json(hist_path, {"updatedAt": updated_at, "type": etf_type, "data": merged_recs})
+    save_json(f"data/etf_{coin}_metrics.json", {
+        "updatedAt": updated_at, "type": etf_type, **metrics
+    })
+
+    daily_obj = metrics.get("dailyNetInflow") or {}
+    aum_obj   = metrics.get("totalNetAssets") or {}
+    all_summary[coin] = {
+        "totalNetAssets":        aum_obj.get("value"),
+        "dailyNetInflow":        daily_obj.get("value"),
+        "cumNetInflow":          cum,
+        "dailyTotalValueTraded": (metrics.get("dailyTotalValueTraded") or {}).get("value"),
+        "totalTokenHoldings":    (metrics.get("totalTokenHoldings") or {}).get("value"),
+        "lastUpdateDate":        daily_obj.get("lastUpdateDate") or aum_obj.get("lastUpdateDate"),
+        "source":                "v2",
+    }
+    aum   = float(all_summary[coin]["totalNetAssets"] or 0)
+    daily = float(all_summary[coin]["dailyNetInflow"] or 0)
+    print(f"  AUM: ${aum/1e9:.2f}B / 일별 순유입: ${daily/1e6:.1f}M / 기준일 {all_summary[coin]['lastUpdateDate']} (v2)")
+    print(f"  개별 ETF 수: {len(metrics.get('list') or [])} / 보유량 기준일: {(metrics.get('totalTokenHoldings') or {}).get('lastUpdateDate')}")
+    print(f"  히스토리: {prev_count}일 → {len(merged_recs)}일 (+ {len(merged_recs) - prev_count}일 추가)")
+
+# ────────────────────────────────────────────────────────────
+# 공식 API v1 (대체 경로) — 합계만 제공
 # ────────────────────────────────────────────────────────────
 def fetch_summary_history(symbol, limit=300):
     """GET /etfs/summary-history — 최신 날짜가 먼저 오는 리스트 반환"""
-    r = requests.get(
-        f"{BASE_URL}/etfs/summary-history",
-        headers=API_HEADERS,
-        params={"symbol": symbol.upper(), "country_code": "US", "limit": limit},
-        timeout=15,
-    )
+    r = _request("GET", f"{BASE_URL_V1}/etfs/summary-history",
+                 headers=API_HEADERS,
+                 params={"symbol": symbol.upper(), "country_code": "US", "limit": limit})
+    _debug_http(r)
     r.raise_for_status()
     body = r.json()
     if isinstance(body, dict):
@@ -114,8 +211,7 @@ def fetch_summary_history(symbol, limit=300):
         body = body.get("data", body)
     return body
 
-def process_official_coin(coin, etf_type, updated_at, all_summary):
-    print(f"\n--- {coin.upper()} (공식 API v1) ---")
+def process_official_coin_v1(coin, etf_type, updated_at, all_summary):
     try:
         rows = fetch_summary_history(coin)
         if not rows:
@@ -142,7 +238,7 @@ def process_official_coin(coin, etf_type, updated_at, all_summary):
         vol    = float(latest["total_value_traded"])
         d      = latest["date"]
 
-        # 기존 metrics 파일(개별 ETF list 등)은 보존하고 합계 필드만 갱신
+        # 기존 metrics 파일(개별 ETF list·보유량 등)은 보존하고 합계 필드만 갱신
         metrics_path = f"data/etf_{coin}_metrics.json"
         metrics = load_json(metrics_path) or {}
         metrics.update({
@@ -162,12 +258,22 @@ def process_official_coin(coin, etf_type, updated_at, all_summary):
             "dailyTotalValueTraded": str(vol),
             "totalTokenHoldings":    None,
             "lastUpdateDate":        d,
+            "source":                "v1",
         }
-        print(f"  AUM: ${aum/1e9:.2f}B / 일별 순유입: ${daily/1e6:.1f}M / 기준일 {d}")
-        print(f"  누적 순유입: ${cum/1e9:.2f}B")
+        print(f"  AUM: ${aum/1e9:.2f}B / 일별 순유입: ${daily/1e6:.1f}M / 기준일 {d} (v1)")
         print(f"  히스토리: {prev_count}일 → {len(merged_recs)}일 (+ {len(merged_recs) - prev_count}일 추가)")
     except Exception as e:
-        print(f"  ❌ 실패: {e}")
+        print(f"  ❌ v1도 실패: {e}")
+
+def process_official_coin(coin, etf_type, updated_at, all_summary):
+    print(f"\n--- {coin.upper()} (공식 API) ---")
+    try:
+        process_official_coin_v2(coin, etf_type, updated_at, all_summary)
+        return
+    except Exception as e:
+        print(f"  ⚠️ v2 실패: {e}")
+    print("  ↪ v1 요약으로 대체 (개별 ETF 표·보유량·시총 비중은 이번 실행에서 갱신 안 됨)")
+    process_official_coin_v1(coin, etf_type, updated_at, all_summary)
 
 # ────────────────────────────────────────────────────────────
 # _next/data (알트코인)
@@ -281,6 +387,8 @@ def main():
 
     if not API_KEY:
         print("⚠️ SOSOVALUE_API_KEY 미설정 — BTC/ETH/SOL 공식 API 호출은 실패할 수 있음")
+    else:
+        print(f"[debug] API 키 길이: {len(API_KEY)}자")
 
     # 실패 시 이전 값을 유지하기 위해 기존 summary 로드
     prev = load_json("data/etf_summary.json") or {}
