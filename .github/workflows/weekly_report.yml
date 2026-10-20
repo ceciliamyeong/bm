@@ -1,0 +1,82 @@
+# 마켓랩 주간 보고서: 국내 5대 거래소 거래대금 + BM20 + 시황 글
+# 매주 월요일 09:10(KST)에 지난주(월~일)를 집계합니다. 수동 실행(Run workflow)도 가능합니다.
+name: Weekly Report (5대 거래소 거래대금)
+
+on:
+  schedule:
+    - cron: "10 0 * * 1"   # UTC 월 00:10 = KST 월 09:10
+  workflow_dispatch:
+    inputs:
+      week:
+        description: "집계 주의 월요일 (YYYY-MM-DD). 비우면 지난주"
+        required: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: weekly-report
+  cancel-in-progress: false
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      # 전주 원자료를 다시 받지 않도록 data/ 를 캐시 (직전 실행분을 복원)
+      - name: Restore raw data cache
+        uses: actions/cache@v4
+        with:
+          path: _weekly_report/data
+          key: weekly-data-${{ github.run_id }}
+          restore-keys: |
+            weekly-data-
+
+      - name: Run weekly report
+        working-directory: _weekly_report
+        env:
+          WEEK: ${{ github.event.inputs.week }}
+        run: |
+          set -e
+          if [ -n "$WEEK" ]; then
+            python run_weekly.py --week "$WEEK" --bm20-dir ..
+          else
+            python run_weekly.py --bm20-dir ..
+          fi
+          # 3주보다 오래된 시간봉 원자료는 캐시에서 정리
+          find data -name 'hourly_*.csv' -mtime +21 -delete || true
+
+      - name: Upload report files
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-report
+          path: |
+            _weekly_report/out
+            _weekly_report/logs
+          retention-days: 90
+
+      - name: Commit results
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin main || true
+          git add _weekly_report/out || true
+          git add _weekly_report/data/returns_*.csv _weekly_report/data/korean_names.json || true
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "[skip ci] Weekly report $(TZ=Asia/Seoul date '+%Y-%m-%d')"
+          git push
