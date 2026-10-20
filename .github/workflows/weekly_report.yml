@@ -1,5 +1,5 @@
 # 마켓랩 주간 보고서: 국내 5대 거래소 거래대금 + BM20 + 시황 글
-# 매주 월요일 00:10(KST, 주 마감 직후)에 지난주(월~일)를 집계합니다. 수동 실행(Run workflow)도 가능합니다.
+# 매주 월요일 09:10(KST)에 지난주(월~일)를 집계합니다. 수동 실행(Run workflow)도 가능합니다.
 name: Weekly Report (5대 거래소 거래대금)
 
 on:
@@ -59,7 +59,7 @@ jobs:
           # 3주보다 오래된 시간봉 원자료는 캐시에서 정리
           find data -name 'hourly_*.csv' -mtime +21 -delete || true
 
-      - name: Make card images
+      - name: Make long report image
         working-directory: _weekly_report
         env:
           WEEK: ${{ github.event.inputs.week }}
@@ -93,3 +93,5 @@ jobs:
           fi
           git commit -m "[skip ci] Weekly report $(TZ=Asia/Seoul date '+%Y-%m-%d')"
           git push
+
+
