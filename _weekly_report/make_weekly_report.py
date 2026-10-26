@@ -589,7 +589,7 @@ def main():
 <style>{CSS}</style></head><body><div class="wrap">
 <div class="top"><div><h1>주간 시장 리포트</h1><p>{ws:%Y.%m.%d} ~ {end:%m.%d} (KST 월~일)</p></div><p>블록미디어 마켓랩</p></div>
 <div class="grid">
-{card_story(args.out_dir, tag)}{wm}{card_bm20(bm)}{card_total(s, daily, order)}<div class="p3">{card_exchanges(s)}{card_stable(s)}</div>{card_returns(load_returns(args.data_dir, tag), coins, args.min_krw_eok * 1e8, args.min_listings)}{movers_html}{card_coins(s, coins)}{card_downloads(tag, present)}
+{card_story(args.out_dir, tag)}{wm}{card_bm20(bm)}{card_total(s, daily, order)}<div class="p3">{card_exchanges(s)}{card_stable(s)}</div>{card_returns(load_returns(args.data_dir, tag), coins, args.min_krw_eok * 1e8, args.min_listings)}{movers_html}{card_coins(s, coins)}
 </div>
 <div class="foot">{notes}<br>거래소 공시(09시 기준, 타 마켓 포함)와는 1~3% 차이가 날 수 있습니다.<br>BM20: 일별 확정 시계열 기준, 월요일 값 → 다음 월요일 값.</div>
 </div></body></html>'''
