@@ -70,6 +70,19 @@ jobs:
             python make_cards.py
           fi
 
+      - name: Organize outputs by week
+        working-directory: _weekly_report/out
+        run: |
+          # out/ 바로 아래 파일을 주(월요일 날짜)별 폴더로 정리: out/2026-10-19/...
+          shopt -s nullglob
+          for f in weekly_????-??-??_* article_weekly_????-??-??.* article_facts_????-??-??.*; do
+            [ -f "$f" ] || continue
+            d=$(echo "$f" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -1)
+            mkdir -p "$d"
+            mv -f "$f" "$d/"
+          done
+          ls -R . | head -60
+
       - name: Upload report files
         uses: actions/upload-artifact@v4
         with:
@@ -84,14 +97,12 @@ jobs:
           set -e
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git pull --rebase origin main || true
-          git add _weekly_report/out || true
+          git add -A _weekly_report/out || true
           git add _weekly_report/data/returns_*.csv _weekly_report/data/korean_names.json || true
           if git diff --cached --quiet; then
             echo "No changes to commit."
             exit 0
           fi
           git commit -m "[skip ci] Weekly report $(TZ=Asia/Seoul date '+%Y-%m-%d')"
+          git pull --rebase origin main
           git push
-
-
