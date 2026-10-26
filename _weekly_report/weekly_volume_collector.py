@@ -587,7 +587,7 @@ def build_and_write(week_start, week_end, exs, data, failed, has_prev, partial):
         "집계 기준: 한국시간 월요일 00:00 ~ 다음 월요일 00:00, 1시간봉(고팍스 30분봉) 합산",
         "업비트·빗썸·코인원은 거래소 제공 원화 거래대금, 디지털X(구 코빗)·고팍스는 캔들 종가×거래량 근사치",
         "집계 시점의 원화마켓 상장 종목 기준이며, 주중 상장폐지 종목은 누락될 수 있음",
-        "스테이블코인: USDT·USDC·RLUSD 등 법정화폐 연동 코인 기준(목록은 summary.json의 stablecoins 참고)",
+        "스테이블코인: USDT·USDC·RLUSD 등 법정화폐 연동 코인 기준",
     ]
     top_no_stable = [r for r in coin_rows if not r["stablecoin"]][:3]
     summary = {
