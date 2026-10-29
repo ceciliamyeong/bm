@@ -1,0 +1,152 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>유로존 기준금리 · 블록미디어</title><style>
+:root{--bg:#f7f6f2;--card:#fff;--ink:#1c1d21;--sub:#5d6068;--line:#e3e1da;--blue:#1f5fbf;--blue-soft:#dbe7f8;--amber:#b25e00;--green:#1c7a4a;--red:#b4332b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 "Noto Sans CJK KR","Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif}
+.wrap{max-width:880px;margin:0 auto;padding:28px 20px 40px}
+.top h1{font-size:26px;margin:0 0 4px;letter-spacing:-.02em}
+.top p{margin:0;color:var(--sub);font-size:13px}
+.strip{display:grid;grid-template-columns:1fr 1fr 1.5fr;gap:10px;margin:18px 0 8px}
+.strip div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.strip span{display:block;font-size:12px;color:var(--sub)}
+.strip b{font-size:19px;font-variant-numeric:tabular-nums}
+.market{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 22px 18px;margin-top:22px}
+.m-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+.m-head h2{font-size:21px;margin:0}
+.sub{margin:2px 0 0;color:var(--sub);font-size:13px}
+.big{font-size:44px;font-weight:700;letter-spacing:-.03em;color:var(--blue);font-variant-numeric:tabular-nums;line-height:1}
+.tags{list-style:none;padding:0;margin:14px 0 4px;display:flex;flex-wrap:wrap;gap:6px}
+.tags li{background:#f1f0ea;border-radius:999px;padding:3px 11px;font-size:13px}
+.market h3{font-size:15px;margin:22px 0 8px;padding-top:14px;border-top:1px solid var(--line)}
+.chart svg{width:100%;height:auto;display:block;margin-top:10px}
+.grid{stroke:#ecebe4;stroke-width:1}.grid-strong{stroke:#c9c7bd}
+.axis{font-size:11px;fill:#6b6e76}.axis-strong{font-size:11px;fill:var(--ink);font-weight:600}
+.line{fill:none;stroke:var(--blue);stroke-width:2.6;stroke-linejoin:round}
+.band{fill:var(--blue-soft);opacity:.75}
+.forecast{stroke:var(--amber);stroke-width:2;stroke-dasharray:2 5;stroke-linecap:round}
+.next{stroke:#8a8d95;stroke-width:1;stroke-dasharray:3 4}
+.dot{fill:#fff;stroke:var(--blue);stroke-width:1.6}.dot-chg{fill:var(--blue);stroke:#fff;stroke-width:1.6}
+.lbl{font-size:11.5px;font-weight:600;fill:var(--blue)}.lbl-fc{font-size:11px;fill:var(--amber);font-weight:600}.lbl-now{font-size:12px;fill:var(--blue);font-weight:700}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;white-space:nowrap;font-size:12px;color:var(--sub);margin:4px 0 0}
+.legend span[class^=lg]{display:inline-block;width:22px;margin-right:6px;vertical-align:middle}
+.lg-line{border-top:3px solid var(--blue)}.lg-fc{border-top:3px dotted var(--amber)}.lg-next{border-top:1px dashed #8a8d95}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;color:var(--sub);font-weight:600;font-size:12px;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:8px;border-bottom:1px solid #f0efe9;vertical-align:top}
+.nw{white-space:nowrap}.num{font-variant-numeric:tabular-nums}
+.kind{padding:1px 8px;border-radius:6px;font-size:12px;font-weight:600}
+.kind.up{background:#fbe5e3;color:var(--red)}.kind.down{background:#dff1e7;color:var(--green)}.kind.hold{background:#eeedE7;color:#4b4e55}
+.tbd{color:var(--amber);font-weight:600}
+.srcs{display:block;font-size:11.5px;color:var(--sub);margin-top:2px}.srcs a{color:var(--sub)}
+.claims,.pv-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.claim,.pv{border:1px solid var(--line);border-radius:10px;padding:11px 13px;background:#fcfcfa}
+.claim header,.pv-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.who b{font-size:14px}.role{display:block;font-size:12px;color:var(--sub)}
+.meta{display:flex;gap:6px;align-items:center;white-space:nowrap}
+.meta time{font-size:12px;color:var(--sub)}
+.chip{font-size:11px;background:var(--blue-soft);color:var(--blue);padding:1px 8px;border-radius:999px;font-weight:600}
+.chip-view{background:#fdebd3;color:var(--amber)}
+.claim p,.pv p{margin:7px 0 6px;font-size:13.5px}
+.claim footer,.pv footer{font-size:12px;color:var(--sub)}
+.claim footer a,.pv footer a{color:var(--sub)}
+.note{font-size:12px;color:var(--sub);margin:6px 0 0}
+.method{margin-top:22px;font-size:12.5px;color:var(--sub);line-height:1.7}
+.method b{color:var(--ink)}
+.cta{margin-top:18px;padding:16px 18px;border-radius:12px;background:#17306b;color:#fff;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.cta b{font-size:15px}.cta span{font-size:12.5px;opacity:.85}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tw table{min-width:520px}
+@media(max-width:640px){
+.wrap{padding:20px 12px 32px}
+.market{padding:16px 14px 14px}
+.meta{white-space:normal;flex-wrap:wrap;justify-content:flex-end}
+table.dec,table.dec tbody{display:block}
+table.dec thead{display:none}
+table.dec tr{display:grid;grid-template-columns:auto auto 1fr auto;gap:4px 10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)}
+table.dec td{display:block;border:0;padding:0}
+table.dec td:nth-child(3){text-align:right}
+table.dec td:nth-child(5),table.dec td:nth-child(6){grid-column:1/-1;font-size:13px}
+table.dec td[data-l]::before{content:attr(data-l) " ";color:var(--sub);font-size:11.5px;font-weight:600;margin-right:4px}
+}
+.mk-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.mk-card{border:1px solid var(--line);border-radius:12px;padding:6px 14px 8px;background:#fcfcfa}
+.market .mk-card h3{margin:10px 0 4px;padding:0;border:0;font-size:15px}
+.mk-row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid #f0efe9;align-items:flex-start}
+.mk-row:last-child{border-bottom:0}
+.mk-l{font-size:13.5px;white-space:nowrap}.mk-l small{display:block;font-size:11px;color:var(--sub)}
+.mk-v{text-align:right;font-variant-numeric:tabular-nums}
+.mk-v b{font-size:16px}.mk-v span{display:block;font-size:11.5px;color:var(--sub);max-width:210px;margin-left:auto}
+.mk-chg{color:var(--sub)}
+.nav{display:flex;gap:6px;margin:14px 0 4px}
+.nav a{padding:5px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--sub);text-decoration:none;font-size:13.5px}
+.nav a.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.mk-grid.one{grid-template-columns:1fr}
+table.wd{width:100%;border-collapse:collapse;font-size:14px}
+table.wd th{text-align:left;font-size:12px;color:var(--sub);padding:6px 8px;border-bottom:1px solid var(--line)}
+table.wd td{padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+table.wd a{color:var(--blue);text-decoration:none}
+.wh{margin:8px 0;font-size:13px}.wh summary{cursor:pointer;color:var(--sub)}.wh ul{margin:6px 0 0;padding-left:18px;line-height:1.7}
+@media(max-width:640px){table.wd,table.wd tbody{display:block}table.wd thead{display:none}table.wd tr{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:11px 0;border-bottom:1px solid var(--line)}table.wd td{display:block;border:0;padding:0}table.wd td:nth-child(2){text-align:right}table.wd td:nth-child(3),table.wd td:nth-child(4){grid-column:1/-1;font-size:13px}table.wd td[data-l]::before{content:attr(data-l) " ";color:var(--sub);font-size:11.5px;font-weight:600;margin-right:4px}table.wd td:nth-child(2)::before{display:none}}
+.hub-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.hub-card{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;color:inherit;text-decoration:none}
+.hub-card:hover{border-color:#b9bcc4}
+.hub-top{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+.hub-top h2{font-size:19px;margin:0}
+.hub-top .big{font-size:30px;white-space:nowrap}
+.hub-mk{margin:8px 0 0;font-size:13px;color:var(--sub)}.hub-mk b{color:var(--ink)}
+.hub-go{display:block;margin-top:12px;font-size:13px;color:var(--blue);font-weight:600}
+.line-us{stroke:#3a3d45}.line-sp{stroke:var(--amber);stroke-width:2.2}
+.gap{fill:#fdebd3;opacity:.8}.sp-area{fill:#fdebd3;opacity:.7}
+.dot-sp{fill:var(--amber)}
+.lbl-us{font-size:11.5px;font-weight:700;fill:#3a3d45}.lbl-sp{font-size:11.5px;font-weight:700;fill:var(--amber)}
+.lg-us{border-top:3px solid #3a3d45}.lg-gap{height:10px;background:#fdebd3;border:0;vertical-align:middle}
+@media(max-width:640px){.hub-grid{grid-template-columns:1fr}.mk-grid{grid-template-columns:1fr}.mk-v span{max-width:none}.strip,.claims,.pv-grid{grid-template-columns:1fr}.big{font-size:34px}.m-head{align-items:flex-start;flex-direction:column}}
+</style></head><body><div class="wrap"><div class="top"><h1>유로존 기준금리</h1><p>기준일 2026-10-27 · 블록미디어</p></div><nav class="nav"><a href=".././">개요</a><a href="../korea/">한국</a><a href="../us/">미국</a><a href="../europe/" class=on>유럽</a><a href="../japan/">일본</a><a href="../world/">월드</a></nav><section id="ecb_rate" class="market">
+<header class="m-head"><div><h2>유로존 기준금리</h2><p class="sub">ECB 예금금리(DFR) · 통화정책회의</p></div><div class="big">2.50%</div></header>
+<ul class="tags"><li>최신 결정 2026-09-10 인상</li><li>인상 +0.25%p</li><li>다음 ECB 통화정책회의 10/29</li></ul>
+<div class="chart"><svg viewBox="0 0 760 310" role="img" aria-label="유로존 기준금리 추이" xmlns="http://www.w3.org/2000/svg">
+<line x1="54" y1="272.0" x2="682" y2="272.0" class="grid"/>
+<text x="46" y="276.0" class="axis" text-anchor="end">1.75</text>
+<line x1="54" y1="210.5" x2="682" y2="210.5" class="grid"/>
+<text x="46" y="214.5" class="axis" text-anchor="end">2.00</text>
+<line x1="54" y1="149.0" x2="682" y2="149.0" class="grid"/>
+<text x="46" y="153.0" class="axis" text-anchor="end">2.25</text>
+<line x1="54" y1="87.5" x2="682" y2="87.5" class="grid"/>
+<text x="46" y="91.5" class="axis" text-anchor="end">2.50</text>
+<line x1="54" y1="26.0" x2="682" y2="26.0" class="grid"/>
+<text x="46" y="30.0" class="axis" text-anchor="end">2.75</text>
+<line x1="88.3" y1="272" x2="88.3" y2="276" class="grid-strong"/>
+<text x="88.3" y="290" class="axis" text-anchor="middle">2월</text>
+<line x1="144.9" y1="272" x2="144.9" y2="276" class="grid-strong"/>
+<text x="144.9" y="290" class="axis" text-anchor="middle">3월</text>
+<line x1="207.5" y1="272" x2="207.5" y2="276" class="grid-strong"/>
+<text x="207.5" y="290" class="axis" text-anchor="middle">4월</text>
+<line x1="268.0" y1="272" x2="268.0" y2="276" class="grid-strong"/>
+<text x="268.0" y="290" class="axis" text-anchor="middle">5월</text>
+<line x1="330.6" y1="272" x2="330.6" y2="276" class="grid-strong"/>
+<text x="330.6" y="290" class="axis" text-anchor="middle">6월</text>
+<line x1="391.2" y1="272" x2="391.2" y2="276" class="grid-strong"/>
+<text x="391.2" y="290" class="axis" text-anchor="middle">7월</text>
+<line x1="453.8" y1="272" x2="453.8" y2="276" class="grid-strong"/>
+<text x="453.8" y="290" class="axis" text-anchor="middle">8월</text>
+<line x1="516.4" y1="272" x2="516.4" y2="276" class="grid-strong"/>
+<text x="516.4" y="290" class="axis" text-anchor="middle">9월</text>
+<line x1="577.0" y1="272" x2="577.0" y2="276" class="grid-strong"/>
+<text x="577.0" y="290" class="axis" text-anchor="middle">10월</text>
+<line x1="639.6" y1="272" x2="639.6" y2="276" class="grid-strong"/>
+<text x="639.6" y="290" class="axis" text-anchor="middle">11월</text>
+<line x1="633.5" y1="26" x2="633.5" y2="272" class="next"/>
+<text x="633.5" y="18" class="axis-strong" text-anchor="middle">ECB 통화정책회의 10/29</text>
+<path d="M54.0,210.5 L96.4,210.5 L96.4,210.5 L181.2,210.5 L181.2,210.5 L266.0,210.5 L266.0,210.5 L350.8,210.5 L350.8,149.0 L435.6,149.0 L435.6,149.0 L534.6,149.0 L534.6,87.5 L629.5,87.5" class="line"/>
+<circle cx="96.4" cy="210.5" r="3" class="dot"/>
+<circle cx="181.2" cy="210.5" r="3" class="dot"/>
+<circle cx="266.0" cy="210.5" r="3" class="dot"/>
+<circle cx="350.8" cy="149.0" r="5" class="dot-chg"/>
+<text x="350.8" y="138.0" class="lbl" text-anchor="middle">2.25%</text>
+<circle cx="435.6" cy="149.0" r="3" class="dot"/>
+<circle cx="534.6" cy="87.5" r="5" class="dot-chg"/>
+<text x="534.6" y="76.5" class="lbl" text-anchor="middle">2.50%</text>
+<text x="641.5" y="91.5" class="lbl-now">현재 2.50%</text>
+</svg></div>
+<p class="legend"><span class="lg-line"></span>확정 값 (공식)<span class="lg-next"></span>다음 결정일</p>
+<h3>결정 이력</h3><table class="dec"><thead><tr><th>날짜</th><th>결정</th><th>금리</th><th>변화</th><th>표결</th><th>근거</th></tr></thead><tbody><tr><td class="nw">2026-09-10</td><td class="nw"><span class="kind up">인상</span></td><td class="nw num">2.50%</td><td class="nw num">+0.25%p</td><td data-l="표결">—</td><td data-l="근거">—</td></tr><tr><td class="nw">2026-07-23</td><td class="nw"><span class="kind hold">동결</span></td><td class="nw num">2.25%</td><td class="nw num">0</td><td data-l="표결">—</td><td data-l="근거">—</td></tr><tr><td class="nw">2026-06-11</td><td class="nw"><span class="kind up">인상</span></td><td class="nw num">2.25%</td><td class="nw num">+0.25%p</td><td data-l="표결">—</td><td data-l="근거">—</td></tr><tr><td class="nw">2026-04-30</td><td class="nw"><span class="kind hold">동결</span></td><td class="nw num">2.00%</td><td class="nw num">0</td><td data-l="표결">—</td><td data-l="근거">—</td></tr><tr><td class="nw">2026-03-19</td><td class="nw"><span class="kind hold">동결</span></td><td class="nw num">2.00%</td><td class="nw num">0</td><td data-l="표결">—</td><td data-l="근거">—</td></tr><tr><td class="nw">2026-02-05</td><td class="nw"><span class="kind hold">동결</span></td><td class="nw num">2.00%</td><td class="nw num">0</td><td data-l="표결">—</td><td data-l="근거">—</td></tr></tbody></table>
+</section><p class="note">시장은 추가 인상 가능성을 반영 중(9월 말 기준 약 60%)</p><div class="method"><b>데이터 기준</b> 새 결정은 중앙은행 공식 발표(ECB 보도자료)를 읽어 자동 반영하며, 인상·인하·동결은 금리 값의 변화로 계산합니다. 올해 지난 결정 이력은 보도 요약 기준이며 원문 대조 전입니다. 표결 칸의 “—”은 확인되지 않은 항목입니다.</div></div></body></html>
