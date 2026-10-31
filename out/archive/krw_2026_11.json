@@ -709,5 +709,242 @@
         }
       ]
     }
+  },
+  {
+    "schema": "krw_rolling24h_v1",
+    "timestamp_kst": "2026-11-01T08:55:48+0900",
+    "timestamp_label": "11/01 08:55 KST",
+    "totals": {
+      "combined_24h": 1508835790540.3003,
+      "upbit_24h": 880351228809.683,
+      "bithumb_24h": 347759010233.8514,
+      "coinone_24h": 204211510588.02597,
+      "korbit_24h": 76514040908.73871
+    },
+    "stablecoins": {
+      "total_stable_vol_24h": 193223137374.87524,
+      "stable_dominance_pct": 12.806107767743487,
+      "by_asset": {
+        "USDC": 59611433365.45134,
+        "USDT": 133608156562.39369,
+        "PYUSD": 3547447.0302144596,
+        "DAI": 0.0
+      }
+    },
+    "by_exchange_top": {
+      "upbit_top5": [
+        {
+          "symbol": "KRW-LSK",
+          "value": 110479774309.76357
+        },
+        {
+          "symbol": "KRW-BEAM",
+          "value": 85188656838.81024
+        },
+        {
+          "symbol": "KRW-WET",
+          "value": 56410148673.31138
+        },
+        {
+          "symbol": "KRW-USDT",
+          "value": 42299088851.590004
+        },
+        {
+          "symbol": "KRW-BTC",
+          "value": 34823190406.81332
+        }
+      ],
+      "bithumb_top5": [
+        {
+          "symbol": "KRW-Q",
+          "value": 41997894949.29558
+        },
+        {
+          "symbol": "KRW-USDT",
+          "value": 40765425587.83253
+        },
+        {
+          "symbol": "KRW-LSK",
+          "value": 32755613460.65246
+        },
+        {
+          "symbol": "KRW-BTC",
+          "value": 14691311768.85098
+        },
+        {
+          "symbol": "KRW-XRP",
+          "value": 14601462985.592503
+        }
+      ],
+      "coinone_top5": [
+        {
+          "symbol": "KRW-BTC",
+          "value": 105563018576.8837
+        },
+        {
+          "symbol": "KRW-ETH",
+          "value": 32296206001.1112
+        },
+        {
+          "symbol": "KRW-USDT",
+          "value": 22104051429.4086
+        },
+        {
+          "symbol": "KRW-USDC",
+          "value": 16325815781.2636
+        },
+        {
+          "symbol": "KRW-XRP",
+          "value": 11466313448.4947
+        }
+      ],
+      "korbit_top5": [
+        {
+          "symbol": "KRW-USDC",
+          "value": 41702567515.889595
+        },
+        {
+          "symbol": "KRW-USDT",
+          "value": 28439590693.562557
+        },
+        {
+          "symbol": "KRW-BTC",
+          "value": 3292990344.52317
+        },
+        {
+          "symbol": "KRW-XRP",
+          "value": 1333003074.8266115
+        },
+        {
+          "symbol": "KRW-ETH",
+          "value": 1009070231.8925099
+        }
+      ]
+    },
+    "top10": {
+      "top10_total_24h": 837160133434.6028,
+      "rest_total_24h": 671675657105.6975,
+      "top10_share_pct": 55.483846465149355,
+      "coins": [
+        {
+          "symbol": "KRW-BTC",
+          "value": 158370511097.07117,
+          "share_pct": 10.4962058886713,
+          "change_rate_24h": 0.002966419
+        },
+        {
+          "symbol": "KRW-LSK",
+          "value": 143235387770.41602,
+          "share_pct": 9.493106451241108,
+          "change_rate_24h": 0.2132352941
+        },
+        {
+          "symbol": "KRW-USDT",
+          "value": 133608156562.39369,
+          "share_pct": 8.855049528918574,
+          "change_rate_24h": 0.0007423905
+        },
+        {
+          "symbol": "KRW-BEAM",
+          "value": 90801626144.56291,
+          "share_pct": 6.017992594942865,
+          "change_rate_24h": 0.1091492777
+        },
+        {
+          "symbol": "KRW-WET",
+          "value": 62734875848.84133,
+          "share_pct": 4.157833227589103,
+          "change_rate_24h": 0.1297602257
+        },
+        {
+          "symbol": "KRW-USDC",
+          "value": 59611433365.45134,
+          "share_pct": 3.9508231272871006,
+          "change_rate_24h": 0.0007423905
+        },
+        {
+          "symbol": "KRW-XRP",
+          "value": 59290851886.50222,
+          "share_pct": 3.9295761843819137,
+          "change_rate_24h": -0.0029568303
+        },
+        {
+          "symbol": "KRW-ETH",
+          "value": 55964394772.025566,
+          "share_pct": 3.7091110326846923,
+          "change_rate_24h": 0.0052962595
+        },
+        {
+          "symbol": "KRW-Q",
+          "value": 41997894949.29558,
+          "share_pct": 2.7834635957473224,
+          "change_rate_24h": null
+        },
+        {
+          "symbol": "KRW-MPLX",
+          "value": 31545001038.0431,
+          "share_pct": 2.0906848336853887,
+          "change_rate_24h": 0.0262582057
+        }
+      ]
+    },
+    "winner_loser": {
+      "basis": "upbit_24h_change_rate",
+      "filter": "stable_excluded, min_volume_5B",
+      "winners": [
+        {
+          "symbol": "KRW-LSK",
+          "change_rate_24h": 0.2132352941,
+          "upbit_volume_24h": 110479774309.76357
+        },
+        {
+          "symbol": "KRW-WET",
+          "change_rate_24h": 0.1297602257,
+          "upbit_volume_24h": 56410148673.31138
+        },
+        {
+          "symbol": "KRW-STX",
+          "change_rate_24h": 0.1266149871,
+          "upbit_volume_24h": 17510229870.92997
+        },
+        {
+          "symbol": "KRW-BEAM",
+          "change_rate_24h": 0.1091492777,
+          "upbit_volume_24h": 85188656838.81024
+        },
+        {
+          "symbol": "KRW-COW",
+          "change_rate_24h": 0.0828025478,
+          "upbit_volume_24h": 13684761662.756662
+        }
+      ],
+      "losers": [
+        {
+          "symbol": "KRW-CAP",
+          "change_rate_24h": -0.1071428571,
+          "upbit_volume_24h": 15060442145.043917
+        },
+        {
+          "symbol": "KRW-BIRB",
+          "change_rate_24h": -0.1048387097,
+          "upbit_volume_24h": 12364629695.911257
+        },
+        {
+          "symbol": "KRW-NIL",
+          "change_rate_24h": -0.0953703704,
+          "upbit_volume_24h": 7882758253.686086
+        },
+        {
+          "symbol": "KRW-SPK",
+          "change_rate_24h": -0.0671936759,
+          "upbit_volume_24h": 5287471214.371878
+        },
+        {
+          "symbol": "KRW-SOPH",
+          "change_rate_24h": -0.0529595016,
+          "upbit_volume_24h": 5205258055.032182
+        }
+      ]
+    }
   }
 ]
