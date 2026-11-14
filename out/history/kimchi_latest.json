@@ -1,18 +1,18 @@
 {
   "schema": "smart_kimchi_v2",
-  "timestamp_kst": "2026-11-14T19:12:20+0900",
-  "timestamp_label": "11/14 19:12 KST",
+  "timestamp_kst": "2026-11-14T22:55:27+0900",
+  "timestamp_label": "11/14 22:55 KST",
   "prices": {
     "upbit": {
-      "KRW-BTC": 92000000.0,
-      "KRW-ETH": 2611000.0,
-      "KRW-XRP": 1353.0,
-      "KRW-USDT": 1367.0
+      "KRW-BTC": 91450000.0,
+      "KRW-ETH": 2590000.0,
+      "KRW-XRP": 1363.0,
+      "KRW-USDT": 1369.0
     },
     "binance": {
-      "BTCUSDT": 67276.92,
-      "ETHUSDT": 1908.75,
-      "XRPUSDT": 0.9899
+      "BTCUSDT": 66781.69,
+      "ETHUSDT": 1891.88,
+      "XRPUSDT": 0.9959
     },
     "fx": {
       "USDKRW": 1336.2,
@@ -20,32 +20,32 @@
     }
   },
   "kimchi_premium_pct": {
-    "BTC": 2.341,
-    "ETH": 2.373,
-    "XRP": 2.29
+    "BTC": 2.484,
+    "ETH": 2.455,
+    "XRP": 2.426
   },
-  "cb_premium_pct": -0.09,
+  "cb_premium_pct": -0.049,
   "kimchi_delta_pp": {
-    "BTC": -0.057,
-    "ETH": 0.002,
-    "XRP": -0.03
+    "BTC": 0.143,
+    "ETH": 0.082,
+    "XRP": 0.136
   },
   "driver_share_pct": {
-    "BTC": 64.1,
-    "ETH": 2.5,
-    "XRP": 33.4
+    "BTC": 39.6,
+    "ETH": 22.8,
+    "XRP": 37.6
   },
   "diagnostics": {
-    "local_usdt_premium_hint_pct": 2.305
+    "local_usdt_premium_hint_pct": 2.455
   },
   "smart_kimchi": {
-    "type": "Neutral",
-    "rationale": "뚜렷한 과열/제약 신호가 약함",
-    "score_v1": 71.7,
+    "type": "Constraint-driven",
+    "rationale": "김프↑ + 거래대금/스테이블 비중 약함 → 구조/제약(차익거래 비활성) 가능성",
+    "score_v1": 57.3,
     "inputs": {
-      "total_krw_24h": 2059268361555.496,
-      "top10_share_pct": 63.74562986907991,
-      "stable_dominance_pct": 14.838425518135415
+      "total_krw_24h": 1878059210627.3665,
+      "top10_share_pct": 61.43709398227997,
+      "stable_dominance_pct": 15.823268987698485
     }
   }
 }
