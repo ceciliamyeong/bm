@@ -95,7 +95,7 @@ def para_total(s, bm):
     else:
         lead = pre + ph
     up = wow >= 0
-    body = (f"국내 5대 거래소 원화마켓 주간 거래대금은 {ro(won_amt(tot))} 전주({won_amt(prev)})보다 {pct(wow)} {'증가' if up else '감소'}했다. "
+    body = (f"국내 4대 거래소 원화마켓 주간 거래대금은 {ro(won_amt(tot))} 전주({won_amt(prev)})보다 {pct(wow)} {'증가' if up else '감소'}했다. "
             f"일평균은 {won_amt(prev / 7)}에서 {ro(won_amt(tot / 7))} {'늘었다' if up else '줄었다'}.")
     if bm:
         body += f" 같은 기간 BM20은 {pct(bm['ret'], d=2)} {'상승' if bm['ret'] >= 0 else '하락'}했다."
@@ -302,9 +302,9 @@ def main():
         print(f"data/returns_{tag}.csv 가 없어 급등·급락 문단을 뺍니다 (weekly_returns.py 먼저 실행).")
 
     end = ws + timedelta(days=6)
-    title = f"[블록미디어 마켓랩] 국내 5대 거래소 주간 시황 ({ws:%m/%d}~{end:%m/%d})"
+    title = f"[블록미디어 마켓랩] 국내 4대 거래소 주간 시황 ({ws:%m/%d}~{end:%m/%d})"
     foot = ("집계: KST 월 0시~일 24시, 원화마켓 기준. 수익률은 월요일 첫 시가→일요일 마지막 종가(업비트, 없으면 빗썸). "
-            "디지털X·고팍스 거래대금은 캔들 종가×거래량 근사치.")
+            "디지털X 거래대금은 캔들 종가×거래량 근사치.")
     md = f"**{title}**\n\n" + "\n\n".join(f"**{lead}.** {body}" for _, (lead, body) in paras) + f"\n\n*{foot}*\n"
     html = f"<h2>{title}</h2>\n" + "\n".join(f"<p><strong>{lead}.</strong> {body}</p>" for _, (lead, body) in paras) + f"\n<p><em>{foot}</em></p>\n"
 

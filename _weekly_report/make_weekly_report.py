@@ -299,7 +299,7 @@ def card_total(s, daily, order):
         d_html = f'<div class="chart"><h4>일별 거래대금 (조원) · 연한 막대는 전주</h4>{daily_svg(daily, order)}<div class="legend">{legend}</div></div>'
     avg = s["total_krw"] / 7
     return f'''<section class="card wide">
-  <header><h2>국내 5대 거래소 주간 거래대금</h2><span class="tag">원화마켓 · 월~일</span></header>
+  <header><h2>국내 4대 거래소 주간 거래대금</h2><span class="tag">원화마켓 · 월~일</span></header>
   <div class="hero"><div class="big">{jo(s["total_krw"])}</div>
     <div class="hero-side">{chg(s["total_wow_pct"])} <span class="sub">전주 {jo(s["prev_total_krw"])}</span>
     <div class="sub">일평균 {jo(avg)}</div></div></div>{d_html}
@@ -322,7 +322,7 @@ def card_exchanges(s):
   <header><h2>거래소별</h2><span class="tag">점유율</span></header>
   <div class="stack">{stack}</div>
   <div class="tw"><table><thead><tr><th></th><th>거래대금</th><th>전주 대비</th><th>점유율</th><th></th></tr></thead><tbody>{rows}</tbody></table></div>
-  <p class="note">* 디지털X(구 코빗)·고팍스는 캔들 종가×거래량 근사치</p>
+  <p class="note">* 디지털X(구 코빗)는 캔들 종가×거래량 근사치</p>
 </section>'''
 
 
@@ -352,7 +352,7 @@ def coin_label(sym, ex=None):
     chips = ""
     if ex:
         if len(ex) == len(ALL_LABELS):
-            chips = '<span class="chip all">5개 전체</span>'
+            chips = f'<span class="chip all">{len(ALL_LABELS)}개 전체</span>'
         else:
             chips = "".join(f'<span class="chip">{esc(SHORT.get(e, e))}</span>' for e in ex)
     return f'<div class="cn">{name}</div>' + (f'<div class="chips">{chips}</div>' if chips else "")
@@ -369,7 +369,7 @@ def coin_list(rows, title, coins):
 
 def card_coins(s, coins):
     return f'''<section class="card wide">
-  <header><h2>거래대금 상위 종목</h2><span class="tag">5개 거래소 합산</span></header>
+  <header><h2>거래대금 상위 종목</h2><span class="tag">{len(ALL_LABELS)}개 거래소 합산</span></header>
   <div class="two">{coin_list(s["top3"], "TOP 3", coins)}{coin_list(s["top3_excluding_stablecoins"], "TOP 3 (스테이블코인 제외)", coins)}</div>
 </section>'''
 
@@ -386,7 +386,7 @@ def card_movers(coins, min_prev):
                      f'<span class="num">{chg(c["wow_pct"], 1)}</span></li>' for i, c in enumerate(rows, 1))
         return f'<div><h4>{title}</h4><ul class="coins">{li}</ul></div>'
     return f'''<section class="card wide">
-  <header><h2>거래대금 증감률 상위·하위</h2><span class="tag">5개 거래소 합산 · 전주 {jo(min_prev, 0)} 이상 종목</span></header>
+  <header><h2>거래대금 증감률 상위·하위</h2><span class="tag">{len(ALL_LABELS)}개 거래소 합산 · 전주 {jo(min_prev, 0)} 이상 종목</span></header>
   <div class="two">{col(up, "증가율 TOP 3")}{col(dn, "감소율 TOP 3")}</div>
 </section>'''
 

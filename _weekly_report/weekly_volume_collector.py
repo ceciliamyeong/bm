@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-국내 5대 거래소(업비트·빗썸·코인원·디지털X(구 코빗)·고팍스) 주간 누적 원화 거래대금 집계
+국내 4대 거래소(업비트·빗썸·코인원·디지털X(구 코빗)) 주간 누적 원화 거래대금 집계
 =====================================================================================
 
 집계 기준
 ---------
 - 기간: 한국시간(KST) 월요일 00:00 ~ 다음 월요일 00:00 (완결된 주만)
-- 원천: 1시간봉(고팍스는 30분봉)을 직접 합산 -> 일봉의 09:00 경계 문제 없음
+- 원천: 1시간봉을 직접 합산 -> 일봉의 09:00 경계 문제 없음
 - 업비트·빗썸·코인원: 거래소가 주는 원화 거래대금 필드를 그대로 사용
-- 디지털X·고팍스: 캔들에 원화 거래대금이 없어 close × volume 으로 근사
+- 디지털X: 캔들에 원화 거래대금이 없어 close × volume 으로 근사
+- 고팍스: 거래 중단으로 집계 대상에서 제외 (코드는 남겨 둠, 재개 시 EXCHANGES에 "gopax" 추가)
 - 대상: 실행 시점에 원화마켓에 상장된 전 종목
         (해당 주 중 상장폐지된 종목은 목록에서 빠져 누락될 수 있음)
 
@@ -34,7 +35,7 @@
 ------------
     pip install requests
 
-    :: 1) BTC 한 종목만 5개 거래소에서 (값 검증용, 1~2분)
+    :: 1) BTC 한 종목만 전 거래소에서 (값 검증용, 1~2분)
     python weekly_volume_collector.py --week 2026-10-12 --btc
 
     :: 2) 전 종목 (첫 실행은 10~20분. 중간에 멈춰도 같은 명령으로 이어서 진행)
@@ -75,7 +76,7 @@ UTC = timezone.utc
 OUT_DIR = "out"
 DATA_DIR = "data"
 
-EXCHANGES = ["upbit", "bithumb", "coinone", "korbit", "gopax"]
+EXCHANGES = ["upbit", "bithumb", "coinone", "korbit"]  # 고팍스는 거래 중단으로 제외
 LABELS = {
     "upbit": "업비트",
     "bithumb": "빗썸",
@@ -584,8 +585,8 @@ def build_and_write(week_start, week_end, exs, data, failed, has_prev, partial):
                 w.writerow([x["exchange"], x["week"], x["coin"], x["error"]])
 
     notes = [
-        "집계 기준: 한국시간 월요일 00:00 ~ 다음 월요일 00:00, 1시간봉(고팍스 30분봉) 합산",
-        "업비트·빗썸·코인원은 거래소 제공 원화 거래대금, 디지털X(구 코빗)·고팍스는 캔들 종가×거래량 근사치",
+        "집계 기준: 한국시간 월요일 00:00 ~ 다음 월요일 00:00, 1시간봉 합산",
+        "업비트·빗썸·코인원은 거래소 제공 원화 거래대금, 디지털X(구 코빗)는 캔들 종가×거래량 근사치",
         "집계 시점의 원화마켓 상장 종목 기준이며, 주중 상장폐지 종목은 누락될 수 있음",
         "스테이블코인: USDT·USDC·RLUSD 등 법정화폐 연동 코인 기준",
     ]
@@ -655,9 +656,9 @@ def parse_selection(tokens, btc_only):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="국내 5대 거래소 주간 누적 원화 거래대금 집계")
+    ap = argparse.ArgumentParser(description="국내 4대 거래소 주간 누적 원화 거래대금 집계")
     ap.add_argument("--week", help="집계할 주의 월요일 (YYYY-MM-DD, KST). 생략하면 가장 최근에 끝난 주")
-    ap.add_argument("--btc", action="store_true", help="BTC 한 종목만 5개 거래소에서 (값 검증용)")
+    ap.add_argument("--btc", action="store_true", help="BTC 한 종목만 전 거래소에서 (값 검증용)")
     ap.add_argument("--only", nargs="+", metavar="EX[:COIN]",
                     help="예: upbit:BTC coinone  (거래소 또는 거래소:종목)")
     ap.add_argument("--from-data", action="store_true", help="네트워크 없이 data 폴더의 저장분으로 다시 계산")
